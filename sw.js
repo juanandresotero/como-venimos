@@ -8,7 +8,7 @@
      que abra. Antes esto era solo-cache y una version vieja podia quedarse pegada para
      siempre en el telefono, aunque el repo tuviera codigo nuevo. */
 
-const CACHE = "como-venimos-v3";
+const CACHE = "como-venimos-v4";
 
 const ARMAZON = [
   "./",
@@ -16,6 +16,8 @@ const ARMAZON = [
   "./app.css",
   "./app.js",
   "./manifest.webmanifest",
+  "./iconos/icono-192.png",
+  "./iconos/icono-512.png",
   "./tipografia/bricolage.woff2",
   "./lib/formato.js",
   "./lib/salud.js",
@@ -24,6 +26,7 @@ const ARMAZON = [
   "./lib/github.js",
   "./lib/guardado.js",
   "./lib/cartera.js",
+  "./lib/catalogos.js",
   "./lib/contactos.js",
   "./lib/renta.js",
   "./lib/cambio.js",

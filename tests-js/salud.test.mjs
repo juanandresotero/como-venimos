@@ -261,3 +261,59 @@ test("comparativa: la categoria actual queda marcada y con diferencia cero", () 
   assert.equal(rap.actual, true);
   assert.equal(rap.diferencia, 0);
 });
+
+/* "Cuanto voy ganando y cuanto si cierro todo lo que esta en negociacion y reservado":
+   los dos numeros que el usuario pidio tener siempre a mano. */
+test("avanzado: suma lo en curso y lo que esta en negociacion o reservado, al 100%", () => {
+  const cartera = {
+    pub: { entity_id: "pub", activa: true, estado: "publicada", operacion: "venta",
+           precio: 100000, usar_en_proyeccion: true },
+    neg: { entity_id: "neg", activa: true, estado: "en_negociacion", operacion: "venta",
+           precio: 100000, usar_en_proyeccion: true },
+    res: { entity_id: "res", activa: true, estado: "reservada", operacion: "venta",
+           precio: 100000, usar_en_proyeccion: true },
+  };
+  const negocios = [
+    { id: "a", fecha_fin: "2026-03-01", estado: "cerrado", tipo_negocio: "venta",
+      precio_operacion: 100000, facturacion: 4000, ganancia: 1800, puntas: 1 },
+    { id: "b", fecha_fin: "2026-09-01", estado: "en_curso", tipo_negocio: "venta",
+      precio_operacion: 100000, facturacion: 3000, ganancia: 1350, puntas: 1 },
+  ];
+  const c = capas(negocios, cartera, AJUSTES, "2026");
+
+  // Lo publicado NO entra: todavia no se movio.
+  assert.equal(c.avanzado.cantidad, 3, "el negocio en curso mas las dos propiedades");
+  assert.ok(!c.avanzado.detalle.some((x) => x.entity_id === "pub"));
+
+  // Al 100%: sin descontar la probabilidad de cierre.
+  const propiedades = c.avanzado.detalle.filter((x) => x.origen === "propiedad");
+  assert.equal(propiedades.length, 2);
+  assert.equal(propiedades[0].facturacion, propiedades[1].facturacion,
+    "negociacion y reservada valen igual acá: la pregunta es 'si cierra todo'");
+  assert.ok(c.avanzado.facturacion > c.capa3.facturacion,
+    "sin probabilidad tiene que dar mas que la capa 3");
+});
+
+test("avanzado: una propiedad que ya tiene su negocio en curso no se cuenta dos veces", () => {
+  const cartera = {
+    neg: { entity_id: "neg", activa: true, estado: "en_negociacion", operacion: "venta",
+           precio: 100000, usar_en_proyeccion: true },
+  };
+  const negocios = [
+    { id: "b", fecha_fin: "2026-09-01", estado: "en_curso", tipo_negocio: "venta",
+      entity_id_cartera: "neg", precio_operacion: 100000, facturacion: 3000, ganancia: 1350 },
+  ];
+  const c = capas(negocios, cartera, AJUSTES, "2026");
+  assert.equal(c.avanzado.cantidad, 1);
+  assert.equal(c.avanzado.facturacion, 3000);
+});
+
+test("avanzado: lo apagado de la proyeccion tampoco entra acá", () => {
+  const cartera = {
+    neg: { entity_id: "neg", activa: true, estado: "reservada", operacion: "venta",
+           precio: 100000, usar_en_proyeccion: false },
+  };
+  const c = capas([], cartera, AJUSTES, "2026");
+  assert.equal(c.avanzado.cantidad, 0);
+  assert.equal(c.avanzado.facturacion, 0);
+});

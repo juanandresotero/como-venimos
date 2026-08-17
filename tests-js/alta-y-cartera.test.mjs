@@ -41,8 +41,9 @@ test("el id nuevo no pisa ninguno de los que ya hay", () => {
 test("los seis atajos existen, agrupados, y cada uno trae su regla de plata", () => {
   assert.deepEqual(Object.keys(ATAJOS).sort(),
     ["alquiler", "busqueda", "busqueda_alquiler", "suplencia", "venta", "yo_referi"]);
-  assert.equal(ATAJOS.suplencia.regimen_comision, "suplencia");
-  assert.equal(ATAJOS.yo_referi.regimen_comision, "yo_referi");
+  // La regla de comision ya no se elige a mano: sale del origen mas estas dos marcas.
+  assert.equal(ATAJOS.suplencia.marca, "es_suplencia");
+  assert.equal(ATAJOS.yo_referi.marca, "yo_referi");
   // Todo atajo tiene que caer en alguno de los grupos que se dibujan, o queda invisible.
   const grupos = new Set(GRUPOS_ATAJOS.map((g) => g.clave));
   for (const [clave, molde] of Object.entries(ATAJOS)) {

@@ -24,6 +24,7 @@ const estado = {
   vista: "hoy",
   foco: null,          // id del negocio o de la propiedad abierta
   precargaRenta: null, // precio que viaja de una propiedad a la calculadora
+  instalador: null,    // el aviso de Android para instalar la app, guardado para despues
   token: github.leerToken(),
   sucios: new Set(),
   shas: {},
@@ -72,16 +73,22 @@ function dibujarBarraEstado() {
   barra.textContent = `Cartera actualizada ${cuando} · ${robot.propiedades} propiedades`;
 }
 
-function dibujarBarraGuardado(mensaje, esError) {
+/* estados: null (lo que falta subir) · "guardando" · "listo" · "error" */
+function dibujarBarraGuardado(situacion, mensaje) {
   const barra = document.getElementById("barra-guardado");
   const texto = document.getElementById("texto-guardado");
-  if (!hayCambios(estado) && !mensaje) {
+  const boton = document.getElementById("boton-guardar");
+
+  if (!situacion && !hayCambios(estado)) {
     barra.hidden = true;
     return;
   }
   barra.hidden = false;
-  barra.className = `barra-guardado${esError ? " error" : ""}`;
+  barra.className = `barra-guardado${situacion ? ` ${situacion}` : ""}`;
   texto.textContent = mensaje || resumenCambios(estado);
+  boton.disabled = situacion === "guardando";
+  boton.hidden = situacion === "listo";
+  boton.textContent = situacion === "error" ? "Reintentar" : "Guardar";
 }
 
 /* Los eventos que el usuario ya despacho se filtran con lo anotado en mis_datos. */
@@ -146,11 +153,28 @@ function leerHash() {
   }
 }
 
+/* Antes esto se quedaba en "Guardando…" y no decia nunca que habia terminado: la barra
+   simplemente desaparecia. Ahora avisa que salio bien y recien despues se va sola.
+
+   El try/catch no es de adorno: si `sincronizar` reventara por algo inesperado, sin el la
+   barra quedaria colgada en "Guardando…" para siempre. */
+let reloj = null;
+
 async function guardar() {
-  dibujarBarraGuardado("Guardando…", false);
-  const r = await sincronizar(estado, github, estado.token);
-  dibujarBarraGuardado(r.ok ? "" : r.mensaje, !r.ok);
-  if (r.ok) setTimeout(() => dibujarBarraGuardado(), 100);
+  clearTimeout(reloj);
+  dibujarBarraGuardado("guardando", "Guardando…");
+  let r;
+  try {
+    r = await sincronizar(estado, github, estado.token);
+  } catch (error) {
+    r = { ok: false, mensaje: `No se pudo guardar: ${error.message}` };
+  }
+  if (!r.ok) {
+    dibujarBarraGuardado("error", r.mensaje);
+    return;
+  }
+  dibujarBarraGuardado("listo", "✓ Guardado en GitHub");
+  reloj = setTimeout(() => dibujarBarraGuardado(), 2500);
 }
 
 async function arrancar() {
@@ -170,6 +194,18 @@ async function arrancar() {
   // Si se cierra la app con cambios sin subir, avisar antes de perderlos.
   window.addEventListener("beforeunload", (evento) => {
     if (hayCambios(estado)) evento.preventDefault();
+  });
+
+  // Android avisa una sola vez que la app se puede instalar, y si no se atiende ese aviso
+  // se pierde. Se guarda para poder ofrecerlo despues, con un boton en Ajustes.
+  window.addEventListener("beforeinstallprompt", (evento) => {
+    evento.preventDefault();
+    estado.instalador = evento;
+    dibujar();
+  });
+  window.addEventListener("appinstalled", () => {
+    estado.instalador = null;
+    dibujar();
   });
 
   dibujarBarraEstado();

@@ -10,7 +10,7 @@ import {
 import { traerCotizacion, cotizacionVigente } from "../lib/cambio.js";
 import { guardarCalculo, borrarCalculo, editarAjustes } from "../lib/guardado.js";
 import { dibujar as dibujarFicha, nombreImagen } from "../lib/ficha-imagen.js";
-import { plata, plataUSD, pct, escapar } from "../lib/formato.js";
+import { plata, plataUSD, pct, escapar, numeroDesde } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -118,25 +118,33 @@ function basicos(estado, cotizacion) {
   `);
   const contenedor = seccion.getElementById("campos-renta");
 
-  const agregar = (clave, etiqueta, sufijo, paso) => {
+  /* Los montos van con los puntos de miles: 100.000 se lee de un golpe, 100000 no. Por eso
+     son campos de texto y no <input type="number">, que no admite el separador. */
+  const agregar = (clave, etiqueta, sufijo, { moneda = false, paso } = {}) => {
     const fila = document.createElement("div");
     fila.className = "campo-fila";
+    const valor = entradas[clave];
     fila.innerHTML = html`
       <label for="r-${clave}">${etiqueta}${sufijo ? ` <span class="apunte">${sufijo}</span>` : ""}</label>
-      <input class="campo" id="r-${clave}" type="number" inputmode="decimal"
-             step="${paso || "any"}" value="${entradas[clave] ?? ""}">
+      ${moneda
+        ? html`<input class="campo" id="r-${clave}" type="text" inputmode="decimal"
+                 value="${valor === null || valor === undefined ? "" : plata(valor)}">`
+        : html`<input class="campo" id="r-${clave}" type="number" inputmode="decimal"
+                 step="${paso || "any"}" value="${valor ?? ""}">`}
     `;
     const control = fila.querySelector(".campo");
     control.addEventListener("change", () => {
-      entradas[clave] = control.value === "" ? null : Number(control.value);
+      entradas[clave] = moneda
+        ? numeroDesde(control.value)
+        : (control.value === "" ? null : Number(control.value));
       if (clave === "precio" || clave === "alquiler_mensual") ajustarMoneda();
       estado.redibujar();
     });
     contenedor.append(fila);
   };
 
-  agregar("precio", "Precio de la propiedad", "USD");
-  agregar("alquiler_mensual", "Alquiler por mes", entradas.moneda_alquiler);
+  agregar("precio", "Precio de la propiedad", "USD", { moneda: true });
+  agregar("alquiler_mensual", "Alquiler por mes", entradas.moneda_alquiler, { moneda: true });
 
   // La moneda se propone sola por la relacion alquiler/precio, y se cambia de un toque.
   const moneda = document.createElement("div");
@@ -163,7 +171,7 @@ function basicos(estado, cotizacion) {
 
   agregar("meses_alquilados", "Meses alquilados por año", "de 12");
   agregar("plazo_anios", "Plazo del contrato", "años");
-  agregar("irpf_pct", "Impuestos (IRPF)", "0,105 = 10,5%", "0.001");
+  agregar("irpf_pct", "Impuestos (IRPF)", "0,105 = 10,5%", { paso: "0.001" });
 
   return seccion;
 }
@@ -254,29 +262,35 @@ function finos(estado) {
   });
 
   const contenedor = seccion.getElementById("campos-finos");
-  const agregar = (clave, etiqueta, sufijo, paso) => {
+  const agregar = (clave, etiqueta, sufijo, { moneda = false, paso } = {}) => {
     const fila = document.createElement("div");
     fila.className = "campo-fila";
+    const valor = entradas[clave];
     fila.innerHTML = html`
       <label for="f-${clave}">${etiqueta}${sufijo ? ` <span class="apunte">${sufijo}</span>` : ""}</label>
-      <input class="campo" id="f-${clave}" type="number" inputmode="decimal"
-             step="${paso || "any"}" value="${entradas[clave] ?? ""}"
-             placeholder="${DEFAULTS[clave] ?? ""}">
+      ${moneda
+        ? html`<input class="campo" id="f-${clave}" type="text" inputmode="decimal"
+                 value="${valor === null || valor === undefined ? "" : plata(valor)}" placeholder="0">`
+        : html`<input class="campo" id="f-${clave}" type="number" inputmode="decimal"
+                 step="${paso || "any"}" value="${valor ?? ""}"
+                 placeholder="${DEFAULTS[clave] ?? ""}">`}
     `;
     fila.querySelector(".campo").addEventListener("change", (evento) => {
-      entradas[clave] = evento.target.value === "" ? null : Number(evento.target.value);
+      entradas[clave] = moneda
+        ? numeroDesde(evento.target.value)
+        : (evento.target.value === "" ? null : Number(evento.target.value));
       estado.redibujar();
     });
     contenedor.append(fila);
   };
 
-  agregar("gastos_compra_pct", "Gastos de compra (ITP y escritura)", "0,07 = 7%", "0.005");
+  agregar("gastos_compra_pct", "Gastos de compra (ITP y escritura)", "0,07 = 7%", { paso: "0.005" });
   agregar("comision_meses", "Comisión de alquiler", "meses");
   agregar("refaccion_meses", "Refacción por año", "meses de alquiler");
-  agregar("refaccion_anual", "…o un monto fijo por año", "USD, manda sobre el de arriba");
-  agregar("contribucion_anual", "Contribución inmobiliaria", "USD por año");
-  agregar("primaria_anual", "Impuesto de Primaria", "USD por año");
-  agregar("admin_pct", "Administración", "0,05 = 5%", "0.01");
+  agregar("refaccion_anual", "…o un monto fijo por año", "USD, manda sobre el de arriba", { moneda: true });
+  agregar("contribucion_anual", "Contribución inmobiliaria", "USD por año", { moneda: true });
+  agregar("primaria_anual", "Impuesto de Primaria", "USD por año", { moneda: true });
+  agregar("admin_pct", "Administración", "0,05 = 5%", { paso: "0.01" });
 
   return seccion;
 }

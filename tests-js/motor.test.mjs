@@ -205,3 +205,65 @@ test("revisar: si no hay categoria vigente, avisa en vez de borrar la ganancia",
 test("revisar: con la categoria bien puesta no avisa nada de eso", () => {
   assert.ok(!tipos(revisar(negocio(), AJUSTES, "2026-08-17")).includes("sin_categoria"));
 });
+
+/* Lo que dijo mirando Flammarion: si la propiedad sigue en la cartera en negociacion,
+   la app YA SABE que todavia no hay boleto ni firma. Pedirselos es pedirle un dato que
+   no existe. */
+const CARTERA_VIVA = { flam: { entity_id: "flam", activa: true, estado: "en_negociacion" } };
+
+test("revisar: no pide firma ni boleto si la propiedad sigue viva en la cartera", () => {
+  const enMarcha = negocio({
+    entity_id_cartera: "flam", fecha_fin: null, fecha_boleto: null,
+  });
+  const t = tipos(revisar(enMarcha, AJUSTES, "2026-08-17", CARTERA_VIVA));
+  assert.ok(!t.includes("sin_fecha_fin"));
+  assert.ok(!t.includes("falta_fecha_boleto"));
+});
+
+test("revisar: si la propiedad ya no esta en la cartera, si las pide", () => {
+  const cerrada = { flam: { entity_id: "flam", activa: false } };
+  const t = tipos(revisar(
+    negocio({ entity_id_cartera: "flam", fecha_fin: null, fecha_boleto: null }),
+    AJUSTES, "2026-08-17", cerrada
+  ));
+  assert.ok(t.includes("sin_fecha_fin"));
+  assert.ok(t.includes("falta_fecha_boleto"));
+});
+
+test("revisar: un negocio sin propiedad de la cartera sigue pidiendo las fechas", () => {
+  const t = tipos(revisar(
+    negocio({ fecha_fin: null, fecha_boleto: null }), AJUSTES, "2026-08-17", CARTERA_VIVA
+  ));
+  assert.ok(t.includes("sin_fecha_fin"));
+});
+
+test("revisar: la fecha en que se publico se pide siempre, este viva o no", () => {
+  const t = tipos(revisar(
+    negocio({ entity_id_cartera: "flam", fecha_inicio: null }),
+    AJUSTES, "2026-08-17", CARTERA_VIVA
+  ));
+  assert.ok(t.includes("falta_fecha_inicio"));
+});
+
+/* Un alquiler casi nunca pasa por negociacion: no se le reclama esa fecha. */
+test("revisar: a un alquiler no se le pide la fecha de boleto", () => {
+  const t = tipos(revisar(
+    negocio({ tipo_negocio: "alquiler", fecha_boleto: null }), AJUSTES, "2026-08-17"
+  ));
+  assert.ok(!t.includes("falta_fecha_boleto"));
+});
+
+/* El regimen se deriva: no se puede quedar pegado uno viejo al cambiar el origen. */
+test("revisar: cambiar el origen cambia la regla de comision sola", () => {
+  const n = revisar(negocio({ origen_captacion: "Ref. Martin" }), AJUSTES, "2026-08-17");
+  assert.equal(n.regimen_comision, "ref_martin");
+  assert.equal(n.facturacion, 1500, "la regla de Martin factura la mitad");
+  assert.equal(n.ganancia, 1050, "y deja el 35% del total");
+});
+
+test("revisar: marcar una suplencia la hace cobrar el 12,5% y no facturar", () => {
+  const n = revisar(negocio({ es_suplencia: true }), AJUSTES, "2026-08-17");
+  assert.equal(n.regimen_comision, "suplencia");
+  assert.equal(n.facturacion, 0);
+  assert.equal(n.ganancia, 375);
+});

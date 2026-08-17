@@ -4,11 +4,12 @@
    completar. Cada cambio se aplica al instante y queda en la cola para subir. */
 
 import { editarNegocio, borrarNegocio } from "../lib/guardado.js";
-import { plata, plataUSD, escapar, fechaRazonable } from "../lib/formato.js";
+import { plata, plataUSD, escapar, fechaRazonable, numeroDesde } from "../lib/formato.js";
+import { esBusqueda, puntasSegunAgentes } from "../lib/motor.js";
 import {
-  REGIMENES, esBusqueda, puntasSegunAgentes, nombrePropio, OTRO_AGENTE,
-} from "../lib/motor.js";
-import { ORIGENES } from "../lib/cartera.js";
+  AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, EXPLICACION_ORIGEN,
+  MARCAS, marcaActual, admiteMarcas, TIPOS_NEGOCIO, regimenDe,
+} from "../lib/catalogos.js";
 import { ROLES, enlaceWhatsapp, hayPicker, elegirContacto } from "../lib/contactos.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -18,17 +19,6 @@ function nodo(marca) {
   molde.innerHTML = marca.trim();
   return molde.content;
 }
-
-/* "Captación mía" era un nombre equivocado: en una búsqueda no hubo ninguna captación,
-   el aviso era de otro. Lo que este campo dice de verdad es si alguien se lleva una tajada
-   de tu comisión, no de dónde salió la propiedad. */
-const NOMBRE_REGIMEN = {
-  captacion_mia: "Es mío — no me lo refirió nadie",
-  ref_martin: "Me lo refirió Martín",
-  ref_otro_colega: "Me lo refirió otro colega",
-  yo_referi: "Yo se lo referí a un colega",
-  suplencia: "Suplencia (cubrí una visita)",
-};
 
 /* Los valores del Excel no son sólo estos tres, así que el que ya está cargado se
    conserva como opción en vez de perderse al abrir el desplegable. */
@@ -40,12 +30,7 @@ function opcionesCon(lista, actual) {
   return opciones;
 }
 
-const TIPOS = {
-  venta: "Venta",
-  alquiler: "Alquiler",
-  renovacion_alquiler: "Renovación de alquiler",
-  suplencia: "Suplencia",
-};
+const TIPOS = Object.fromEntries(TIPOS_NEGOCIO);
 
 export function dibujarFicha(estado) {
   const n = (estado.datos.negocios || []).find((x) => x.id === estado.foco);
@@ -73,9 +58,10 @@ export function dibujarFicha(estado) {
       </div>
       <div class="datos">
         <div class="dato"><span class="dato-nombre">Comisión total (BASE)</span><span class="dato-valor">${plata(n.base)}</span></div>
-        <div class="dato"><span class="dato-nombre">Facturación RE/MAX</span><span class="dato-valor">${plata(n.facturacion)}</span></div>
+        <div class="dato"><span class="dato-nombre">Facturación RE/MAX</span><span class="dato-valor">${plataUSD(n.facturacion)}</span></div>
         <div class="dato"><span class="dato-nombre">A tu bolsillo</span><span class="dato-valor">${plataUSD(n.ganancia)}</span></div>
       </div>
+      <p class="apunte" style="margin-top:12px">${escapar(explicarRegimen(n))}</p>
     </section>
   `));
 
@@ -220,20 +206,29 @@ function campos(n, falta, estado) {
     const fila = document.createElement("div");
     fila.className = `campo-fila${faltaEste ? " falta" : ""}`;
     const id = `campo-${clave}`;
+    // Los montos van en un campo de texto para poder mostrarlos con los puntos de miles:
+    // un <input type="number"> no los admite y 100000 se lee peor que 100.000.
+    const esMoneda = tipo === "moneda";
     fila.innerHTML = html`
       <label for="${id}">${etiqueta}${faltaEste ? " — falta" : ""}</label>
       ${opciones
         ? html`<select class="campo" id="${id}">
              ${opciones.map(([v, t]) => `<option value="${escapar(v)}"${String(v) === String(valor ?? "") ? " selected" : ""}>${escapar(t)}</option>`).join("")}
            </select>`
-        : html`<input class="campo" id="${id}" type="${tipo}" value="${escapar(valor ?? "")}"${tipo === "number" ? ' step="any"' : ""}>`}
+        : esMoneda
+          ? html`<input class="campo" id="${id}" type="text" inputmode="decimal"
+                   value="${escapar(valor === null || valor === undefined ? "" : plata(valor))}">`
+          : html`<input class="campo" id="${id}" type="${tipo}" value="${escapar(valor ?? "")}"${tipo === "number" ? ' step="any"' : ""}>`}
     `;
     const control = fila.querySelector(".campo");
     control.addEventListener("change", () => {
       const crudo = control.value;
       // El navegador avisa del cambio mientras se tipea el año: no guardar a medio escribir.
       if (tipo === "date" && !fechaRazonable(crudo)) return;
-      const nuevo = tipo === "number" ? (crudo === "" ? null : Number(crudo)) : crudo || null;
+      let nuevo;
+      if (esMoneda) nuevo = numeroDesde(crudo);
+      else if (tipo === "number") nuevo = crudo === "" ? null : Number(crudo);
+      else nuevo = crudo || null;
       const extra = derivar ? derivar(nuevo) : {};
       editarNegocio(estado, n.id, { [clave]: nuevo, ...extra });
       estado.redibujar();
@@ -241,63 +236,130 @@ function campos(n, falta, estado) {
     contenedor.append(fila);
   };
 
-  agregar("fecha_inicio", "Fecha de inicio", "date", n.fecha_inicio);
-  agregar("fecha_boleto", "Fecha del boleto o reserva", "date", n.fecha_boleto);
-  agregar("fecha_fin", "Fecha de firma (cuando cobraste)", "date", n.fecha_fin);
+  /* Las cuatro fechas del camino de una propiedad: se publica, pasa a negociación, queda
+     reservada y se cierra. De 2026 en adelante el robot llena las tres primeras solo,
+     porque le hace seguimiento a la cartera todos los días.
+
+     Los alquileres casi nunca pasan por negociación: el campo está, pero se avisa que lo
+     normal es que quede vacío. */
+  const esAlquiler = n.tipo_negocio !== "venta";
+  agregar("fecha_inicio", "1 · Cuándo se publicó", "date", n.fecha_inicio);
+  agregar(
+    "fecha_negociacion",
+    `2 · Cuándo pasó a negociación${esAlquiler ? " (los alquileres casi nunca pasan por acá)" : ""}`,
+    "date",
+    n.fecha_negociacion
+  );
+  agregar("fecha_boleto", "3 · Cuándo quedó reservada (boleto)", "date", n.fecha_boleto);
+  agregar("fecha_fin", "4 · Cuándo cerró y cobraste", "date", n.fecha_fin);
   agregar("direccion", "Dirección", "text", n.direccion);
   agregar("barrio", "Barrio", "text", n.barrio);
-  agregar("precio_operacion", "Precio de la operación (USD)", "number", n.precio_operacion);
+  agregar("precio_operacion", "Precio de la operación (USD)", "moneda", n.precio_operacion);
   agregar("pct_comision_total", "% de comisión (0,03 = 3%)", "number", n.pct_comision_total);
 
   agregarAgentes(contenedor, n, falta, estado, agregar);
 
   agregar("puntas", "Puntas", "number", n.puntas,
     [[0, "0 — no fue mío"], [1, "1 punta"], [2, "2 puntas"]]);
-  agregar("regimen_comision", "Quién se lleva una tajada", "text", n.regimen_comision,
-    REGIMENES.map((r) => [r, NOMBRE_REGIMEN[r] || r]));
 
   // En una búsqueda no hubo captación: lo que salió de algún lado es el COMPRADOR.
   agregar(
     "origen_captacion",
-    esBusqueda(n, estado.datos.ajustes) ? "De dónde salió el comprador" : "De dónde salió la captación",
+    esBusqueda(n, estado.datos.ajustes) ? "Cómo llegó el comprador" : "Cómo llegó el negocio",
     "text",
     n.origen_captacion,
-    opcionesCon(["", ...ORIGENES], n.origen_captacion)
+    opcionesCon([["", "sin cargar"], ...ORIGENES.map(
+      (o) => [o, EXPLICACION_ORIGEN[o] ? `${o} — ${EXPLICACION_ORIGEN[o]}` : o]
+    )], n.origen_captacion),
+    falta.has("origen_sin_clasificar")
   );
 
-  agregar("tipo_negocio", "Tipo", "text", n.tipo_negocio, Object.entries(TIPOS));
+  agregarMarcas(contenedor, n, estado);
+
+  agregar("tipo_negocio", "Tipo", "text", n.tipo_negocio, opcionesCon(TIPOS_NEGOCIO, n.tipo_negocio));
   agregar("notas", "Notas", "text", n.notas);
 
   return seccion;
 }
 
-/* Quién puso cada lado. Faltaba en la ficha: había pendientes de "sin agente vendedor ni
-   comprador" que no se podían resolver desde ningún lado de la app.
+/* Quién puso cada lado, y quién refirió a quién. Son cuatro veces la misma lista corta de
+   gente de la casa, así que se dibujan igual.
 
-   Al cambiar un lado se recalculan las puntas, que es lo que decide la plata: dos puntas
-   facturan el doble que una. */
+   Es información interna: no lleva teléfono. Los que sí lo llevan son los clientes, que
+   van más abajo con su botón de WhatsApp. */
 function agregarAgentes(contenedor, n, falta, estado, agregar) {
-  const yo = nombrePropio(estado.datos.ajustes);
   const faltanAgentes = falta.has("faltan_agentes");
 
-  const lado = (clave, etiqueta) => {
-    const opciones = opcionesCon(
-      [[yo, "Yo"], [OTRO_AGENTE, "Otro"], ["Otro REMAX", "Otro RE/MAX"]],
-      n[clave]
-    );
-    agregar(clave, etiqueta, "text", n[clave], [["", "sin cargar"], ...opciones], faltanAgentes,
+  const lado = (clave, etiqueta, esUnLadoDelNegocio) => {
+    agregar(clave, etiqueta, "text", n[clave],
+      opcionesCon([["", "sin cargar"], ...AGENTES], n[clave]),
+      esUnLadoDelNegocio && faltanAgentes,
       (valor) => {
+        // Al elegir una oficina o el Team, el nombre de la persona concreta que había
+        // deja de tener sentido si se cambia a otra cosa.
+        const extra = AGENTES_QUE_LLEVAN_NOMBRE.has(valor) ? {} : { [`${clave}_nombre`]: null };
+        if (!esUnLadoDelNegocio) return extra;
         const otroLado = clave === "agente_vende" ? n.agente_compra : n.agente_vende;
         const vende = clave === "agente_vende" ? valor : otroLado;
         const compra = clave === "agente_compra" ? valor : otroLado;
         const puntas = puntasSegunAgentes(vende, compra, estado.datos.ajustes);
-        return puntas === null ? {} : { puntas };
+        return puntas === null ? extra : { ...extra, puntas };
       });
+
+    // "Team", "Ofi Único" y "Otra Oficina" son un grupo, no una persona: se puede anotar
+    // de quién se trata. En Juan y en Martín no hace falta, ya son alguien.
+    if (AGENTES_QUE_LLEVAN_NOMBRE.has(n[clave])) {
+      agregar(`${clave}_nombre`, "  ↳ ¿Quién en concreto?", "text", n[`${clave}_nombre`]);
+    }
   };
 
-  lado("agente_vende", "Quién tenía el aviso");
-  lado("agente_compra", "Quién trajo al comprador");
+  lado("agente_vende", "Quién tenía el aviso", true);
+  lado("agente_compra", "Quién trajo al comprador", true);
+  lado("referidor", "Quién te lo refirió", false);
+  lado("referido_a", "A quién se lo referiste", false);
 }
+
+/* Suplencia y "yo la referí" van sueltas del origen: un negocio puede llegar por "Dueño
+   Vende" y después referirse igual. Son excluyentes entre sí, así que se ofrecen como una
+   sola elección de tres en vez de dos casillas que se pueden contradecir.
+
+   No aparecen si la propiedad está en la cartera: si la estás trabajando vos, no es ni una
+   suplencia ni algo que le pasaste a otro. */
+function agregarMarcas(contenedor, n, estado) {
+  if (!admiteMarcas(n)) return;
+
+  const fila = document.createElement("div");
+  fila.className = "campo-fila";
+  const actual = marcaActual(n);
+  fila.innerHTML = html`
+    <label for="campo-marca">¿Es una suplencia o la referiste?</label>
+    <select class="campo" id="campo-marca">
+      ${MARCAS.map(([v, t]) => `<option value="${v}"${v === actual ? " selected" : ""}>${escapar(t)}</option>`).join("")}
+    </select>
+    <p class="apunte" style="margin-top:6px">${escapar(explicarRegimen(n))}</p>
+  `;
+  fila.querySelector(".campo").addEventListener("change", (evento) => {
+    const elegida = evento.target.value;
+    editarNegocio(estado, n.id, {
+      es_suplencia: elegida === "es_suplencia",
+      yo_referi: elegida === "yo_referi",
+    });
+    estado.redibujar();
+  });
+  contenedor.append(fila);
+}
+
+/* La regla de comisión ya no se elige: sale sola. Se muestra para que se entienda de
+   dónde salió el número, sin poder desincronizarse de los datos. */
+const NOMBRE_REGIMEN = {
+  captacion_mia: "Cobrás tu comisión entera: no se lleva una tajada nadie.",
+  ref_martin: "Regla de Martín: facturás la mitad y te quedás con el 35% del total.",
+  ref_otro_colega: "Referido de un colega: se lleva el 25% antes de tu tajada.",
+  yo_referi: "Vos lo referiste: cobrás el 25% de la comisión.",
+  suplencia: "Suplencia: no factura por RE/MAX y el 12,5% va entero a tu bolsillo.",
+};
+
+const explicarRegimen = (n) => NOMBRE_REGIMEN[regimenDe(n)] || "";
 
 function avisos(n) {
   const lista = n.avisos || [];

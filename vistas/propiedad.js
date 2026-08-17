@@ -5,9 +5,10 @@
    lo que hay que completar a mano. */
 
 import {
-  estadoVisible, nombreEstado, lineaDeTiempo, diasEnCartera, negociosDe, rendimiento,
-  ORIGENES, DESENLACES,
+  estadoVisible, nombreEstado, lineaDeTiempo, diasEnCartera, desdeCuando,
+  negociosDe, rendimiento, DESENLACES,
 } from "../lib/cartera.js";
+import { ORIGENES } from "../lib/catalogos.js";
 import { editarPropiedad, crearNegocio } from "../lib/guardado.js";
 import { plata, plataUSD, fechaCorta, escapar, fechaRazonable } from "../lib/formato.js";
 
@@ -76,6 +77,8 @@ function acciones(p, estado) {
 
   marca.getElementById("nuevo-negocio").addEventListener("click", () => {
     const atajo = p.operacion === "alquiler" ? "alquiler" : "venta";
+    // Las fechas del camino ya las sabe el robot: cuándo se publicó, cuándo pasó a
+    // negociación y cuándo quedó reservada. No hay por qué volver a pedirlas.
     const nuevo = crearNegocio(estado, atajo, {
       entity_id_cartera: p.entity_id,
       direccion: p.direccion || "",
@@ -83,6 +86,9 @@ function acciones(p, estado) {
       tipo_propiedad: p.tipo || null,
       precio_operacion: p.precio ?? null,
       origen_captacion: p.origen_captacion || null,
+      fecha_inicio: desdeCuando(p),
+      fecha_negociacion: p.fecha_negociacion || null,
+      fecha_boleto: p.fecha_reservada || null,
     });
     estado.irA("ficha", nuevo.id);
   });

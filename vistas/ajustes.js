@@ -15,6 +15,62 @@ function nodo(marca) {
   return molde.content;
 }
 
+const yaInstalada = () =>
+  window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+
+/* Instalar la app en el celular, como Parecidas.
+
+   Android avisa que se puede instalar UNA sola vez y en el momento que quiere; si no se
+   atiende ese aviso, se pierde. Por eso se guarda al arrancar y se ofrece acá, cuando el
+   usuario lo busca. En iPhone no existe ese aviso: hay que explicarle los dos toques. */
+function instalar(estado) {
+  if (yaInstalada()) {
+    return nodo(html`
+      <section class="tarjeta">
+        <h2 class="titulo" style="font-size:17px;margin-bottom:6px">Ya la tenés instalada ✓</h2>
+        <p class="apunte">Estás usando la app desde la pantalla de inicio.</p>
+      </section>
+    `);
+  }
+
+  const esIphone = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">Instalarla en el celular</h2>
+      <p class="apunte" style="margin-bottom:12px">
+        Queda como una app más, con su ícono en la pantalla de inicio, sin la barra del
+        navegador y andando aunque no tengas señal.
+      </p>
+      ${estado.instalador
+        ? html`<button class="boton boton-primario" id="instalar">Instalar</button>`
+        : esIphone
+          ? html`<ol class="pasos">
+               <li>Tocá el botón de <strong>Compartir</strong> (el cuadrito con la flecha para arriba).</li>
+               <li>Bajá y elegí <strong>Agregar a inicio</strong>.</li>
+             </ol>`
+          : html`<ol class="pasos">
+               <li>Tocá los <strong>tres puntitos</strong> de arriba a la derecha del navegador.</li>
+               <li>Elegí <strong>Instalar aplicación</strong> o <strong>Agregar a pantalla principal</strong>.</li>
+             </ol>
+             <p class="apunte">Si te aparece solo el aviso de Chrome, aceptalo y listo.</p>`}
+    </section>
+  `);
+
+  const boton = seccion.getElementById("instalar");
+  if (boton) {
+    boton.addEventListener("click", async () => {
+      const aviso = estado.instalador;
+      if (!aviso) return;
+      boton.disabled = true;
+      aviso.prompt();
+      await aviso.userChoice;
+      estado.instalador = null;   // Android no lo deja usar dos veces
+      estado.redibujar();
+    });
+  }
+  return seccion;
+}
+
 /* El dia anterior, para cerrar el periodo de la categoria vieja sin superponerlo. */
 function ayer(iso) {
   const fecha = new Date(`${iso}T00:00:00Z`);
@@ -81,6 +137,7 @@ export function dibujarAjustes(estado) {
     </section>
   `));
 
+  trozo.append(instalar(estado));
   trozo.append(tuNegocio(estado));
 
   const campo = trozo.getElementById("campo-token");
@@ -197,11 +254,10 @@ function tuNegocio(estado) {
     });
   }, escalones.map((e) => [e.categoria, `${e.categoria} · ${Math.round(e.split_pct * 100)}% · fee ${e.fee_mensual_usd}`]));
 
-  agregar("Desde cuándo estás en esa categoría", "date", vigente.desde, (v) => {
-    editarAjustes(estado, {
-      categorias: [...(a.categorias || []).filter((c) => c.hasta !== null), { ...vigente, desde: v }],
-    });
-  }, null, "los negocios anteriores se siguen calculando con la vieja");
+  // La fecha NO se carga a mano: la lleva la app sola. Cuando cambiás de categoría se
+  // cierra la anterior en el día de hoy y se abre la nueva, así los negocios de antes
+  // se siguen calculando con la tajada que tenías entonces. Pedirla a mano no aportaba
+  // nada (siempre estuvo en RAP) y era la puerta por la que se coló el año 0001.
 
   const comision = (familia, puntas, etiqueta) =>
     agregar(etiqueta, "number", (defaults[familia] || {})[puntas], (v) => {
@@ -278,10 +334,16 @@ function tuNegocio(estado) {
   resumen.style.padding = "12px 14px";
   resumen.style.margin = "0";
   resumen.style.background = "var(--lienzo)";
+  const anteriores = (a.categorias || []).filter((c) => c.hasta !== null);
   resumen.textContent =
     `Hoy: ${vigente.categoria || "sin categoría"}, te quedás con ` +
     `${pct(vigente.split_pct || 0)} de lo que factura RE/MAX y pagás ` +
-    `${plata(vigente.fee_mensual_usd || 0)} por mes de fee.`;
+    `${plata(vigente.fee_mensual_usd || 0)} por mes de fee. `
+    + (anteriores.length
+      ? `Antes pasaste por ${anteriores.map((c) => c.categoria).join(", ")}; `
+        + `esos negocios se siguen calculando con la tajada de entonces.`
+      : `Si algún día cambiás, los negocios de antes se siguen calculando con el
+         ${pct(vigente.split_pct || 0)} de ahora.`.replace(/\s+/g, " "));
   contenedor.append(resumen);
 
   return seccion;

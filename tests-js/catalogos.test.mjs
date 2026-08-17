@@ -1,0 +1,93 @@
+/* Los desplegables del negocio y la regla de comision que sale de ellos. */
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import {
+  AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, ORIGEN_A_REGIMEN,
+  regimenDe, marcaActual, admiteMarcas, MARCAS, TIPOS_NEGOCIO, YO,
+} from "../lib/catalogos.js";
+
+test("los agentes son la lista corta que se acordo", () => {
+  assert.deepEqual(AGENTES, [
+    "Juan Andrés Otero", "Martin Sedes", "Team", "Ofi Único", "Otra Oficina",
+  ]);
+});
+
+test("solo los que son un grupo o una oficina llevan el nombre de la persona", () => {
+  assert.equal(AGENTES_QUE_LLEVAN_NOMBRE.has("Team"), true);
+  assert.equal(AGENTES_QUE_LLEVAN_NOMBRE.has("Otra Oficina"), true);
+  assert.equal(AGENTES_QUE_LLEVAN_NOMBRE.has(YO), false, "Juan ya es alguien");
+  assert.equal(AGENTES_QUE_LLEVAN_NOMBRE.has("Martin Sedes"), false);
+});
+
+test("los diez origenes estan completos", () => {
+  assert.equal(ORIGENES.length, 10);
+  for (const o of ["B.d.r.", "Ref. Team", "Ref. Martin", "Ref. Único", "Ref. Remax",
+                   "Cliente antiguo", "Dueño Vende", "Redes sociales Orgánico",
+                   "Redes sociales Campaña", "On mind"]) {
+    assert.ok(ORIGENES.includes(o), `falta el origen ${o}`);
+  }
+});
+
+/* La regla de plata sale del origen mas dos marcas sueltas, no de una sola casilla. */
+test("un referido de Martin activa su regla", () => {
+  assert.equal(regimenDe({ origen_captacion: "Ref. Martin" }), "ref_martin");
+});
+
+test("los referidos de Team, Unico y Remax son de otro colega", () => {
+  for (const o of ["Ref. Team", "Ref. Único", "Ref. Remax"]) {
+    assert.equal(regimenDe({ origen_captacion: o }), "ref_otro_colega", o);
+  }
+});
+
+test("un origen que no es referido no se lleva ninguna tajada", () => {
+  for (const o of ["B.d.r.", "Dueño Vende", "On mind", "Cliente antiguo"]) {
+    assert.equal(regimenDe({ origen_captacion: o }), "captacion_mia", o);
+  }
+});
+
+/* El caso que pidio: llega por Dueño Vende y despues igual se refiere. */
+test("un negocio que llega por Dueño Vende y despues se refiere paga como referido", () => {
+  assert.equal(regimenDe({ origen_captacion: "Dueño Vende", yo_referi: true }), "yo_referi");
+});
+
+test("la suplencia le gana a todo lo demas", () => {
+  assert.equal(regimenDe({ origen_captacion: "Ref. Martin", es_suplencia: true }), "suplencia");
+});
+
+test("las dos marcas son excluyentes: se elige una sola de tres", () => {
+  assert.equal(MARCAS.length, 3);
+  assert.equal(marcaActual({}), "");
+  assert.equal(marcaActual({ es_suplencia: true }), "es_suplencia");
+  assert.equal(marcaActual({ yo_referi: true }), "yo_referi");
+});
+
+/* Una propiedad que esta en la cartera la esta trabajando el: no puede ser ni una
+   suplencia ni algo que le paso a otro. */
+test("las marcas no se ofrecen en una propiedad de tu cartera", () => {
+  assert.equal(admiteMarcas({ entity_id_cartera: "aaa" }), false);
+  assert.equal(admiteMarcas({ entity_id_cartera: null }), true);
+  assert.equal(admiteMarcas({}), true);
+});
+
+test("suplencia salio de los tipos de negocio: ya queda cubierta por la marca", () => {
+  const claves = TIPOS_NEGOCIO.map(([v]) => v);
+  assert.deepEqual(claves, ["venta", "alquiler", "renovacion_alquiler"]);
+  assert.ok(!claves.includes("suplencia"));
+});
+
+/* Lo mas importante: la derivacion NO puede cambiarle la plata a ningun negocio ya
+   cargado. Se prueba contra los 85 de verdad, no contra un ejemplo inventado. */
+test("sobre los 85 negocios reales, el regimen derivado da exactamente el guardado", () => {
+  const negocios = JSON.parse(
+    readFileSync(new URL("../datos/negocios.json", import.meta.url), "utf8")
+  );
+  const distintos = negocios.filter((n) => regimenDe(n) !== n.regimen_comision);
+  assert.deepEqual(distintos.map((n) => n.id), [], "estos cambiarian de plata");
+  assert.ok(negocios.length >= 85);
+});
+
+test("el vocabulario viejo del Excel sigue mapeando igual", () => {
+  assert.equal(ORIGEN_A_REGIMEN["Referido - Martín"], "ref_martin");
+  assert.equal(ORIGEN_A_REGIMEN["Referido - RE/MAX"], "ref_otro_colega");
+});

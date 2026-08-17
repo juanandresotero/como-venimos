@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   plata, plataUSD, compacto, pct, fechaCorta, diasEntre, mes, escapar, fechaRazonable,
+  numeroDesde,
 } from "../lib/formato.js";
 
 test("plata: separador de miles con punto, como en Uruguay", () => {
@@ -77,4 +78,29 @@ test("una fecha normal se acepta, y vacio tambien", () => {
   assert.equal(fechaRazonable("2100-12-31"), true);
   assert.equal(fechaRazonable(""), true, "vacio quiere decir 'todavia no se'");
   assert.equal(fechaRazonable(null), true);
+});
+
+/* Los montos se escriben con los puntos de miles y hay que poder leerlos de vuelta. */
+test("un monto con puntos de miles se lee bien", () => {
+  assert.equal(numeroDesde("100.000"), 100000);
+  assert.equal(numeroDesde("1.250.000"), 1250000);
+  assert.equal(numeroDesde("100000"), 100000, "sin puntos tambien");
+});
+
+test("la coma es el decimal, como en Uruguay", () => {
+  assert.equal(numeroDesde("1.234,50"), 1234.5);
+  assert.equal(numeroDesde("0,5"), 0.5);
+});
+
+test("vacio y basura no se toman por cero", () => {
+  assert.equal(numeroDesde(""), null);
+  assert.equal(numeroDesde("   "), null);
+  assert.equal(numeroDesde(null), null);
+  assert.equal(numeroDesde("no es un numero"), null);
+});
+
+test("lo que se escribe y se vuelve a mostrar da lo mismo", () => {
+  for (const n of [0, 1, 999, 1000, 100000, 1250000]) {
+    assert.equal(numeroDesde(plata(n)), n, `no cierra con ${n}`);
+  }
 });

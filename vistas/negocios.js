@@ -1,6 +1,6 @@
 /* La lista de los 85 negocios, con filtros. Tocar uno abre su ficha. */
 
-import { plata, fechaCorta, escapar } from "../lib/formato.js";
+import { plata, plataUSD, fechaCorta, escapar } from "../lib/formato.js";
 import { crearNegocio } from "../lib/guardado.js";
 import { ATAJOS, GRUPOS_ATAJOS, esBusqueda } from "../lib/motor.js";
 
@@ -40,7 +40,9 @@ export function dibujarNegocios(estado) {
     <section style="margin-bottom:14px">
       <p class="etiqueta">Negocios</p>
       <h1 class="titulo" style="font-size:27px;margin-top:4px">${lista.length} de ${todos.length}</h1>
-      <p class="apunte">${plata(totalFact)} facturados · ${plata(totalGan)} de ganancia</p>
+      <p class="apunte">
+        <strong>${plataUSD(totalGan)}</strong> a tu bolsillo · ${plataUSD(totalFact)} facturados
+      </p>
     </section>
 
     <section class="filtros">
@@ -156,7 +158,10 @@ function fila(n, estado) {
         </span>
       </span>
       <span class="fila-derecha">
-        <span class="cifra cifra-media">${plata(n.facturacion)}</span>
+        <span class="fila-plata">
+          <span class="cifra cifra-media">${plata(n.ganancia)}</span>
+          <span class="fila-sub">${plata(n.facturacion)} fact.</span>
+        </span>
         ${avisos ? `<span class="chip-avisos">${avisos}</span>` : ""}
       </span>
     </button>

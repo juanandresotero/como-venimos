@@ -146,15 +146,33 @@ function descargarReporte(estado, anio) {
   return seccion;
 }
 
+/* Los dos números que el usuario pidió tener siempre a mano: lo que lleva ganado hasta
+   hoy, y lo que va a tener si cierra todo lo que ya está avanzado. Los dos con las dos
+   caras de la plata: lo que factura RE/MAX y lo que le queda a él. */
 function cabecera(anio, c) {
+  const suma = (campo) => c.capa1[campo] + c.avanzado[campo];
   return nodo(html`
     <section class="tarjeta">
       <p class="etiqueta">Cobrado en ${anio}</p>
-      <p class="cifra cifra-heroe" style="margin:6px 0 4px">${plata(c.capa1.facturacion)}</p>
-      <p class="apunte">
-        facturado · <strong>${plataUSD(c.capa1.ganancia)}</strong> a tu bolsillo
+      <p class="cifra cifra-heroe" style="margin:6px 0 2px">${plata(c.capa1.ganancia)}</p>
+      <p class="apunte" style="margin-bottom:16px">
+        <strong>a tu bolsillo</strong> · ${plataUSD(c.capa1.facturacion)} facturados
         · ${c.capa1.negocios} ${c.capa1.negocios === 1 ? "negocio" : "negocios"}
       </p>
+
+      <div class="cierre">
+        <p class="etiqueta">Si cierra todo lo que está en negociación y reservado</p>
+        <p class="cifra cifra-grande" style="margin:6px 0 2px;color:var(--azul)">${plata(suma("ganancia"))}</p>
+        <p class="apunte">
+          a tu bolsillo · <strong>${plataUSD(suma("facturacion"))}</strong> facturados
+        </p>
+        <p class="apunte" style="margin-top:8px">
+          Son ${plata(c.avanzado.ganancia)} más de ganancia
+          (${plata(c.avanzado.facturacion)} de facturación) repartidos en
+          ${c.avanzado.cantidad} ${c.avanzado.cantidad === 1 ? "negocio" : "negocios"}.
+          Acá van al 100%, sin descontar probabilidad: es la pregunta "si cierra todo".
+        </p>
+      </div>
     </section>
   `);
 }

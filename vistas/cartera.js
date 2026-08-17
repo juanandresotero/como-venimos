@@ -92,7 +92,7 @@ function fila(p, estado) {
           ${escapar(p.barrio || "sin barrio")} · ${escapar(p.tipo || "")} ·
           <span class="chip-estado ${CLASE_ESTADO[clave] || ""}">${nombreEstado(clave)}</span>
           ${dias !== null ? ` · ${dias} días` : ""}
-          ${r.cerrados ? ` · <strong>${plata(r.facturacion)}</strong> dados` : ""}
+          ${r.cerrados ? ` · dio <strong>${plata(r.ganancia)}</strong> de ${plata(r.facturacion)}` : ""}
         </span>
       </span>
       <span class="fila-derecha">

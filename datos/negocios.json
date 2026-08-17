@@ -4,7 +4,7 @@
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Villa española",
-  "base": 666.0,
+  "base": 666,
   "categoria_vigente": null,
   "direccion": "Tomas claramount 3679 apto 04",
   "entity_id_cartera": null,
@@ -22,21 +22,23 @@
   "moneda": "USD",
   "notas": "",
   "origen_captacion": "BDR",
-  "pct_comision_total": 2.0,
+  "pct_comision_total": 2,
   "precio_operacion": 333,
   "puntas": 2,
   "recalculado": false,
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Complejo america",
-  "base": 616.0,
+  "base": 616,
   "categoria_vigente": null,
   "direccion": "Complejo america",
   "entity_id_cartera": null,
@@ -54,21 +56,23 @@
   "moneda": "USD",
   "notas": "",
   "origen_captacion": "Referido - Martín",
-  "pct_comision_total": 2.0,
+  "pct_comision_total": 2,
   "precio_operacion": 308,
   "puntas": 2,
   "recalculado": false,
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "La teja",
-  "base": 488.0,
+  "base": 488,
   "categoria_vigente": null,
   "direccion": "Eulogio caballero y ameghino",
   "entity_id_cartera": null,
@@ -86,21 +90,23 @@
   "moneda": "USD",
   "notas": "",
   "origen_captacion": "Referido - Martín",
-  "pct_comision_total": 2.0,
+  "pct_comision_total": 2,
   "precio_operacion": 244,
   "puntas": 2,
   "recalculado": false,
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Solymar norte",
-  "base": 4200.0,
+  "base": 4200,
   "categoria_vigente": null,
   "direccion": "Picaflores",
   "entity_id_cartera": null,
@@ -125,14 +131,16 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.5,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Ciudad vieja",
-  "base": 180.0,
+  "base": 180,
   "categoria_vigente": null,
   "direccion": "Bartolome mitre 1475 -Garaje",
   "entity_id_cartera": null,
@@ -150,21 +158,23 @@
   "moneda": "USD",
   "notas": "",
   "origen_captacion": "BDR",
-  "pct_comision_total": 2.0,
+  "pct_comision_total": 2,
   "precio_operacion": 90,
   "puntas": 2,
   "recalculado": false,
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Buceo",
-  "base": 7200.0,
+  "base": 7200,
   "categoria_vigente": null,
   "direccion": "Dionisio lopes y av. Italia",
   "entity_id_cartera": null,
@@ -189,14 +199,16 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.5,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Villa española",
-  "base": 616.0,
+  "base": 616,
   "categoria_vigente": null,
   "direccion": "Tomas claramount 3679 apto 02",
   "entity_id_cartera": null,
@@ -214,21 +226,23 @@
   "moneda": "USD",
   "notas": "",
   "origen_captacion": "Cliente antiguo",
-  "pct_comision_total": 2.0,
+  "pct_comision_total": 2,
   "precio_operacion": 308,
   "puntas": 2,
   "recalculado": false,
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Otro REMAX",
   "avisos": [],
   "barrio": "Santa ana",
-  "base": 1020.0,
+  "base": 1020,
   "categoria_vigente": null,
   "direccion": "calle 19 M.2349 S.1",
   "entity_id_cartera": null,
@@ -253,14 +267,16 @@
   "regimen_comision": "yo_referi",
   "split_aplicado": 0.5,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": true
  },
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Peñarol",
-  "base": 612.0,
+  "base": 612,
   "categoria_vigente": null,
   "direccion": "pastor 1223",
   "entity_id_cartera": null,
@@ -285,14 +301,16 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Barros blancos",
-  "base": 3330.0,
+  "base": 3330,
   "categoria_vigente": null,
   "direccion": "Felix martinez y picardias",
   "entity_id_cartera": null,
@@ -317,14 +335,16 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.5,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Mercado modelo",
-  "base": 1104.0,
+  "base": 1104,
   "categoria_vigente": null,
   "direccion": "altamirano 3214",
   "entity_id_cartera": null,
@@ -349,7 +369,9 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -381,7 +403,9 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -413,14 +437,16 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Cerro",
-  "base": 735.0,
+  "base": 735,
   "categoria_vigente": null,
   "direccion": "grecia 3491",
   "entity_id_cartera": null,
@@ -445,7 +471,9 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro",
@@ -477,14 +505,16 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Mercado modelo",
-  "base": 549.0,
+  "base": 549,
   "categoria_vigente": null,
   "direccion": "arrieta",
   "entity_id_cartera": null,
@@ -509,14 +539,16 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Centro",
-  "base": 1332.0,
+  "base": 1332,
   "categoria_vigente": null,
   "direccion": "Mercede 1422",
   "entity_id_cartera": null,
@@ -534,21 +566,23 @@
   "moneda": "USD",
   "notas": "",
   "origen_captacion": "Cliente antiguo",
-  "pct_comision_total": 2.0,
+  "pct_comision_total": 2,
   "precio_operacion": 666,
   "puntas": 2,
   "recalculado": false,
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Santa lucia",
-  "base": 12450.0,
+  "base": 12450,
   "categoria_vigente": null,
   "direccion": "la marina",
   "entity_id_cartera": null,
@@ -573,14 +607,16 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.8,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Wendy Sánchez",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Punta de rieles",
-  "base": 1320.0,
+  "base": 1320,
   "categoria_vigente": null,
   "direccion": "Rut. 8 y leonardo da vinci",
   "entity_id_cartera": null,
@@ -605,7 +641,9 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.5,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -637,7 +675,9 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -669,7 +709,9 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -701,14 +743,16 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Malvin norte",
-  "base": 4020.0,
+  "base": 4020,
   "categoria_vigente": null,
   "direccion": "Mallorca 4411 g8 -402",
   "entity_id_cartera": null,
@@ -733,7 +777,9 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.5,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -765,14 +811,16 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "La teja",
-  "base": 540.0,
+  "base": 540,
   "categoria_vigente": null,
   "direccion": "adolfo valiant 864",
   "entity_id_cartera": null,
@@ -790,21 +838,23 @@
   "moneda": "USD",
   "notas": "",
   "origen_captacion": "Referido - Martín",
-  "pct_comision_total": 2.0,
+  "pct_comision_total": 2,
   "precio_operacion": 270,
   "puntas": 1,
   "recalculado": false,
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.5,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Ituzaingo",
-  "base": 3600.0,
+  "base": 3600,
   "categoria_vigente": null,
   "direccion": "ricardo cossio 3290",
   "entity_id_cartera": null,
@@ -829,14 +879,16 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Unión",
-  "base": 6900.0,
+  "base": 6900,
   "categoria_vigente": null,
   "direccion": "joanico 3680",
   "entity_id_cartera": null,
@@ -861,14 +913,16 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro",
   "agente_vende": "Otro REMAX",
   "avisos": [],
   "barrio": "Punta del este",
-  "base": 1200.0,
+  "base": 1200,
   "categoria_vigente": null,
   "direccion": "Ref.",
   "entity_id_cartera": null,
@@ -893,14 +947,16 @@
   "regimen_comision": "yo_referi",
   "split_aplicado": 0.5,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": true
  },
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Otro REMAX",
   "avisos": [],
   "barrio": "Punta del este",
-  "base": 1080.0,
+  "base": 1080,
   "categoria_vigente": null,
   "direccion": "Ref.",
   "entity_id_cartera": null,
@@ -925,7 +981,9 @@
   "regimen_comision": "yo_referi",
   "split_aplicado": 0.5,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": true
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -957,14 +1015,16 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Malvin norte",
-  "base": 4800.0,
+  "base": 4800,
   "categoria_vigente": null,
   "direccion": "Ramallo 4411",
   "entity_id_cartera": null,
@@ -989,7 +1049,9 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.35,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1021,7 +1083,9 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -1053,14 +1117,16 @@
   "regimen_comision": "yo_referi",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": true
  },
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Cerrito",
-  "base": 1410.0,
+  "base": 1410,
   "categoria_vigente": null,
   "direccion": "lancaster 4542 bis",
   "entity_id_cartera": null,
@@ -1085,14 +1151,16 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Otro",
   "avisos": [],
   "barrio": "La blanqueada",
-  "base": 1800.0,
+  "base": 1800,
   "categoria_vigente": null,
   "direccion": "Anzani 2114",
   "entity_id_cartera": null,
@@ -1117,7 +1185,9 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.35,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1154,14 +1224,16 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "La teja",
-  "base": 4200.0,
+  "base": 4200,
   "categoria_vigente": null,
   "direccion": "inclusa 509",
   "entity_id_cartera": null,
@@ -1186,7 +1258,9 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -1198,7 +1272,7 @@
    }
   ],
   "barrio": "Brazo oriental",
-  "base": 3270.0,
+  "base": 3270,
   "categoria_vigente": null,
   "direccion": "Felipe contucci 3980 apot 202",
   "entity_id_cartera": null,
@@ -1223,14 +1297,16 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Perez castellanos",
-  "base": 1500.0,
+  "base": 1500,
   "categoria_vigente": null,
   "direccion": "Elcano 3548",
   "entity_id_cartera": null,
@@ -1255,14 +1331,16 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Colon",
-  "base": 2400.0,
+  "base": 2400,
   "categoria_vigente": null,
   "direccion": "complejo america",
   "entity_id_cartera": null,
@@ -1287,7 +1365,9 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1319,7 +1399,9 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1351,14 +1433,16 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Centro",
-  "base": 1950.0,
+  "base": 1950,
   "categoria_vigente": null,
   "direccion": "Paraguay 1547 apto 12",
   "entity_id_cartera": null,
@@ -1383,7 +1467,9 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro",
@@ -1415,7 +1501,9 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1447,7 +1535,9 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1479,7 +1569,9 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1491,7 +1583,7 @@
    }
   ],
   "barrio": "Las acacias",
-  "base": 2680.0,
+  "base": 2680,
   "categoria_vigente": null,
   "direccion": "Salustio 3948",
   "entity_id_cartera": null,
@@ -1516,7 +1608,9 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1548,27 +1642,29 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Malvin norte",
-  "base": 1890.0,
+  "base": 1890,
   "categoria_vigente": null,
   "direccion": "Flammarion 5042 apto 109",
   "entity_id_cartera": null,
   "estado": "cerrado",
   "excel_facturado": 1890,
-  "excel_importe": 1134.0,
+  "excel_importe": 1134,
   "facturacion": 1890,
   "fecha_boleto": "2024-08-14",
   "fecha_fin": "2024-12-02",
   "fecha_fin_estimada": false,
   "fecha_inicio": "2024-08-02",
   "ficha_completa": false,
-  "ganancia": 1134.0,
+  "ganancia": 1134,
   "id": "excel-50",
   "moneda": "USD",
   "notas": "",
@@ -1580,7 +1676,9 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.6,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Wendy Sánchez",
@@ -1592,7 +1690,7 @@
    }
   ],
   "barrio": "Palermo",
-  "base": 2310000.0,
+  "base": 2310000,
   "categoria_vigente": null,
   "direccion": "durazno 1215",
   "entity_id_cartera": null,
@@ -1617,7 +1715,9 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1649,14 +1749,16 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Las acacias",
-  "base": 1170.0,
+  "base": 1170,
   "categoria_vigente": null,
   "direccion": "Joquin Artigas 4422",
   "entity_id_cartera": null,
@@ -1681,7 +1783,9 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.34,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -1713,15 +1817,17 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Punta de rieles",
@@ -1750,15 +1856,17 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Punta carretas",
@@ -1787,23 +1895,25 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_boleto",
+    "detalle": "Falta la fecha de la reserva o boleto"
    },
    {
-    "detalle": "Falta la fecha del boleto",
-    "tipo": "falta_fecha_boleto"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Paso de la arena",
-  "base": 3600.0,
+  "base": 3600,
   "categoria_vigente": null,
   "direccion": "luis b.b.",
   "entity_id_cartera": null,
@@ -1828,23 +1938,25 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_boleto",
+    "detalle": "Falta la fecha de la reserva o boleto"
    },
    {
-    "detalle": "Falta la fecha del boleto",
-    "tipo": "falta_fecha_boleto"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Punta de rieles",
-  "base": 2820.0,
+  "base": 2820,
   "categoria_vigente": null,
   "direccion": "cam. maldonad",
   "entity_id_cartera": null,
@@ -1869,23 +1981,25 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_boleto",
+    "detalle": "Falta la fecha de la reserva o boleto"
    },
    {
-    "detalle": "Falta la fecha del boleto",
-    "tipo": "falta_fecha_boleto"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Cerro",
-  "base": 5940.0,
+  "base": 5940,
   "categoria_vigente": null,
   "direccion": "polonia",
   "entity_id_cartera": null,
@@ -1910,40 +2024,42 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
+    "tipo": "firma_futura",
+    "detalle": "La firma dice 2026-12-05, que todavía no llegó, así que no está cobrado."
+   },
+   {
+    "tipo": "falta_fecha_boleto",
+    "detalle": "Falta la fecha de la reserva o boleto"
+   },
+   {
     "detalle": "Puede ser la propiedad Juana de Ibarbourou 200 (en_negociacion), por misma calle y precio parecido. Confirmalo.",
     "tipo": "posible_cruce"
-   },
-   {
-    "detalle": "La firma dice 2026-12-05, que todavia no llego, asi que no esta cobrado. Pone la fecha real cuando cobres.",
-    "tipo": "firma_futura"
-   },
-   {
-    "detalle": "Falta la fecha del boleto",
-    "tipo": "falta_fecha_boleto"
    }
   ],
   "barrio": "Pando",
-  "base": 4620.0,
+  "base": 4620,
   "categoria_vigente": "RAP",
   "direccion": "juana de ibarburu",
   "entity_id_cartera": null,
   "estado": "en_curso",
   "excel_facturado": 4620,
   "excel_importe": 2079,
-  "facturacion": 4620.0,
+  "facturacion": 4620,
   "fecha_boleto": null,
   "fecha_fin": "2026-12-05",
   "fecha_fin_estimada": true,
   "fecha_inicio": "2026-08-14",
   "ficha_completa": false,
-  "ganancia": 2079.0,
+  "ganancia": 2079,
   "id": "excel-60",
   "moneda": "USD",
   "notas": "",
@@ -1955,23 +2071,25 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_boleto",
+    "detalle": "Falta la fecha de la reserva o boleto"
    },
    {
-    "detalle": "Falta la fecha del boleto",
-    "tipo": "falta_fecha_boleto"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Centro",
-  "base": 4020.0,
+  "base": 4020,
   "categoria_vigente": null,
   "direccion": "santiago de chile",
   "entity_id_cartera": null,
@@ -1996,31 +2114,29 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.34,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Martin Sedes",
   "agente_vende": "Martin Sedes",
   "avisos": [
    {
-    "detalle": "El origen 'Otros' no esta en la tabla; hay que decidir como computa",
-    "tipo": "origen_sin_clasificar"
+    "tipo": "falta_fecha_boleto",
+    "detalle": "Falta la fecha de la reserva o boleto"
+   },
+   {
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    },
    {
     "detalle": "El % de comision dice 25.00%, imposible para un venta. Suele ser una celda con formato de porcentaje mal puesto.",
     "tipo": "comision_absurda"
-   },
-   {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
-   },
-   {
-    "detalle": "Falta la fecha del boleto",
-    "tipo": "falta_fecha_boleto"
    }
   ],
   "barrio": "Aires puros",
-  "base": 1200.0,
+  "base": 1200,
   "categoria_vigente": null,
   "direccion": "No se",
   "entity_id_cartera": null,
@@ -2045,7 +2161,9 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -2057,20 +2175,20 @@
    }
   ],
   "barrio": "Aires puros",
-  "base": 3000.0,
+  "base": 3000,
   "categoria_vigente": "RAP",
   "direccion": "Ipiranga y spikerman",
   "entity_id_cartera": null,
   "estado": "cerrado",
   "excel_facturado": 3000,
   "excel_importe": 1050,
-  "facturacion": 1500.0,
+  "facturacion": 1500,
   "fecha_boleto": "2025-08-15",
   "fecha_fin": "2026-03-15",
   "fecha_fin_estimada": false,
   "fecha_inicio": "2024-12-15",
   "ficha_completa": false,
-  "ganancia": 1050.0,
+  "ganancia": 1050,
   "id": "excel-63",
   "moneda": "USD",
   "notas": "",
@@ -2082,15 +2200,17 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Sayago",
@@ -2119,15 +2239,17 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.34,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Villa española",
@@ -2156,34 +2278,28 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Figura firmado el 2026-11-05, pero Flammarión 5000 sigue 'en_negociacion' en RE/MAX. No esta cobrado: pone la fecha real cuando cobres.",
-    "tipo": "firma_inventada"
-   },
-   {
-    "detalle": "La firma dice 2026-11-05, que todavia no llego, asi que no esta cobrado. Pone la fecha real cuando cobres.",
-    "tipo": "firma_futura"
-   },
-   {
-    "detalle": "Falta la fecha del boleto",
-    "tipo": "falta_fecha_boleto"
+    "tipo": "firma_futura",
+    "detalle": "La firma dice 2026-11-05, que todavía no llegó, así que no está cobrado."
    }
   ],
   "barrio": "Malvin norte",
-  "base": 3510.0,
+  "base": 3510,
   "categoria_vigente": "RAP",
   "direccion": "flamarrion 5046",
   "entity_id_cartera": "45e27b03-b19a-4654-a163-4d0bf3307fac",
   "estado": "en_curso",
   "excel_facturado": 3510,
   "excel_importe": 1580,
-  "facturacion": 3510.0,
+  "facturacion": 3510,
   "fecha_boleto": null,
   "fecha_fin": "2026-11-05",
   "fecha_fin_estimada": true,
@@ -2201,15 +2317,17 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Cerrito",
@@ -2238,15 +2356,17 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.34,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Centro",
@@ -2275,15 +2395,17 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "La teja",
@@ -2312,14 +2434,16 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.34,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Barrio sur",
-  "base": 7875.0,
+  "base": 7875,
   "categoria_vigente": null,
   "direccion": "Canelones 1066",
   "entity_id_cartera": null,
@@ -2344,15 +2468,17 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.34,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Pocitos",
@@ -2381,7 +2507,9 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2413,21 +2541,23 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "El pinar",
-  "base": 9270.0,
+  "base": 9270,
   "categoria_vigente": "RAP",
   "direccion": "b.v. argitas",
   "entity_id_cartera": null,
   "estado": "cerrado",
   "excel_facturado": 9270,
   "excel_importe": 4172,
-  "facturacion": 9270.0,
+  "facturacion": 9270,
   "fecha_boleto": "2025-11-08",
   "fecha_fin": "2026-02-05",
   "fecha_fin_estimada": false,
@@ -2445,14 +2575,16 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Sayago",
-  "base": 1995.0,
+  "base": 1995,
   "categoria_vigente": null,
   "direccion": "quicuyo 933",
   "entity_id_cartera": null,
@@ -2477,7 +2609,9 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2509,7 +2643,9 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2541,7 +2677,9 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2573,7 +2711,9 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.34,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2605,7 +2745,9 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.34,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2628,7 +2770,7 @@
   "estado": "cerrado",
   "excel_facturado": 692,
   "excel_importe": 242,
-  "facturacion": 346.0,
+  "facturacion": 346,
   "fecha_boleto": "2025-12-21",
   "fecha_fin": "2026-01-12",
   "fecha_fin_estimada": false,
@@ -2646,7 +2788,9 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2678,7 +2822,9 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.34,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2710,30 +2856,28 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.34,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Figura firmado el 2026-04-20, pero San Fructuoso 1200 sigue 'reservada' en RE/MAX. No esta cobrado: pone la fecha real cuando cobres.",
-    "tipo": "firma_inventada"
-   },
-   {
-    "detalle": "La firma (2026-04-20) es anterior al boleto (2026-05-05)",
-    "tipo": "fechas_al_reves"
+    "tipo": "fechas_al_reves",
+    "detalle": "La firma (2026-04-20) es anterior al boleto (2026-05-05)"
    }
   ],
   "barrio": "Zapican",
-  "base": 5394.0,
+  "base": 5394,
   "categoria_vigente": "RAP",
   "direccion": "San fructuoso 1254",
   "entity_id_cartera": "5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6",
   "estado": "en_curso",
   "excel_facturado": 5394,
   "excel_importe": 2427,
-  "facturacion": 5394.0,
+  "facturacion": 5394,
   "fecha_boleto": "2026-05-05",
   "fecha_fin": "2026-04-20",
   "fecha_fin_estimada": true,
@@ -2751,15 +2895,17 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    }
   ],
   "barrio": "Cerrito",
@@ -2788,19 +2934,25 @@
   "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.34,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": null,
   "agente_vende": null,
   "avisos": [
    {
-    "detalle": "No dice quien vendio ni quien compro",
-    "tipo": "faltan_agentes"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    },
    {
-    "detalle": "El origen None no esta en la tabla; hay que decidir como computa",
-    "tipo": "origen_sin_clasificar"
+    "tipo": "faltan_agentes",
+    "detalle": "No dice quién tenía el aviso ni quién trajo al comprador: sin eso no se sabe cuántas puntas cobraste"
+   },
+   {
+    "tipo": "origen_sin_clasificar",
+    "detalle": "Falta de dónde salió: sin eso no se sabe qué canal te está dando plata"
    },
    {
     "detalle": "El Excel dice facturado 658.00 y ganancia 230.00; con las reglas de 2026 da 658.00 y 296.10. Decidi cual vale.",
@@ -2809,10 +2961,6 @@
    {
     "detalle": "Puede ser la propiedad Estanislao Vega 3900 (en_negociacion), por misma calle y misma altura. Confirmalo.",
     "tipo": "posible_cruce"
-   },
-   {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
    }
   ],
   "barrio": "Cerrito",
@@ -2841,40 +2989,42 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.35,
   "tipo_negocio": "alquiler",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
+    "tipo": "falta_fecha_boleto",
+    "detalle": "Falta la fecha de la reserva o boleto"
+   },
+   {
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
+   },
+   {
     "detalle": "El Excel dice facturado 6,480.00 y ganancia 2,268.00; con las reglas de 2026 da 3,240.00 y 2,268.00. Decidi cual vale.",
     "tipo": "recalculo_distinto"
-   },
-   {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
-   },
-   {
-    "detalle": "Falta la fecha del boleto",
-    "tipo": "falta_fecha_boleto"
    }
   ],
   "barrio": "Ituzaingo",
-  "base": 6480.0,
+  "base": 6480,
   "categoria_vigente": "RAP",
   "direccion": "osvaldo martinez",
   "entity_id_cartera": null,
   "estado": "cerrado",
   "excel_facturado": 6480,
   "excel_importe": 2268,
-  "facturacion": 3240.0,
+  "facturacion": 3240,
   "fecha_boleto": null,
   "fecha_fin": "2026-04-20",
   "fecha_fin_estimada": false,
   "fecha_inicio": null,
   "ficha_completa": false,
-  "ganancia": 2268.0,
+  "ganancia": 2268,
   "id": "excel-85",
   "moneda": "USD",
   "notas": "",
@@ -2886,52 +3036,46 @@
   "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  },
  {
   "agente_compra": null,
   "agente_vende": null,
   "avisos": [
    {
-    "detalle": "No dice quien vendio ni quien compro",
-    "tipo": "faltan_agentes"
+    "tipo": "falta_fecha_inicio",
+    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    },
    {
-    "detalle": "El origen None no esta en la tabla; hay que decidir como computa",
-    "tipo": "origen_sin_clasificar"
+    "tipo": "faltan_agentes",
+    "detalle": "No dice quién tenía el aviso ni quién trajo al comprador: sin eso no se sabe cuántas puntas cobraste"
+   },
+   {
+    "tipo": "origen_sin_clasificar",
+    "detalle": "Falta de dónde salió: sin eso no se sabe qué canal te está dando plata"
    },
    {
     "detalle": "El Excel dice facturado 2,400.00 y ganancia 840.00; con las reglas de 2026 da 2,400.00 y 1,080.00. Decidi cual vale.",
     "tipo": "recalculo_distinto"
-   },
-   {
-    "detalle": "Figura firmado el 2026-04-20, pero Estanislao Vega 3900 sigue 'en_negociacion' en RE/MAX. No esta cobrado: pone la fecha real cuando cobres.",
-    "tipo": "firma_inventada"
-   },
-   {
-    "detalle": "Sin fecha de inicio no se puede medir el plazo",
-    "tipo": "falta_fecha_inicio"
-   },
-   {
-    "detalle": "Falta la fecha del boleto",
-    "tipo": "falta_fecha_boleto"
    }
   ],
   "barrio": "Cerrito",
-  "base": 2400.0,
+  "base": 2400,
   "categoria_vigente": "RAP",
   "direccion": "estanislao vega 3959",
   "entity_id_cartera": "d8d7855f-b0bb-4122-bc7e-74c987f50396",
   "estado": "en_curso",
   "excel_facturado": 2400,
   "excel_importe": 840,
-  "facturacion": 2400.0,
+  "facturacion": 2400,
   "fecha_boleto": null,
   "fecha_fin": "2026-04-20",
   "fecha_fin_estimada": true,
   "fecha_inicio": null,
   "ficha_completa": false,
-  "ganancia": 1080.0,
+  "ganancia": 1080,
   "id": "excel-86",
   "moneda": "USD",
   "notas": "",
@@ -2943,6 +3087,8 @@
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.35,
   "tipo_negocio": "venta",
-  "tipo_propiedad": null
+  "tipo_propiedad": null,
+  "es_suplencia": false,
+  "yo_referi": false
  }
 ]
