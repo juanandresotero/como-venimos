@@ -1,0 +1,63 @@
+"""Corre una vez por dia. Baja la cartera de RE/MAX, la compara con la de ayer,
+guarda los cambios y deja anotado si la corrida salio bien.
+
+Si la API falla, NO se toca la cartera: se anota el error y listo. Lo peor que podria
+pasar es que un corte de red se interprete como que se vendieron todas las propiedades.
+
+Uso:  python -m robot.main
+      DRY_RUN=1 python -m robot.main     (muestra lo que haria, sin escribir)
+      FECHA_HOY=2026-08-18 python -m robot.main   (para probar)
+"""
+from __future__ import annotations
+
+import datetime
+import os
+import sys
+
+from robot import almacen, api, modelo, procesar
+
+
+def main() -> int:
+    seco = os.environ.get("DRY_RUN") == "1"
+    hoy = os.environ.get("FECHA_HOY") or datetime.date.today().isoformat()
+
+    try:
+        listings = api.traer_listings()
+    except RuntimeError as error:
+        almacen.escribir_json("estado_robot.json", {
+            "ultima_corrida": hoy,
+            "ok": False,
+            "error": str(error),
+            "propiedades": None,
+            "novedades": None,
+        })
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 1
+
+    propiedades = [modelo.normalizar(x) for x in listings]
+    cartera_previa = almacen.leer_json("cartera.json", {})
+    eventos_previos = almacen.leer_json("eventos.json", [])
+    cartera, eventos = procesar.procesar(cartera_previa, propiedades, hoy)
+
+    print(f"{hoy}: {len(propiedades)} propiedades, {len(eventos)} novedades")
+    for evento in eventos:
+        print(f"  - {evento['tipo']}: {evento['titulo']} ({evento['direccion']})")
+
+    if seco:
+        print("DRY_RUN: no se escribio nada")
+        return 0
+
+    almacen.escribir_json("cartera.json", cartera)
+    almacen.escribir_json("eventos.json", eventos_previos + eventos)
+    almacen.escribir_json("estado_robot.json", {
+        "ultima_corrida": hoy,
+        "ok": True,
+        "error": None,
+        "propiedades": len(propiedades),
+        "novedades": len(eventos),
+    })
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
