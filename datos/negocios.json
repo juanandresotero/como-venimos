@@ -1232,7 +1232,12 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "detalle": "La celda dice 770,048 pero la cuenta da 770.048: se perdio la coma decimal. Se tomo 770.048. Conviene arreglarlo en el Excel.",
+    "tipo": "separador_decimal"
+   }
+  ],
   "barrio": "Malvin norte",
   "base": 770.048,
   "categoria_vigente": null,
@@ -1303,7 +1308,12 @@
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "detalle": "Precio x % da 3,270.00 pero el Excel dice 2,772.96. Puede ser un descuento real o un error de tipeo.",
+    "tipo": "aritmetica_no_cierra"
+   }
+  ],
   "barrio": "Brazo oriental",
   "base": 3270,
   "categoria_vigente": null,
@@ -1618,7 +1628,12 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "detalle": "Precio x % da 2,680.00 pero el Excel dice 3,010.00. Puede ser un descuento real o un error de tipeo.",
+    "tipo": "aritmetica_no_cierra"
+   }
+  ],
   "barrio": "Las acacias",
   "base": 2680,
   "categoria_vigente": null,
@@ -1728,9 +1743,14 @@
  {
   "agente_compra": "Wendy Sánchez",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "detalle": "El % de comision dice 2,625.00%, imposible para un venta. Suele ser una celda con formato de porcentaje mal puesto.",
+    "tipo": "comision_absurda"
+   }
+  ],
   "barrio": "Palermo",
-  "base": 2310,
+  "base": 2310000,
   "categoria_vigente": null,
   "direccion": "durazno 1215",
   "entity_id_cartera": null,
@@ -1748,7 +1768,7 @@
   "moneda": "USD",
   "notas": "",
   "origen_captacion": "Redes pagas",
-  "pct_comision_total": 0.02625,
+  "pct_comision_total": 26.25,
   "precio_operacion": 88000,
   "puntas": 1,
   "recalculado": false,
@@ -2181,6 +2201,10 @@
    {
     "tipo": "falta_fecha_inicio",
     "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
+   },
+   {
+    "detalle": "El % de comision dice 25.00%, imposible para un venta. Suele ser una celda con formato de porcentaje mal puesto.",
+    "tipo": "comision_absurda"
    }
   ],
   "barrio": "Aires puros",
@@ -2217,7 +2241,12 @@
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "detalle": "El Excel dice facturado 3,000.00 y ganancia 1,050.00; con las reglas de 2026 da 1,500.00 y 1,050.00. Decidi cual vale.",
+    "tipo": "recalculo_distinto"
+   }
+  ],
   "barrio": "Aires puros",
   "base": 3000,
   "categoria_vigente": "RAP",
@@ -2438,7 +2467,7 @@
   "precio_operacion": 400,
   "puntas": 2,
   "recalculado": false,
-  "regimen_comision": "captacion_mia",
+  "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.45,
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
@@ -2658,7 +2687,7 @@
   "precio_operacion": 66500,
   "puntas": 2,
   "recalculado": false,
-  "regimen_comision": "captacion_mia",
+  "regimen_comision": "ref_otro_colega",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
@@ -2811,8 +2840,8 @@
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "tipo": "posible_cruce",
-    "detalle": "Puede ser \"Estanislao Vega 3900\", que está en tu cartera (en negociacion). Si es la misma, engancharlas."
+    "detalle": "El Excel dice facturado 692.00 y ganancia 242.00; con las reglas de 2026 da 346.00 y 242.20. Decidi cual vale.",
+    "tipo": "recalculo_distinto"
    }
   ],
   "barrio": "Cerrito",
@@ -2828,7 +2857,7 @@
   "fecha_fin": "2026-01-12",
   "fecha_fin_estimada": false,
   "fecha_inicio": "2025-11-19",
-  "ficha_completa": false,
+  "ficha_completa": true,
   "ganancia": 242.2,
   "id": "excel-79",
   "moneda": "USD",
@@ -2844,7 +2873,11 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "referidor": "Martin Sedes",
+  "referidor_nombre": null,
+  "sin_propiedad_en_cartera": true,
+  "ficha_completa_momento": null
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -3011,6 +3044,10 @@
    {
     "tipo": "origen_sin_clasificar",
     "detalle": "Falta de dónde salió: sin eso no se sabe qué canal te está dando plata"
+   },
+   {
+    "detalle": "El Excel dice facturado 658.00 y ganancia 230.00; con las reglas de 2026 da 658.00 y 296.10. Decidi cual vale.",
+    "tipo": "recalculo_distinto"
    }
   ],
   "barrio": "Cerrito",
@@ -3055,6 +3092,10 @@
    {
     "tipo": "falta_fecha_inicio",
     "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
+   },
+   {
+    "detalle": "El Excel dice facturado 6,480.00 y ganancia 2,268.00; con las reglas de 2026 da 3,240.00 y 2,268.00. Decidi cual vale.",
+    "tipo": "recalculo_distinto"
    }
   ],
   "barrio": "Ituzaingo",
@@ -3099,6 +3140,10 @@
    {
     "tipo": "origen_sin_clasificar",
     "detalle": "Falta de dónde salió: sin eso no se sabe qué canal te está dando plata"
+   },
+   {
+    "detalle": "El Excel dice facturado 2,400.00 y ganancia 840.00; con las reglas de 2026 da 2,400.00 y 1,080.00. Decidi cual vale.",
+    "tipo": "recalculo_distinto"
    }
   ],
   "barrio": "Cerrito",
