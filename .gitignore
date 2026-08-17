@@ -1,2 +1,4 @@
-﻿negocios.xlsx
+__pycache__/
+*.pyc
+negocios.xlsx
 *.lnk
