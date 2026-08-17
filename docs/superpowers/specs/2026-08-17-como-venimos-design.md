@@ -544,6 +544,46 @@ con un número inventado.
 
 ---
 
+### 8.6 Reporte descargable
+
+Un botón en Salud del Negocio que arma un **reporte autocontenido** para guardar o mandar.
+
+**Formato:** un archivo HTML de una sola pieza (sin dependencias externas) que se abre en
+cualquier teléfono o computadora, más un botón *Compartir* que usa la Web Share API del
+celular para mandarlo por WhatsApp. Al ser una página servida desde GitHub Pages y no un
+sandbox, la descarga funciona sin restricciones.
+
+**Qué lleva adentro:**
+
+1. **Encabezado** — nombre, oficina, período del reporte y fecha de generación.
+2. **Las tres capas de plata** del período (cobrado · casi seguro · potencial), con el
+   detalle de qué propiedades y negocios entran en cada una.
+3. **Ritmo contra calendario** (§8.4) y avance hacia el objetivo personal y el nivel RE/MAX.
+4. **Los números del período**: cantidad de negocios, ticket promedio, comisión efectiva,
+   puntas promedio, plazos, barrios y origen de las captaciones.
+5. **Gráficas** de ganancia por mes y de facturación por año, dibujadas en SVG.
+6. **Qué hacer para llegar al objetivo** (ver abajo).
+
+#### Qué hacer para llegar al objetivo
+
+No son consejos genéricos: son cuentas hechas con los propios números del usuario. Cada
+recomendación se muestra solo si su condición se cumple.
+
+| Condición | Qué dice el reporte |
+|---|---|
+| Falta para el objetivo > 0 | *"Te faltan USD F. Con tu ticket mediano de venta (74.055) y tu facturación media del 4,5 %, son **N ventas más**. O M alquileres."* |
+| Proyección de cartera < falta para el objetivo | *"Aun cerrando toda tu cartera llegás a X. Te faltan **USD V de volumen nuevo** para captar."* |
+| Hay propiedades publicadas hace más que la mediana de días sin pasar a negociación | *"**N propiedades llevan más de D días publicadas** sin moverse. Tu mediana de inicio a boleto es de 96 días."* |
+| `neto(ALTO)` o `neto(PURO)` > `neto(categoría actual)` | *"Siendo RAP dejaste de ganar **USD P en lo que va del año**. Con ALTO habrías ganado Q."* |
+| Un canal de origen concentra > 25 % de la ganancia | *"El **X %** de tu plata viene de un solo canal. Si se corta, perdés esa porción."* |
+| Hay negocios sin `ficha_completa` y con datos faltantes | *"Tenés **N negocios con datos sin cargar**. Sin eso, estas cuentas están incompletas."* |
+| Hay eventos sin atender en la bandeja | *"Tenés **N novedades sin revisar** desde el DD/MM."* |
+
+**Fase:** va en la Fase 2, junto con Salud del Negocio. No tiene sentido antes: sin el Excel
+importado el reporte saldría vacío.
+
+---
+
 ## 9. Import del Excel
 
 Archivo entregado el 2026-08-17: `negocios.xlsx`, una hoja, **85 negocios** (2022-08 a
