@@ -71,9 +71,20 @@ class TestImportacionReal(unittest.TestCase):
             if n["fecha_fin"] and n["fecha_fin"] > "2026-08-17":
                 self.assertEqual(n["estado"], "en_curso", n["id"])
 
-    def test_hay_17_negocios_sin_fecha_de_inicio(self):
+    def test_los_negocios_sin_fecha_de_inicio_son_los_que_el_robot_no_puede_saber(self):
+        """El Excel dejo 17 filas sin fecha de inicio.
+
+        La app rellena sola la de los negocios enganchados a una propiedad de la cartera,
+        porque el robot sabe cuando se empezo a publicar. Las que quedan son las de
+        propiedades que el robot nunca vio, y esas hay que cargarlas a mano.
+        """
         sin_inicio = [n for n in self.negocios if not n["fecha_inicio"]]
-        self.assertEqual(len(sin_inicio), 17)
+        self.assertLessEqual(len(sin_inicio), 17)
+        for n in sin_inicio:
+            self.assertIsNone(
+                n.get("entity_id_cartera"),
+                f"{n['id']} esta en la cartera: la fecha la tendria que poner el robot",
+            )
 
     def test_los_barrios_quedaron_normalizados(self):
         barrios = {n["barrio"] for n in self.negocios if n["barrio"]}

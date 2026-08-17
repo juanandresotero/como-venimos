@@ -492,7 +492,12 @@
  {
   "agente_compra": "Otro",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "posible_cruce",
+    "detalle": "Puede ser \"Estanislao Vega 3900\", que está en tu cartera (en negociacion). Si es la misma, engancharlas."
+   }
+  ],
   "barrio": "Cerrito",
   "base": 472.5,
   "categoria_vigente": null,
@@ -1697,7 +1702,12 @@
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "posible_cruce",
+    "detalle": "Puede ser \"Flammarión 5000\", que está en tu cartera (en negociacion). Si es la misma, engancharlas."
+   }
+  ],
   "barrio": "Malvin norte",
   "base": 1890,
   "categoria_vigente": null,
@@ -1881,6 +1891,10 @@
    {
     "tipo": "falta_fecha_inicio",
     "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
+   },
+   {
+    "tipo": "posible_cruce",
+    "detalle": "Puede ser \"Ovidio Fernandez Rios 3900\", que está en tu cartera (publicada). Si es la misma, engancharlas."
    }
   ],
   "barrio": "Punta de rieles",
@@ -2099,8 +2113,8 @@
     "detalle": "Falta la fecha de la reserva o boleto"
    },
    {
-    "detalle": "Puede ser la propiedad Juana de Ibarbourou 200 (en_negociacion), por misma calle y precio parecido. Confirmalo.",
-    "tipo": "posible_cruce"
+    "tipo": "posible_cruce",
+    "detalle": "Puede ser \"Juana de Ibarbourou 200\", que está en tu cartera (en negociacion). Si es la misma, engancharlas."
    }
   ],
   "barrio": "Pando",
@@ -2833,12 +2847,12 @@
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "detalle": "El Excel dice facturado 692.00 y ganancia 242.00; con las reglas de 2026 da 346.00 y 242.20. Decidi cual vale.",
-    "tipo": "recalculo_distinto"
+    "tipo": "posible_cruce",
+    "detalle": "Puede ser \"Estanislao Vega 3900\", que está en tu cartera (en negociacion). Si es la misma, engancharlas."
    },
    {
-    "detalle": "Puede ser la propiedad Estanislao Vega 3900 (en_negociacion), por misma calle y misma altura. Confirmalo.",
-    "tipo": "posible_cruce"
+    "detalle": "El Excel dice facturado 692.00 y ganancia 242.00; con las reglas de 2026 da 346.00 y 242.20. Decidi cual vale.",
+    "tipo": "recalculo_distinto"
    }
   ],
   "barrio": "Cerrito",
@@ -3031,6 +3045,10 @@
     "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
    },
    {
+    "tipo": "posible_cruce",
+    "detalle": "Puede ser \"Estanislao Vega 3900\", que está en tu cartera (en negociacion). Si es la misma, engancharlas."
+   },
+   {
     "tipo": "faltan_agentes",
     "detalle": "No dice quién tenía el aviso ni quién trajo al comprador: sin eso no se sabe cuántas puntas cobraste"
    },
@@ -3041,10 +3059,6 @@
    {
     "detalle": "El Excel dice facturado 658.00 y ganancia 230.00; con las reglas de 2026 da 658.00 y 296.10. Decidi cual vale.",
     "tipo": "recalculo_distinto"
-   },
-   {
-    "detalle": "Puede ser la propiedad Estanislao Vega 3900 (en_negociacion), por misma calle y misma altura. Confirmalo.",
-    "tipo": "posible_cruce"
    }
   ],
   "barrio": "Cerrito",

@@ -11,6 +11,7 @@ import {
   MARCAS, marcaActual, admiteMarcas, TIPOS_NEGOCIO, regimenDe,
 } from "../lib/catalogos.js";
 import { ROLES, enlaceWhatsapp, hayPicker, elegirContacto } from "../lib/contactos.js";
+import { sugerencias } from "../lib/cruce.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -80,8 +81,26 @@ export function dibujarFicha(estado) {
    cuelgan de ninguna y esta bien: son de antes de que existiera el robot. */
 function propiedadVinculada(n, estado) {
   const cartera = estado.datos.cartera || {};
+  const propuestas = sugerencias(n, cartera);
+
   const marca = nodo(html`
     <section class="tarjeta" style="padding:0;overflow:hidden">
+      ${propuestas.length
+        ? html`<div class="campo-fila falta">
+             <label>¿Es una propiedad de tu cartera?</label>
+             <p class="apunte" style="margin:2px 0 8px">
+               Si lo es, dejo de pedirte las fechas que todavía no existen.
+             </p>
+             <div class="botonera" style="margin-top:0">
+               ${propuestas.slice(0, 3).map((x) => html`
+                 <button class="boton boton-primario" data-enganchar="${escapar(x.propiedad.entity_id)}"
+                         style="padding:9px 14px;font-size:13px">
+                   Sí, es ${escapar(x.propiedad.direccion || x.propiedad.titulo)}
+                 </button>`).join("")}
+               <button class="filtro" id="no-es-ninguna">No es ninguna</button>
+             </div>
+           </div>`
+        : ""}
       <div class="campo-fila">
         <label for="campo-propiedad">Propiedad de tu cartera</label>
         <select class="campo" id="campo-propiedad">
@@ -105,6 +124,21 @@ function propiedadVinculada(n, estado) {
     editarNegocio(estado, n.id, { entity_id_cartera: evento.target.value || null });
     estado.redibujar();
   });
+  for (const boton of marca.querySelectorAll("[data-enganchar]")) {
+    boton.addEventListener("click", () => {
+      editarNegocio(estado, n.id, { entity_id_cartera: boton.dataset.enganchar });
+      estado.redibujar();
+    });
+  }
+  // "No es ninguna" se anota, si no la sugerencia volvería a aparecer en cada arranque.
+  const ninguna = marca.getElementById("no-es-ninguna");
+  if (ninguna) {
+    ninguna.addEventListener("click", () => {
+      editarNegocio(estado, n.id, { sin_propiedad_en_cartera: true });
+      estado.redibujar();
+    });
+  }
+
   const ver = marca.getElementById("ver-propiedad");
   if (ver) ver.addEventListener("click", () => estado.irA("propiedad", n.entity_id_cartera));
   return marca;
@@ -116,8 +150,8 @@ function gente(n, estado) {
   const seccion = nodo(html`
     <section class="tarjeta">
       <div class="tarjeta-titulo">
-        <h2 class="titulo" style="font-size:17px">La gente</h2>
-        <span class="apunte">${hayPicker() ? "desde tu agenda" : "a mano"}</span>
+        <h2 class="titulo" style="font-size:17px">Los clientes</h2>
+        <span class="apunte">${hayPicker() ? "desde tu agenda" : "con WhatsApp"}</span>
       </div>
       <div id="roles"></div>
     </section>
@@ -291,8 +325,10 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
   const faltanAgentes = falta.has("faltan_agentes");
 
   const lado = (clave, etiqueta, esUnLadoDelNegocio) => {
+    // Vacío no es un agujero: quiere decir "nadie", o sea que es tuyo y lo trabajaste vos.
+    const vacio = esUnLadoDelNegocio ? "sin cargar" : "Nadie";
     agregar(clave, etiqueta, "text", n[clave],
-      opcionesCon([["", "sin cargar"], ...AGENTES], n[clave]),
+      opcionesCon([["", vacio], ...AGENTES], n[clave]),
       esUnLadoDelNegocio && faltanAgentes,
       (valor) => {
         // Al elegir una oficina o el Team, el nombre de la persona concreta que había
@@ -316,7 +352,10 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
   lado("agente_vende", "Quién tenía el aviso", true);
   lado("agente_compra", "Quién trajo al comprador", true);
   lado("referidor", "Quién te lo refirió", false);
-  lado("referido_a", "A quién se lo referiste", false);
+
+  /* Si la propiedad está en tu cartera, la estás trabajando vos: por definición no se la
+     referiste a nadie. Preguntarlo es hacerte contestar algo que la app ya sabe. */
+  if (admiteMarcas(n)) lado("referido_a", "A quién se lo referiste", false);
 }
 
 /* Suplencia y "yo la referí" van sueltas del origen: un negocio puede llegar por "Dueño
