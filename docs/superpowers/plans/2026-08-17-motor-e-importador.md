@@ -1516,8 +1516,10 @@ class TestSeparadorDecimalPerdido(unittest.TestCase):
         self.assertEqual(n["facturacion"], 3010.0)
 
     def test_una_comision_absurda_no_dispara_la_correccion_por_mil(self):
-        # Fila 51: el error esta en el %, no en el facturado. 88.000 x 26,25 da 2.310.000,
-        # que tambien es un factor 1000 — pero corregir el facturado seria desastroso.
+        # Fila 51: la comision real es 2,625% (88.000 x 2,625% = 2.310, que es lo que dice
+        # el Excel). Pero la celda guarda 26,25 en vez de 0,02625, asi que la cuenta da
+        # 2.310.000 — tambien un factor 1000. El error esta en el %, NO en el facturado:
+        # si "corrigieramos" el facturado destruiriamos el unico numero que estaba bien.
         n = importador.calcular_plata(
             importador.traducir(fila(precio=88000.0, pct_comision=26.25,
                                      facturado=2310.0, fecha_fin="2025-02-15"), AJUSTES),
