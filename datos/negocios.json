@@ -2117,7 +2117,7 @@
   "fecha_fin": null,
   "fecha_fin_estimada": false,
   "fecha_inicio": "2025-08-12",
-  "ficha_completa": false,
+  "ficha_completa": true,
   "ganancia": 2079,
   "id": "excel-60",
   "moneda": "USD",
@@ -2133,7 +2133,7 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false,
+  "ficha_vigente": true,
   "fecha_negociacion": "2026-08-14",
   "cliente_comprador": {
    "nombre": "Nicolás Por Zapican",
@@ -2142,7 +2142,8 @@
   "cliente_vendedor": {
    "nombre": "Juanjo 2025",
    "telefono": "+598 92 697 996"
-  }
+  },
+  "ficha_completa_momento": "en_negociacion"
  },
  {
   "agente_compra": "Otro REMAX",
