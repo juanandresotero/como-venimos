@@ -207,5 +207,62 @@ class TestBajas(unittest.TestCase):
         self.assertIsNone(fila["desenlace_propuesto"])
 
 
+class TestCamposDelUsuario(unittest.TestCase):
+    def _cartera_con_datos_cargados_a_mano(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", precio=100000.0)], AYER)
+        cartera["e1"].update({
+            "fecha_captacion_real": "2025-03-01",
+            "fecha_captacion_estimada": False,
+            "origen_captacion": "BDR",
+            "desenlace_confirmado": None,
+            "usar_en_proyeccion": False,
+            "notas": "El dueño viaja en enero",
+        })
+        return cartera
+
+    def test_una_corrida_normal_no_pisa_nada_del_usuario(self):
+        cartera = self._cartera_con_datos_cargados_a_mano()
+        cartera, _ = procesar.procesar(cartera, [propiedad("e1", precio=90000.0)], HOY)
+        fila = cartera["e1"]
+        self.assertEqual(fila["fecha_captacion_real"], "2025-03-01")
+        self.assertFalse(fila["fecha_captacion_estimada"])
+        self.assertEqual(fila["origen_captacion"], "BDR")
+        self.assertFalse(fila["usar_en_proyeccion"])
+        self.assertEqual(fila["notas"], "El dueño viaja en enero")
+        # ...y el dato del robot si se actualizo
+        self.assertEqual(fila["precio"], 90000.0)
+
+    def test_una_baja_tampoco_pisa_nada_del_usuario(self):
+        cartera = self._cartera_con_datos_cargados_a_mano()
+        cartera, _ = procesar.procesar(cartera, [], HOY)
+        fila = cartera["e1"]
+        self.assertEqual(fila["origen_captacion"], "BDR")
+        self.assertEqual(fila["notas"], "El dueño viaja en enero")
+        self.assertEqual(fila["fecha_captacion_real"], "2025-03-01")
+
+    def test_una_reaparicion_tampoco_pisa_nada_del_usuario(self):
+        cartera = self._cartera_con_datos_cargados_a_mano()
+        cartera, _ = procesar.procesar(cartera, [], HOY)
+        cartera, _ = procesar.procesar(cartera, [propiedad("e1")], "2026-08-19")
+        self.assertEqual(cartera["e1"]["origen_captacion"], "BDR")
+        self.assertEqual(cartera["e1"]["notas"], "El dueño viaja en enero")
+
+    def test_el_desenlace_confirmado_por_el_usuario_le_gana_al_propuesto(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", estado="publicada")], AYER)
+        cartera, _ = procesar.procesar(cartera, [], HOY)
+        # El robot propuso "caida"; el usuario dice que en realidad se vendio.
+        cartera["e1"]["desenlace_confirmado"] = "vendida"
+        cartera, _ = procesar.procesar(cartera, [], "2026-08-19")
+        self.assertEqual(cartera["e1"]["desenlace_confirmado"], "vendida")
+        self.assertEqual(cartera["e1"]["desenlace_propuesto"], "caida")
+
+    def test_ningun_campo_del_usuario_aparece_en_lo_que_produce_el_modelo(self):
+        # Garantia estructural: si robot.modelo devolviera alguno de estos campos,
+        # fila.update(prop) lo pisaria. Este test lo impide para siempre.
+        campos_del_modelo = set(propiedad().keys())
+        for campo in procesar.CAMPOS_DEL_USUARIO:
+            self.assertNotIn(campo, campos_del_modelo)
+
+
 if __name__ == "__main__":
     unittest.main()
