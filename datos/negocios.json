@@ -2854,8 +2854,8 @@
   "fecha_boleto": "2026-05-05",
   "fecha_fin": null,
   "fecha_fin_estimada": false,
-  "fecha_inicio": "2026-03-24",
-  "ficha_completa": false,
+  "fecha_inicio": "2026-01-08",
+  "ficha_completa": true,
   "ganancia": 2427.3,
   "id": "excel-82",
   "moneda": "USD",
@@ -2871,8 +2871,9 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false,
-  "fecha_negociacion": "2026-02-26"
+  "ficha_vigente": true,
+  "fecha_negociacion": "2026-02-26",
+  "ficha_completa_momento": "reservada"
  },
  {
   "agente_compra": "Juan Andrés Otero",
