@@ -6,8 +6,14 @@ HOY = "2026-08-18"
 AYER = "2026-08-17"
 
 
-def propiedad(entity_id="e1", precio=100000.0, estado="publicada", direccion="Calle Falsa 100"):
-    """Una propiedad ya normalizada, como la deja robot.modelo."""
+def propiedad(entity_id="e1", precio=100000.0, estado="publicada", direccion=None):
+    """Una propiedad ya normalizada, como la deja robot.modelo.
+
+    Si no se pide una direccion concreta, cada propiedad recibe la suya. Dos propiedades
+    distintas con la MISMA direccion y el MISMO precio son, justamente, lo que el detector
+    de duplicados marca — y eso se prueba aparte en TestDuplicados.
+    """
+    direccion = direccion or f"Calle Falsa {entity_id}"
     return {
         "entity_id": entity_id,
         "internal_id": "940041154-1",
