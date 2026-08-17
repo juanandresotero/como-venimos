@@ -3063,18 +3063,9 @@
   "ficha_vigente": false
  },
  {
-  "agente_compra": null,
-  "agente_vende": null,
-  "avisos": [
-   {
-    "tipo": "faltan_agentes",
-    "detalle": "No dice quién tenía el aviso ni quién trajo al comprador: sin eso no se sabe cuántas puntas cobraste"
-   },
-   {
-    "tipo": "origen_sin_clasificar",
-    "detalle": "Falta de dónde salió: sin eso no se sabe qué canal te está dando plata"
-   }
-  ],
+  "agente_compra": "Juan Andrés Otero",
+  "agente_vende": "Juan Andrés Otero",
+  "avisos": [],
   "barrio": "Cerrito",
   "base": 2400,
   "categoria_vigente": "RAP",
@@ -3085,27 +3076,31 @@
   "excel_importe": 840,
   "facturacion": 2400,
   "fecha_boleto": null,
-  "fecha_fin": "2026-04-20",
-  "fecha_fin_estimada": true,
-  "fecha_inicio": "2026-08-17",
+  "fecha_fin": null,
+  "fecha_fin_estimada": false,
+  "fecha_inicio": "2026-05-14",
   "ficha_completa": false,
   "ganancia": 1080,
   "id": "excel-86",
   "moneda": "USD",
   "notas": "",
-  "origen_captacion": "Sin origen",
+  "origen_captacion": "Ref. Martin",
   "pct_comision_total": 0.06,
   "precio_operacion": 40000,
-  "puntas": 0,
+  "puntas": 2,
   "recalculado": true,
-  "regimen_comision": "captacion_mia",
+  "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
   "fecha_negociacion": "2026-08-17",
-  "ficha_vigente": false
+  "ficha_vigente": false,
+  "agente_vende_nombre": null,
+  "agente_compra_nombre": null,
+  "referidor": "Martin Sedes",
+  "referidor_nombre": null
  },
  {
   "id": "manual-1",
