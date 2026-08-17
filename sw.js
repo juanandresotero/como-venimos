@@ -11,7 +11,7 @@
    probando en vivo, eso era mirar codigo de hace media hora y creer que los arreglos no
    estaban. */
 
-const CACHE = "como-venimos-v8";
+const CACHE = "como-venimos-v9";
 
 const ARMAZON = [
   "./",

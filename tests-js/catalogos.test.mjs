@@ -21,9 +21,9 @@ test("solo los que son un grupo o una oficina llevan el nombre de la persona", (
   assert.equal(AGENTES_QUE_LLEVAN_NOMBRE.has("Martin Sedes"), false);
 });
 
-test("los once origenes estan completos", () => {
-  assert.equal(ORIGENES.length, 11);
-  for (const o of ["B.d.r.", "Ref. Team", "Ref. Martin", "Ref. Único", "Ref. Remax",
+test("los doce origenes estan completos", () => {
+  assert.equal(ORIGENES.length, 12);
+  for (const o of ["B.d.r.", "Ref. B.d.r.", "Ref. Team", "Ref. Martin", "Ref. Único", "Ref. Remax",
                    "Ref. Cliente", "Cliente antiguo", "Dueño Vende", "Redes sociales Orgánico",
                    "Redes sociales Campaña", "On mind"]) {
     assert.ok(ORIGENES.includes(o), `falta el origen ${o}`);
@@ -41,8 +41,9 @@ test("los referidos de Team, Unico y Remax son de otro colega", () => {
   }
 });
 
-test("un origen que no es referido no se lleva ninguna tajada", () => {
-  for (const o of ["B.d.r.", "Dueño Vende", "On mind", "Cliente antiguo"]) {
+/* Ni un cliente ni alguien de su base de relaciones se llevan tajada: cobra entero. */
+test("un origen que no es referido de colega no se lleva ninguna tajada", () => {
+  for (const o of ["B.d.r.", "Ref. B.d.r.", "Ref. Cliente", "Dueño Vende", "On mind", "Cliente antiguo"]) {
     assert.equal(regimenDe({ origen_captacion: o }), "captacion_mia", o);
   }
 });

@@ -3,7 +3,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   crearNegocio, borrarNegocio, nuevoId, editarPropiedad, guardarCalculo, borrarCalculo,
-  editarAjustes, hayCambios, ARCHIVO_NEGOCIOS, ARCHIVO_MIS_DATOS, ARCHIVO_CALCULOS,
+  editarAjustes, editarNegocio, hayCambios, ARCHIVO_NEGOCIOS, ARCHIVO_MIS_DATOS,
+  ARCHIVO_CALCULOS,
   ARCHIVO_AJUSTES,
 } from "../lib/guardado.js";
 import {
@@ -200,4 +201,61 @@ test("cambiar un ajuste deja el archivo de ajustes para subir", () => {
   editarAjustes(e, { tipo_cambio: { usd_uyu: 41.2, fecha: "2026-08-17" } });
   assert.equal(e.datos.ajustes.tipo_cambio.usd_uyu, 41.2);
   assert.ok(e.sucios.has(ARCHIVO_AJUSTES));
+});
+
+/* "Cuando se publico" y "de donde salio" son de la PROPIEDAD, aunque se carguen desde el
+   negocio. Se cargaban en un lado y el otro los seguia mostrando en rojo como si
+   faltaran. Le pasaba con todas. */
+function conPropiedad() {
+  const e = estado();
+  e.datos.cartera.aaa.fecha_captacion_real = "2026-08-17";
+  e.datos.cartera.aaa.fecha_captacion_estimada = true;
+  e.datos.cartera.aaa.origen_captacion = null;
+  e.datos.negocios.push({
+    id: "excel-9", entity_id_cartera: "aaa", tipo_negocio: "venta", estado: "en_curso",
+    fecha_inicio: null, fecha_fin: null, origen_captacion: null,
+    precio_operacion: 100000, pct_comision_total: 0.03, puntas: 1, avisos: [],
+  });
+  return e;
+}
+
+test("cargar la fecha en el negocio la completa en la propiedad", () => {
+  const e = conPropiedad();
+  editarNegocio(e, "excel-9", { fecha_inicio: "2025-02-03" });
+  const p = e.datos.cartera.aaa;
+  assert.equal(p.fecha_captacion_real, "2025-02-03");
+  assert.equal(p.fecha_captacion_estimada, false, "deja de ser la estimacion del robot");
+  assert.ok(e.sucios.has(ARCHIVO_MIS_DATOS), "y se sube con las anotaciones");
+});
+
+test("cargar el origen en el negocio lo completa en la propiedad", () => {
+  const e = conPropiedad();
+  editarNegocio(e, "excel-9", { origen_captacion: "B.d.r." });
+  assert.equal(e.datos.cartera.aaa.origen_captacion, "B.d.r.");
+});
+
+test("y al reves: cargarlo en la propiedad lo baja a sus negocios", () => {
+  const e = conPropiedad();
+  editarPropiedad(e, "aaa", { fecha_captacion_real: "2025-02-03", origen_captacion: "Dueño Vende" });
+  const n = e.datos.negocios.find((x) => x.id === "excel-9");
+  assert.equal(n.fecha_inicio, "2025-02-03");
+  assert.equal(n.origen_captacion, "Dueño Vende");
+});
+
+test("un negocio que no cuelga de la propiedad no se toca", () => {
+  const e = conPropiedad();
+  e.datos.negocios.push({
+    id: "otro", entity_id_cartera: null, tipo_negocio: "venta", estado: "en_curso",
+    fecha_inicio: null, fecha_fin: null, avisos: [],
+  });
+  editarPropiedad(e, "aaa", { fecha_captacion_real: "2025-02-03" });
+  assert.equal(e.datos.negocios.find((x) => x.id === "otro").fecha_inicio, null);
+});
+
+test("borrar el dato en el negocio no borra el de la propiedad", () => {
+  const e = conPropiedad();
+  editarNegocio(e, "excel-9", { fecha_inicio: "2025-02-03" });
+  editarNegocio(e, "excel-9", { fecha_inicio: null });
+  assert.equal(e.datos.cartera.aaa.fecha_captacion_real, "2025-02-03",
+    "vaciar un campo no puede borrar lo que ya estaba confirmado en la propiedad");
 });
