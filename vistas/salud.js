@@ -3,7 +3,9 @@
    La barra de ritmo es el elemento central: muestra el avance real contra un marcador
    de calendario. La distancia entre los dos es toda la informacion. */
 
-import { capas, ritmo, metricas, porAnio, comparativaCategorias } from "../lib/salud.js";
+import { capas, ritmo, metricas, porAnio, porMes, comparativaCategorias } from "../lib/salud.js";
+import { recomendaciones, contarPendientes } from "../lib/recomendaciones.js";
+import { armarReporte, nombreArchivo } from "../lib/reporte.js";
 import { plata, plataUSD, compacto, pct, escapar } from "../lib/formato.js";
 
 const html = (cadenas, ...valores) =>
@@ -25,15 +27,123 @@ export function dibujarSalud(estado) {
   const anios = porAnio(negocios);
   const cats = comparativaCategorias(negocios, ajustes, anio, estado.hoy);
 
+  const eventosSinAtender = (estado.datos.eventos || []).filter((e) => {
+    const atendidos = new Set((estado.datos.mis_datos || {}).eventos_atendidos || []);
+    return !atendidos.has(e.id) && !e.atendido;
+  });
+  const consejos = recomendaciones(
+    estado.datos, anio, estado.hoy, contarPendientes(negocios, eventosSinAtender)
+  );
+
   const trozo = document.createDocumentFragment();
   trozo.append(cabecera(anio, c));
   if (r) trozo.append(barraDeRitmo(r, objetivo, c, anio));
   trozo.append(tresCapas(c));
+  if (consejos.length) trozo.append(queHacer(consejos));
+  trozo.append(graficaMensual(porMes(negocios, anio), anio));
   if (anios.length) trozo.append(graficaAnual(anios, anio));
   trozo.append(metricasDelAnio(m));
   if (cats.length) trozo.append(comparativa(cats));
-  if (c.capa3.detalle.length) trozo.append(propiedadesUsadas(c.capa3));
+  if (c.capa3.detalle.length) trozo.append(propiedadesUsadas(c.capa3, estado));
+  trozo.append(descargarReporte(estado, anio));
   return trozo;
+}
+
+const ROJAS = new Set(["falta_volumen", "categoria", "concentracion", "trabadas"]);
+
+function queHacer(consejos) {
+  return nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2 class="titulo">Qué hacer</h2>
+        <span class="apunte">con tus propios números</span>
+      </div>
+      ${consejos.map((c) => html`
+        <div class="consejo ${ROJAS.has(c.clave) ? "rojo" : ""}">
+          <p class="consejo-titulo">${escapar(c.titulo)}</p>
+          <p class="consejo-detalle">${escapar(c.detalle)}</p>
+        </div>`).join("")}
+    </section>
+  `);
+}
+
+const MESES_CORTOS = ["E", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+
+function graficaMensual(meses, anio) {
+  const tope = Math.max(...meses.map((m) => m.ganancia), 1);
+  const mesActual = new Date().getMonth() + 1;
+  const total = meses.reduce((t, m) => t + m.ganancia, 0);
+  const mejor = meses.reduce((a, b) => (b.ganancia > a.ganancia ? b : a), meses[0]);
+  return nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2 class="titulo">Tu ganancia mes a mes</h2>
+        <span class="apunte">${plataUSD(total)} en ${anio}</span>
+      </div>
+      <div class="barras">
+        ${meses.map((m, i) => html`
+          <div class="barras-columna ${m.mes === mesActual ? "actual" : ""}">
+            <span class="barras-tope">${m.ganancia ? compacto(m.ganancia) : ""}</span>
+            <div class="barras-cana" style="height:${(m.ganancia / tope) * 100}%"></div>
+            <span class="barras-pie">${MESES_CORTOS[i]}</span>
+          </div>`).join("")}
+      </div>
+      ${mejor && mejor.ganancia
+        ? html`<p class="apunte" style="margin-top:10px">Tu mejor mes fue
+             ${["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
+                "septiembre", "octubre", "noviembre", "diciembre"][mejor.mes - 1]}, con
+             ${plataUSD(mejor.ganancia)}.</p>`
+        : ""}
+    </section>
+  `);
+}
+
+/* El reporte se arma en el momento y se baja como archivo. No hay servidor atras: es el
+   mismo navegador el que escribe el HTML. */
+function descargarReporte(estado, anio) {
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">Llevate el reporte</h2>
+      <p class="apunte" style="margin-bottom:12px">
+        Un archivo con todo esto adentro: capas, ritmo, gráficas y qué hacer para llegar.
+        Se abre en cualquier teléfono, aunque no haya señal.
+      </p>
+      <div class="botonera" style="margin-top:0">
+        <button class="boton boton-primario" id="bajar-reporte">Descargar</button>
+        <button class="boton" id="compartir-reporte">Compartir</button>
+      </div>
+      <p class="apunte" id="aviso-reporte" style="margin-top:10px"></p>
+    </section>
+  `);
+
+  const construir = () => armarReporte(estado.datos, anio, estado.hoy);
+  const aviso = seccion.getElementById("aviso-reporte");
+
+  seccion.getElementById("bajar-reporte").addEventListener("click", () => {
+    const blob = new Blob([construir()], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = nombreArchivo(anio, estado.hoy);
+    enlace.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    aviso.textContent = "Descargado.";
+  });
+
+  seccion.getElementById("compartir-reporte").addEventListener("click", async () => {
+    const archivo = new File([construir()], nombreArchivo(anio, estado.hoy), { type: "text/html" });
+    if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+      try {
+        await navigator.share({ files: [archivo], title: `¿Cómo venimos? ${anio}` });
+        return;
+      } catch {
+        return;   // se cancelo
+      }
+    }
+    aviso.textContent = "Este navegador no comparte archivos. Descargalo y adjuntalo.";
+  });
+
+  return seccion;
 }
 
 function cabecera(anio, c) {
@@ -188,27 +298,35 @@ function comparativa(cats) {
   `);
 }
 
-function propiedadesUsadas(capa3) {
+function propiedadesUsadas(capa3, estado) {
   const filas = capa3.detalle
     .map(
       (p) => html`
-      <div class="dato">
-        <span class="dato-nombre">${escapar(p.direccion || "Sin dirección")} · ${p.estado.replace("_", " ")}</span>
-        <span class="dato-valor">${plata(p.precio)} × ${Math.round(p.probabilidad * 100)}%</span>
-      </div>`
+      <button class="fila" data-propiedad="${escapar(p.entity_id)}">
+        <span class="fila-cuerpo">
+          <span class="fila-titulo">${escapar(p.direccion || "Sin dirección")}</span>
+          <span class="fila-sub">${p.estado.replace("_", " ")} · ${plata(p.precio)} × ${Math.round(p.probabilidad * 100)}%</span>
+        </span>
+        <span class="cifra cifra-media">${plata(p.facturacion)}</span>
+      </button>`
     )
     .join("");
-  return nodo(html`
+  const seccion = nodo(html`
     <section class="tarjeta">
       <div class="tarjeta-titulo">
         <h2 class="titulo">Qué se proyectó</h2>
         <span class="apunte">${capa3.propiedades} propiedades</span>
       </div>
-      <div class="datos">${filas}</div>
+      <div class="lista">${filas}</div>
       <p class="apunte" style="margin-top:12px">
         Cada una vale su precio por la probabilidad de cerrarse según su estado, y por tu
-        propio ratio histórico de facturación.
+        propio ratio histórico de facturación. Si alguna no debería contar, entrá y
+        apagala.
       </p>
     </section>
   `);
+  for (const boton of seccion.querySelectorAll("[data-propiedad]")) {
+    boton.addEventListener("click", () => estado.irA("propiedad", boton.dataset.propiedad));
+  }
+  return seccion;
 }

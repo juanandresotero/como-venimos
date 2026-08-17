@@ -100,7 +100,7 @@ body {
 
 /* ---------- Estructura ---------- */
 
-.vista { padding: 16px 16px 28px; max-width: 640px; margin: 0 auto; outline: none; }
+.vista { padding: 8px 16px 28px; max-width: 640px; margin: 0 auto; outline: none; }
 .vista > * { animation: entrar .45s cubic-bezier(.2, .7, .3, 1) backwards; }
 .vista > *:nth-child(2) { animation-delay: .05s; }
 .vista > *:nth-child(3) { animation-delay: .1s; }
@@ -395,3 +395,90 @@ body {
   background: var(--azul-suave); color: var(--azul);
   padding: 1px 6px; border-radius: 5px; font-weight: 700;
 }
+
+/* ---------- Cartera ---------- */
+
+/* El estado de una propiedad se lee por color: cuanto mas saturado el azul, mas cerca
+   esta de cobrarse. El rojo, como siempre, es la que se fue. */
+.chip-estado {
+  display: inline-block;
+  padding: 1px 7px; border-radius: 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: .01em;
+  background: var(--azul-suave); color: var(--azul);
+  box-shadow: inset 0 0 0 1px var(--azul-claro);
+}
+.chip-reservada { background: var(--azul); color: #fff; box-shadow: none; }
+.chip-negociacion { background: var(--azul-claro); color: var(--azul); box-shadow: none; }
+.chip-caida { background: var(--rojo-suave); color: var(--rojo-tinta); box-shadow: inset 0 0 0 1px var(--rojo); }
+.chip-apagado {
+  padding: 1px 7px; border-radius: 6px;
+  font-size: 11px; font-weight: 700;
+  background: var(--lienzo-2); color: var(--tinta-2);
+  box-shadow: inset 0 0 0 1px var(--linea);
+}
+
+/* ---------- Linea de tiempo ---------- */
+
+.tiempo { list-style: none; margin: 0; padding: 0 0 0 20px; position: relative; }
+.tiempo::before {
+  content: ""; position: absolute; left: 4px; top: 6px; bottom: 6px;
+  width: 2px; background: var(--linea); border-radius: 2px;
+}
+.tiempo-hito { position: relative; padding-bottom: 16px; }
+.tiempo-hito:last-child { padding-bottom: 0; }
+.tiempo-hito::before {
+  content: ""; position: absolute; left: -20px; top: 5px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--azul); box-shadow: 0 0 0 3px var(--lienzo);
+}
+.tiempo-hito:last-child::before { background: var(--tinta); }
+.tiempo-fecha {
+  display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--tinta-2); font-variant-numeric: tabular-nums;
+}
+.tiempo-titulo { display: block; font-weight: 600; font-size: 14.5px; }
+.tiempo-detalle { display: block; font-size: 12.5px; color: var(--tinta-2); }
+
+/* ---------- Consejos (que hacer) ---------- */
+
+.consejo {
+  border-left: 3px solid var(--azul);
+  background: var(--azul-suave);
+  border-radius: 0 12px 12px 0;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.consejo:last-child { margin-bottom: 0; }
+.consejo.rojo { border-color: var(--rojo); background: var(--rojo-suave); }
+.consejo-titulo { margin: 0; font-weight: 700; font-size: 14px; }
+.consejo-detalle { margin: 3px 0 0; font-size: 13px; color: var(--tinta-2); }
+.consejo.rojo .consejo-detalle { color: var(--rojo-tinta); }
+
+/* ---------- Contactos ---------- */
+
+.persona { padding: 12px 0; border-top: 1px solid var(--linea); }
+.persona:first-child { border-top: none; padding-top: 0; }
+.persona-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.persona-campos .campo { margin-top: 6px; }
+@media (max-width: 380px) {
+  .persona-campos { grid-template-columns: 1fr; }
+}
+
+/* ---------- Engranaje de Ajustes ----------
+   Va en el flujo y no fijo: asi no se le monta encima al titulo de ninguna pantalla. */
+
+.cinta {
+  display: flex; justify-content: flex-end;
+  max-width: 640px; margin: 0 auto; padding: 10px 16px 0;
+}
+.boton-ajustes {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  font: inherit; font-size: 16px;
+  color: var(--tinta-2);
+  background: var(--lienzo);
+  border: 1px solid var(--linea); border-radius: 50%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.boton-ajustes:active { transform: translateY(1px); }

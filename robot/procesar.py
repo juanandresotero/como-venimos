@@ -157,7 +157,28 @@ def _detectar_duplicados(cartera: dict, vistos: set, hoy: str) -> list:
     return eventos
 
 
-def procesar(cartera_previa: dict, propiedades_hoy: list, hoy: str):
+def _aplicar_overlay(cartera: dict, mis_datos: dict) -> None:
+    """Superpone lo que el usuario edito desde la app (§3.3).
+
+    La app NO escribe cartera.json: anota sus cambios en mis_datos.json, que es solo suyo.
+    El robot los lee y los respeta, pero nunca los escribe. Asi los dos pueden trabajar el
+    mismo dia sin pisarse.
+
+    Se aplica al final, despues de detectar duplicados, para que la decision del usuario
+    (por ejemplo volver a incluir en la proyeccion algo marcado como duplicado) sea la
+    ultima palabra.
+    """
+    anotaciones = (mis_datos or {}).get("cartera") or {}
+    for entity_id, campos in anotaciones.items():
+        fila = cartera.get(entity_id)
+        if not fila:
+            continue    # anotacion de una propiedad que ya no existe
+        for campo, valor in campos.items():
+            if campo in CAMPOS_DEL_USUARIO:
+                fila[campo] = valor
+
+
+def procesar(cartera_previa: dict, propiedades_hoy: list, hoy: str, mis_datos: dict = None):
     """Devuelve (cartera_nueva, eventos_nuevos). No modifica cartera_previa."""
     cartera = {clave: dict(fila) for clave, fila in cartera_previa.items()}
     eventos = []
@@ -181,4 +202,5 @@ def procesar(cartera_previa: dict, propiedades_hoy: list, hoy: str):
 
     eventos += _marcar_bajas(cartera, vistos, hoy)
     eventos += _detectar_duplicados(cartera, vistos, hoy)
+    _aplicar_overlay(cartera, mis_datos)
     return cartera, eventos

@@ -37,7 +37,9 @@ def main() -> int:
     propiedades = [modelo.normalizar(x) for x in listings]
     cartera_previa = almacen.leer_json("cartera.json", {})
     eventos_previos = almacen.leer_json("eventos.json", [])
-    cartera, eventos = procesar.procesar(cartera_previa, propiedades, hoy)
+    # Se lee, nunca se escribe: mis_datos.json es de la app (§3.3).
+    mis_datos = almacen.leer_json("mis_datos.json", {})
+    cartera, eventos = procesar.procesar(cartera_previa, propiedades, hoy, mis_datos)
 
     print(f"{hoy}: {len(propiedades)} propiedades, {len(eventos)} novedades")
     for evento in eventos:

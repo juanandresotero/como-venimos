@@ -1,6 +1,8 @@
 /* La lista de los 85 negocios, con filtros. Tocar uno abre su ficha. */
 
 import { plata, fechaCorta, escapar } from "../lib/formato.js";
+import { crearNegocio } from "../lib/guardado.js";
+import { ATAJOS } from "../lib/motor.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -11,6 +13,7 @@ function nodo(marca) {
 }
 
 const filtro = { anio: "todos", tipo: "todos", conAvisos: false };
+let altaAbierta = false;
 
 function aplicarFiltros(negocios) {
   return negocios.filter((n) => {
@@ -41,6 +44,7 @@ export function dibujarNegocios(estado) {
     </section>
 
     <section class="filtros">
+      <button class="filtro prendido" id="abrir-alta">+ Nuevo</button>
       <select class="filtro" id="f-anio" aria-label="Año">
         <option value="todos">Todos los años</option>
         ${anios.map((a) => `<option value="${a}"${filtro.anio === a ? " selected" : ""}>${a}</option>`).join("")}
@@ -55,6 +59,8 @@ export function dibujarNegocios(estado) {
       </button>
     </section>
   `));
+
+  if (altaAbierta) trozo.append(alta(estado));
 
   const contenedor = document.createElement("div");
   contenedor.className = "lista";
@@ -76,8 +82,55 @@ export function dibujarNegocios(estado) {
     filtro.conAvisos = !filtro.conAvisos;
     estado.redibujar();
   });
+  trozo.getElementById("abrir-alta").addEventListener("click", () => {
+    altaAbierta = !altaAbierta;
+    estado.redibujar();
+  });
 
   return trozo;
+}
+
+/* Los cuatro atajos del alta manual (§7.3). El unico dato que hace falta para arrancar es
+   cual de los cuatro es: cada uno deja puesta su regla de plata, que es lo que el usuario
+   no tiene por que recordar. */
+const EXPLICACION = {
+  venta: "Vos captaste y vendiste. Comisión sobre el precio.",
+  alquiler: "Un alquiler nuevo o una renovación.",
+  suplencia: "Le cubriste una visita a un colega: te llevás el 12,5% y no factura.",
+  yo_referi: "Se lo pasaste a otro agente: cobrás el 25% de la comisión.",
+};
+
+function alta(estado) {
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:4px">¿Qué querés cargar?</h2>
+      <p class="apunte" style="margin-bottom:12px">
+        Elegí y se abre la ficha con la regla de comisión ya puesta. Después completás
+        precio y fechas.
+      </p>
+      <div class="lista" id="atajos"></div>
+    </section>
+  `);
+  const contenedor = seccion.getElementById("atajos");
+
+  for (const [clave, molde] of Object.entries(ATAJOS)) {
+    const boton = nodo(html`
+      <button class="fila" data-atajo="${clave}">
+        <span class="fila-cuerpo">
+          <span class="fila-titulo">${molde.nombre}</span>
+          <span class="fila-sub">${EXPLICACION[clave]}</span>
+        </span>
+        <span class="fila-derecha"><span class="apunte">›</span></span>
+      </button>
+    `);
+    boton.querySelector(".fila").addEventListener("click", () => {
+      const nuevo = crearNegocio(estado, clave);
+      altaAbierta = false;
+      estado.irA("ficha", nuevo.id);
+    });
+    contenedor.append(boton);
+  }
+  return seccion;
 }
 
 function fila(n, estado) {

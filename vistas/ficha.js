@@ -3,9 +3,10 @@
    Los campos que faltan se pintan en rojo, para que se vea de un golpe que hay que
    completar. Cada cambio se aplica al instante y queda en la cola para subir. */
 
-import { editarNegocio } from "../lib/guardado.js";
+import { editarNegocio, borrarNegocio } from "../lib/guardado.js";
 import { plata, plataUSD, escapar } from "../lib/formato.js";
 import { REGIMENES } from "../lib/motor.js";
+import { ROLES, enlaceWhatsapp, hayPicker, elegirContacto } from "../lib/contactos.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -63,11 +64,128 @@ export function dibujarFicha(estado) {
   `));
 
   trozo.append(campos(n, falta, estado));
+  trozo.append(propiedadVinculada(n, estado));
+  trozo.append(gente(n, estado));
   trozo.append(avisos(n));
   trozo.append(fichaCompleta(n, estado));
+  if (n.manual) trozo.append(borrar(n, estado));
 
   trozo.getElementById("volver").addEventListener("click", () => estado.irA("negocios"));
   return trozo;
+}
+
+/* Un negocio puede colgar de una propiedad de la cartera. Los importados del Excel no
+   cuelgan de ninguna y esta bien: son de antes de que existiera el robot. */
+function propiedadVinculada(n, estado) {
+  const cartera = estado.datos.cartera || {};
+  const marca = nodo(html`
+    <section class="tarjeta" style="padding:0;overflow:hidden">
+      <div class="campo-fila">
+        <label for="campo-propiedad">Propiedad de tu cartera</label>
+        <select class="campo" id="campo-propiedad">
+          <option value="">Ninguna — no está en la cartera</option>
+          ${Object.values(cartera)
+            .sort((a, b) => (a.direccion || "").localeCompare(b.direccion || ""))
+            .map((p) => `<option value="${escapar(p.entity_id)}"${p.entity_id === n.entity_id_cartera ? " selected" : ""}>${
+              escapar(p.direccion || p.titulo || p.entity_id)}${p.activa ? "" : " (archivada)"}</option>`)
+            .join("")}
+        </select>
+        ${n.entity_id_cartera && cartera[n.entity_id_cartera]
+          ? html`<div class="botonera" style="margin-top:6px">
+               <button class="filtro" id="ver-propiedad">Ver la propiedad</button>
+             </div>`
+          : ""}
+      </div>
+    </section>
+  `);
+
+  marca.getElementById("campo-propiedad").addEventListener("change", (evento) => {
+    editarNegocio(estado, n.id, { entity_id_cartera: evento.target.value || null });
+    estado.redibujar();
+  });
+  const ver = marca.getElementById("ver-propiedad");
+  if (ver) ver.addEventListener("click", () => estado.irA("propiedad", n.entity_id_cartera));
+  return marca;
+}
+
+/* La gente del negocio (§7.6). Con el tiempo esto arma solo su BDR: la lista de quienes
+   ya operaron con el, que es el canal que mas ganancia le da. */
+function gente(n, estado) {
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2 class="titulo" style="font-size:17px">La gente</h2>
+        <span class="apunte">${hayPicker() ? "desde tu agenda" : "a mano"}</span>
+      </div>
+      <div id="roles"></div>
+    </section>
+  `);
+  const contenedor = seccion.getElementById("roles");
+
+  for (const [clave, etiqueta] of ROLES) {
+    const persona = n[clave] || {};
+    const url = enlaceWhatsapp(persona.telefono);
+    const bloque = document.createElement("div");
+    bloque.className = "persona";
+    bloque.innerHTML = html`
+      <label class="etiqueta" for="nombre-${clave}">${etiqueta}</label>
+      <div class="persona-campos">
+        <input class="campo" id="nombre-${clave}" type="text" placeholder="Nombre"
+               value="${escapar(persona.nombre || "")}">
+        <input class="campo" id="tel-${clave}" type="tel" inputmode="tel" placeholder="Teléfono"
+               value="${escapar(persona.telefono || "")}">
+      </div>
+      <div class="botonera" style="margin-top:6px">
+        ${hayPicker() ? html`<button class="filtro" data-agenda="${clave}">Elegir de la agenda</button>` : ""}
+        ${url ? html`<a class="filtro" href="${url}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+      </div>
+    `;
+
+    const guardar = () => {
+      const nombre = bloque.querySelector(`#nombre-${clave}`).value.trim();
+      const telefono = bloque.querySelector(`#tel-${clave}`).value.trim();
+      editarNegocio(estado, n.id, {
+        [clave]: nombre || telefono ? { nombre, telefono } : null,
+      });
+      estado.redibujar();
+    };
+    bloque.querySelector(`#nombre-${clave}`).addEventListener("change", guardar);
+    bloque.querySelector(`#tel-${clave}`).addEventListener("change", guardar);
+
+    const agenda = bloque.querySelector("[data-agenda]");
+    if (agenda) {
+      agenda.addEventListener("click", async () => {
+        const elegido = await elegirContacto();
+        if (!elegido) return;
+        editarNegocio(estado, n.id, { [clave]: elegido });
+        estado.redibujar();
+      });
+    }
+    contenedor.append(bloque);
+  }
+  return seccion;
+}
+
+function borrar(n, estado) {
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <p class="apunte" style="margin-bottom:12px">
+        Este negocio lo cargaste a mano. Si lo creaste sin querer, lo podés borrar.
+      </p>
+      <button class="boton boton-borrar" id="borrar-negocio">Borrar este negocio</button>
+    </section>
+  `);
+  const boton = seccion.getElementById("borrar-negocio");
+  boton.addEventListener("click", () => {
+    if (boton.dataset.seguro !== "si") {
+      boton.dataset.seguro = "si";
+      boton.textContent = "Tocá otra vez para borrarlo de verdad";
+      return;
+    }
+    borrarNegocio(estado, n.id);
+    estado.irA("negocios");
+  });
+  return seccion;
 }
 
 function campos(n, falta, estado) {

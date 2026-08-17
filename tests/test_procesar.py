@@ -318,5 +318,53 @@ class TestDuplicados(unittest.TestCase):
         self.assertEqual(len([e for e in eventos if e["tipo"] == "posible_duplicado"]), 1)
 
 
+class TestOverlayDelUsuario(unittest.TestCase):
+    """La app no escribe cartera.json: anota en mis_datos.json y el robot lo respeta (§3.3)."""
+
+    def test_lo_anotado_por_el_usuario_se_aplica_sobre_la_cartera(self):
+        mis_datos = {"cartera": {"e1": {"origen_captacion": "BDR",
+                                        "fecha_captacion_real": "2026-03-01",
+                                        "fecha_captacion_estimada": False}}}
+        cartera, _ = procesar.procesar({}, [propiedad("e1")], HOY, mis_datos)
+        self.assertEqual(cartera["e1"]["origen_captacion"], "BDR")
+        self.assertEqual(cartera["e1"]["fecha_captacion_real"], "2026-03-01")
+        self.assertFalse(cartera["e1"]["fecha_captacion_estimada"])
+
+    def test_los_datos_del_robot_no_se_tocan(self):
+        mis_datos = {"cartera": {"e1": {"notas": "hablar con el dueño"}}}
+        cartera, _ = procesar.procesar({}, [propiedad("e1", precio=123456.0)], HOY, mis_datos)
+        self.assertEqual(cartera["e1"]["precio"], 123456.0)
+        self.assertEqual(cartera["e1"]["notas"], "hablar con el dueño")
+
+    def test_el_overlay_no_puede_escribir_campos_que_son_del_robot(self):
+        mis_datos = {"cartera": {"e1": {"precio": 1, "estado": "reservada"}}}
+        cartera, _ = procesar.procesar({}, [propiedad("e1", precio=100000.0)], HOY, mis_datos)
+        self.assertEqual(cartera["e1"]["precio"], 100000.0)
+        self.assertEqual(cartera["e1"]["estado"], "publicada")
+
+    def test_una_anotacion_de_una_propiedad_que_ya_no_existe_no_rompe(self):
+        mis_datos = {"cartera": {"fantasma": {"notas": "vieja"}}}
+        cartera, _ = procesar.procesar({}, [propiedad("e1")], HOY, mis_datos)
+        self.assertEqual(list(cartera), ["e1"])
+
+    def test_el_usuario_puede_volver_a_incluir_un_duplicado_en_la_proyeccion(self):
+        # El detector apaga usar_en_proyeccion; el usuario dice que no son la misma.
+        propiedades = [
+            propiedad("e1", precio=490000.0, direccion="Gutenberg 6100"),
+            propiedad("e2", precio=490000.0, direccion="Gutenberg 6100"),
+        ]
+        sin_overlay, _ = procesar.procesar({}, propiedades, HOY)
+        self.assertFalse(sin_overlay["e2"]["usar_en_proyeccion"])
+
+        mis_datos = {"cartera": {"e2": {"usar_en_proyeccion": True}}}
+        con_overlay, _ = procesar.procesar({}, propiedades, HOY, mis_datos)
+        self.assertTrue(con_overlay["e2"]["usar_en_proyeccion"])
+
+    def test_sin_mis_datos_todo_sigue_funcionando_igual(self):
+        cartera, eventos = procesar.procesar({}, [propiedad("e1")], HOY)
+        self.assertTrue(cartera["e1"]["usar_en_proyeccion"])
+        self.assertEqual(len(eventos), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -2,21 +2,28 @@
 
 import { derivar } from "./lib/pendientes.js";
 import * as github from "./lib/github.js";
+import { fusionar } from "./lib/cartera.js";
 import { hayCambios, resumenCambios, sincronizar } from "./lib/guardado.js";
 import { dibujarSalud } from "./vistas/salud.js";
 import { dibujarHoy } from "./vistas/hoy.js";
 import { dibujarNegocios } from "./vistas/negocios.js";
 import { dibujarFicha } from "./vistas/ficha.js";
+import { dibujarCartera } from "./vistas/cartera.js";
+import { dibujarPropiedad } from "./vistas/propiedad.js";
+import { dibujarRenta } from "./vistas/renta.js";
 import { dibujarAjustes } from "./vistas/ajustes.js";
 
-const ARCHIVOS = ["cartera", "negocios", "ajustes", "eventos", "estado_robot", "mis_datos"];
+const ARCHIVOS = [
+  "cartera", "negocios", "ajustes", "eventos", "estado_robot", "mis_datos", "calculos_renta",
+];
 const VACIO_OBJETO = new Set(["cartera", "ajustes", "estado_robot", "mis_datos"]);
 
 const estado = {
   datos: {},
   hoy: new Date().toISOString().slice(0, 10),
   vista: "hoy",
-  foco: null,          // id del negocio abierto, cuando la vista es "ficha"
+  foco: null,          // id del negocio o de la propiedad abierta
+  precargaRenta: null, // precio que viaja de una propiedad a la calculadora
   token: github.leerToken(),
   sucios: new Set(),
   shas: {},
@@ -96,8 +103,15 @@ const VISTAS = {
   salud: dibujarSalud,
   negocios: dibujarNegocios,
   ficha: dibujarFicha,
+  cartera: dibujarCartera,
+  propiedad: dibujarPropiedad,
+  renta: dibujarRenta,
   ajustes: dibujarAjustes,
 };
+
+// La ficha de un negocio se llega desde Negocios, y la de una propiedad desde Cartera:
+// la barra de abajo tiene que quedar marcada en la pantalla de la que salio.
+const PADRE = { ficha: "negocios", propiedad: "cartera" };
 
 function dibujar() {
   const contenedor = document.getElementById("vista");
@@ -109,9 +123,9 @@ function dibujar() {
     contenedor.append(fabrica(estado));
   }
   window.scrollTo(0, 0);
+  const marcada = PADRE[estado.vista] || estado.vista;
   for (const boton of document.querySelectorAll(".nav-boton")) {
-    const activa = boton.dataset.vista === estado.vista;
-    boton.setAttribute("aria-current", activa ? "page" : "false");
+    boton.setAttribute("aria-current", boton.dataset.vista === marcada ? "page" : "false");
   }
   dibujarBarraGuardado();
   dibujarGlobo();
@@ -141,6 +155,8 @@ async function guardar() {
 
 async function arrancar() {
   estado.datos = await bajarDatos();
+  // Lo que el usuario edito de la cartera vive aparte (§3.3) y se superpone al leer.
+  estado.datos.cartera = fusionar(estado.datos.cartera, estado.datos.mis_datos);
   leerHash();
 
   document.getElementById("navegacion").addEventListener("click", (evento) => {
@@ -148,6 +164,7 @@ async function arrancar() {
     if (boton) irA(boton.dataset.vista);
   });
   document.getElementById("boton-guardar").addEventListener("click", guardar);
+  document.getElementById("boton-ajustes").addEventListener("click", () => irA("ajustes"));
   window.addEventListener("hashchange", () => { leerHash(); dibujar(); });
 
   // Si se cierra la app con cambios sin subir, avisar antes de perderlos.
