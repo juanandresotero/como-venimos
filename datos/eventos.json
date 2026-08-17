@@ -1,0 +1,197 @@
+[
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 240000.0
+  },
+  "direccion": "Gobernador Vigodet 2700",
+  "entity_id": "a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f|carga_inicial",
+  "internal_id": "940041154-217",
+  "tipo": "carga_inicial",
+  "titulo": "Venta 2 casas en Maroñas con cochera y gran salón"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "en_negociacion",
+   "moneda": "USD",
+   "precio": 60000.0
+  },
+  "direccion": "Flammarión 5000",
+  "entity_id": "45e27b03-b19a-4654-a163-4d0bf3307fac",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|45e27b03-b19a-4654-a163-4d0bf3307fac|carga_inicial",
+  "internal_id": "940041154-216",
+  "tipo": "carga_inicial",
+  "titulo": "Venta Apartamento en Malvin Norte de 2 dormitorios"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 490000.0
+  },
+  "direccion": "Gutenberg 6100",
+  "entity_id": "c9f554b2-5290-4e2f-9b88-fdac4cbd67d7",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|c9f554b2-5290-4e2f-9b88-fdac4cbd67d7|carga_inicial",
+  "internal_id": "940041154-197",
+  "tipo": "carga_inicial",
+  "titulo": "Venta gran casa en colon 5 dorm. con gran terreno"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 490000.0
+  },
+  "direccion": "Gutenberg 6100",
+  "entity_id": "2c76d23c-2d94-4cd4-8120-d052679e1608",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|2c76d23c-2d94-4cd4-8120-d052679e1608|carga_inicial",
+  "internal_id": "940041154-198",
+  "tipo": "carga_inicial",
+  "titulo": "Venta gran casa en colon 5 dorm. con gran terreno"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 245000.0
+  },
+  "direccion": "Ovidio Fernandez Rios 3900",
+  "entity_id": "f123f605-dc13-4aaa-ad8a-94ad44a11db6",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|f123f605-dc13-4aaa-ad8a-94ad44a11db6|carga_inicial",
+  "internal_id": "940041154-179",
+  "tipo": "carga_inicial",
+  "titulo": "Venta gran padrón punta de rieles casa y terreno"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "en_negociacion",
+   "moneda": "USD",
+   "precio": 80000.0
+  },
+  "direccion": "Juana de Ibarbourou 200",
+  "entity_id": "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|bbc202e6-4ad7-49f3-9b7c-e667810aa8ea|carga_inicial",
+  "internal_id": "940041154-147",
+  "tipo": "carga_inicial",
+  "titulo": "Venta terreno y gran Casa 4 dorm. Barros Blancos"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 94000.0
+  },
+  "direccion": "Eusebio Vidal 3100",
+  "entity_id": "29b0df7e-7d40-4283-99b0-f88c2f168377",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|29b0df7e-7d40-4283-99b0-f88c2f168377|carga_inicial",
+  "internal_id": "940041154-210",
+  "tipo": "carga_inicial",
+  "titulo": "Venta 2 casas mismo padron flor de Maroñas cochera"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "en_negociacion",
+   "moneda": "USD",
+   "precio": 56000.0
+  },
+  "direccion": "San José 1200",
+  "entity_id": "a4b43687-a487-485c-82ae-62118b687ec1",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|a4b43687-a487-485c-82ae-62118b687ec1|carga_inicial",
+  "internal_id": "940041154-207",
+  "tipo": "carga_inicial",
+  "titulo": "Venta Casa 3 dormitorios playa pascual parrillero"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "en_negociacion",
+   "moneda": "USD",
+   "precio": 43000.0
+  },
+  "direccion": "Estanislao Vega 3900",
+  "entity_id": "d8d7855f-b0bb-4122-bc7e-74c987f50396",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|d8d7855f-b0bb-4122-bc7e-74c987f50396|carga_inicial",
+  "internal_id": "940041154-205",
+  "tipo": "carga_inicial",
+  "titulo": "Casa 1 Dormitorio cochera Cerrito ideal negocio"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "en_negociacion",
+   "moneda": "USD",
+   "precio": 165000.0
+  },
+  "direccion": "Minas 1600",
+  "entity_id": "c9e235a6-5bb0-47a6-b9aa-62b2283bb94a",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|c9e235a6-5bb0-47a6-b9aa-62b2283bb94a|carga_inicial",
+  "internal_id": "940041154-204",
+  "tipo": "carga_inicial",
+  "titulo": "Venta Apartamento 2 dormitorios Cordon con jacuzzi"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "en_negociacion",
+   "moneda": "USD",
+   "precio": 54000.0
+  },
+  "direccion": "Camino Tomkinson 2200",
+  "entity_id": "cab1949c-02eb-445f-989a-68c5f31523df",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|cab1949c-02eb-445f-989a-68c5f31523df|carga_inicial",
+  "internal_id": "940041154-150",
+  "tipo": "carga_inicial",
+  "titulo": "Venta salón 3 dormitorios cochera paso de la arena"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "reservada",
+   "moneda": "USD",
+   "precio": 89900.0
+  },
+  "direccion": "San Fructuoso 1200",
+  "entity_id": "5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6|carga_inicial",
+  "internal_id": "940041154-196",
+  "tipo": "carga_inicial",
+  "titulo": "Venta apartamento 2 dormitiros Reducto con cochera"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "direccion": "Gutenberg 6100",
+   "duplicado_de": "2c76d23c-2d94-4cd4-8120-d052679e1608",
+   "precio": 490000.0
+  },
+  "direccion": "Gutenberg 6100",
+  "entity_id": "c9f554b2-5290-4e2f-9b88-fdac4cbd67d7",
+  "fecha": "2026-08-17",
+  "id": "2026-08-17|c9f554b2-5290-4e2f-9b88-fdac4cbd67d7|posible_duplicado",
+  "internal_id": "940041154-197",
+  "tipo": "posible_duplicado",
+  "titulo": "Venta gran casa en colon 5 dorm. con gran terreno"
+ }
+]
