@@ -1,0 +1,49 @@
+name: Robot de cartera
+
+# La corrida REAL: 1 vez por dia (y a mano desde la pestaña Actions cuando haga falta).
+# La PRUEBA: cada vez que se toca el codigo, para cazar errores antes de la corrida diaria.
+on:
+  schedule:
+    - cron: "0 9 * * *"      # 09:00 UTC = 06:00 en Uruguay
+  workflow_dispatch: {}
+  push:
+    paths:
+      - "robot/**"
+      - "tests/**"
+      - ".github/workflows/robot.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Correr los tests
+        run: python -m unittest discover -s tests -t . -v
+      - name: Probar el robot sin escribir nada
+        run: DRY_RUN=1 python -m robot.main
+
+  grabar:
+    # Solo en la corrida diaria o a mano; en los push alcanza con las pruebas.
+    if: github.event_name != 'push'
+    needs: pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Bajar la cartera y anotar los cambios
+        run: python -m robot.main
+      - name: Guardar los datos nuevos
+        run: |
+          git config user.name "como-venimos-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add datos/
+          git commit -m "datos: cartera del $(date -u +%F)" || echo "sin cambios"
+          git push
