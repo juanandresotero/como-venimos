@@ -2877,12 +2877,7 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "falta_fecha_inicio",
-    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
-   }
-  ],
+  "avisos": [],
   "barrio": "Cerrito",
   "base": 640.5,
   "categoria_vigente": null,
@@ -2892,11 +2887,11 @@
   "excel_facturado": 640,
   "excel_importe": 216,
   "facturacion": 640,
-  "fecha_boleto": null,
+  "fecha_boleto": "2025-06-18",
   "fecha_fin": "2025-08-11",
   "fecha_fin_estimada": false,
-  "fecha_inicio": null,
-  "ficha_completa": false,
+  "fecha_inicio": "2025-05-26",
+  "ficha_completa": true,
   "ganancia": 216,
   "id": "excel-83",
   "moneda": "USD",
@@ -2912,7 +2907,8 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "ficha_completa_momento": null
  },
  {
   "agente_compra": "Juan Andrés Otero",
