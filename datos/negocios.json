@@ -3014,7 +3014,7 @@
   "fecha_fin": null,
   "fecha_fin_estimada": false,
   "fecha_inicio": "2026-05-14",
-  "ficha_completa": false,
+  "ficha_completa": true,
   "ganancia": 840,
   "id": "excel-86",
   "moneda": "USD",
@@ -3031,11 +3031,20 @@
   "es_suplencia": false,
   "yo_referi": false,
   "fecha_negociacion": "2026-08-17",
-  "ficha_vigente": false,
+  "ficha_vigente": true,
   "agente_vende_nombre": null,
   "agente_compra_nombre": null,
   "referidor": null,
-  "referidor_nombre": null
+  "referidor_nombre": null,
+  "cliente_comprador": {
+   "nombre": "Sebastian Felicini Por Estanislao",
+   "telefono": "+59892405196"
+  },
+  "cliente_vendedor": {
+   "nombre": "claudio Pagani Dueño Estanislao",
+   "telefono": "+59899601877"
+  },
+  "ficha_completa_momento": "en_negociacion"
  },
  {
   "id": "manual-1",
