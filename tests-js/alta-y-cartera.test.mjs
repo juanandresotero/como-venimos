@@ -259,3 +259,40 @@ test("borrar el dato en el negocio no borra el de la propiedad", () => {
   assert.equal(e.datos.cartera.aaa.fecha_captacion_real, "2025-02-03",
     "vaciar un campo no puede borrar lo que ya estaba confirmado en la propiedad");
 });
+
+/* Un alquiler que rota genera tres negocios sobre la misma propiedad, cada uno con su
+   fecha de inicio. La CAPTACION de la propiedad es una sola: la del principio. */
+test("el segundo alquiler no pisa la fecha de captacion con una posterior", () => {
+  const e = conPropiedad();
+  editarNegocio(e, "excel-9", { fecha_inicio: "2025-02-03" });
+  assert.equal(e.datos.cartera.aaa.fecha_captacion_real, "2025-02-03");
+
+  e.datos.negocios.push({
+    id: "excel-10", entity_id_cartera: "aaa", tipo_negocio: "alquiler", estado: "en_curso",
+    fecha_inicio: null, fecha_fin: null, precio_operacion: 900, pct_comision_total: 1,
+    puntas: 1, avisos: [],
+  });
+  editarNegocio(e, "excel-10", { fecha_inicio: "2026-07-01" });
+  assert.equal(e.datos.cartera.aaa.fecha_captacion_real, "2025-02-03",
+    "la captacion sigue siendo la del primero, no la del alquiler nuevo");
+});
+
+test("pero si el negocio nuevo es ANTERIOR, adelanta la captacion", () => {
+  const e = conPropiedad();
+  editarNegocio(e, "excel-9", { fecha_inicio: "2025-02-03" });
+  e.datos.negocios.push({
+    id: "excel-10", entity_id_cartera: "aaa", tipo_negocio: "alquiler", estado: "en_curso",
+    fecha_inicio: null, fecha_fin: null, avisos: [],
+  });
+  editarNegocio(e, "excel-10", { fecha_inicio: "2024-05-01" });
+  assert.equal(e.datos.cartera.aaa.fecha_captacion_real, "2024-05-01",
+    "la tenia desde antes de lo que se creia");
+});
+
+test("mientras la captacion sea la estimacion del robot, cualquier fecha la reemplaza", () => {
+  const e = conPropiedad();
+  assert.equal(e.datos.cartera.aaa.fecha_captacion_estimada, true);
+  editarNegocio(e, "excel-9", { fecha_inicio: "2026-07-01" });
+  assert.equal(e.datos.cartera.aaa.fecha_captacion_real, "2026-07-01");
+  assert.equal(e.datos.cartera.aaa.fecha_captacion_estimada, false);
+});
