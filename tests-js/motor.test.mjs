@@ -187,3 +187,21 @@ test("revisar: no modifica el negocio original", () => {
   revisar(original, AJUSTES, "2026-08-17");
   assert.deepEqual(original.avisos, []);
 });
+
+/* Bug real del 2026-08-17: al cargar "desde cuándo sos RAP", el <input type="date"> mandó
+   el cambio a medio tipear y quedó guardado el año 0001. Con una fecha así fuera de rango,
+   ningún negocio de 2026 tendría categoría vigente y la ganancia se volvía null en
+   silencio: la plata desaparecía sin que nada lo dijera. */
+test("revisar: si no hay categoria vigente, avisa en vez de borrar la ganancia", () => {
+  const rotos = { ...AJUSTES, categorias: [
+    { categoria: "RAP", split_pct: 0.45, fee_mensual_usd: 70, desde: "2030-01-01", hasta: null },
+  ] };
+  const r = revisar(negocio({ ganancia: 1350 }), rotos, "2026-08-17");
+  assert.ok(tipos(r).includes("sin_categoria"));
+  assert.equal(r.ganancia, 1350, "la ganancia que ya estaba no se pierde");
+  assert.equal(r.facturacion, 3000, "la facturacion no depende de la categoria");
+});
+
+test("revisar: con la categoria bien puesta no avisa nada de eso", () => {
+  assert.ok(!tipos(revisar(negocio(), AJUSTES, "2026-08-17")).includes("sin_categoria"));
+});

@@ -4,7 +4,7 @@
    completar. Cada cambio se aplica al instante y queda en la cola para subir. */
 
 import { editarNegocio, borrarNegocio } from "../lib/guardado.js";
-import { plata, plataUSD, escapar } from "../lib/formato.js";
+import { plata, plataUSD, escapar, fechaRazonable } from "../lib/formato.js";
 import {
   REGIMENES, esBusqueda, puntasSegunAgentes, nombrePropio, OTRO_AGENTE,
 } from "../lib/motor.js";
@@ -231,6 +231,8 @@ function campos(n, falta, estado) {
     const control = fila.querySelector(".campo");
     control.addEventListener("change", () => {
       const crudo = control.value;
+      // El navegador avisa del cambio mientras se tipea el año: no guardar a medio escribir.
+      if (tipo === "date" && !fechaRazonable(crudo)) return;
       const nuevo = tipo === "number" ? (crudo === "" ? null : Number(crudo)) : crudo || null;
       const extra = derivar ? derivar(nuevo) : {};
       editarNegocio(estado, n.id, { [clave]: nuevo, ...extra });

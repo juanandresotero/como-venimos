@@ -5,7 +5,7 @@
 
 import { guardarToken, leerToken, borrarToken, probarToken, REPO } from "../lib/github.js";
 import { editarAjustes } from "../lib/guardado.js";
-import { plata, pct } from "../lib/formato.js";
+import { plata, pct, fechaRazonable } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -163,6 +163,9 @@ function tuNegocio(estado) {
     `;
     const control = fila.querySelector(".campo");
     control.addEventListener("change", () => {
+      // El navegador avisa del cambio mientras se tipea el año. Una fecha a medio escribir
+      // acá deja sin categoría vigente a todo el año y hace desaparecer la ganancia.
+      if (tipo === "date" && !fechaRazonable(control.value)) return;
       alCambiar(tipo === "number" ? (control.value === "" ? null : Number(control.value)) : control.value);
       estado.redibujar();
     });
@@ -251,6 +254,22 @@ function tuNegocio(estado) {
       estado.redibujar();
     });
     contenedorProb.append(fila);
+  }
+
+  // Si la fecha de la categoria deja al año en curso sin ninguna vigente, la ganancia de
+  // todos los negocios de este año no se puede calcular. Se dice acá, donde se rompe.
+  const alInicioDelAnio = `${anio}-01-01`;
+  const hayVigente = (a.categorias || []).some(
+    (c) => (!c.desde || c.desde <= estado.hoy) && (!c.hasta || c.hasta >= alInicioDelAnio)
+  );
+  if (!hayVigente) {
+    const alarma = document.createElement("p");
+    alarma.className = "aviso";
+    alarma.style.margin = "0";
+    alarma.textContent =
+      `Con estas fechas, en ${anio} no tenés ninguna categoría vigente y tu ganancia no se `
+      + `puede calcular. Revisá desde cuándo estás en la categoría de arriba.`;
+    contenedor.append(alarma);
   }
 
   // Un resumen en criollo de lo que significan esos numeros juntos.

@@ -9,7 +9,7 @@ import {
   ORIGENES, DESENLACES,
 } from "../lib/cartera.js";
 import { editarPropiedad, crearNegocio } from "../lib/guardado.js";
-import { plata, plataUSD, fechaCorta, escapar } from "../lib/formato.js";
+import { plata, plataUSD, fechaCorta, escapar, fechaRazonable } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -211,6 +211,8 @@ function campos(p, estado) {
     `;
     const control = fila.querySelector(".campo");
     control.addEventListener("change", () => {
+      // El navegador avisa del cambio mientras se tipea el año: no guardar a medio escribir.
+      if (tipo === "date" && !fechaRazonable(control.value)) return;
       const cambios = { [clave]: control.value || null };
       // Si toca la fecha de captacion, deja de ser una estimacion del robot.
       if (clave === "fecha_captacion_real") cambios.fecha_captacion_estimada = false;

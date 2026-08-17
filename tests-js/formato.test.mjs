@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { plata, plataUSD, compacto, pct, fechaCorta, diasEntre, mes, escapar } from "../lib/formato.js";
+import {
+  plata, plataUSD, compacto, pct, fechaCorta, diasEntre, mes, escapar, fechaRazonable,
+} from "../lib/formato.js";
 
 test("plata: separador de miles con punto, como en Uruguay", () => {
   assert.equal(plata(20079), "20.079");
@@ -59,4 +61,20 @@ test("mes devuelve el numero de mes", () => {
 test("escapar deja el HTML inofensivo", () => {
   assert.equal(escapar('<b>Calle & "Co"</b>'), "&lt;b&gt;Calle &amp; &quot;Co&quot;&lt;/b&gt;");
   assert.equal(escapar(null), "");
+});
+
+/* Un <input type="date"> dispara "change" mientras se tipea el año. */
+test("una fecha a medio escribir se rechaza", () => {
+  assert.equal(fechaRazonable("0001-09-01"), false);
+  assert.equal(fechaRazonable("0202-09-01"), false);
+  assert.equal(fechaRazonable("20-09-01"), false);
+  assert.equal(fechaRazonable("no es fecha"), false);
+});
+
+test("una fecha normal se acepta, y vacio tambien", () => {
+  assert.equal(fechaRazonable("2026-08-17"), true);
+  assert.equal(fechaRazonable("2000-01-01"), true);
+  assert.equal(fechaRazonable("2100-12-31"), true);
+  assert.equal(fechaRazonable(""), true, "vacio quiere decir 'todavia no se'");
+  assert.equal(fechaRazonable(null), true);
 });
