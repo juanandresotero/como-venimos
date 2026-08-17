@@ -92,3 +92,35 @@ test("cuenta el total de pendientes", () => {
   const total = grupos.reduce((t, g) => t + g.items.length, 0);
   assert.equal(total, 2);
 });
+
+/* Se creo un duplicado sobre Flammarion sin que nadie se diera cuenta: el boton de la
+   ficha de propiedad decia "cargar un negocio de aca" y creaba uno nuevo siempre. */
+test("avisa cuando quedan dos negocios abiertos sobre la misma propiedad", () => {
+  const grupos = derivar([
+    { id: "a", entity_id_cartera: "flam", estado: "en_curso", direccion: "Flammarión 5000", avisos: [] },
+    { id: "b", entity_id_cartera: "flam", estado: "en_curso", direccion: "Flammarión 5000", avisos: [] },
+  ], [], "2026-08-17");
+  const duplicados = grupos.find((g) => g.clave === "negocio_duplicado");
+  assert.ok(duplicados, "tiene que avisar");
+  assert.equal(duplicados.items.length, 2, "los dos aparecen, para poder elegir cual borrar");
+  assert.ok(duplicados.urgente);
+});
+
+/* Un alquiler que rota genera muchos negocios sobre la misma propiedad, pero se van
+   cerrando. Dos CERRADOS no son un duplicado. */
+test("varios negocios ya cerrados sobre la misma propiedad no son un duplicado", () => {
+  const grupos = derivar([
+    { id: "a", entity_id_cartera: "flam", estado: "cerrado", ficha_completa: true, avisos: [] },
+    { id: "b", entity_id_cartera: "flam", estado: "cerrado", ficha_completa: true, avisos: [] },
+    { id: "c", entity_id_cartera: "flam", estado: "en_curso", avisos: [] },
+  ], [], "2026-08-17");
+  assert.equal(grupos.find((g) => g.clave === "negocio_duplicado"), undefined);
+});
+
+test("dos negocios abiertos SIN propiedad no se toman por duplicados", () => {
+  const grupos = derivar([
+    { id: "a", entity_id_cartera: null, estado: "en_curso", avisos: [] },
+    { id: "b", entity_id_cartera: null, estado: "en_curso", avisos: [] },
+  ], [], "2026-08-17");
+  assert.equal(grupos.find((g) => g.clave === "negocio_duplicado"), undefined);
+});

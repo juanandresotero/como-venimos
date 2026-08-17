@@ -62,20 +62,59 @@ function cabecera(p, estado) {
   return marca;
 }
 
+/* Una propiedad puede generar muchos negocios (se alquila cinco veces y después se vende),
+   pero lo normal al entrar es querer SEGUIR con el que ya está, no abrir otro.
+
+   Antes el único botón decía "Cargar un negocio de acá" y creaba uno nuevo siempre. Con
+   eso se armó un duplicado sobre Flammarión sin que nadie se diera cuenta. */
 function acciones(p, estado) {
+  const abiertos = negociosDe(estado.datos.negocios, p.entity_id)
+    .filter((n) => n.estado !== "cerrado");
+  const enCurso = abiertos[0] || null;
+  const hubo = negociosDe(estado.datos.negocios, p.entity_id).length > 0;
+
   const marca = nodo(html`
     <section class="tarjeta">
+      ${enCurso
+        ? html`<p class="apunte" style="margin:0 0 10px">
+             Esta propiedad ya tiene un negocio abierto. Lo normal es seguir con ese.
+           </p>`
+        : ""}
       <div class="botonera" style="margin-top:0">
-        <button class="boton boton-primario" id="nuevo-negocio">Cargar un negocio de acá</button>
+        ${enCurso
+          ? html`<button class="boton boton-primario" id="seguir-negocio">Seguir con su negocio</button>
+                 <button class="boton" id="nuevo-negocio">Cargar otro negocio</button>`
+          : html`<button class="boton boton-primario" id="nuevo-negocio">
+               ${hubo ? "Cargar otro negocio de acá" : "Cargar el negocio de esta propiedad"}
+             </button>`}
         ${p.operacion === "venta"
           ? html`<button class="boton" id="calcular-renta">Calcular su renta</button>`
           : ""}
         ${p.link ? html`<a class="boton" href="${escapar(p.link)}" target="_blank" rel="noopener">Ver en RE/MAX</a>` : ""}
       </div>
+      <p class="apunte" id="aviso-otro" style="margin-top:10px" hidden></p>
     </section>
   `);
 
-  marca.getElementById("nuevo-negocio").addEventListener("click", () => {
+  const seguir = marca.getElementById("seguir-negocio");
+  if (seguir) seguir.addEventListener("click", () => estado.irA("ficha", enCurso.id));
+
+  const botonNuevo = marca.getElementById("nuevo-negocio");
+  const avisoOtro = marca.getElementById("aviso-otro");
+
+  botonNuevo.addEventListener("click", () => {
+    // Si ya hay uno abierto, se pide confirmar: crear dos por la misma venta es el error
+    // que este boton provocaba sin avisar.
+    if (enCurso && botonNuevo.dataset.seguro !== "si") {
+      botonNuevo.dataset.seguro = "si";
+      botonNuevo.textContent = "Sí, es otro negocio distinto";
+      avisoOtro.hidden = false;
+      avisoOtro.textContent =
+        `Ojo: ya tenés "${enCurso.direccion || "un negocio"}" abierto en esta propiedad. `
+        + `Esto crea uno SEPARADO, para cuando de verdad son dos (un alquiler que se `
+        + `renueva, por ejemplo). Si querés corregir el que ya está, tocá "Seguir con su negocio".`;
+      return;
+    }
     const atajo = p.operacion === "alquiler" ? "alquiler" : "venta";
     // Las fechas del camino ya las sabe el robot: cuándo se publicó, cuándo pasó a
     // negociación y cuándo quedó reservada. No hay por qué volver a pedirlas.
