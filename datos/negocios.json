@@ -2451,12 +2451,7 @@
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "falta_fecha_inicio",
-    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
-   }
-  ],
+  "avisos": [],
   "barrio": "Pocitos",
   "base": 1000,
   "categoria_vigente": null,
@@ -2466,11 +2461,11 @@
   "excel_facturado": 1000,
   "excel_importe": 450,
   "facturacion": 1000,
-  "fecha_boleto": null,
-  "fecha_fin": "2025-03-12",
+  "fecha_boleto": "2025-09-17",
+  "fecha_fin": "2025-09-23",
   "fecha_fin_estimada": false,
-  "fecha_inicio": null,
-  "ficha_completa": false,
+  "fecha_inicio": "2025-08-27",
+  "ficha_completa": true,
   "ganancia": 450,
   "id": "excel-71",
   "moneda": "USD",
@@ -2486,7 +2481,8 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "ficha_completa_momento": null
  },
  {
   "agente_compra": "Juan Andrés Otero",
