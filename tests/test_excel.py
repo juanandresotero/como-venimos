@@ -39,6 +39,14 @@ class TestAFecha(unittest.TestCase):
         self.assertIsNone(excel.a_fecha(""))
 
 
+# El Excel es un archivo de trabajo del usuario, no parte de la app: esta en .gitignore,
+# asi que en GitHub no existe. Lo que SI se versiona y se verifica en CI es el resultado
+# de la importacion (datos/negocios.json), en tests/test_importacion_real.py.
+@unittest.skipUnless(
+    excel.ARCHIVO.exists(),
+    "negocios.xlsx no esta (es local, no se versiona) — la importacion se verifica "
+    "igual en test_importacion_real.py",
+)
 class TestLeer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
