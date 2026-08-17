@@ -7,6 +7,11 @@
    "fecha_captacion_real": "2026-07-30",
    "fecha_captacion_estimada": false,
    "origen_captacion": "Cliente antiguo"
+  },
+  "d8d7855f-b0bb-4122-bc7e-74c987f50396": {
+   "fecha_captacion_real": "2026-05-14",
+   "fecha_captacion_estimada": false,
+   "origen_captacion": "Ref. Martin"
   }
  }
 }
