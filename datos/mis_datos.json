@@ -1,5 +1,12 @@
 {
  "eventos_atendidos": [
   "2026-08-17|c9f554b2-5290-4e2f-9b88-fdac4cbd67d7|posible_duplicado"
- ]
+ ],
+ "cartera": {
+  "45e27b03-b19a-4654-a163-4d0bf3307fac": {
+   "fecha_captacion_real": "2026-07-30",
+   "fecha_captacion_estimada": false,
+   "origen_captacion": "Cliente antiguo"
+  }
+ }
 }
