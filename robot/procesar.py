@@ -70,6 +70,13 @@ def _actualizar(fila: dict, prop: dict, hoy: str) -> list:
     fila["visto_ultima_vez"] = hoy
     fila["activa"] = True
 
+    # Si la habiamos dado de baja y volvio a aparecer, se limpia la baja.
+    if fila.get("fecha_desaparicion"):
+        fila["fecha_desaparicion"] = None
+        fila["estado_al_desaparecer"] = None
+        fila["desenlace_propuesto"] = None
+        eventos.append(_evento("reaparecio", prop, hoy, {"estado": prop["estado"]}))
+
     if precio_previo is not None and prop["precio"] != precio_previo:
         fila["historial_precio"].append(
             {"fecha": hoy, "precio": prop["precio"], "moneda": prop["moneda"]}
@@ -95,14 +102,40 @@ def _actualizar(fila: dict, prop: dict, hoy: str) -> list:
     return eventos
 
 
+def _marcar_bajas(cartera: dict, vistos: set, hoy: str) -> list:
+    """Las que estaban y hoy no aparecen se dan de baja, con una propuesta de que paso.
+
+    Es SOLO una propuesta. Una propiedad tambien desaparece si vencio el contrato, si el
+    dueño la retiro o si paso a otro agente. El desenlace lo confirma el usuario.
+    """
+    eventos = []
+    for entity_id, fila in cartera.items():
+        if entity_id in vistos or not fila.get("activa", True):
+            continue
+        estado = fila.get("estado")
+        fila["activa"] = False
+        fila["fecha_desaparicion"] = hoy
+        fila["estado_al_desaparecer"] = estado
+        fila["desenlace_propuesto"] = "vendida" if estado == "reservada" else "caida"
+        eventos.append(_evento("baja", fila, hoy, {
+            "estado_al_desaparecer": estado,
+            "desenlace_propuesto": fila["desenlace_propuesto"],
+            "precio": fila.get("precio"),
+            "moneda": fila.get("moneda"),
+        }))
+    return eventos
+
+
 def procesar(cartera_previa: dict, propiedades_hoy: list, hoy: str):
     """Devuelve (cartera_nueva, eventos_nuevos). No modifica cartera_previa."""
     cartera = {clave: dict(fila) for clave, fila in cartera_previa.items()}
     eventos = []
     primera_corrida = not cartera_previa
+    vistos = set()
 
     for prop in propiedades_hoy:
         entity_id = prop["entity_id"]
+        vistos.add(entity_id)
         if entity_id in cartera:
             eventos += _actualizar(cartera[entity_id], prop, hoy)
         else:
@@ -115,4 +148,5 @@ def procesar(cartera_previa: dict, propiedades_hoy: list, hoy: str):
                 "estado": prop["estado"],
             }))
 
+    eventos += _marcar_bajas(cartera, vistos, hoy)
     return cartera, eventos

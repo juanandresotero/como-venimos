@@ -156,5 +156,56 @@ class TestCambioDeEstado(unittest.TestCase):
         self.assertEqual(sorted(tipos(eventos)), ["cambio_estado", "cambio_precio"])
 
 
+class TestBajas(unittest.TestCase):
+    def test_desaparecer_estando_reservada_propone_vendida(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", estado="reservada")], AYER)
+        cartera, eventos = procesar.procesar(cartera, [], HOY)
+
+        self.assertEqual(tipos(eventos), ["baja"])
+        self.assertEqual(eventos[0]["detalle"]["desenlace_propuesto"], "vendida")
+        self.assertEqual(eventos[0]["detalle"]["estado_al_desaparecer"], "reservada")
+
+    def test_desaparecer_estando_publicada_propone_caida(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", estado="publicada")], AYER)
+        cartera, eventos = procesar.procesar(cartera, [], HOY)
+        self.assertEqual(eventos[0]["detalle"]["desenlace_propuesto"], "caida")
+
+    def test_desaparecer_estando_en_negociacion_propone_caida(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", estado="en_negociacion")], AYER)
+        cartera, eventos = procesar.procesar(cartera, [], HOY)
+        self.assertEqual(eventos[0]["detalle"]["desenlace_propuesto"], "caida")
+
+    def test_la_baja_marca_la_fila_y_guarda_la_fecha(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", estado="reservada")], AYER)
+        cartera, _ = procesar.procesar(cartera, [], HOY)
+        fila = cartera["e1"]
+        self.assertFalse(fila["activa"])
+        self.assertEqual(fila["fecha_desaparicion"], HOY)
+        self.assertEqual(fila["estado_al_desaparecer"], "reservada")
+        self.assertEqual(fila["desenlace_propuesto"], "vendida")
+
+    def test_no_avisa_dos_veces_por_la_misma_baja(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1")], AYER)
+        cartera, _ = procesar.procesar(cartera, [], HOY)
+        cartera, eventos = procesar.procesar(cartera, [], "2026-08-19")
+        self.assertEqual(eventos, [])
+
+    def test_la_propiedad_dada_de_baja_no_se_borra(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1")], AYER)
+        cartera, _ = procesar.procesar(cartera, [], HOY)
+        self.assertIn("e1", cartera)
+
+    def test_si_reaparece_se_limpia_la_baja_y_avisa(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1")], AYER)
+        cartera, _ = procesar.procesar(cartera, [], HOY)
+        cartera, eventos = procesar.procesar(cartera, [propiedad("e1")], "2026-08-19")
+
+        self.assertIn("reaparecio", tipos(eventos))
+        fila = cartera["e1"]
+        self.assertTrue(fila["activa"])
+        self.assertIsNone(fila["fecha_desaparicion"])
+        self.assertIsNone(fila["desenlace_propuesto"])
+
+
 if __name__ == "__main__":
     unittest.main()
