@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import {
   AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, ORIGEN_A_REGIMEN,
   regimenDe, marcaActual, admiteMarcas, MARCAS, TIPOS_NEGOCIO, YO,
-  origenSegunReferidor, esOrigenDeReferido,
+  origenSegunReferidor, esOrigenDeReferido, normalizarOrigen,
 } from "../lib/catalogos.js";
 
 test("los agentes son la lista corta que se acordo", () => {
@@ -121,4 +121,44 @@ test("se reconoce cuando el origen ya dice que fue un referido", () => {
   assert.equal(esOrigenDeReferido("B.d.r."), false);
   assert.equal(esOrigenDeReferido("Sin origen"), false);
   assert.equal(esOrigenDeReferido(null), false);
+});
+
+/* El Excel escribia los origenes distinto. Si no se traducen, el desplegable no encuentra
+   el valor y aparece VACIO teniendo el dato cargado. */
+test("el vocabulario del Excel se traduce al de hoy", () => {
+  assert.equal(normalizarOrigen("Referido - BDR"), "Ref. B.d.r.");
+  assert.equal(normalizarOrigen("BDR"), "B.d.r.");
+  assert.equal(normalizarOrigen("Referido - Martín"), "Ref. Martin");
+  assert.equal(normalizarOrigen("Referido - RE/MAX"), "Ref. Remax");
+  assert.equal(normalizarOrigen("Referido - cliente"), "Ref. Cliente");
+  assert.equal(normalizarOrigen("Redes pagas"), "Redes sociales Campaña");
+});
+
+test("lo que ya esta en el vocabulario nuevo no se toca", () => {
+  for (const o of ORIGENES) assert.equal(normalizarOrigen(o), o);
+});
+
+test("un origen desconocido se conserva tal cual, no se borra", () => {
+  assert.equal(normalizarOrigen("Otros"), "Otros");
+  assert.equal(normalizarOrigen(null), null);
+  assert.equal(normalizarOrigen(""), null);
+});
+
+/* Traducir NO puede cambiarle la regla de comision a ningun negocio. */
+test("traducir el origen no cambia el regimen de ninguno de los 85", () => {
+  const negocios = JSON.parse(
+    readFileSync(new URL("../datos/negocios.json", import.meta.url), "utf8")
+  );
+  for (const n of negocios) {
+    const traducido = { ...n, origen_captacion: normalizarOrigen(n.origen_captacion) };
+    assert.equal(regimenDe(traducido), regimenDe(n), `${n.id} cambiaria de plata`);
+  }
+});
+
+test("todo origen traducido cae en la lista que se ofrece", () => {
+  const conocidos = new Set([...ORIGENES, "Otros", "Sin origen"]);
+  for (const viejo of ["BDR", "Referido - BDR", "Referido - Martín", "Referido - RE/MAX",
+                       "Referido - Team", "Referido - cliente", "Redes pagas"]) {
+    assert.ok(conocidos.has(normalizarOrigen(viejo)), `${viejo} traduce a algo que no esta`);
+  }
 });

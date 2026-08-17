@@ -9,6 +9,16 @@ import {
   negociosDe, rendimiento, DESENLACES,
 } from "../lib/cartera.js";
 import { ORIGENES } from "../lib/catalogos.js";
+
+/* Un valor cargado que no este en la lista se conserva como opcion, en vez de dejar el
+   desplegable vacio como si faltara el dato. */
+function opcionesCon(lista, actual) {
+  const opciones = lista.map((v) => (Array.isArray(v) ? v : [v, v]));
+  if (actual && !opciones.some(([v]) => String(v) === String(actual))) {
+    opciones.unshift([actual, actual]);
+  }
+  return opciones;
+}
 import { editarPropiedad } from "../lib/guardado.js";
 import { plata, plataUSD, fechaCorta, escapar, fechaRazonable } from "../lib/formato.js";
 
@@ -237,7 +247,7 @@ function campos(p, estado) {
   agregar("fecha_captacion_real", "Cuándo la captaste de verdad", "date",
     p.fecha_captacion_real, null, p.fecha_captacion_estimada);
   agregar("origen_captacion", "De dónde salió", null, p.origen_captacion,
-    ORIGENES.map((o) => [o, o]), !p.origen_captacion);
+    opcionesCon(ORIGENES, p.origen_captacion), !p.origen_captacion);
   if (!p.activa) {
     agregar("desenlace_confirmado", "Qué pasó al final", null, p.desenlace_confirmado,
       DESENLACES, !p.desenlace_confirmado);

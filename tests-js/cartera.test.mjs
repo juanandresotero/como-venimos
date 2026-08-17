@@ -190,3 +190,32 @@ test("un negocio de otra propiedad no la toca", () => {
   const r = completarConNegocios(cartera, [{ entity_id_cartera: "zzz", origen_captacion: "B.d.r." }]);
   assert.equal(r.aaa.origen_captacion, null);
 });
+
+/* Paso de verdad: la propiedad decia "Cliente antiguo" y su negocio "Ref. B.d.r.". */
+test("si propiedad y negocio dicen origenes distintos, gana el del negocio", () => {
+  const cartera = { aaa: propiedad({ origen_captacion: "Cliente antiguo" }) };
+  const negocios = [{ entity_id_cartera: "aaa", fecha_inicio: "2025-01-01", origen_captacion: "Ref. B.d.r." }];
+  assert.equal(completarConNegocios(cartera, negocios).aaa.origen_captacion, "Ref. B.d.r.",
+    "el del negocio decide la comision: ese tiene que estar bien si o si");
+});
+
+test("el origen sale del negocio mas viejo, no del ultimo alquiler", () => {
+  const cartera = { aaa: propiedad({ origen_captacion: null }) };
+  const negocios = [
+    { entity_id_cartera: "aaa", fecha_inicio: "2026-07-01", origen_captacion: "On mind" },
+    { entity_id_cartera: "aaa", fecha_inicio: "2024-05-01", origen_captacion: "B.d.r." },
+  ];
+  assert.equal(completarConNegocios(cartera, negocios).aaa.origen_captacion, "B.d.r.");
+});
+
+test("un origen viejo del Excel se traduce al vocabulario de hoy", () => {
+  const cartera = { aaa: propiedad({ origen_captacion: null }) };
+  const negocios = [{ entity_id_cartera: "aaa", origen_captacion: "Referido - BDR" }];
+  assert.equal(completarConNegocios(cartera, negocios).aaa.origen_captacion, "Ref. B.d.r.");
+});
+
+test("si el negocio no tiene origen, se conserva el de la propiedad", () => {
+  const cartera = { aaa: propiedad({ origen_captacion: "Cliente antiguo" }) };
+  const negocios = [{ entity_id_cartera: "aaa", origen_captacion: null }];
+  assert.equal(completarConNegocios(cartera, negocios).aaa.origen_captacion, "Cliente antiguo");
+});
