@@ -20,10 +20,10 @@ test("solo los que son un grupo o una oficina llevan el nombre de la persona", (
   assert.equal(AGENTES_QUE_LLEVAN_NOMBRE.has("Martin Sedes"), false);
 });
 
-test("los diez origenes estan completos", () => {
-  assert.equal(ORIGENES.length, 10);
+test("los once origenes estan completos", () => {
+  assert.equal(ORIGENES.length, 11);
   for (const o of ["B.d.r.", "Ref. Team", "Ref. Martin", "Ref. Único", "Ref. Remax",
-                   "Cliente antiguo", "Dueño Vende", "Redes sociales Orgánico",
+                   "Ref. Cliente", "Cliente antiguo", "Dueño Vende", "Redes sociales Orgánico",
                    "Redes sociales Campaña", "On mind"]) {
     assert.ok(ORIGENES.includes(o), `falta el origen ${o}`);
   }
@@ -90,4 +90,12 @@ test("sobre los 85 negocios reales, el regimen derivado da exactamente el guarda
 test("el vocabulario viejo del Excel sigue mapeando igual", () => {
   assert.equal(ORIGEN_A_REGIMEN["Referido - Martín"], "ref_martin");
   assert.equal(ORIGEN_A_REGIMEN["Referido - RE/MAX"], "ref_otro_colega");
+});
+
+/* Un cliente que te recomienda no se lleva ninguna tajada. El importador lo tenia
+   como referido de colega y estaba mal: en los dos negocios que quedaron asi, la
+   ganancia fue el 45% pleno de la comision (360 sobre 800), no el 45% del 75%. */
+test("un referido de cliente no paga tajada a nadie", () => {
+  assert.equal(regimenDe({ origen_captacion: "Ref. Cliente" }), "captacion_mia");
+  assert.equal(ORIGEN_A_REGIMEN["Ref. Cliente"], undefined);
 });

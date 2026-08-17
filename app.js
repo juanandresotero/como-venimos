@@ -29,10 +29,12 @@ const estado = {
   token: github.leerToken(),
   sucios: new Set(),
   shas: {},
+  anterior: "negocios",  // de que pantalla se vino, para poder volver
   redibujar: () => dibujar(),
   // La navegacion viaja en el estado y NO se importa desde las vistas: si cada vista
   // importara app.js habria un ciclo (app.js -> vistas -> app.js).
   irA: (vista, foco) => irA(vista, foco),
+  guardar: () => guardar(),
 };
 
 async function bajarDatos() {
@@ -121,8 +123,19 @@ const VISTAS = {
 // la barra de abajo tiene que quedar marcada en la pantalla de la que salio.
 const PADRE = { ficha: "negocios", propiedad: "cartera" };
 
-function dibujar() {
+/* Cambiar de pantalla sube arriba de todo. Corregir un dato NO: hay que quedarse donde
+   estaba y con el cursor en el mismo campo.
+
+   Sin esto, cada vez que se cargaba un dato la pantalla pestañeaba, volvia arriba y habia
+   que scrollear de nuevo hasta donde uno estaba. Con una ficha de veinte campos, eso hace
+   la app inusable. */
+function dibujar({ desdeArriba = false } = {}) {
   const contenedor = document.getElementById("vista");
+  const alturaPrevia = window.scrollY;
+  const enfocado = document.activeElement;
+  const idEnfocado = enfocado && enfocado.id && contenedor.contains(enfocado)
+    ? enfocado.id : null;
+
   const fabrica = VISTAS[estado.vista];
   contenedor.innerHTML = "";
   if (!fabrica) {
@@ -130,7 +143,18 @@ function dibujar() {
   } else {
     contenedor.append(fabrica(estado));
   }
-  window.scrollTo(0, 0);
+
+  if (desdeArriba) {
+    window.scrollTo(0, 0);
+  } else {
+    window.scrollTo(0, alturaPrevia);
+    if (idEnfocado) {
+      const devuelto = document.getElementById(idEnfocado);
+      // `preventScroll` es la clave: sin eso el navegador vuelve a saltar al campo.
+      if (devuelto) devuelto.focus({ preventScroll: true });
+    }
+  }
+
   const marcada = PADRE[estado.vista] || estado.vista;
   for (const boton of document.querySelectorAll(".nav-boton")) {
     boton.setAttribute("aria-current", boton.dataset.vista === marcada ? "page" : "false");
@@ -140,10 +164,12 @@ function dibujar() {
 }
 
 function irA(vista, foco = null) {
+  // De donde vino, para que "Ficha completa" sepa a donde devolverlo.
+  if (vista !== estado.vista) estado.anterior = estado.vista;
   estado.vista = vista;
   estado.foco = foco;
   location.hash = foco ? `${vista}/${foco}` : vista;
-  dibujar();
+  dibujar({ desdeArriba: true });
 }
 
 function leerHash() {

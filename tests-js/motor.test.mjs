@@ -175,11 +175,28 @@ test("revisar: una ficha dada por completa no genera avisos de faltantes", () =>
   assert.deepEqual(tipos(n), []);
 });
 
-test("revisar: conserva los avisos que solo el importador puede saber", () => {
-  // 'separador_decimal' salio de comparar contra la celda del Excel; la app no puede
-  // recalcularlo, asi que no se pierde al editar.
-  const conAviso = negocio({ avisos: [{ tipo: "separador_decimal", detalle: "x" }] });
-  assert.ok(tipos(revisar(conAviso, AJUSTES, "2026-08-17")).includes("separador_decimal"));
+/* Los avisos del importador eran todos "tu Excel dice X pero la cuenta da Y". El usuario
+   decidio que ese Excel quedo viejo y que la app es la fuente de verdad, asi que discutir
+   con una planilla que no va a volver a abrir es ruido. Se descartan al revisar. */
+test("revisar: los avisos que venian del Excel ya no se conservan", () => {
+  const conAvisosViejos = negocio({
+    avisos: [
+      { tipo: "separador_decimal", detalle: "x" },
+      { tipo: "recalculo_distinto", detalle: "x" },
+      { tipo: "aritmetica_no_cierra", detalle: "x" },
+      { tipo: "comision_absurda", detalle: "x" },
+      { tipo: "firma_inventada", detalle: "x" },
+    ],
+  });
+  assert.deepEqual(tipos(revisar(conAvisosViejos, AJUSTES, "2026-08-17")), []);
+});
+
+test("revisar: pero lo que SI se puede arreglar se sigue avisando", () => {
+  const t = tipos(revisar(
+    negocio({ fecha_inicio: null, avisos: [{ tipo: "separador_decimal", detalle: "x" }] }),
+    AJUSTES, "2026-08-17"
+  ));
+  assert.deepEqual(t, ["falta_fecha_inicio"]);
 });
 
 test("revisar: no modifica el negocio original", () => {

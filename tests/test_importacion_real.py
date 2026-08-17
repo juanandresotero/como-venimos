@@ -61,16 +61,24 @@ class TestImportacionReal(unittest.TestCase):
         self.assertTrue(n["fecha_fin_estimada"])
         self.assertIsNotNone(n["entity_id_cartera"])
 
-    def test_detecta_la_fila_37_con_la_coma_decimal_perdida(self):
+    # Los avisos del importador ("tu Excel dice X pero la cuenta da Y") se dejaron de
+    # mostrar: ese Excel quedo viejo y la app pasa a ser la fuente de verdad. Lo que se
+    # sigue verificando es que los VALORES hayan quedado bien corregidos.
+
+    def test_la_fila_37_recupero_la_coma_decimal(self):
+        # La celda decia 770048; el valor real es 770,048. Sin esto, 2024 daba 809.403.
         n = next(x for x in self.negocios if x["id"] == "excel-37")
-        self.assertIn("separador_decimal", [a["tipo"] for a in n["avisos"]])
         self.assertAlmostEqual(n["facturacion"], 770.048, places=3)
 
-    def test_detecta_la_fila_51_con_el_porcentaje_absurdo(self):
+    def test_la_fila_51_quedo_con_el_porcentaje_bien_puesto(self):
+        # La celda guardaba 26,25 en vez de 2,625%. El facturado (2.310) siempre fue el
+        # correcto: 88.000 x 0,02625 = 2.310.
         n = next(x for x in self.negocios if x["id"] == "excel-51")
-        self.assertIn("comision_absurda", [a["tipo"] for a in n["avisos"]])
-        # El facturado del Excel (2.310) es el correcto y no se toco.
         self.assertEqual(n["facturacion"], 2310.0)
+        self.assertAlmostEqual(n["pct_comision_total"], 0.02625, places=5)
+        self.assertAlmostEqual(
+            n["precio_operacion"] * n["pct_comision_total"], 2310.0, places=2
+        )
 
     def test_ninguna_firma_futura_cuenta_como_cobrada(self):
         for n in self.negocios:

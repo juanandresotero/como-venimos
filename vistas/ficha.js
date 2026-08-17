@@ -293,8 +293,11 @@ function campos(n, falta, estado) {
 
   agregarAgentes(contenedor, n, falta, estado, agregar);
 
-  agregar("puntas", "Puntas", "number", n.puntas,
-    [[0, "0 — no fue mío"], [1, "1 punta"], [2, "2 puntas"]]);
+  /* Las puntas son las de la OPERACIÓN, no las tuyas: una suplencia o un referido que
+     diste igual se hace sobre un negocio de una o de dos puntas, y eso es lo que fija la
+     comisión total. Por eso no hay opción "cero". */
+  agregar("puntas", "Puntas de la operación", "number", n.puntas,
+    opcionesCon([[1, "1 punta"], [2, "2 puntas"]], n.puntas));
 
   // En una búsqueda no hubo captación: lo que salió de algún lado es el COMPRADOR.
   agregar(
@@ -339,7 +342,9 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
         const vende = clave === "agente_vende" ? valor : otroLado;
         const compra = clave === "agente_compra" ? valor : otroLado;
         const puntas = puntasSegunAgentes(vende, compra, estado.datos.ajustes);
-        return puntas === null ? extra : { ...extra, puntas };
+        /* Si ningún lado es tuyo, las puntas de la OPERACIÓN no se pueden deducir: puede
+           haber sido de una o de dos igual. Se deja lo que haya en vez de poner cero. */
+        return puntas ? { ...extra, puntas } : extra;
       });
 
     // "Team", "Ofi Único" y "Otra Oficina" son un grupo, no una persona: se puede anotar
@@ -451,7 +456,14 @@ function fichaCompleta(n, estado) {
       // Se guarda DESDE CUÁNDO vale la marca: si la propiedad se mueve, deja de valer.
       ficha_completa_momento: marcando ? momento : null,
     });
-    estado.redibujar();
+    if (!marcando) {
+      estado.redibujar();
+      return;
+    }
+    /* Al darla por completa se sube y se sale: es el final del trabajo con ese negocio.
+       El guardado va por atrás, así la pantalla no se queda esperando a la red. */
+    estado.guardar();
+    estado.irA(estado.anterior === "ficha" ? "negocios" : estado.anterior || "negocios");
   });
   return seccion;
 }

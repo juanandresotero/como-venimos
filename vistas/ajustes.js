@@ -6,6 +6,7 @@
 import { guardarToken, leerToken, borrarToken, probarToken, REPO } from "../lib/github.js";
 import { editarAjustes } from "../lib/guardado.js";
 import { plata, pct, fechaRazonable } from "../lib/formato.js";
+import { negociosACsv, carteraACsv, nombrePlanilla } from "../lib/planilla.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -13,6 +14,41 @@ function nodo(marca) {
   const molde = document.createElement("template");
   molde.innerHTML = marca.trim();
   return molde.content;
+}
+
+/* Bajar todo a una planilla. El Excel viejo dejó de ser la fuente de verdad, pero tiene
+   que poder mirarse todo afuera de la app cuando haga falta. */
+function bajarPlanilla(estado) {
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">Bajar todo a una planilla</h2>
+      <p class="apunte" style="margin-bottom:12px">
+        Se abre con doble clic en Excel. Es una foto del momento: para trabajar, la app
+        sigue siendo la que manda.
+      </p>
+      <div class="botonera" style="margin-top:0">
+        <button class="boton" id="bajar-negocios">Los negocios</button>
+        <button class="boton" id="bajar-cartera">La cartera</button>
+      </div>
+    </section>
+  `);
+
+  const bajar = (texto, nombre) => {
+    const blob = new Blob([texto], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = nombre;
+    enlace.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  seccion.getElementById("bajar-negocios").addEventListener("click", () =>
+    bajar(negociosACsv(estado.datos.negocios), nombrePlanilla("negocios", estado.hoy)));
+  seccion.getElementById("bajar-cartera").addEventListener("click", () =>
+    bajar(carteraACsv(estado.datos.cartera), nombrePlanilla("cartera", estado.hoy)));
+
+  return seccion;
 }
 
 const yaInstalada = () =>
@@ -138,6 +174,7 @@ export function dibujarAjustes(estado) {
   `));
 
   trozo.append(instalar(estado));
+  trozo.append(bajarPlanilla(estado));
   trozo.append(tuNegocio(estado));
 
   const campo = trozo.getElementById("campo-token");
