@@ -4,20 +4,41 @@
    "categoria": "RAP",
    "split_pct": 0.45,
    "fee_mensual_usd": 70,
-   "desde": "2026-01-01",
+   "desde": "0001-09-01",
    "hasta": null
   }
  ],
  "escalones": [
-  {"categoria": "RAP", "split_pct": 0.45, "fee_mensual_usd": 70},
-  {"categoria": "ALTO", "split_pct": 0.6, "fee_mensual_usd": 425},
-  {"categoria": "PURO", "split_pct": 0.8, "fee_mensual_usd": 975}
+  {
+   "categoria": "RAP",
+   "split_pct": 0.45,
+   "fee_mensual_usd": 70
+  },
+  {
+   "categoria": "ALTO",
+   "split_pct": 0.6,
+   "fee_mensual_usd": 425
+  },
+  {
+   "categoria": "PURO",
+   "split_pct": 0.8,
+   "fee_mensual_usd": 975
+  }
  ],
  "defaults_comision": {
-  "venta": {"1": 0.03, "2": 0.06},
-  "alquiler": {"1": 1.0, "2": 2.0}
+  "venta": {
+   "1": 0.03,
+   "2": 0.06
+  },
+  "alquiler": {
+   "1": 1,
+   "2": 2
+  }
  },
- "regla_martin": {"facturacion": 0.5, "ganancia": 0.35},
+ "regla_martin": {
+  "facturacion": 0.5,
+  "ganancia": 0.35
+ },
  "pct_suplencia": 0.125,
  "pct_referido_saliente": 0.25,
  "pct_referido_entrante_otro": 0.75,
@@ -30,11 +51,23 @@
   "Titan": 300000,
   "Diamond": 400000
  },
- "objetivo_personal": {"2025": 65000, "2026": 65000, "2027": 100000},
+ "objetivo_personal": {
+  "2025": 65000,
+  "2026": 65000,
+  "2027": 100000
+ },
  "probabilidades_cierre": {
   "reservada": 0.9,
   "en_negociacion": 0.6,
   "publicada": 0.25
  },
- "tipo_cambio": {"usd_uyu": null, "fecha": null}
+ "tipo_cambio": {
+  "usd_uyu": null,
+  "fecha": null
+ },
+ "agente": {
+  "nombre": "Juan Andrés Otero",
+  "oficina": "Remax Único",
+  "telefono": "099616633"
+ }
 }
