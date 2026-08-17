@@ -5,7 +5,9 @@
   "2026-08-17|5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6|carga_inicial",
   "2026-08-17|a4b43687-a487-485c-82ae-62118b687ec1|carga_inicial",
   "2026-08-17|cab1949c-02eb-445f-989a-68c5f31523df|carga_inicial",
-  "2026-08-17|d8d7855f-b0bb-4122-bc7e-74c987f50396|carga_inicial"
+  "2026-08-17|d8d7855f-b0bb-4122-bc7e-74c987f50396|carga_inicial",
+  "2026-08-17|c9f554b2-5290-4e2f-9b88-fdac4cbd67d7|carga_inicial",
+  "2026-08-17|2c76d23c-2d94-4cd4-8120-d052679e1608|carga_inicial"
  ],
  "cartera": {
   "45e27b03-b19a-4654-a163-4d0bf3307fac": {
@@ -39,6 +41,11 @@
   "c9f554b2-5290-4e2f-9b88-fdac4cbd67d7": {
    "origen_captacion": "Redes sociales Campaña",
    "fecha_captacion_real": "2026-01-30",
+   "fecha_captacion_estimada": false
+  },
+  "f123f605-dc13-4aaa-ad8a-94ad44a11db6": {
+   "origen_captacion": "Ref. Martin",
+   "fecha_captacion_real": "2025-07-08",
    "fecha_captacion_estimada": false
   }
  }
