@@ -2159,16 +2159,7 @@
  {
   "agente_compra": "Martin Sedes",
   "agente_vende": "Martin Sedes",
-  "avisos": [
-   {
-    "tipo": "falta_fecha_boleto",
-    "detalle": "Falta la fecha de la reserva o boleto"
-   },
-   {
-    "tipo": "falta_fecha_inicio",
-    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
-   }
-  ],
+  "avisos": [],
   "barrio": "Aires puros",
   "base": 1200,
   "categoria_vigente": null,
@@ -2182,7 +2173,7 @@
   "fecha_fin": "2025-03-04",
   "fecha_fin_estimada": false,
   "fecha_inicio": null,
-  "ficha_completa": false,
+  "ficha_completa": true,
   "ganancia": 540,
   "id": "excel-62",
   "moneda": "USD",
@@ -2192,13 +2183,14 @@
   "precio_operacion": 4800,
   "puntas": 0,
   "recalculado": false,
-  "regimen_comision": "captacion_mia",
+  "regimen_comision": "suplencia",
   "split_aplicado": 0.45,
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
-  "es_suplencia": false,
+  "es_suplencia": true,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "ficha_completa_momento": null
  },
  {
   "agente_compra": "Otro REMAX",
