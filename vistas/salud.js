@@ -334,7 +334,11 @@ function propiedadesUsadas(publicado, estado) {
       <button class="fila" data-propiedad="${escapar(p.entity_id)}">
         <span class="fila-cuerpo">
           <span class="fila-titulo">${escapar(p.direccion || "Sin dirección")}</span>
-          <span class="fila-sub">${p.estado.replace("_", " ")} · ${plata(p.precio)} × ${Math.round(p.probabilidad * 100)}%</span>
+          <span class="fila-sub">
+            ${plata(p.precio)}${p.estimado
+              ? ` × ${pct(p.pct)}`
+              : " · con tu negocio ya cargado"}
+          </span>
         </span>
         <span class="fila-plata">
           <span class="cifra cifra-media">${plata(p.ganancia)}</span>
@@ -343,6 +347,9 @@ function propiedadesUsadas(publicado, estado) {
       </button>`
     )
     .join("");
+
+  // Cómo se llegó a ese porcentaje, con los números que él conoce.
+  const muestra = publicado.detalle.find((p) => p.estimado);
   const seccion = nodo(html`
     <section class="tarjeta">
       <div class="tarjeta-titulo">
@@ -350,10 +357,15 @@ function propiedadesUsadas(publicado, estado) {
         <span class="apunte">${publicado.cantidad} propiedades</span>
       </div>
       <div class="lista">${filas}</div>
-      <p class="apunte" style="margin-top:12px">
-        Lo que dejaría cada una si se vendiera al precio publicado, calculado con tu propio
-        ratio histórico. Si alguna no debería contar, entrá y apagala.
-      </p>
+      ${muestra
+        ? html`<p class="apunte" style="margin-top:12px">
+             El <strong>${pct(muestra.pct)}</strong> sale de tu propia forma de cerrar:
+             ${pct(muestra.unaPunta)} de comisión por punta, y cerrás con
+             <strong>${muestra.puntas.toFixed(2).replace(".", ",")} puntas</strong> en
+             promedio. De ahí se descuenta tu tajada de hoy. Si alguna no debería contar,
+             entrá y apagala.
+           </p>`
+        : ""}
     </section>
   `);
   for (const boton of seccion.querySelectorAll("[data-propiedad]")) {

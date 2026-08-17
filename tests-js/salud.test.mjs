@@ -1,10 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ratios, capas, ritmo, porAnio, metricas, comparativaCategorias } from "../lib/salud.js";
+import { ratios, capas, ritmo, porAnio, metricas, comparativaCategorias, estimacionPorPuntas,
+} from "../lib/salud.js";
 
 const AJUSTES = {
   probabilidades_cierre: { reservada: 0.9, en_negociacion: 0.6, publicada: 0.25 },
   objetivo_personal: { "2026": 65000 },
+  // La estimacion de lo publicado sale de la comision de una punta y de la tajada de hoy.
+  defaults_comision: { venta: { 1: 0.03, 2: 0.06 }, alquiler: { 1: 1.0, 2: 2.0 } },
+  categorias: [{ categoria: "RAP", split_pct: 0.45, fee_mensual_usd: 70, desde: "2026-01-01", hasta: null }],
 };
 
 const AJUSTES_CAT = {
@@ -20,7 +24,7 @@ function negocio(x = {}) {
   return {
     id: "n1", tipo_negocio: "venta", estado: "cerrado",
     fecha_fin: "2026-03-01", precio_operacion: 100000,
-    facturacion: 3000, ganancia: 1350, entity_id_cartera: null,
+    facturacion: 3000, ganancia: 1350, entity_id_cartera: null, puntas: 1,
     direccion: "Calle 100", ...x,
   };
 }
@@ -98,13 +102,13 @@ test("cada propiedad cae en el grupo de su estado", () => {
 
 /* Al 100%: la pregunta es "cuanto cobro si esto cierra", no "cuanto vale hoy". */
 test("los grupos van al 100%, sin descontar probabilidad", () => {
-  const lista = [negocio({ precio_operacion: 100000, facturacion: 4500, ganancia: 1800 })];
+  const lista = [negocio({ precio_operacion: 100000, facturacion: 4500, ganancia: 1800, puntas: 1 })];
   const cartera = { p1: propiedad({ precio: 200000, estado: "publicada" }) };
   const c = capas(lista, cartera, AJUSTES, "2026");
-  // 200.000 x 4,5% = 9.000, entero
-  assert.equal(Math.round(c.publicado.facturacion), 9000);
-  // La cuenta realista sí lo descuenta: cobrado (4.500) + 9.000 x 25% = 6.750
-  assert.equal(Math.round(c.ponderado.facturacion), 6750);
+  // Cierra con 1 punta en promedio -> 3%. 200.000 x 3% = 6.000, entero.
+  assert.equal(Math.round(c.publicado.facturacion), 6000);
+  // La cuenta realista sí lo descuenta: cobrado (4.500) + 6.000 x 25% = 6.000
+  assert.equal(Math.round(c.ponderado.facturacion), 6000);
 });
 
 test("una reservada pesa mucho mas que una publicada en la cuenta realista", () => {
@@ -371,4 +375,54 @@ test("encaminado suma cobrado, reservado y negociacion, y deja fuera lo publicad
   assert.ok(c.publicado.facturacion > 0, "lo publicado existe...");
   assert.ok(c.encaminado.facturacion < c.total.facturacion, "...pero no entra en lo encaminado");
   assert.equal(c.total.facturacion, c.encaminado.facturacion + c.publicado.facturacion);
+});
+
+/* La estimacion sale de las PUNTAS PROMEDIO, no de una mediana opaca: si cerras con 1,61
+   puntas y una punta cobra el 3%, lo esperable de una venta nueva es el 4,83%. */
+test("la estimacion se arma con la comision de una punta por las puntas promedio", () => {
+  const cerrados = [
+    negocio({ id: "a", estado: "cerrado", tipo_negocio: "venta", puntas: 2 }),
+    negocio({ id: "b", estado: "cerrado", tipo_negocio: "venta", puntas: 1 }),
+  ];
+  const e = estimacionPorPuntas(cerrados, AJUSTES);
+  assert.equal(e.venta.puntas, 1.5);
+  assert.equal(e.venta.unaPunta, 0.03);
+  assert.equal(e.venta.pct, 0.045, "3% x 1,5 puntas");
+});
+
+test("las renovaciones cuentan como alquiler", () => {
+  const cerrados = [
+    negocio({ id: "a", estado: "cerrado", tipo_negocio: "alquiler", puntas: 2 }),
+    negocio({ id: "b", estado: "cerrado", tipo_negocio: "renovacion_alquiler", puntas: 2 }),
+  ];
+  assert.equal(estimacionPorPuntas(cerrados, AJUSTES).alquiler.puntas, 2);
+});
+
+test("sin historial no se inventa: se asume una punta", () => {
+  const e = estimacionPorPuntas([], AJUSTES);
+  assert.equal(e.venta.puntas, 1);
+  assert.equal(e.venta.pct, 0.03);
+});
+
+test("lo en curso no cuenta para el promedio: todavia no se sabe como cerro", () => {
+  const lista = [
+    negocio({ id: "a", estado: "cerrado", tipo_negocio: "venta", puntas: 1 }),
+    negocio({ id: "b", estado: "en_curso", tipo_negocio: "venta", puntas: 2 }),
+  ];
+  assert.equal(estimacionPorPuntas(lista, AJUSTES).venta.puntas, 1);
+});
+
+test("una propiedad publicada se proyecta con esa comision y la tajada de hoy", () => {
+  const cerrados = [
+    negocio({ id: "a", estado: "cerrado", tipo_negocio: "venta", puntas: 2,
+              precio_operacion: 100000, facturacion: 6000, ganancia: 2700 }),
+  ];
+  const cartera = { p1: propiedad({ precio: 490000, estado: "publicada" }) };
+  const c = capas(cerrados, cartera, AJUSTES, "2026");
+  const p = c.publicado.detalle[0];
+  // 2 puntas promedio x 3% = 6%  ->  490.000 x 6% = 29.400, y el 45% queda para el
+  assert.equal(p.pct, 0.06);
+  assert.equal(Math.round(p.facturacion), 29400);
+  assert.equal(Math.round(p.ganancia), Math.round(29400 * 0.45));
+  assert.equal(p.estimado, true);
 });
