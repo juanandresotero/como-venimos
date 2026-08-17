@@ -5,7 +5,10 @@
 
 import { editarNegocio, borrarNegocio } from "../lib/guardado.js";
 import { plata, plataUSD, escapar } from "../lib/formato.js";
-import { REGIMENES } from "../lib/motor.js";
+import {
+  REGIMENES, esBusqueda, puntasSegunAgentes, nombrePropio, OTRO_AGENTE,
+} from "../lib/motor.js";
+import { ORIGENES } from "../lib/cartera.js";
 import { ROLES, enlaceWhatsapp, hayPicker, elegirContacto } from "../lib/contactos.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -16,13 +19,26 @@ function nodo(marca) {
   return molde.content;
 }
 
+/* "Captación mía" era un nombre equivocado: en una búsqueda no hubo ninguna captación,
+   el aviso era de otro. Lo que este campo dice de verdad es si alguien se lleva una tajada
+   de tu comisión, no de dónde salió la propiedad. */
 const NOMBRE_REGIMEN = {
-  captacion_mia: "Captación mía",
-  ref_martin: "Referida de Martín",
-  ref_otro_colega: "Referida de otro colega",
+  captacion_mia: "Es mío — no me lo refirió nadie",
+  ref_martin: "Me lo refirió Martín",
+  ref_otro_colega: "Me lo refirió otro colega",
   yo_referi: "Yo se lo referí a un colega",
   suplencia: "Suplencia (cubrí una visita)",
 };
+
+/* Los valores del Excel no son sólo estos tres, así que el que ya está cargado se
+   conserva como opción en vez de perderse al abrir el desplegable. */
+function opcionesCon(lista, actual) {
+  const opciones = lista.map((v) => (Array.isArray(v) ? v : [v, v]));
+  if (actual && !opciones.some(([v]) => String(v) === String(actual))) {
+    opciones.unshift([actual, actual]);
+  }
+  return opciones;
+}
 
 const TIPOS = {
   venta: "Venta",
@@ -196,8 +212,11 @@ function campos(n, falta, estado) {
   `);
   const contenedor = seccion.getElementById("campos");
 
-  const agregar = (clave, etiqueta, tipo, valor, opciones) => {
-    const faltaEste = falta.has(`falta_${clave}`) || falta.has(`sin_${clave}`);
+  /* `faltaExtra` marca en rojo un campo cuyo aviso no sigue el patrón falta_<clave>.
+     `derivar` deja que un campo actualice a otro: cambiar quién puso cada lado recalcula
+     las puntas, que son las que deciden la plata. */
+  const agregar = (clave, etiqueta, tipo, valor, opciones, faltaExtra, derivar) => {
+    const faltaEste = faltaExtra || falta.has(`falta_${clave}`) || falta.has(`sin_${clave}`);
     const fila = document.createElement("div");
     fila.className = `campo-fila${faltaEste ? " falta" : ""}`;
     const id = `campo-${clave}`;
@@ -205,15 +224,16 @@ function campos(n, falta, estado) {
       <label for="${id}">${etiqueta}${faltaEste ? " — falta" : ""}</label>
       ${opciones
         ? html`<select class="campo" id="${id}">
-             ${opciones.map(([v, t]) => `<option value="${v}"${String(v) === String(valor) ? " selected" : ""}>${t}</option>`).join("")}
+             ${opciones.map(([v, t]) => `<option value="${escapar(v)}"${String(v) === String(valor ?? "") ? " selected" : ""}>${escapar(t)}</option>`).join("")}
            </select>`
-        : html`<input class="campo" id="${id}" type="${tipo}" value="${valor ?? ""}"${tipo === "number" ? ' step="any"' : ""}>`}
+        : html`<input class="campo" id="${id}" type="${tipo}" value="${escapar(valor ?? "")}"${tipo === "number" ? ' step="any"' : ""}>`}
     `;
     const control = fila.querySelector(".campo");
     control.addEventListener("change", () => {
       const crudo = control.value;
       const nuevo = tipo === "number" ? (crudo === "" ? null : Number(crudo)) : crudo || null;
-      editarNegocio(estado, n.id, { [clave]: nuevo });
+      const extra = derivar ? derivar(nuevo) : {};
+      editarNegocio(estado, n.id, { [clave]: nuevo, ...extra });
       estado.redibujar();
     });
     contenedor.append(fila);
@@ -226,14 +246,55 @@ function campos(n, falta, estado) {
   agregar("barrio", "Barrio", "text", n.barrio);
   agregar("precio_operacion", "Precio de la operación (USD)", "number", n.precio_operacion);
   agregar("pct_comision_total", "% de comisión (0,03 = 3%)", "number", n.pct_comision_total);
+
+  agregarAgentes(contenedor, n, falta, estado, agregar);
+
   agregar("puntas", "Puntas", "number", n.puntas,
     [[0, "0 — no fue mío"], [1, "1 punta"], [2, "2 puntas"]]);
-  agregar("regimen_comision", "Cómo llegó el negocio", "text", n.regimen_comision,
+  agregar("regimen_comision", "Quién se lleva una tajada", "text", n.regimen_comision,
     REGIMENES.map((r) => [r, NOMBRE_REGIMEN[r] || r]));
+
+  // En una búsqueda no hubo captación: lo que salió de algún lado es el COMPRADOR.
+  agregar(
+    "origen_captacion",
+    esBusqueda(n, estado.datos.ajustes) ? "De dónde salió el comprador" : "De dónde salió la captación",
+    "text",
+    n.origen_captacion,
+    opcionesCon(["", ...ORIGENES], n.origen_captacion)
+  );
+
   agregar("tipo_negocio", "Tipo", "text", n.tipo_negocio, Object.entries(TIPOS));
   agregar("notas", "Notas", "text", n.notas);
 
   return seccion;
+}
+
+/* Quién puso cada lado. Faltaba en la ficha: había pendientes de "sin agente vendedor ni
+   comprador" que no se podían resolver desde ningún lado de la app.
+
+   Al cambiar un lado se recalculan las puntas, que es lo que decide la plata: dos puntas
+   facturan el doble que una. */
+function agregarAgentes(contenedor, n, falta, estado, agregar) {
+  const yo = nombrePropio(estado.datos.ajustes);
+  const faltanAgentes = falta.has("faltan_agentes");
+
+  const lado = (clave, etiqueta) => {
+    const opciones = opcionesCon(
+      [[yo, "Yo"], [OTRO_AGENTE, "Otro"], ["Otro REMAX", "Otro RE/MAX"]],
+      n[clave]
+    );
+    agregar(clave, etiqueta, "text", n[clave], [["", "sin cargar"], ...opciones], faltanAgentes,
+      (valor) => {
+        const otroLado = clave === "agente_vende" ? n.agente_compra : n.agente_vende;
+        const vende = clave === "agente_vende" ? valor : otroLado;
+        const compra = clave === "agente_compra" ? valor : otroLado;
+        const puntas = puntasSegunAgentes(vende, compra, estado.datos.ajustes);
+        return puntas === null ? {} : { puntas };
+      });
+  };
+
+  lado("agente_vende", "Quién tenía el aviso");
+  lado("agente_compra", "Quién trajo al comprador");
 }
 
 function avisos(n) {

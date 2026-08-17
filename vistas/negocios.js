@@ -2,7 +2,7 @@
 
 import { plata, fechaCorta, escapar } from "../lib/formato.js";
 import { crearNegocio } from "../lib/guardado.js";
-import { ATAJOS } from "../lib/motor.js";
+import { ATAJOS, GRUPOS_ATAJOS, esBusqueda } from "../lib/motor.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -90,45 +90,54 @@ export function dibujarNegocios(estado) {
   return trozo;
 }
 
-/* Los cuatro atajos del alta manual (§7.3). El unico dato que hace falta para arrancar es
-   cual de los cuatro es: cada uno deja puesta su regla de plata, que es lo que el usuario
-   no tiene por que recordar. */
-const EXPLICACION = {
-  venta: "Vos captaste y vendiste. Comisión sobre el precio.",
-  alquiler: "Un alquiler nuevo o una renovación.",
-  suplencia: "Le cubriste una visita a un colega: te llevás el 12,5% y no factura.",
-  yo_referi: "Se lo pasaste a otro agente: cobrás el 25% de la comisión.",
-};
+/* El alta manual (§7.3), agrupada por lo que de verdad se carga desde acá.
 
+   Si un negocio hay que cargarlo a mano es porque la propiedad NO está en tu cartera, y
+   entonces el aviso casi siempre era de otro agente: es una búsqueda. Las ventas y
+   alquileres propios quedan abajo, para la propiedad que el robot nunca llegó a ver. */
 function alta(estado) {
   const seccion = nodo(html`
     <section class="tarjeta">
       <h2 class="titulo" style="font-size:17px;margin-bottom:4px">¿Qué querés cargar?</h2>
-      <p class="apunte" style="margin-bottom:12px">
+      <p class="apunte" style="margin-bottom:14px">
         Elegí y se abre la ficha con la regla de comisión ya puesta. Después completás
         precio y fechas.
       </p>
-      <div class="lista" id="atajos"></div>
+      <div id="atajos"></div>
     </section>
   `);
   const contenedor = seccion.getElementById("atajos");
 
-  for (const [clave, molde] of Object.entries(ATAJOS)) {
-    const boton = nodo(html`
-      <button class="fila" data-atajo="${clave}">
-        <span class="fila-cuerpo">
-          <span class="fila-titulo">${molde.nombre}</span>
-          <span class="fila-sub">${EXPLICACION[clave]}</span>
-        </span>
-        <span class="fila-derecha"><span class="apunte">›</span></span>
-      </button>
+  for (const grupo of GRUPOS_ATAJOS) {
+    const claves = Object.keys(ATAJOS).filter((c) => ATAJOS[c].grupo === grupo.clave);
+    if (!claves.length) continue;
+
+    const bloque = nodo(html`
+      <p class="etiqueta" style="margin-top:16px">${escapar(grupo.nombre)}</p>
+      <p class="apunte" style="margin:2px 0 8px">${escapar(grupo.apunte)}</p>
+      <div class="lista"></div>
     `);
-    boton.querySelector(".fila").addEventListener("click", () => {
-      const nuevo = crearNegocio(estado, clave);
-      altaAbierta = false;
-      estado.irA("ficha", nuevo.id);
-    });
-    contenedor.append(boton);
+    const lista = bloque.querySelector(".lista");
+
+    for (const clave of claves) {
+      const molde = ATAJOS[clave];
+      const boton = nodo(html`
+        <button class="fila" data-atajo="${clave}">
+          <span class="fila-cuerpo">
+            <span class="fila-titulo">${escapar(molde.nombre)}</span>
+            <span class="fila-sub">${escapar(molde.explicacion)}</span>
+          </span>
+          <span class="fila-derecha"><span class="apunte">›</span></span>
+        </button>
+      `);
+      boton.querySelector(".fila").addEventListener("click", () => {
+        const nuevo = crearNegocio(estado, clave);
+        altaAbierta = false;
+        estado.irA("ficha", nuevo.id);
+      });
+      lista.append(boton);
+    }
+    contenedor.append(bloque);
   }
   return seccion;
 }
@@ -142,6 +151,7 @@ function fila(n, estado) {
         <span class="fila-titulo">${escapar(n.direccion || "Sin dirección")}</span>
         <span class="fila-sub">
           ${escapar(n.barrio || "sin barrio")} · ${n.tipo_negocio} · ${fechaCorta(n.fecha_fin, anio)}
+          ${esBusqueda(n, estado.datos.ajustes) ? ' · <span class="chip-apagado">búsqueda</span>' : ""}
           ${n.estado === "en_curso" ? ' · <span class="chip-curso">en curso</span>' : ""}
         </span>
       </span>

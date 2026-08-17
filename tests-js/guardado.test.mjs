@@ -20,6 +20,7 @@ function estado() {
           barrio: "Cerrito", precio_operacion: 100000, pct_comision_total: 0.03,
           regimen_comision: "captacion_mia", puntas: 1, base: 3000, facturacion: 3000,
           ganancia: 1350, ficha_completa: false,
+          agente_vende: "Juan Andrés Otero", agente_compra: "Otro", origen_captacion: "BDR",
           avisos: [{ tipo: "falta_fecha_inicio", detalle: "x" }] },
       ],
       mis_datos: { eventos_atendidos: [] },

@@ -6,7 +6,9 @@ import {
   editarAjustes, hayCambios, ARCHIVO_NEGOCIOS, ARCHIVO_MIS_DATOS, ARCHIVO_CALCULOS,
   ARCHIVO_AJUSTES,
 } from "../lib/guardado.js";
-import { ATAJOS, plantillaNegocio } from "../lib/motor.js";
+import {
+  ATAJOS, GRUPOS_ATAJOS, plantillaNegocio, esBusqueda, puntasSegunAgentes, esMio,
+} from "../lib/motor.js";
 
 const AJUSTES = {
   categorias: [{ categoria: "RAP", split_pct: 0.45, fee_mensual_usd: 70, desde: "2026-01-01", hasta: null }],
@@ -36,22 +38,81 @@ test("el id nuevo no pisa ninguno de los que ya hay", () => {
   assert.equal(nuevoId([]), "manual-1");
 });
 
-test("los cuatro atajos existen y traen su regla de plata", () => {
-  assert.deepEqual(Object.keys(ATAJOS).sort(), ["alquiler", "suplencia", "venta", "yo_referi"]);
+test("los seis atajos existen, agrupados, y cada uno trae su regla de plata", () => {
+  assert.deepEqual(Object.keys(ATAJOS).sort(),
+    ["alquiler", "busqueda", "busqueda_alquiler", "suplencia", "venta", "yo_referi"]);
   assert.equal(ATAJOS.suplencia.regimen_comision, "suplencia");
   assert.equal(ATAJOS.yo_referi.regimen_comision, "yo_referi");
+  // Todo atajo tiene que caer en alguno de los grupos que se dibujan, o queda invisible.
+  const grupos = new Set(GRUPOS_ATAJOS.map((g) => g.clave));
+  for (const [clave, molde] of Object.entries(ATAJOS)) {
+    assert.ok(grupos.has(molde.grupo), `el atajo ${clave} está en un grupo que no se dibuja`);
+    assert.ok(molde.explicacion, `al atajo ${clave} le falta la explicación`);
+  }
 });
 
-test("una venta nueva arranca al 3% y sin fecha de firma", () => {
-  const p = plantillaNegocio("venta", AJUSTES, "2026-08-17");
+/* Una BUSQUEDA es aviso ajeno + cliente tuyo: una sola punta, siempre. */
+test("una búsqueda arranca con una sola punta y al 3%", () => {
+  const p = plantillaNegocio("busqueda", AJUSTES, "2026-08-17");
+  assert.equal(p.tipo_negocio, "venta", "una búsqueda de compra sigue siendo una venta");
+  assert.equal(p.puntas, 1);
   assert.equal(p.pct_comision_total, 0.03);
+  assert.equal(p.agente_compra, "Juan Andrés Otero");
+  assert.notEqual(p.agente_vende, "Juan Andrés Otero");
+  assert.equal(esBusqueda(p, AJUSTES), true);
   assert.equal(p.fecha_fin, null, "poner la firma sola seria inventar plata cobrada");
   assert.equal(p.estado, "en_curso");
   assert.equal(p.manual, true);
 });
 
-test("un alquiler nuevo arranca al 100% de un mes", () => {
-  assert.equal(plantillaNegocio("alquiler", AJUSTES, "2026-08-17").pct_comision_total, 1.0);
+test("una búsqueda de alquiler cobra un mes, no dos", () => {
+  const p = plantillaNegocio("busqueda_alquiler", AJUSTES, "2026-08-17");
+  assert.equal(p.tipo_negocio, "alquiler");
+  assert.equal(p.puntas, 1);
+  assert.equal(p.pct_comision_total, 1.0);
+  assert.equal(esBusqueda(p, AJUSTES), true);
+});
+
+/* Una propiedad propia arranca con las dos puntas: es lo que dice su historia
+   (22 ventas con dos puntas contra 11 con la compradora de otro). */
+test("una venta de propiedad tuya arranca con las dos puntas", () => {
+  const p = plantillaNegocio("venta", AJUSTES, "2026-08-17");
+  assert.equal(p.puntas, 2);
+  assert.equal(p.pct_comision_total, 0.06);
+  assert.equal(esBusqueda(p, AJUSTES), false);
+});
+
+test("un alquiler de propiedad tuya arranca con dos meses", () => {
+  assert.equal(plantillaNegocio("alquiler", AJUSTES, "2026-08-17").pct_comision_total, 2.0);
+});
+
+test("una suplencia y un referido que das no tienen ninguna punta tuya", () => {
+  for (const atajo of ["suplencia", "yo_referi"]) {
+    const p = plantillaNegocio(atajo, AJUSTES, "2026-08-17");
+    assert.equal(p.puntas, 0, atajo);
+    assert.equal(esBusqueda(p, AJUSTES), false, `${atajo} no es una búsqueda`);
+  }
+});
+
+test("las puntas salen de quién puso cada lado", () => {
+  const yo = "Juan Andrés Otero";
+  assert.equal(puntasSegunAgentes(yo, yo, AJUSTES), 2);
+  assert.equal(puntasSegunAgentes(yo, "Otro", AJUSTES), 1);
+  assert.equal(puntasSegunAgentes("Otro", yo, AJUSTES), 1);
+  assert.equal(puntasSegunAgentes("Otro", "Otro REMAX", AJUSTES), 0);
+  assert.equal(puntasSegunAgentes(null, null, AJUSTES), null, "sin datos no se inventa");
+});
+
+test("el nombre propio se puede cambiar desde Ajustes", () => {
+  const otros = { ...AJUSTES, agente: { nombre: "Otra Persona" } };
+  assert.equal(esMio("Otra Persona", otros), true);
+  assert.equal(esMio("Juan Andrés Otero", otros), false);
+  assert.equal(esMio("Juan Andrés Otero", AJUSTES), true, "sin configurar, vale el del Excel");
+});
+
+test("un negocio a medio cargar no se toma por búsqueda", () => {
+  assert.equal(esBusqueda({ agente_compra: "Juan Andrés Otero" }, AJUSTES), false);
+  assert.equal(esBusqueda({}, AJUSTES), false);
 });
 
 test("un atajo que no existe se rechaza en vez de crear un negocio raro", () => {
@@ -74,7 +135,15 @@ test("un negocio creado desde una propiedad queda enganchado a ella", () => {
   });
   assert.equal(nuevo.entity_id_cartera, "aaa");
   assert.equal(nuevo.precio_operacion, 900);
-  assert.equal(nuevo.base, 900, "la BASE de un alquiler al 100% es un mes");
+  assert.equal(nuevo.base, 1800, "el aviso es tuyo: arranca con las dos puntas, dos meses");
+});
+
+test("una búsqueda cargada sobre una propiedad ajena factura la mitad", () => {
+  const e = estado();
+  const propia = crearNegocio(e, "venta", { precio_operacion: 100000 });
+  const ajena = crearNegocio(e, "busqueda", { precio_operacion: 100000 });
+  assert.equal(propia.base, 6000);
+  assert.equal(ajena.base, 3000, "una sola punta sobre el mismo precio");
 });
 
 test("borrar un negocio lo saca y avisa si no estaba", () => {

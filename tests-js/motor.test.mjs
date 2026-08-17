@@ -93,6 +93,8 @@ function negocio(x = {}) {
     direccion: "Calle 100", barrio: "Cerrito",
     precio_operacion: 100000, pct_comision_total: 0.03,
     regimen_comision: "captacion_mia", puntas: 1,
+    agente_vende: "Juan Andrés Otero", agente_compra: "Otro",
+    origen_captacion: "BDR",
     base: 3000, facturacion: 3000, ganancia: 1350,
     ficha_completa: false, avisos: [], ...x,
   };
@@ -102,6 +104,21 @@ const tipos = (n) => n.avisos.map((a) => a.tipo);
 
 test("revisar: un negocio completo no genera avisos", () => {
   assert.deepEqual(tipos(revisar(negocio(), AJUSTES, "2026-08-17")), []);
+});
+
+/* Estos dos campos no se podian cargar desde la ficha, asi que el aviso quedaba pegado
+   para siempre. Ahora se regeneran mirando el dato, y desaparecen al completarlo. */
+test("revisar: avisa si no dice quien puso cada lado", () => {
+  const sin = revisar(negocio({ agente_vende: null, agente_compra: null }), AJUSTES, "2026-08-17");
+  assert.ok(tipos(sin).includes("faltan_agentes"));
+  const con = revisar(negocio({ agente_vende: null, agente_compra: "Juan Andrés Otero" }), AJUSTES, "2026-08-17");
+  assert.ok(!tipos(con).includes("faltan_agentes"));
+});
+
+test("revisar: avisa si no dice de donde salio, y 'Sin origen' no cuenta como cargado", () => {
+  assert.ok(tipos(revisar(negocio({ origen_captacion: null }), AJUSTES, "2026-08-17")).includes("origen_sin_clasificar"));
+  assert.ok(tipos(revisar(negocio({ origen_captacion: "Sin origen" }), AJUSTES, "2026-08-17")).includes("origen_sin_clasificar"));
+  assert.ok(!tipos(revisar(negocio({ origen_captacion: "Otros" }), AJUSTES, "2026-08-17")).includes("origen_sin_clasificar"));
 });
 
 test("revisar: avisa si falta la fecha de inicio", () => {
