@@ -58,6 +58,30 @@ def _dar_de_alta(prop: dict, hoy: str) -> dict:
     return fila
 
 
+def _actualizar(fila: dict, prop: dict, hoy: str) -> list:
+    """Refresca una propiedad que ya conociamos y devuelve las novedades que haya."""
+    eventos = []
+    precio_previo = fila.get("precio")
+
+    # Los datos frescos de la API pisan a los viejos. Como `prop` solo trae los campos
+    # que produce robot.modelo, los campos del usuario quedan intactos por construccion.
+    fila.update(prop)
+    fila["visto_ultima_vez"] = hoy
+    fila["activa"] = True
+
+    if precio_previo is not None and prop["precio"] != precio_previo:
+        fila["historial_precio"].append(
+            {"fecha": hoy, "precio": prop["precio"], "moneda": prop["moneda"]}
+        )
+        eventos.append(_evento("cambio_precio", prop, hoy, {
+            "antes": precio_previo,
+            "ahora": prop["precio"],
+            "moneda": prop["moneda"],
+        }))
+
+    return eventos
+
+
 def procesar(cartera_previa: dict, propiedades_hoy: list, hoy: str):
     """Devuelve (cartera_nueva, eventos_nuevos). No modifica cartera_previa."""
     cartera = {clave: dict(fila) for clave, fila in cartera_previa.items()}
@@ -66,7 +90,9 @@ def procesar(cartera_previa: dict, propiedades_hoy: list, hoy: str):
 
     for prop in propiedades_hoy:
         entity_id = prop["entity_id"]
-        if entity_id not in cartera:
+        if entity_id in cartera:
+            eventos += _actualizar(cartera[entity_id], prop, hoy)
+        else:
             cartera[entity_id] = _dar_de_alta(prop, hoy)
             # La primera corrida no son altas de verdad: son las que ya tenia publicadas.
             tipo = "carga_inicial" if primera_corrida else "alta"

@@ -91,5 +91,37 @@ class TestAltas(unittest.TestCase):
         self.assertEqual(original, {})
 
 
+class TestCambioDePrecio(unittest.TestCase):
+    def test_baja_de_precio_genera_evento_y_se_suma_al_historial(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", precio=240000.0)], AYER)
+        cartera, eventos = procesar.procesar(cartera, [propiedad("e1", precio=225000.0)], HOY)
+
+        self.assertEqual(tipos(eventos), ["cambio_precio"])
+        self.assertEqual(eventos[0]["detalle"], {
+            "antes": 240000.0, "ahora": 225000.0, "moneda": "USD",
+        })
+        self.assertEqual(cartera["e1"]["historial_precio"], [
+            {"fecha": AYER, "precio": 240000.0, "moneda": "USD"},
+            {"fecha": HOY, "precio": 225000.0, "moneda": "USD"},
+        ])
+
+    def test_el_precio_actual_queda_actualizado(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", precio=240000.0)], AYER)
+        cartera, _ = procesar.procesar(cartera, [propiedad("e1", precio=225000.0)], HOY)
+        self.assertEqual(cartera["e1"]["precio"], 225000.0)
+
+    def test_mismo_precio_no_genera_nada(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", precio=240000.0)], AYER)
+        cartera, eventos = procesar.procesar(cartera, [propiedad("e1", precio=240000.0)], HOY)
+        self.assertEqual(eventos, [])
+        self.assertEqual(len(cartera["e1"]["historial_precio"]), 1)
+
+    def test_se_actualiza_la_fecha_de_ultima_vez_vista(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1")], AYER)
+        cartera, _ = procesar.procesar(cartera, [propiedad("e1")], HOY)
+        self.assertEqual(cartera["e1"]["visto_primera_vez"], AYER)
+        self.assertEqual(cartera["e1"]["visto_ultima_vez"], HOY)
+
+
 if __name__ == "__main__":
     unittest.main()
