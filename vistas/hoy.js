@@ -100,8 +100,18 @@ function todoAlDia(estado) {
     </section>
     <section class="tarjeta">
       <p class="etiqueta">Cobrado en ${anio}</p>
-      <p class="cifra cifra-grande" style="margin:6px 0 4px">${plataUSD(c.capa1.facturacion)}</p>
-      ${r ? html`<p class="apunte">${pct(r.avance)} del objetivo · ${r.aRitmo ? "vas a ritmo" : "vas atrasado"}</p>` : ""}
+      <p class="cifra cifra-grande" style="margin:6px 0 2px">${plataUSD(c.capa1.ganancia)}</p>
+      <p class="apunte">a tu bolsillo · ${plataUSD(c.capa1.facturacion)} facturados</p>
+      ${r ? html`<p class="apunte" style="margin-top:8px">${pct(r.avance)} del objetivo · ${r.aRitmo ? "vas a ritmo" : "vas atrasado"}</p>` : ""}
+    </section>
+    <section class="tarjeta">
+      <p class="etiqueta">Si cierra lo que está en negociación y reservado</p>
+      <p class="cifra cifra-grande" style="margin:6px 0 2px;color:var(--azul)">
+        ${plataUSD(c.capa1.ganancia + c.avanzado.ganancia)}
+      </p>
+      <p class="apunte">
+        a tu bolsillo · ${plataUSD(c.capa1.facturacion + c.avanzado.facturacion)} facturados
+      </p>
     </section>
   `);
 }

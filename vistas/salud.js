@@ -202,7 +202,7 @@ function barraDeRitmo(r, objetivo, c, anio) {
         <div class="dato"><span class="dato-nombre">Te faltan</span><span class="dato-valor">${plata(r.falta)}</span></div>
         <div class="dato"><span class="dato-nombre">Por mes, para llegar</span><span class="dato-valor">${plata(r.porMes)}</span></div>
         <div class="dato"><span class="dato-nombre">A fin de año, a este paso</span><span class="dato-valor">${plata(r.proyeccion)}</span></div>
-        <div class="dato"><span class="dato-nombre">Si cierra toda tu cartera</span><span class="dato-valor">${plata(c.total.facturacion)}</span></div>
+        <div class="dato"><span class="dato-nombre">Si cierra toda tu cartera</span><span class="dato-valor">${plata(c.total.facturacion)} · ${plata(c.total.ganancia)} tuyos</span></div>
       </div>
       ${r.falta > 0 && c.total.facturacion < objetivo
         ? html`<p class="aviso">Aun cerrando <strong>todo</strong> lo que tenés hoy llegás a
@@ -325,7 +325,10 @@ function propiedadesUsadas(capa3, estado) {
           <span class="fila-titulo">${escapar(p.direccion || "Sin dirección")}</span>
           <span class="fila-sub">${p.estado.replace("_", " ")} · ${plata(p.precio)} × ${Math.round(p.probabilidad * 100)}%</span>
         </span>
-        <span class="cifra cifra-media">${plata(p.facturacion)}</span>
+        <span class="fila-plata">
+          <span class="cifra cifra-media">${plata(p.ganancia)}</span>
+          <span class="fila-sub">${plata(p.facturacion)} fact.</span>
+        </span>
       </button>`
     )
     .join("");
