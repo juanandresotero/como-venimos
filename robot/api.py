@@ -1,0 +1,57 @@
+"""Lo unico que habla con RE/MAX.
+
+La API es publica: no hay claves ni secretos. Se piden las propiedades del asociado
+en una sola tanda; si algun dia son mas de las que entran, el codigo revienta a proposito
+en vez de grabar una cartera incompleta (ver traer_listings).
+"""
+from __future__ import annotations
+
+import json
+import time
+import urllib.error
+import urllib.request
+
+ASOCIADO = "385bebaf-55e1-4fcb-85e6-10f6619d635e"   # Juan Andres Otero
+PAGINA = 200
+
+URL = (
+    "https://api-ar.redremax.com/remaxweb-uy/api/listings/findAllWithEntrepreneurships"
+    f"?page=0&pageSize={PAGINA}"
+    f"&eq=associateId:{ASOCIADO}"
+    "&eq=entrepreneurship:false"
+)
+
+CABECERAS = {
+    "User-Agent": "Mozilla/5.0 (como-venimos-robot)",
+    "Accept": "application/json",
+}
+
+
+def bajar(url: str = URL, intentos: int = 3, espera: int = 5):
+    """Pide el JSON con reintentos. Un corte de red no puede tumbar la corrida del dia."""
+    ultimo_error = None
+    for intento in range(1, intentos + 1):
+        try:
+            pedido = urllib.request.Request(url, headers=CABECERAS)
+            with urllib.request.urlopen(pedido, timeout=60) as respuesta:
+                return json.loads(respuesta.read().decode("utf-8"))
+        except (urllib.error.URLError, TimeoutError, ValueError) as error:
+            ultimo_error = error
+            if intento < intentos:
+                time.sleep(espera * intento)
+    raise RuntimeError(
+        f"No se pudo bajar la cartera despues de {intentos} intentos: {ultimo_error}"
+    )
+
+
+def traer_listings(url: str = URL) -> list:
+    crudo = bajar(url)
+    datos = (crudo or {}).get("data") or {}
+    listings = datos.get("data") or []
+    total = datos.get("totalItems")
+    if total is not None and len(listings) < total:
+        raise RuntimeError(
+            f"La API dice que hay {total} propiedades pero devolvio {len(listings)}. "
+            f"Hay que subir PAGINA en robot/api.py."
+        )
+    return listings

@@ -1,0 +1,1201 @@
+{
+ "data": {
+  "data": [
+   {
+    "id": 31193,
+    "entityId": "a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f/03e41346-dc06-4283-b56f-472fc4df34d3"
+     },
+     {
+      "rawValue": "listings/a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f/4170c366-30bd-4fc0-a0b4-59ff9fc5ba84"
+     },
+     {
+      "rawValue": "listings/a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f/d2a42be9-8834-4152-a2c2-e70217a504f2"
+     },
+     {
+      "rawValue": "listings/a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f/be4b9395-548b-491f-a177-df90c5e17bc5"
+     },
+     {
+      "rawValue": "listings/a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f/1761ac7f-a03e-4299-8bdd-80380443c39e"
+     }
+    ],
+    "listingStatus": {
+     "id": 1.0,
+     "value": "active"
+    },
+    "type": {
+     "id": 9.0,
+     "value": "casa"
+    },
+    "title": "Venta 2 casas en Maroñas con cochera y gran salón",
+    "slug": "venta-2-casas-en-maronas-con-cochera-y-gran-salon",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.1320319,
+      -34.8604102
+     ]
+    },
+    "totalRooms": 7,
+    "bathrooms": 2,
+    "bedrooms": 4,
+    "price": 240000.0,
+    "priceExposure": true,
+    "expensesPrice": null,
+    "displayAddress": "Gobernador Vigodet 2700",
+    "internalId": "940041154-217",
+    "dimensionLand": 565.0,
+    "dimensionTotalBuilt": 565.0,
+    "dimensionCovered": 227.0,
+    "geoLabel": null,
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   },
+   {
+    "id": 31080,
+    "entityId": "45e27b03-b19a-4654-a163-4d0bf3307fac",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/45e27b03-b19a-4654-a163-4d0bf3307fac/a3892b66-f135-4e42-aaaf-1798de0891b7"
+     },
+     {
+      "rawValue": "listings/45e27b03-b19a-4654-a163-4d0bf3307fac/e9f050bc-18ea-4c3d-9b90-47ab69a80901"
+     },
+     {
+      "rawValue": "listings/45e27b03-b19a-4654-a163-4d0bf3307fac/038672e3-f1d5-44ce-bc5b-0450be9d39d5"
+     },
+     {
+      "rawValue": "listings/45e27b03-b19a-4654-a163-4d0bf3307fac/2fcf91e4-4f25-4826-bdbb-a27f1bc0b1a8"
+     },
+     {
+      "rawValue": "listings/45e27b03-b19a-4654-a163-4d0bf3307fac/17700a3a-3233-4b5a-8d10-7f69dea8ddac"
+     }
+    ],
+    "listingStatus": {
+     "id": 3.0,
+     "value": "negotiation"
+    },
+    "type": {
+     "id": 2.0,
+     "value": "departamento_estandar"
+    },
+    "title": "Venta Apartamento en Malvin Norte de 2 dormitorios",
+    "slug": "venta-apartamento-en-malvin-norte-de-2-dormitorios",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.1040818,
+      -34.8747132
+     ]
+    },
+    "totalRooms": 3,
+    "bathrooms": 1,
+    "bedrooms": 2,
+    "price": 60000.0,
+    "priceExposure": true,
+    "expensesPrice": 2900.0,
+    "displayAddress": "Flammarión 5000",
+    "internalId": "940041154-216",
+    "dimensionLand": 0.0,
+    "dimensionTotalBuilt": 51.0,
+    "dimensionCovered": 49.0,
+    "geoLabel": "Malvin norte, Malvin norte, Montevideo",
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   },
+   {
+    "id": 29891,
+    "entityId": "c9f554b2-5290-4e2f-9b88-fdac4cbd67d7",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/c9f554b2-5290-4e2f-9b88-fdac4cbd67d7/8e9710d4-0ea7-4038-9449-3526c4b217ad"
+     },
+     {
+      "rawValue": "listings/c9f554b2-5290-4e2f-9b88-fdac4cbd67d7/271ad90d-ed8e-4498-bda5-11ab566d5a16"
+     },
+     {
+      "rawValue": "listings/c9f554b2-5290-4e2f-9b88-fdac4cbd67d7/cad6f8a5-38f1-4d46-96cf-3667e1b80c1a"
+     },
+     {
+      "rawValue": "listings/c9f554b2-5290-4e2f-9b88-fdac4cbd67d7/3a4aefc0-1aac-49d2-bfa1-092927f9b263"
+     },
+     {
+      "rawValue": "listings/c9f554b2-5290-4e2f-9b88-fdac4cbd67d7/289950c5-1657-4cf5-9063-3fde7208f9e1"
+     }
+    ],
+    "listingStatus": {
+     "id": 1.0,
+     "value": "active"
+    },
+    "type": {
+     "id": 9.0,
+     "value": "casa"
+    },
+    "title": "Venta gran casa en colon 5 dorm. con gran terreno",
+    "slug": "venta-gran-casa-en-colon-5-dorm-con-gran-terreno-1",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.240805387497,
+      -34.799814075936
+     ]
+    },
+    "totalRooms": 8,
+    "bathrooms": 4,
+    "bedrooms": 5,
+    "price": 490000.0,
+    "priceExposure": true,
+    "expensesPrice": 0.0,
+    "displayAddress": "Gutenberg 6100",
+    "internalId": "940041154-197",
+    "dimensionLand": 6769.0,
+    "dimensionTotalBuilt": 6769.0,
+    "dimensionCovered": 715.0,
+    "geoLabel": "Colon, Colon, Montevideo",
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   },
+   {
+    "id": 29889,
+    "entityId": "2c76d23c-2d94-4cd4-8120-d052679e1608",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/2c76d23c-2d94-4cd4-8120-d052679e1608/8e9710d4-0ea7-4038-9449-3526c4b217ad"
+     },
+     {
+      "rawValue": "listings/2c76d23c-2d94-4cd4-8120-d052679e1608/271ad90d-ed8e-4498-bda5-11ab566d5a16"
+     },
+     {
+      "rawValue": "listings/2c76d23c-2d94-4cd4-8120-d052679e1608/cad6f8a5-38f1-4d46-96cf-3667e1b80c1a"
+     },
+     {
+      "rawValue": "listings/2c76d23c-2d94-4cd4-8120-d052679e1608/3a4aefc0-1aac-49d2-bfa1-092927f9b263"
+     },
+     {
+      "rawValue": "listings/2c76d23c-2d94-4cd4-8120-d052679e1608/289950c5-1657-4cf5-9063-3fde7208f9e1"
+     }
+    ],
+    "listingStatus": {
+     "id": 1.0,
+     "value": "active"
+    },
+    "type": {
+     "id": 17.0,
+     "value": "local"
+    },
+    "title": "Venta gran casa en colon 5 dorm. con gran terreno",
+    "slug": "venta-gran-casa-en-colon-5-dorm-con-gran-terreno",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.240805387497,
+      -34.799814075936
+     ]
+    },
+    "totalRooms": 0,
+    "bathrooms": 4,
+    "bedrooms": 0,
+    "price": 490000.0,
+    "priceExposure": true,
+    "expensesPrice": 0.0,
+    "displayAddress": "Gutenberg 6100",
+    "internalId": "940041154-198",
+    "dimensionLand": 6769.0,
+    "dimensionTotalBuilt": 6769.0,
+    "dimensionCovered": 715.0,
+    "geoLabel": "Colon, Colon, Montevideo",
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   },
+   {
+    "id": 29888,
+    "entityId": "f123f605-dc13-4aaa-ad8a-94ad44a11db6",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/f123f605-dc13-4aaa-ad8a-94ad44a11db6/cf199daf-9664-4216-b27f-8eac93746ae8"
+     },
+     {
+      "rawValue": "listings/f123f605-dc13-4aaa-ad8a-94ad44a11db6/544553da-8d92-4e58-9231-44adddd04493"
+     },
+     {
+      "rawValue": "listings/f123f605-dc13-4aaa-ad8a-94ad44a11db6/76bb0553-183a-4da1-9597-ffc971b1070c"
+     },
+     {
+      "rawValue": "listings/f123f605-dc13-4aaa-ad8a-94ad44a11db6/232e4993-d47b-46aa-9003-edbb1db3ce1f"
+     },
+     {
+      "rawValue": "listings/f123f605-dc13-4aaa-ad8a-94ad44a11db6/23f1ee4e-cda4-47e7-8a54-3e2913883ae6"
+     }
+    ],
+    "listingStatus": {
+     "id": 1.0,
+     "value": "active"
+    },
+    "type": {
+     "id": 9.0,
+     "value": "casa"
+    },
+    "title": "Venta gran padrón punta de rieles casa y terreno",
+    "slug": "venta-gran-padron-punta-de-rieles-casa-y-terreno",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.112647093546,
+      -34.822945358038
+     ]
+    },
+    "totalRooms": 8,
+    "bathrooms": 1,
+    "bedrooms": 4,
+    "price": 245000.0,
+    "priceExposure": true,
+    "expensesPrice": null,
+    "displayAddress": "Ovidio Fernandez Rios 3900",
+    "internalId": "940041154-179",
+    "dimensionLand": 4095.0,
+    "dimensionTotalBuilt": 4104.0,
+    "dimensionCovered": 130.0,
+    "geoLabel": "Punta Rieles, Punta Rieles, Montevideo",
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   },
+   {
+    "id": 29755,
+    "entityId": "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/bbc202e6-4ad7-49f3-9b7c-e667810aa8ea/53f99850-7745-464d-b65c-ef8626ea1814"
+     },
+     {
+      "rawValue": "listings/bbc202e6-4ad7-49f3-9b7c-e667810aa8ea/340ae433-a46e-4c06-8b43-2f75e3b77bf0"
+     },
+     {
+      "rawValue": "listings/bbc202e6-4ad7-49f3-9b7c-e667810aa8ea/9c32092b-e454-4ec9-bf6f-193a4542a40f"
+     },
+     {
+      "rawValue": "listings/bbc202e6-4ad7-49f3-9b7c-e667810aa8ea/523d98ad-1e8d-4226-ad38-e4548fabd7c8"
+     },
+     {
+      "rawValue": "listings/bbc202e6-4ad7-49f3-9b7c-e667810aa8ea/03aca4c7-2e3f-4d91-b279-935092f62f23"
+     }
+    ],
+    "listingStatus": {
+     "id": 3.0,
+     "value": "negotiation"
+    },
+    "type": {
+     "id": 9.0,
+     "value": "casa"
+    },
+    "title": "Venta terreno y gran Casa 4 dorm. Barros Blancos",
+    "slug": "venta-terreno-y-gran-casa-4-dorm-barros-blancos",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.02646637791,
+      -34.766933442965
+     ]
+    },
+    "totalRooms": 6,
+    "bathrooms": 1,
+    "bedrooms": 4,
+    "price": 80000.0,
+    "priceExposure": true,
+    "expensesPrice": 0.0,
+    "displayAddress": "Juana de Ibarbourou 200",
+    "internalId": "940041154-147",
+    "dimensionLand": 2500.0,
+    "dimensionTotalBuilt": 2499.0,
+    "dimensionCovered": 235.0,
+    "geoLabel": "Barros Blancos, Barros Blancos, Canelones",
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   },
+   {
+    "id": 28870,
+    "entityId": "29b0df7e-7d40-4283-99b0-f88c2f168377",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/29b0df7e-7d40-4283-99b0-f88c2f168377/e8856cb8-4e8d-432d-9670-1d8f1a688e88"
+     },
+     {
+      "rawValue": "listings/29b0df7e-7d40-4283-99b0-f88c2f168377/0ff1ac92-7791-4701-a7f9-2e91228ac669"
+     },
+     {
+      "rawValue": "listings/29b0df7e-7d40-4283-99b0-f88c2f168377/1a7144ec-3a63-400d-9f06-1218c2d1f980"
+     },
+     {
+      "rawValue": "listings/29b0df7e-7d40-4283-99b0-f88c2f168377/a8655bcc-dd15-47c7-b79f-c1c7cfd11dba"
+     },
+     {
+      "rawValue": "listings/29b0df7e-7d40-4283-99b0-f88c2f168377/09ebb52e-8be7-4cd1-8dc5-a57fbcb13097"
+     }
+    ],
+    "listingStatus": {
+     "id": 1.0,
+     "value": "active"
+    },
+    "type": {
+     "id": 9.0,
+     "value": "casa"
+    },
+    "title": "Venta 2 casas mismo padron flor de Maroñas cochera",
+    "slug": "venta-2-casas-mismo-padron-flor-de-maronas-cochera",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.1209869,
+      -34.854729
+     ]
+    },
+    "totalRooms": 8,
+    "bathrooms": 1,
+    "bedrooms": 3,
+    "price": 94000.0,
+    "priceExposure": true,
+    "expensesPrice": null,
+    "displayAddress": "Eusebio Vidal 3100",
+    "internalId": "940041154-210",
+    "dimensionLand": 503.0,
+    "dimensionTotalBuilt": 503.0,
+    "dimensionCovered": 196.0,
+    "geoLabel": "Maroñas, Maroñas, Montevideo",
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   },
+   {
+    "id": 28848,
+    "entityId": "a4b43687-a487-485c-82ae-62118b687ec1",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/a4b43687-a487-485c-82ae-62118b687ec1/1760ac50-d93d-4ac7-981a-1e4b190557ed"
+     },
+     {
+      "rawValue": "listings/a4b43687-a487-485c-82ae-62118b687ec1/eb590cbc-8909-4a60-b0e9-b3ed118a2380"
+     },
+     {
+      "rawValue": "listings/a4b43687-a487-485c-82ae-62118b687ec1/1d3d95ea-66b5-4644-a7e0-13c3ba499346"
+     },
+     {
+      "rawValue": "listings/a4b43687-a487-485c-82ae-62118b687ec1/85c278e2-2dd2-4efe-ba9d-f86890bdc82e"
+     },
+     {
+      "rawValue": "listings/a4b43687-a487-485c-82ae-62118b687ec1/997fe4c9-1661-4f28-bd2b-449b227044a8"
+     }
+    ],
+    "listingStatus": {
+     "id": 3.0,
+     "value": "negotiation"
+    },
+    "type": {
+     "id": 9.0,
+     "value": "casa"
+    },
+    "title": "Venta Casa 3 dormitorios playa pascual parrillero",
+    "slug": "venta-casa-3-dormitorios-playa-pascual-parrillero",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.455403431295,
+      -34.742152427778
+     ]
+    },
+    "totalRooms": 4,
+    "bathrooms": 1,
+    "bedrooms": 2,
+    "price": 56000.0,
+    "priceExposure": true,
+    "expensesPrice": 0.0,
+    "displayAddress": "San José 1200",
+    "internalId": "940041154-207",
+    "dimensionLand": 539.0,
+    "dimensionTotalBuilt": 56.0,
+    "dimensionCovered": 54.0,
+    "geoLabel": "Playa pascual, Playa pascual, San Jose",
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   },
+   {
+    "id": 27907,
+    "entityId": "d8d7855f-b0bb-4122-bc7e-74c987f50396",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/d8d7855f-b0bb-4122-bc7e-74c987f50396/83ffd6c5-f04e-42ff-b65e-26e7143ef5cb"
+     },
+     {
+      "rawValue": "listings/d8d7855f-b0bb-4122-bc7e-74c987f50396/c221638b-7826-47f7-8ac1-b02085e43005"
+     },
+     {
+      "rawValue": "listings/d8d7855f-b0bb-4122-bc7e-74c987f50396/d8c2c115-d3cb-47ef-b10f-d7a74ce94393"
+     },
+     {
+      "rawValue": "listings/d8d7855f-b0bb-4122-bc7e-74c987f50396/dcaf5d74-7fa0-490a-bbdb-076ec172e875"
+     },
+     {
+      "rawValue": "listings/d8d7855f-b0bb-4122-bc7e-74c987f50396/0355baad-363a-48e8-8f6e-036e65c1a239"
+     }
+    ],
+    "listingStatus": {
+     "id": 3.0,
+     "value": "negotiation"
+    },
+    "type": {
+     "id": 9.0,
+     "value": "casa"
+    },
+    "title": "Casa 1 Dormitorio cochera Cerrito ideal negocio",
+    "slug": "casa-1-dormitorio-cochera-cerrito-ideal-negocio",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.175155639648,
+      -34.848800858636
+     ]
+    },
+    "totalRooms": 3,
+    "bathrooms": 1,
+    "bedrooms": 1,
+    "price": 43000.0,
+    "priceExposure": true,
+    "expensesPrice": null,
+    "displayAddress": "Estanislao Vega 3900",
+    "internalId": "940041154-205",
+    "dimensionLand": 66.0,
+    "dimensionTotalBuilt": 66.0,
+    "dimensionCovered": 41.0,
+    "geoLabel": "Cerrito, Cerrito, Montevideo",
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   },
+   {
+    "id": 27204,
+    "entityId": "c9e235a6-5bb0-47a6-b9aa-62b2283bb94a",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/c9e235a6-5bb0-47a6-b9aa-62b2283bb94a/11701ce2-26b9-49ea-99bb-5a606104a0dd"
+     },
+     {
+      "rawValue": "listings/c9e235a6-5bb0-47a6-b9aa-62b2283bb94a/3dcee60f-e3c1-4991-b2ac-85e900f9ac77"
+     },
+     {
+      "rawValue": "listings/c9e235a6-5bb0-47a6-b9aa-62b2283bb94a/3ca8ddb7-4983-4012-a830-6130687ad736"
+     },
+     {
+      "rawValue": "listings/c9e235a6-5bb0-47a6-b9aa-62b2283bb94a/c94423b7-7ce6-44e7-985a-6228af7fe74a"
+     },
+     {
+      "rawValue": "listings/c9e235a6-5bb0-47a6-b9aa-62b2283bb94a/7905b056-978b-4e71-b4c2-9cb7f2c6dbda"
+     }
+    ],
+    "listingStatus": {
+     "id": 3.0,
+     "value": "negotiation"
+    },
+    "type": {
+     "id": 2.0,
+     "value": "departamento_estandar"
+    },
+    "title": "Venta Apartamento 2 dormitorios Cordon con jacuzzi",
+    "slug": "venta-apartamento-2-dormitorios-cordon-con-jacuzzi",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.1825308,
+      -34.8999394
+     ]
+    },
+    "totalRooms": 5,
+    "bathrooms": 2,
+    "bedrooms": 2,
+    "price": 165000.0,
+    "priceExposure": true,
+    "expensesPrice": 1600.0,
+    "displayAddress": "Minas 1600",
+    "internalId": "940041154-204",
+    "dimensionLand": 0.0,
+    "dimensionTotalBuilt": 110.0,
+    "dimensionCovered": 98.0,
+    "geoLabel": "Cordon, Cordon, Montevideo",
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   },
+   {
+    "id": 23599,
+    "entityId": "cab1949c-02eb-445f-989a-68c5f31523df",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/cab1949c-02eb-445f-989a-68c5f31523df/85f38333-999e-4f7b-a49e-7654e28d4aaf"
+     },
+     {
+      "rawValue": "listings/cab1949c-02eb-445f-989a-68c5f31523df/3b1ea5a3-d809-44d7-94d6-02f5b1ef4043"
+     },
+     {
+      "rawValue": "listings/cab1949c-02eb-445f-989a-68c5f31523df/628b8109-8f52-4b1c-90c2-7325ed209bc0"
+     },
+     {
+      "rawValue": "listings/cab1949c-02eb-445f-989a-68c5f31523df/244ce24b-4fb9-43a6-8f88-a6a0126a59ac"
+     },
+     {
+      "rawValue": "listings/cab1949c-02eb-445f-989a-68c5f31523df/b4f62cea-336d-475a-8215-160ee046e79b"
+     }
+    ],
+    "listingStatus": {
+     "id": 3.0,
+     "value": "negotiation"
+    },
+    "type": {
+     "id": 17.0,
+     "value": "local"
+    },
+    "title": "Venta salón 3 dormitorios cochera paso de la arena",
+    "slug": "venta-salon-3-dormitorios-cochera-paso-de-la-arena",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.2699444,
+      -34.8341845
+     ]
+    },
+    "totalRooms": 8,
+    "bathrooms": 1,
+    "bedrooms": 3,
+    "price": 54000.0,
+    "priceExposure": true,
+    "expensesPrice": null,
+    "displayAddress": "Camino Tomkinson 2200",
+    "internalId": "940041154-150",
+    "dimensionLand": 390.0,
+    "dimensionTotalBuilt": 390.0,
+    "dimensionCovered": 167.0,
+    "geoLabel": "Paso de la Arena, Paso de la Arena, Montevideo",
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   },
+   {
+    "id": 22844,
+    "entityId": "5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6",
+    "entrepreneurship": false,
+    "operation": {
+     "id": 1.0,
+     "value": "sale"
+    },
+    "associate": {
+     "emails": [
+      {
+       "value": "jaotero@remax.com.uy",
+       "isPrimary": true
+      }
+     ],
+     "officeName": "REMAX Único",
+     "license": "",
+     "rawPhoto": "agents/385bebaf-55e1-4fcb-85e6-10f6619d635e/agentimage47222_18_10_2022_11_37_12",
+     "officeId": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+     "auctioneerOffice": false,
+     "name": "Juan Andrés Otero",
+     "phones": [
+      {
+       "type": "mobile",
+       "value": "+59899616633",
+       "isPrimary": true
+      }
+     ],
+     "id": "385bebaf-55e1-4fcb-85e6-10f6619d635e",
+     "auctioneerAssociate": false
+    },
+    "currency": {
+     "id": 1.0,
+     "value": "USD"
+    },
+    "expensesCurrency": {
+     "id": 3.0,
+     "value": "UYU"
+    },
+    "listBroker": null,
+    "photos": [
+     {
+      "rawValue": "listings/5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6/968c7647-7ef6-482c-9ded-b114c3061720"
+     },
+     {
+      "rawValue": "listings/5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6/4ca03618-1b52-490a-b316-3d82e83275e9"
+     },
+     {
+      "rawValue": "listings/5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6/5b0af140-3e5a-4d3e-bfdb-abccfd2b2b82"
+     },
+     {
+      "rawValue": "listings/5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6/31e9630e-0d94-41fb-940b-b9d4cfad564c"
+     },
+     {
+      "rawValue": "listings/5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6/a2ba16b4-45f3-4a07-9813-1f48b346e419"
+     }
+    ],
+    "listingStatus": {
+     "id": 2.0,
+     "value": "reserved"
+    },
+    "type": {
+     "id": 2.0,
+     "value": "departamento_estandar"
+    },
+    "title": "Venta apartamento 2 dormitiros Reducto con cochera",
+    "slug": "venta-apartamento-2-dormitiros-reducto-con-cochera",
+    "location": {
+     "type": "Point",
+     "coordinates": [
+      -56.1921015,
+      -34.8800749
+     ]
+    },
+    "totalRooms": 3,
+    "bathrooms": 1,
+    "bedrooms": 2,
+    "price": 89900.0,
+    "priceExposure": true,
+    "expensesPrice": 4500.0,
+    "displayAddress": "San Fructuoso 1200",
+    "internalId": "940041154-196",
+    "dimensionLand": 0.0,
+    "dimensionTotalBuilt": 49.0,
+    "dimensionCovered": 49.0,
+    "geoLabel": "Reducto, Reducto, Montevideo",
+    "translations": [],
+    "estage": null,
+    "eminPrice": null,
+    "emaxPrice": null,
+    "ecompletedMonth": null,
+    "ecompletedYear": null,
+    "etotalUnits": null,
+    "eminTotalRooms": null,
+    "emaxTotalRooms": null,
+    "ecurrency": null,
+    "eminBedrooms": null,
+    "emaxBedrooms": null
+   }
+  ],
+  "page": 0,
+  "pageSize": 200,
+  "totalPages": 1,
+  "totalItems": 12
+ },
+ "code": 200,
+ "message": "Time elapsed seconds: 0",
+ "errors": null
+}

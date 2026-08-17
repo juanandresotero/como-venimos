@@ -9,10 +9,16 @@ from __future__ import annotations
 
 import json
 import pathlib
+import sys
 
-from robot import api
+RAIZ = pathlib.Path(__file__).resolve().parent.parent
+# Se corre como "python herramientas/grabar_fixture.py", asi que Python solo conoce la
+# carpeta del script. Le agregamos la raiz del proyecto para poder importar `robot`.
+sys.path.insert(0, str(RAIZ))
 
-DESTINO = pathlib.Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "respuesta_api.json"
+from robot import api  # noqa: E402  (tiene que ir despues de tocar sys.path)
+
+DESTINO = RAIZ / "tests" / "fixtures" / "respuesta_api.json"
 
 
 def main():
