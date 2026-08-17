@@ -2860,7 +2860,7 @@
   "id": "excel-82",
   "moneda": "USD",
   "notas": "",
-  "origen_captacion": "Redes pagas",
+  "origen_captacion": "Ref. B.d.r.",
   "pct_comision_total": 0.06,
   "precio_operacion": 89900,
   "puntas": 2,
@@ -3066,8 +3066,8 @@
   "ficha_vigente": true,
   "regimen_comision": "captacion_mia",
   "base": 9000,
-  "facturacion": null,
-  "ganancia": null,
+  "facturacion": 9000,
+  "ganancia": 4050,
   "fecha_fin_estimada": false,
   "agente_compra_nombre": null,
   "origen_quien": null,
@@ -3075,6 +3075,8 @@
    "nombre": "Mariela Suegra Pato",
    "telefono": "+598 99 155 336"
   },
-  "ficha_completa_momento": "en_negociacion"
+  "ficha_completa_momento": "en_negociacion",
+  "categoria_vigente": "RAP",
+  "recalculado": true
  }
 ]
