@@ -62,6 +62,7 @@ def _actualizar(fila: dict, prop: dict, hoy: str) -> list:
     """Refresca una propiedad que ya conociamos y devuelve las novedades que haya."""
     eventos = []
     precio_previo = fila.get("precio")
+    estado_previo = fila.get("estado")
 
     # Los datos frescos de la API pisan a los viejos. Como `prop` solo trae los campos
     # que produce robot.modelo, los campos del usuario quedan intactos por construccion.
@@ -78,6 +79,18 @@ def _actualizar(fila: dict, prop: dict, hoy: str) -> list:
             "ahora": prop["precio"],
             "moneda": prop["moneda"],
         }))
+
+    if prop["estado"] != estado_previo:
+        eventos.append(_evento("cambio_estado", prop, hoy, {
+            "antes": estado_previo,
+            "ahora": prop["estado"],
+        }))
+        # Guardamos la PRIMERA vez que entro a cada estado, no la ultima: si va y vuelve,
+        # lo que sirve para medir plazos es cuando arranco.
+        if prop["estado"] == "en_negociacion" and not fila.get("fecha_negociacion"):
+            fila["fecha_negociacion"] = hoy
+        if prop["estado"] == "reservada" and not fila.get("fecha_reservada"):
+            fila["fecha_reservada"] = hoy
 
     return eventos
 

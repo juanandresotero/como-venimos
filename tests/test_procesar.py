@@ -123,5 +123,38 @@ class TestCambioDePrecio(unittest.TestCase):
         self.assertEqual(cartera["e1"]["visto_ultima_vez"], HOY)
 
 
+class TestCambioDeEstado(unittest.TestCase):
+    def test_pasar_a_negociacion_avisa_y_anota_la_fecha(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", estado="publicada")], AYER)
+        cartera, eventos = procesar.procesar(
+            cartera, [propiedad("e1", estado="en_negociacion")], HOY
+        )
+        self.assertEqual(tipos(eventos), ["cambio_estado"])
+        self.assertEqual(eventos[0]["detalle"], {"antes": "publicada", "ahora": "en_negociacion"})
+        self.assertEqual(cartera["e1"]["fecha_negociacion"], HOY)
+
+    def test_pasar_a_reservada_anota_su_propia_fecha(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", estado="en_negociacion")], AYER)
+        cartera, _ = procesar.procesar(cartera, [propiedad("e1", estado="reservada")], HOY)
+        self.assertEqual(cartera["e1"]["fecha_negociacion"], AYER)
+        self.assertEqual(cartera["e1"]["fecha_reservada"], HOY)
+
+    def test_la_fecha_de_negociacion_guarda_la_primera_vez_no_la_ultima(self):
+        # Si va y vuelve de negociacion, nos interesa cuando entro por primera vez.
+        cartera, _ = procesar.procesar({}, [propiedad("e1", estado="en_negociacion")], AYER)
+        cartera, _ = procesar.procesar(cartera, [propiedad("e1", estado="publicada")], HOY)
+        cartera, _ = procesar.procesar(
+            cartera, [propiedad("e1", estado="en_negociacion")], "2026-08-19"
+        )
+        self.assertEqual(cartera["e1"]["fecha_negociacion"], AYER)
+
+    def test_precio_y_estado_cambian_juntos_generan_dos_eventos(self):
+        cartera, _ = procesar.procesar({}, [propiedad("e1", precio=100000.0)], AYER)
+        cartera, eventos = procesar.procesar(
+            cartera, [propiedad("e1", precio=90000.0, estado="en_negociacion")], HOY
+        )
+        self.assertEqual(sorted(tipos(eventos)), ["cambio_estado", "cambio_precio"])
+
+
 if __name__ == "__main__":
     unittest.main()
