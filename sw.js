@@ -1,14 +1,17 @@
 /* Deja la app usable sin señal.
 
-   Estrategia:
+   Estrategia, en las dos: PRIMERO LA RED, con el cache como red de seguridad.
    - Los DATOS se piden siempre a la red y se guarda una copia por si no hay conexion.
-     Asi los numeros nunca quedan viejos cuando hay internet.
-   - El CODIGO se sirve del cache al instante (la app abre rapido y sin señal) pero se
-     vuelve a bajar en segundo plano. La version nueva queda lista para la proxima vez
-     que abra. Antes esto era solo-cache y una version vieja podia quedarse pegada para
-     siempre en el telefono, aunque el repo tuviera codigo nuevo. */
+   - El CODIGO se pide a la red con un limite de 2,5 segundos. Si contesta, esa es la
+     buena; si tarda o no hay señal, sale lo guardado al instante.
 
-const CACHE = "como-venimos-v6";
+   Las dos versiones anteriores fallaban de la misma forma en distinto grado: solo-cache
+   dejaba una version vieja pegada para siempre, y servir-del-cache-y-refrescar-atras
+   hacia que la PRIMERA apertura despues de cada cambio mostrara lo viejo. Con el usuario
+   probando en vivo, eso era mirar codigo de hace media hora y creer que los arreglos no
+   estaban. */
+
+const CACHE = "como-venimos-v7";
 
 const ARMAZON = [
   "./",
@@ -75,19 +78,40 @@ self.addEventListener("fetch", (evento) => {
     return;
   }
 
-  // El armazon: se responde con lo que hay y se refresca por atras.
-  evento.respondWith(
-    caches.match(pedido).then((guardado) => {
-      const deLaRed = fetch(pedido)
-        .then((respuesta) => {
-          if (respuesta && respuesta.ok) {
-            const copia = respuesta.clone();
-            caches.open(CACHE).then((c) => c.put(pedido, copia)).catch(() => {});
-          }
-          return respuesta;
-        })
-        .catch(() => guardado);
-      return guardado || deLaRed;
-    })
-  );
+  /* El armazon: primero la red, pero sin esperarla eternamente.
+
+     Antes se respondia del cache y se refrescaba por atras. Eso hacia que despues de cada
+     cambio la PRIMERA apertura mostrara la version vieja, y solo la segunda la nueva. Con
+     el usuario probando en vivo, eso significaba mirar codigo de hace media hora y creer
+     que los arreglos no estaban.
+
+     Ahora se pide a la red con un limite de tiempo corto: si contesta, esa es la buena; si
+     tarda o no hay señal, sale lo guardado al instante. La app sigue abriendo en el
+     subsuelo, pero nunca mas se queda pegada en una version vieja teniendo internet. */
+  evento.respondWith(responderArmazon(pedido));
 });
+
+const ESPERA_MAXIMA = 2500;
+
+async function responderArmazon(pedido) {
+  const guardado = await caches.match(pedido);
+
+  const deLaRed = fetch(pedido).then((respuesta) => {
+    if (respuesta && respuesta.ok) {
+      const copia = respuesta.clone();
+      caches.open(CACHE).then((c) => c.put(pedido, copia)).catch(() => {});
+    }
+    return respuesta;
+  });
+
+  if (!guardado) return deLaRed;
+
+  // Se corre a la red contra el reloj. El que llegue primero gana.
+  const reloj = new Promise((listo) => setTimeout(() => listo(null), ESPERA_MAXIMA));
+  try {
+    const respuesta = await Promise.race([deLaRed, reloj]);
+    return respuesta && respuesta.ok ? respuesta : guardado;
+  } catch {
+    return guardado;
+  }
+}

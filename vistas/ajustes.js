@@ -5,7 +5,7 @@
 
 import { guardarToken, leerToken, borrarToken, probarToken, REPO } from "../lib/github.js";
 import { editarAjustes } from "../lib/guardado.js";
-import { plata, pct, fechaRazonable } from "../lib/formato.js";
+import { plata, pct, fechaRazonable, numeroDesde } from "../lib/formato.js";
 import { negociosACsv, carteraACsv, nombrePlanilla } from "../lib/planilla.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -247,26 +247,33 @@ function tuNegocio(estado) {
     const fila = document.createElement("div");
     fila.className = "campo-fila";
     const id = `aj-${etiqueta.replace(/\W+/g, "-").toLowerCase()}`;
+    // Los montos van en un campo de texto para poder mostrarlos con los puntos de miles:
+    // 65.000 se lee de un golpe y 65000 no, y <input type="number"> no admite el punto.
+    const esMoneda = tipo === "moneda";
     fila.innerHTML = html`
       <label for="${id}">${etiqueta}${sufijo ? ` <span class="apunte">${sufijo}</span>` : ""}</label>
       ${opciones
         ? html`<select class="campo" id="${id}">
              ${opciones.map(([v, t]) => `<option value="${v}"${String(v) === String(valor) ? " selected" : ""}>${t}</option>`).join("")}
            </select>`
-        : html`<input class="campo" id="${id}" type="${tipo}" step="any" value="${valor ?? ""}">`}
+        : esMoneda
+          ? html`<input class="campo" id="${id}" type="text" inputmode="decimal"
+                   value="${valor === null || valor === undefined ? "" : plata(valor)}">`
+          : html`<input class="campo" id="${id}" type="${tipo}" step="any" value="${valor ?? ""}">`}
     `;
     const control = fila.querySelector(".campo");
     control.addEventListener("change", () => {
       // El navegador avisa del cambio mientras se tipea el año. Una fecha a medio escribir
       // acá deja sin categoría vigente a todo el año y hace desaparecer la ganancia.
       if (tipo === "date" && !fechaRazonable(control.value)) return;
-      alCambiar(tipo === "number" ? (control.value === "" ? null : Number(control.value)) : control.value);
+      if (esMoneda) alCambiar(numeroDesde(control.value));
+      else alCambiar(tipo === "number" ? (control.value === "" ? null : Number(control.value)) : control.value);
       estado.redibujar();
     });
     contenedor.append(fila);
   };
 
-  agregar(`Objetivo de facturación ${anio}`, "number", objetivo, (v) => {
+  agregar(`Objetivo de facturación ${anio}`, "moneda", objetivo, (v) => {
     editarAjustes(estado, {
       objetivo_personal: { ...(a.objetivo_personal || {}), [anio]: v || 0 },
     });
@@ -289,7 +296,7 @@ function tuNegocio(estado) {
         hasta: null,
       }],
     });
-  }, escalones.map((e) => [e.categoria, `${e.categoria} · ${Math.round(e.split_pct * 100)}% · fee ${e.fee_mensual_usd}`]));
+  }, escalones.map((e) => [e.categoria, `${e.categoria} · ${Math.round(e.split_pct * 100)}% · fee ${plata(e.fee_mensual_usd)}`]));
 
   // La fecha NO se carga a mano: la lleva la app sola. Cuando cambiás de categoría se
   // cierra la anterior en el día de hoy y se abre la nueva, así los negocios de antes
