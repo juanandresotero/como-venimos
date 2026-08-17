@@ -2103,25 +2103,12 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "sin_fecha_fin",
-    "detalle": "Sin fecha de firma no se sabe a qué año pertenece"
-   },
-   {
-    "tipo": "falta_fecha_boleto",
-    "detalle": "Falta la fecha de la reserva o boleto"
-   },
-   {
-    "tipo": "posible_cruce",
-    "detalle": "Puede ser \"Juana de Ibarbourou 200\", que está en tu cartera (en negociacion). Si es la misma, engancharlas."
-   }
-  ],
+  "avisos": [],
   "barrio": "Pando",
   "base": 4500,
   "categoria_vigente": "RAP",
-  "direccion": "juana de ibarburu",
-  "entity_id_cartera": null,
+  "direccion": "juana de ibarburu y Picardía ",
+  "entity_id_cartera": "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea",
   "estado": "en_curso",
   "excel_facturado": 4620,
   "excel_importe": 2079,
@@ -2134,7 +2121,7 @@
   "ganancia": 2079,
   "id": "excel-60",
   "moneda": "USD",
-  "notas": "",
+  "notas": "Mucho tiempo porque el negocio se callo alguna vez antes de cerrarlo real",
   "origen_captacion": "Referido - BDR",
   "pct_comision_total": 0.06,
   "precio_operacion": 75000,
@@ -2147,7 +2134,15 @@
   "es_suplencia": false,
   "yo_referi": false,
   "ficha_vigente": false,
-  "fecha_negociacion": "2026-08-14"
+  "fecha_negociacion": "2026-08-14",
+  "cliente_comprador": {
+   "nombre": "Nicolás Por Zapican",
+   "telefono": "+59898548843"
+  },
+  "cliente_vendedor": {
+   "nombre": "Juanjo 2025",
+   "telefono": "+598 92 697 996"
+  }
  },
  {
   "agente_compra": "Otro REMAX",
