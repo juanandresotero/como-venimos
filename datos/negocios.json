@@ -2344,12 +2344,7 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "falta_fecha_inicio",
-    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
-   }
-  ],
+  "avisos": [],
   "barrio": "Centro",
   "base": 800,
   "categoria_vigente": null,
@@ -2359,11 +2354,11 @@
   "excel_facturado": 800,
   "excel_importe": 360,
   "facturacion": 800,
-  "fecha_boleto": null,
-  "fecha_fin": "2025-03-09",
+  "fecha_boleto": "2025-08-19",
+  "fecha_fin": "2025-09-01",
   "fecha_fin_estimada": false,
-  "fecha_inicio": null,
-  "ficha_completa": false,
+  "fecha_inicio": "2025-07-15",
+  "ficha_completa": true,
   "ganancia": 360,
   "id": "excel-68",
   "moneda": "USD",
@@ -2379,7 +2374,8 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "ficha_completa_momento": null
  },
  {
   "agente_compra": "Juan Andrés Otero",
