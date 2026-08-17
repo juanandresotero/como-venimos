@@ -1898,12 +1898,7 @@
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "falta_fecha_inicio",
-    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
-   }
-  ],
+  "avisos": [],
   "barrio": "Punta carretas",
   "base": 1750,
   "categoria_vigente": null,
@@ -1913,11 +1908,11 @@
   "excel_facturado": 1750,
   "excel_importe": 787.5,
   "facturacion": 1750,
-  "fecha_boleto": null,
-  "fecha_fin": "2025-02-26",
+  "fecha_boleto": "2025-05-19",
+  "fecha_fin": "2025-05-30",
   "fecha_fin_estimada": false,
-  "fecha_inicio": null,
-  "ficha_completa": false,
+  "fecha_inicio": "2025-04-30",
+  "ficha_completa": true,
   "ganancia": 787.5,
   "id": "excel-56",
   "moneda": "USD",
@@ -1933,7 +1928,8 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "ficha_completa_momento": null
  },
  {
   "agente_compra": "Juan Andrés Otero",
