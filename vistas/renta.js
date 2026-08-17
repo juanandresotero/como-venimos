@@ -9,6 +9,7 @@ import {
 } from "../lib/renta.js";
 import { traerCotizacion, cotizacionVigente } from "../lib/cambio.js";
 import { guardarCalculo, borrarCalculo, editarAjustes } from "../lib/guardado.js";
+import { dibujar as dibujarFicha, nombreImagen } from "../lib/ficha-imagen.js";
 import { plata, plataUSD, pct, escapar } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -328,7 +329,8 @@ function guardados(estado, r) {
              value="${escapar(entradas.nombre_cliente)}">
       <div class="botonera">
         <button class="boton boton-primario" id="guardar-calculo" ${sePuedeGuardar ? "" : "disabled"}>Guardar</button>
-        <button class="boton" id="compartir-calculo" ${sePuedeGuardar ? "" : "disabled"}>Mandar por WhatsApp</button>
+        <button class="boton" id="ficha-imagen" ${sePuedeGuardar ? "" : "disabled"}>Ficha para el cliente</button>
+        <button class="boton" id="compartir-calculo" ${sePuedeGuardar ? "" : "disabled"}>Mandar texto</button>
       </div>
       <div class="lista" style="margin-top:14px" id="lista-calculos"></div>
     </section>
@@ -351,6 +353,32 @@ function guardados(estado, r) {
       notas: "",
     });
     estado.redibujar();
+  });
+
+  // La ficha en imagen: se dibuja en un canvas y se comparte como PNG. Si el navegador no
+  // sabe compartir archivos, se baja y el usuario la adjunta a mano.
+  seccion.getElementById("ficha-imagen").addEventListener("click", () => {
+    const lienzo = document.createElement("canvas");
+    dibujarFicha(lienzo, entradas, r, estado.datos.ajustes.agente);
+    lienzo.toBlob(async (blob) => {
+      if (!blob) return;
+      const nombre = nombreImagen(entradas.titulo || entradas.nombre_cliente);
+      const archivo = new File([blob], nombre, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+        try {
+          await navigator.share({ files: [archivo] });
+          return;
+        } catch {
+          return;
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement("a");
+      enlace.href = url;
+      enlace.download = nombre;
+      enlace.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, "image/png");
   });
 
   seccion.getElementById("compartir-calculo").addEventListener("click", () => {

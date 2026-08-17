@@ -29,6 +29,7 @@ const ARMAZON = [
   "./lib/cambio.js",
   "./lib/recomendaciones.js",
   "./lib/reporte.js",
+  "./lib/ficha-imagen.js",
   "./vistas/salud.js",
   "./vistas/hoy.js",
   "./vistas/negocios.js",

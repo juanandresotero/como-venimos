@@ -215,6 +215,17 @@ function tuNegocio(estado) {
   comision("alquiler", 1, "Alquiler, 1 punta");
   comision("alquiler", 2, "Alquiler, 2 puntas");
 
+  // Van firmando la ficha de renta que se le manda al cliente.
+  const agente = a.agente || {};
+  const datoAgente = (clave, etiqueta, tipo) =>
+    agregar(etiqueta, tipo, agente[clave], (v) => {
+      editarAjustes(estado, { agente: { ...agente, [clave]: v } });
+    });
+
+  datoAgente("nombre", "Tu nombre en la ficha del cliente", "text");
+  datoAgente("oficina", "Tu oficina", "text");
+  datoAgente("telefono", "Tu teléfono", "tel");
+
   const NOMBRE_ESTADO = {
     reservada: "Reservada",
     en_negociacion: "En negociación",
