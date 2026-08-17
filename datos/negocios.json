@@ -1861,16 +1861,7 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "falta_fecha_inicio",
-    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
-   },
-   {
-    "tipo": "posible_cruce",
-    "detalle": "Puede ser \"Ovidio Fernandez Rios 3900\", que está en tu cartera (publicada). Si es la misma, engancharlas."
-   }
-  ],
+  "avisos": [],
   "barrio": "Punta de rieles",
   "base": 962,
   "categoria_vigente": null,
@@ -1883,8 +1874,8 @@
   "fecha_boleto": null,
   "fecha_fin": "2025-02-25",
   "fecha_fin_estimada": false,
-  "fecha_inicio": null,
-  "ficha_completa": false,
+  "fecha_inicio": "2025-01-02",
+  "ficha_completa": true,
   "ganancia": 337,
   "id": "excel-55",
   "moneda": "USD",
@@ -1900,7 +1891,9 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "sin_propiedad_en_cartera": true,
+  "ficha_completa_momento": null
  },
  {
   "agente_compra": "Otro REMAX",
@@ -3155,8 +3148,6 @@
   "ficha_vigente": false,
   "regimen_comision": "captacion_mia",
   "base": 3600,
-  "fecha_fin_estimada": false,
-  "facturacion": null,
-  "ganancia": null
+  "fecha_fin_estimada": false
  }
 ]
