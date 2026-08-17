@@ -126,6 +126,37 @@ def _marcar_bajas(cartera: dict, vistos: set, hoy: str) -> list:
     return eventos
 
 
+def _detectar_duplicados(cartera: dict, vistos: set, hoy: str) -> list:
+    """Misma direccion y mismo precio = probablemente la misma propiedad publicada dos veces
+    (por ejemplo una como casa y otra como local). Pasa de verdad y, si no se detecta,
+    infla la proyeccion de la cartera.
+
+    Es una sugerencia: se avisa una sola vez y el usuario decide.
+    """
+    eventos = []
+    por_clave: dict = {}
+    for entity_id in sorted(vistos):
+        fila = cartera[entity_id]
+        clave = ((fila.get("direccion") or "").strip().lower(), fila.get("precio"))
+        por_clave.setdefault(clave, []).append(entity_id)
+
+    for ids in por_clave.values():
+        if len(ids) < 2:
+            continue
+        principal, resto = ids[0], ids[1:]
+        for otro in resto:
+            if cartera[otro].get("posible_duplicado_de"):
+                continue    # ya se aviso otro dia
+            cartera[otro]["posible_duplicado_de"] = principal
+            cartera[otro]["usar_en_proyeccion"] = False
+            eventos.append(_evento("posible_duplicado", cartera[otro], hoy, {
+                "duplicado_de": principal,
+                "direccion": cartera[otro].get("direccion"),
+                "precio": cartera[otro].get("precio"),
+            }))
+    return eventos
+
+
 def procesar(cartera_previa: dict, propiedades_hoy: list, hoy: str):
     """Devuelve (cartera_nueva, eventos_nuevos). No modifica cartera_previa."""
     cartera = {clave: dict(fila) for clave, fila in cartera_previa.items()}
@@ -149,4 +180,5 @@ def procesar(cartera_previa: dict, propiedades_hoy: list, hoy: str):
             }))
 
     eventos += _marcar_bajas(cartera, vistos, hoy)
+    eventos += _detectar_duplicados(cartera, vistos, hoy)
     return cartera, eventos

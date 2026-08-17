@@ -264,5 +264,53 @@ class TestCamposDelUsuario(unittest.TestCase):
             self.assertNotIn(campo, campos_del_modelo)
 
 
+class TestDuplicados(unittest.TestCase):
+    def _dos_iguales(self):
+        return [
+            propiedad("e1", precio=490000.0, direccion="Gutenberg 6100"),
+            propiedad("e2", precio=490000.0, direccion="Gutenberg 6100"),
+        ]
+
+    def test_misma_direccion_y_mismo_precio_avisa(self):
+        cartera, eventos = procesar.procesar({}, self._dos_iguales(), HOY)
+        duplicados = [e for e in eventos if e["tipo"] == "posible_duplicado"]
+        self.assertEqual(len(duplicados), 1)
+        self.assertEqual(duplicados[0]["entity_id"], "e2")
+        self.assertEqual(duplicados[0]["detalle"]["duplicado_de"], "e1")
+
+    def test_el_duplicado_queda_fuera_de_la_proyeccion_por_defecto(self):
+        cartera, _ = procesar.procesar({}, self._dos_iguales(), HOY)
+        self.assertTrue(cartera["e1"]["usar_en_proyeccion"])
+        self.assertFalse(cartera["e2"]["usar_en_proyeccion"])
+        self.assertEqual(cartera["e2"]["posible_duplicado_de"], "e1")
+
+    def test_no_avisa_de_nuevo_al_dia_siguiente(self):
+        cartera, _ = procesar.procesar({}, self._dos_iguales(), AYER)
+        cartera, eventos = procesar.procesar(cartera, self._dos_iguales(), HOY)
+        self.assertEqual([e for e in eventos if e["tipo"] == "posible_duplicado"], [])
+
+    def test_si_el_usuario_dijo_que_no_es_duplicado_se_respeta(self):
+        cartera, _ = procesar.procesar({}, self._dos_iguales(), AYER)
+        cartera["e2"]["usar_en_proyeccion"] = True   # el usuario lo volvio a prender
+        cartera, _ = procesar.procesar(cartera, self._dos_iguales(), HOY)
+        self.assertTrue(cartera["e2"]["usar_en_proyeccion"])
+
+    def test_direcciones_distintas_no_son_duplicado(self):
+        propiedades = [
+            propiedad("e1", precio=490000.0, direccion="Gutenberg 6100"),
+            propiedad("e2", precio=490000.0, direccion="Otra calle 200"),
+        ]
+        _, eventos = procesar.procesar({}, propiedades, HOY)
+        self.assertEqual([e for e in eventos if e["tipo"] == "posible_duplicado"], [])
+
+    def test_mayusculas_y_espacios_no_impiden_detectarlo(self):
+        propiedades = [
+            propiedad("e1", precio=490000.0, direccion="Gutenberg 6100"),
+            propiedad("e2", precio=490000.0, direccion="  GUTENBERG 6100 "),
+        ]
+        _, eventos = procesar.procesar({}, propiedades, HOY)
+        self.assertEqual(len([e for e in eventos if e["tipo"] == "posible_duplicado"]), 1)
+
+
 if __name__ == "__main__":
     unittest.main()
