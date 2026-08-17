@@ -267,3 +267,105 @@ test("revisar: marcar una suplencia la hace cobrar el 12,5% y no facturar", () =
   assert.equal(n.facturacion, 0);
   assert.equal(n.ganancia, 375);
 });
+
+/* El ciclo de vida que planteo el usuario: marca "ficha completa" con la propiedad en
+   negociacion, y despues la propiedad avanza. La marca tiene que dejar de valer sola. */
+const propiedadEn = (estado, extra = {}) => ({
+  flam: {
+    entity_id: "flam", activa: estado !== "fuera", estado: estado === "fuera" ? "reservada" : estado,
+    visto_primera_vez: "2026-02-01", fecha_negociacion: null, fecha_reservada: null,
+    fecha_desaparicion: estado === "fuera" ? "2026-09-10" : null,
+    desenlace_propuesto: estado === "fuera" ? "vendida" : null,
+    ...extra,
+  },
+});
+
+const completo = (extra = {}) => negocio({
+  entity_id_cartera: "flam", estado: "en_curso", fecha_fin: null, fecha_boleto: null,
+  ficha_completa: true, ficha_completa_momento: "en_negociacion", ...extra,
+});
+
+test("ficha completa aguanta mientras la propiedad no se mueve", () => {
+  const n = revisar(completo(), AJUSTES, "2026-08-17", propiedadEn("en_negociacion"));
+  assert.equal(n.ficha_vigente, true);
+  assert.deepEqual(tipos(n), []);
+});
+
+test("si la propiedad pasa a reservada, el negocio vuelve a la bandeja", () => {
+  const n = revisar(completo(), AJUSTES, "2026-08-17", propiedadEn("reservada"));
+  assert.equal(n.ficha_vigente, false, "la marca deja de aplicar");
+  assert.equal(n.ficha_completa, true, "pero no se borra: el usuario decide");
+  assert.ok(tipos(n).includes("ficha_reabierta"));
+});
+
+test("al pasar a reservada, la fecha del boleto se llena sola con la del robot", () => {
+  const cartera = propiedadEn("reservada", { fecha_reservada: "2026-08-20" });
+  const n = revisar(completo(), AJUSTES, "2026-08-25", cartera);
+  assert.equal(n.fecha_boleto, "2026-08-20", "el robot ya la vio: no hay que pedirla");
+});
+
+test("la fecha de negociacion tambien se llena sola", () => {
+  const cartera = propiedadEn("en_negociacion", { fecha_negociacion: "2026-06-05" });
+  const n = revisar(negocio({ entity_id_cartera: "flam", fecha_negociacion: null }),
+    AJUSTES, "2026-08-17", cartera);
+  assert.equal(n.fecha_negociacion, "2026-06-05");
+});
+
+test("lo que el usuario cargo a mano no se pisa con lo del robot", () => {
+  const cartera = propiedadEn("reservada", { fecha_reservada: "2026-08-20" });
+  const n = revisar(completo({ fecha_boleto: "2026-08-01" }), AJUSTES, "2026-08-25", cartera);
+  assert.equal(n.fecha_boleto, "2026-08-01");
+});
+
+/* Lo mas importante: cuando la propiedad se va de RE/MAX estando reservada, el robot
+   entiende que se vendio. Ahi hay que cargar el cierre, y es plata. */
+test("cuando la propiedad se va de la cartera, el negocio pide el cierre", () => {
+  const n = revisar(completo(), AJUSTES, "2026-09-15", propiedadEn("fuera"));
+  assert.equal(n.ficha_vigente, false, "la marca deja de valer");
+  const t = tipos(n);
+  assert.ok(t.includes("ficha_reabierta"));
+  assert.ok(t.includes("cerrar_negocio"));
+  assert.ok(t.includes("sin_fecha_fin"), "ahora si se puede pedir la fecha de firma");
+  assert.match(n.avisos.find((a) => a.tipo === "cerrar_negocio").detalle, /se cerró/);
+});
+
+test("si se va sin estar reservada, se pregunta si se concreto o se cayo", () => {
+  const cartera = propiedadEn("fuera", { desenlace_propuesto: "caida" });
+  const n = revisar(completo(), AJUSTES, "2026-09-15", cartera);
+  assert.match(n.avisos.find((a) => a.tipo === "cerrar_negocio").detalle, /si se cayó/);
+});
+
+test("una vez cargado el cierre, deja de reclamarse", () => {
+  const cerrado = completo({
+    ficha_completa: false, ficha_completa_momento: null,
+    fecha_fin: "2026-09-12", fecha_boleto: "2026-08-20", estado: "cerrado",
+  });
+  const t = tipos(revisar(cerrado, AJUSTES, "2026-09-15", propiedadEn("fuera")));
+  assert.ok(!t.includes("cerrar_negocio"));
+  assert.ok(!t.includes("sin_fecha_fin"));
+});
+
+test("volver a marcar ficha completa en el momento nuevo la mantiene callada", () => {
+  const reMarcado = completo({ ficha_completa_momento: "fuera_de_cartera" });
+  const n = revisar(reMarcado, AJUSTES, "2026-09-15", propiedadEn("fuera"));
+  assert.equal(n.ficha_vigente, true);
+  assert.ok(!tipos(n).includes("ficha_reabierta"));
+});
+
+test("un negocio sin propiedad de la cartera conserva su ficha completa para siempre", () => {
+  const suelto = negocio({ ficha_completa: true, ficha_completa_momento: null, fecha_fin: null });
+  const n = revisar(suelto, AJUSTES, "2026-08-17", {});
+  assert.equal(n.ficha_vigente, true);
+  assert.deepEqual(tipos(n), []);
+});
+
+/* Repasar dos veces tiene que dar lo mismo: la app lo hace en cada arranque. */
+test("revisar es idempotente: pasarlo dos veces no cambia nada", () => {
+  const cartera = propiedadEn("fuera");
+  const una = revisar(completo(), AJUSTES, "2026-09-15", cartera);
+  const dos = revisar(una, AJUSTES, "2026-09-15", cartera);
+  assert.deepEqual(tipos(dos), tipos(una));
+  assert.equal(dos.ficha_vigente, una.ficha_vigente);
+  assert.equal(dos.facturacion, una.facturacion);
+  assert.equal(dos.ganancia, una.ganancia);
+});

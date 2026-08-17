@@ -5,7 +5,7 @@
 
 import { editarNegocio, borrarNegocio } from "../lib/guardado.js";
 import { plata, plataUSD, escapar, fechaRazonable, numeroDesde } from "../lib/formato.js";
-import { esBusqueda, puntasSegunAgentes } from "../lib/motor.js";
+import { esBusqueda, puntasSegunAgentes, momentoDeLaPropiedad } from "../lib/motor.js";
 import {
   AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, EXPLICACION_ORIGEN,
   MARCAS, marcaActual, admiteMarcas, TIPOS_NEGOCIO, regimenDe,
@@ -374,24 +374,44 @@ function avisos(n) {
   `);
 }
 
+/* "Ficha completa" no es para siempre: vale mientras la propiedad esté donde está.
+   Si después pasa a reservada o se va de la cartera, el negocio vuelve solo a la bandeja,
+   porque recién ahí existen los datos del cierre. */
 function fichaCompleta(n, estado) {
+  const propiedad = (estado.datos.cartera || {})[n.entity_id_cartera];
+  const momento = momentoDeLaPropiedad(propiedad);
+  const viva = Boolean(propiedad && propiedad.activa);
+
+  const vigente = n.ficha_vigente ?? n.ficha_completa;
+  const explicacion = vigente
+    ? viva
+      ? `No te aviso más por lo que falte. Pero cuando la propiedad pase a otro estado o `
+        + `se vaya de tu cartera, el negocio vuelve solo acá: ahí van a existir datos que `
+        + `hoy todavía no existen.`
+      : `Este negocio no vuelve a aparecer en pendientes. Podés seguir editándolo cuando quieras.`
+    : viva
+      ? `Tocá acá y dejo de avisarte por lo que falte. Cuando la propiedad avance —pase a `
+        + `reservada, o se vaya de RE/MAX— te lo vuelvo a traer para que cargues el cierre.`
+      : `Tocá acá y dejo de avisarte por los datos que falten en este negocio. Se puede deshacer.`;
+
   const seccion = nodo(html`
     <section class="tarjeta">
       <h2 class="titulo" style="font-size:17px;margin-bottom:6px">
-        ${n.ficha_completa ? "Ficha dada por completa" : "¿Ya cargaste todo lo que ibas a cargar?"}
+        ${vigente ? "Ficha dada por completa" : "¿Ya cargaste todo lo que se puede cargar hoy?"}
       </h2>
-      <p class="apunte" style="margin-bottom:12px">
-        ${n.ficha_completa
-          ? "Este negocio no vuelve a aparecer en pendientes por datos faltantes. Podés seguir editándolo cuando quieras."
-          : "Tocá acá y dejo de avisarte por los datos que falten en este negocio. Se puede deshacer."}
-      </p>
-      <button class="boton ${n.ficha_completa ? "" : "boton-primario"}" id="completa">
-        ${n.ficha_completa ? "Volver a pedirme los datos" : "Ficha completa"}
+      <p class="apunte" style="margin-bottom:12px">${explicacion}</p>
+      <button class="boton ${vigente ? "" : "boton-primario"}" id="completa">
+        ${vigente ? "Volver a pedirme los datos" : "Ficha completa"}
       </button>
     </section>
   `);
   seccion.getElementById("completa").addEventListener("click", () => {
-    editarNegocio(estado, n.id, { ficha_completa: !n.ficha_completa });
+    const marcando = !vigente;
+    editarNegocio(estado, n.id, {
+      ficha_completa: marcando,
+      // Se guarda DESDE CUÁNDO vale la marca: si la propiedad se mueve, deja de valer.
+      ficha_completa_momento: marcando ? momento : null,
+    });
     estado.redibujar();
   });
   return seccion;

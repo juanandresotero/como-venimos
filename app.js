@@ -3,6 +3,7 @@
 import { derivar } from "./lib/pendientes.js";
 import * as github from "./lib/github.js";
 import { fusionar } from "./lib/cartera.js";
+import { revisar } from "./lib/motor.js";
 import { hayCambios, resumenCambios, sincronizar } from "./lib/guardado.js";
 import { dibujarSalud } from "./vistas/salud.js";
 import { dibujarHoy } from "./vistas/hoy.js";
@@ -181,6 +182,17 @@ async function arrancar() {
   estado.datos = await bajarDatos();
   // Lo que el usuario edito de la cartera vive aparte (§3.3) y se superpone al leer.
   estado.datos.cartera = fusionar(estado.datos.cartera, estado.datos.mis_datos);
+
+  /* Se repasan todos los negocios contra la cartera de hoy. Sin esto, un negocio dado por
+     completo cuando la propiedad estaba en negociacion nunca volveria a la bandeja al
+     venderse: los avisos quedarian congelados como estaban el dia que se cargo el Excel.
+
+     Es solo en memoria y NO marca nada para subir: si el usuario despues edita algo, se
+     guarda todo junto. Al abrir de nuevo se vuelve a calcular igual. */
+  estado.datos.negocios = (estado.datos.negocios || []).map(
+    (n) => revisar(n, estado.datos.ajustes, estado.hoy, estado.datos.cartera)
+  );
+
   leerHash();
 
   document.getElementById("navegacion").addEventListener("click", (evento) => {

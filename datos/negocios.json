@@ -31,7 +31,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -65,7 +66,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -99,7 +101,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -133,7 +136,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -167,7 +171,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -201,7 +206,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -235,7 +241,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -269,7 +276,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": true
+  "yo_referi": true,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -303,7 +311,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -337,7 +346,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -371,7 +381,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -405,7 +416,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -439,7 +451,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -473,7 +486,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro",
@@ -507,7 +521,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -541,7 +556,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -575,7 +591,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -609,7 +626,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Wendy Sánchez",
@@ -643,7 +661,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -677,7 +696,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -711,7 +731,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -745,7 +766,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -779,7 +801,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -813,7 +836,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro",
@@ -847,7 +871,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -881,7 +906,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -915,7 +941,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro",
@@ -949,7 +976,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": true
+  "yo_referi": true,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -983,7 +1011,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": true
+  "yo_referi": true,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1017,7 +1046,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1051,7 +1081,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1085,7 +1116,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -1119,7 +1151,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": true
+  "yo_referi": true,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -1153,7 +1186,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1187,7 +1221,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1226,7 +1261,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1260,7 +1296,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -1299,7 +1336,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -1333,7 +1371,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1367,7 +1406,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1401,7 +1441,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1435,7 +1476,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro",
@@ -1469,7 +1511,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro",
@@ -1503,7 +1546,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1537,7 +1581,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1571,7 +1616,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1610,7 +1656,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1644,7 +1691,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -1678,7 +1726,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Wendy Sánchez",
@@ -1717,7 +1766,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1751,7 +1801,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1785,7 +1836,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -1819,7 +1871,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1858,7 +1911,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -1897,7 +1951,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1940,7 +1995,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1983,7 +2039,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2026,7 +2083,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2073,7 +2131,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -2116,7 +2175,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Martin Sedes",
@@ -2163,7 +2223,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -2202,7 +2263,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2241,7 +2303,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2280,7 +2343,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2319,7 +2383,9 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "fecha_negociacion": "2026-08-17",
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2358,7 +2424,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2397,7 +2464,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2436,7 +2504,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2470,7 +2539,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Otro REMAX",
@@ -2509,7 +2579,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2543,7 +2614,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2577,7 +2649,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2611,7 +2684,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2645,7 +2719,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2679,7 +2754,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2713,7 +2789,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2747,7 +2824,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2790,7 +2868,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2824,7 +2903,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2858,7 +2938,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2897,7 +2978,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2936,7 +3018,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": null,
@@ -2991,7 +3074,8 @@
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -3038,16 +3122,13 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "ficha_vigente": false
  },
  {
   "agente_compra": null,
   "agente_vende": null,
   "avisos": [
-   {
-    "tipo": "falta_fecha_inicio",
-    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
-   },
    {
     "tipo": "faltan_agentes",
     "detalle": "No dice quién tenía el aviso ni quién trajo al comprador: sin eso no se sabe cuántas puntas cobraste"
@@ -3073,7 +3154,7 @@
   "fecha_boleto": null,
   "fecha_fin": "2026-04-20",
   "fecha_fin_estimada": true,
-  "fecha_inicio": null,
+  "fecha_inicio": "2026-08-17",
   "ficha_completa": false,
   "ganancia": 1080,
   "id": "excel-86",
@@ -3089,6 +3170,8 @@
   "tipo_negocio": "venta",
   "tipo_propiedad": null,
   "es_suplencia": false,
-  "yo_referi": false
+  "yo_referi": false,
+  "fecha_negociacion": "2026-08-17",
+  "ficha_vigente": false
  }
 ]
