@@ -67,6 +67,14 @@ def split_vigente(fecha: str, ajustes: dict):
     return (None, None)
 
 
+def _plata(valor):
+    """Redondea a centavos. Sin esto la plata sale con colas binarias (1012.5000000000001)
+    que despues aparecen en el JSON y en pantalla."""
+    if valor is None:
+        return None
+    return round(valor, 2)
+
+
 def calcular(regimen_comision: str, base_valor: float, fecha_fin: str, ajustes: dict):
     """Devuelve (facturacion, ganancia) para un negocio.
 
@@ -84,27 +92,23 @@ def calcular(regimen_comision: str, base_valor: float, fecha_fin: str, ajustes: 
     if regimen_comision == "suplencia":
         # Cubrir una visita a un colega no pasa por RE/MAX: no hay facturacion, y el
         # 12,5% va entero al bolsillo sin repartir con la oficina.
-        return (0.0, base_valor * ajustes["pct_suplencia"])
+        return (0.0, _plata(base_valor * ajustes["pct_suplencia"]))
 
     if regimen_comision == "ref_martin":
         # Arreglo fijo con esa persona: no escala con RAP/ALTO/PURO.
         regla = ajustes["regla_martin"]
-        return (base_valor * regla["facturacion"], base_valor * regla["ganancia"])
+        return (_plata(base_valor * regla["facturacion"]), _plata(base_valor * regla["ganancia"]))
 
     if regimen_comision == "captacion_mia":
-        facturacion = base_valor
-        ganancia = None if split is None else split * base_valor
-        return (facturacion, ganancia)
+        return (_plata(base_valor), _plata(None if split is None else split * base_valor))
 
     if regimen_comision == "ref_otro_colega":
         # Factura el total y paga el referido de la comision bruta; sobre el resto va su tajada.
-        facturacion = base_valor
         resto = ajustes["pct_referido_entrante_otro"]
-        ganancia = None if split is None else split * resto * base_valor
-        return (facturacion, ganancia)
+        return (_plata(base_valor), _plata(None if split is None else split * resto * base_valor))
 
     # yo_referi: solo factura su parte de referido, y sobre eso va su tajada.
     parte = ajustes["pct_referido_saliente"]
     facturacion = base_valor * parte
     ganancia = None if split is None else split * facturacion
-    return (facturacion, ganancia)
+    return (_plata(facturacion), _plata(ganancia))
