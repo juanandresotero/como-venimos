@@ -8,6 +8,11 @@
    "hasta": null
   }
  ],
+ "escalones": [
+  {"categoria": "RAP", "split_pct": 0.45, "fee_mensual_usd": 70},
+  {"categoria": "ALTO", "split_pct": 0.6, "fee_mensual_usd": 425},
+  {"categoria": "PURO", "split_pct": 0.8, "fee_mensual_usd": 975}
+ ],
  "defaults_comision": {
   "venta": {"1": 0.03, "2": 0.06},
   "alquiler": {"1": 1.0, "2": 2.0}

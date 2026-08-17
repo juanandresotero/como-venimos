@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Cómo venimos?</title>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="¿Cómo venimos?">
+<link rel="preload" href="tipografia/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<header class="barra-estado" id="barra-estado" hidden></header>
+
+<main id="vista" class="vista" tabindex="-1"></main>
+
+<nav class="navegacion" id="navegacion">
+  <button class="nav-boton" data-vista="hoy" aria-current="page">
+    <span class="nav-icono" aria-hidden="true">◍</span><span class="nav-texto">Hoy</span>
+    <span class="nav-globo" id="globo-pendientes" hidden></span>
+  </button>
+  <button class="nav-boton" data-vista="cartera">
+    <span class="nav-icono" aria-hidden="true">⌂</span><span class="nav-texto">Cartera</span>
+  </button>
+  <button class="nav-boton" data-vista="negocios">
+    <span class="nav-icono" aria-hidden="true">≡</span><span class="nav-texto">Negocios</span>
+  </button>
+  <button class="nav-boton" data-vista="salud">
+    <span class="nav-icono" aria-hidden="true">▤</span><span class="nav-texto">Salud</span>
+  </button>
+  <button class="nav-boton" data-vista="renta">
+    <span class="nav-icono" aria-hidden="true">%</span><span class="nav-texto">Renta</span>
+  </button>
+</nav>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

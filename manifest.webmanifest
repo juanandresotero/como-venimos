@@ -1,0 +1,11 @@
+{
+  "name": "¿Cómo venimos?",
+  "short_name": "Cómo venimos",
+  "description": "Control de cartera y salud del negocio inmobiliario",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0043ff",
+  "lang": "es-UY"
+}
