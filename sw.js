@@ -7,11 +7,13 @@
 
    Las dos versiones anteriores fallaban de la misma forma en distinto grado: solo-cache
    dejaba una version vieja pegada para siempre, y servir-del-cache-y-refrescar-atras
-   hacia que la PRIMERA apertura despues de cada cambio mostrara lo viejo. Con el usuario
-   probando en vivo, eso era mirar codigo de hace media hora y creer que los arreglos no
-   estaban. */
+   hacia que la PRIMERA apertura despues de cada cambio mostrara lo viejo.
 
-const CACHE = "como-venimos-v11";
+   La otra mitad del arreglo esta en app.js (`cuidarLaVersion`): busca la version nueva al
+   abrir y al volver a la app, y recarga sola cuando el service worker nuevo toma el
+   mando. Entre las dos, abrir y cerrar la app alcanza para actualizarse. */
+
+const CACHE = "como-venimos-v13";
 
 const ARMAZON = [
   "./",
@@ -48,14 +50,26 @@ const ARMAZON = [
   "./vistas/ajustes.js",
 ];
 
+/* La instalacion NO puede fallar por un archivo.
+
+   `cache.addAll()` es todo o nada: si UNO solo de la lista da 404, la instalacion entera
+   revienta, la version nueva nunca se activa y el telefono se queda con la vieja para
+   siempre. Justo lo que hay que evitar. Se guarda de a uno, ignorando los que fallen: al
+   que falte lo va a buscar a la red cuando haga falta. */
 self.addEventListener("install", (evento) => {
-  evento.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARMAZON)).then(() => self.skipWaiting()));
+  self.skipWaiting();
+  evento.waitUntil(
+    caches.open(CACHE).then((cache) =>
+      Promise.all(ARMAZON.map((archivo) => cache.add(archivo).catch(() => {})))
+    ).catch(() => {})
+  );
 });
 
 self.addEventListener("activate", (evento) => {
   evento.waitUntil(
     caches.keys()
       .then((claves) => Promise.all(claves.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .catch(() => {})
       .then(() => self.clients.claim())
   );
 });
@@ -69,11 +83,10 @@ self.addEventListener("fetch", (evento) => {
     evento.respondWith(
       fetch(pedido)
         .then((respuesta) => {
-          const copia = respuesta.clone();
-          caches.open(CACHE).then((c) => c.put(pedido, copia));
+          guardarCopia(pedido, respuesta);
           return respuesta;
         })
-        .catch(() => caches.match(pedido))
+        .catch(() => leerCopia(pedido))
     );
     return;
   }
@@ -93,14 +106,22 @@ self.addEventListener("fetch", (evento) => {
 
 const ESPERA_MAXIMA = 2500;
 
+/* El cache puede fallar: en un telefono con poco espacio el navegador lo cierra sin
+   avisar. Si eso reventara acá, la app dejaria de cargar. Se ignora y se sigue de largo:
+   sin cache anda igual mientras haya señal. */
+function guardarCopia(pedido, respuesta) {
+  if (!respuesta || !respuesta.ok) return;
+  const copia = respuesta.clone();
+  caches.open(CACHE).then((c) => c.put(pedido, copia)).catch(() => {});
+}
+
+const leerCopia = (pedido) => caches.match(pedido).catch(() => undefined);
+
 async function responderArmazon(pedido) {
-  const guardado = await caches.match(pedido);
+  const guardado = await leerCopia(pedido);
 
   const deLaRed = fetch(pedido).then((respuesta) => {
-    if (respuesta && respuesta.ok) {
-      const copia = respuesta.clone();
-      caches.open(CACHE).then((c) => c.put(pedido, copia)).catch(() => {});
-    }
+    guardarCopia(pedido, respuesta);
     return respuesta;
   });
 

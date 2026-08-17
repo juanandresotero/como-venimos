@@ -254,9 +254,46 @@ async function arrancar() {
   dibujarBarraEstado();
   dibujar();
 
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
-  }
+  cuidarLaVersion();
+}
+
+/* Que la app se actualice sola, sin que nadie tenga que borrar nada.
+
+   El problema: el service worker viejo es el que manda mientras esté instalado, así que
+   una version con un error podia quedarse sirviendo codigo viejo para siempre. Y recargar
+   no alcanza, porque el service worker sobrevive a la recarga.
+
+   Las cuatro piezas que hacen falta, juntas:
+     1. `updateViaCache: "none"` — el navegador no puede servir un sw.js viejo de SU cache.
+     2. `update()` al abrir y al volver a la app — se fija si hay uno nuevo.
+     3. `skipWaiting` + `clients.claim` (en sw.js) — el nuevo toma el mando enseguida.
+     4. al cambiar de mando, se recarga UNA vez — asi la pantalla queda con el codigo nuevo.
+
+   Con esto, abrir y cerrar la app alcanza. */
+function cuidarLaVersion() {
+  if (!("serviceWorker" in navigator)) return;
+
+  // Solo se recarga si habia una version anterior andando. En la primera visita no hay
+  // nada viejo que reemplazar, y recargar seria un parpadeo al pedo.
+  const habiaUnaAnterior = Boolean(navigator.serviceWorker.controller);
+  let yaRecargue = false;
+
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!habiaUnaAnterior || yaRecargue) return;
+    yaRecargue = true;
+    window.location.reload();
+  });
+
+  navigator.serviceWorker
+    .register("sw.js", { updateViaCache: "none" })
+    .then((registro) => {
+      registro.update().catch(() => {});
+      // Al volver a la app (en el celular casi nunca se cierra del todo) se vuelve a mirar.
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) registro.update().catch(() => {});
+      });
+    })
+    .catch(() => {});
 }
 
 arrancar();
