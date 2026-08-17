@@ -26,9 +26,14 @@ const cartera = fusionar(leer("cartera"), misDatos);
 const hoy = process.env.FECHA_HOY || new Date().toISOString().slice(0, 10);
 const revisados = negocios.map((n) => revisar(n, ajustes, hoy, cartera));
 
-/* La PLATA no se puede mover: si algo la cambia, es un error y se aborta. */
+/* La PLATA no se puede mover: si algo la cambia, es un error y se aborta.
+
+   "Sin cargar" y "no existe el campo" son lo mismo: un negocio recien creado a mano no
+   tiene todavia facturacion ni ganancia, y eso no es un cambio de plata. */
+const mismaPlata = (a, b) => (a ?? null) === (b ?? null);
 const conPlataMovida = revisados.filter((n, i) =>
-  n.facturacion !== negocios[i].facturacion || n.ganancia !== negocios[i].ganancia);
+  !mismaPlata(n.facturacion, negocios[i].facturacion)
+  || !mismaPlata(n.ganancia, negocios[i].ganancia));
 if (conPlataMovida.length) {
   console.error(`ABORTA: ${conPlataMovida.length} negocios cambiarian de plata:`);
   for (const n of conPlataMovida.slice(0, 10)) {

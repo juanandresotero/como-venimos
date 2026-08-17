@@ -68,19 +68,27 @@ test("una direccion vacia no sugiere cualquier cosa", () => {
   assert.deepEqual(sugerencias({ direccion: null }, cartera), []);
 });
 
-/* Sobre los datos reales: tiene que encontrar los casos que existen y ninguno mas. */
-test("sobre la cartera y los negocios de verdad, encuentra lo que hay y nada mas", () => {
+/* Sobre los datos reales se prueban las reglas, no casos concretos: el usuario va
+   enganchando negocios a medida que usa la app, y cada uno que engancha deja de tener
+   sugerencia. Fijar un caso puntual haria fallar el test por el trabajo bien hecho. */
+test("sobre la cartera y los negocios de verdad no se sugiere ninguna barbaridad", () => {
   const leer = (n) => JSON.parse(readFileSync(new URL(`../datos/${n}.json`, import.meta.url), "utf8"));
   const negocios = leer("negocios");
   const cartera = leer("cartera");
-  const conSugerencia = negocios.filter((n) => sugerencias(n, cartera).length);
-  const direcciones = conSugerencia.map((n) => (n.direccion || "").toLowerCase());
 
-  assert.ok(direcciones.some((d) => d.includes("ibarburu")), "tiene que encontrar Juana");
-  assert.ok(direcciones.some((d) => d.includes("estanislao")), "y Estanislao Vega");
-  // Nada absurdo: cada sugerencia comparte al menos el arranque del nombre de la calle.
-  for (const n of conSugerencia) {
-    const [mejor] = sugerencias(n, cartera);
-    assert.ok(mejor.puntaje >= 0.62, `${n.id} sugerido con puntaje bajo`);
+  for (const n of negocios) {
+    const propuestas = sugerencias(n, cartera);
+    if (n.entity_id_cartera || n.sin_propiedad_en_cartera) {
+      assert.equal(propuestas.length, 0, `${n.id} ya esta resuelto y sigue preguntando`);
+      continue;
+    }
+    for (const p of propuestas) {
+      assert.ok(p.puntaje >= 0.62, `${n.id} sugerido con puntaje bajo`);
+      // Toda sugerencia comparte letras del nombre de la calle: nada traido de los pelos.
+      assert.ok(
+        parecido(partirDireccion(n.direccion).calle, partirDireccion(p.propiedad.direccion).calle) > 0.5,
+        `${n.id} -> ${p.propiedad.direccion} no se parecen en nada`
+      );
+    }
   }
 });

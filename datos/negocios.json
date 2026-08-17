@@ -3155,6 +3155,8 @@
   "ficha_vigente": false,
   "regimen_comision": "captacion_mia",
   "base": 3600,
-  "fecha_fin_estimada": false
+  "fecha_fin_estimada": false,
+  "facturacion": null,
+  "ganancia": null
  }
 ]

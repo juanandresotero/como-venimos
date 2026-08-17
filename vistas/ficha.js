@@ -8,6 +8,7 @@ import { plata, plataUSD, escapar, fechaRazonable, numeroDesde } from "../lib/fo
 import { esBusqueda, puntasSegunAgentes, momentoDeLaPropiedad } from "../lib/motor.js";
 import {
   AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, EXPLICACION_ORIGEN,
+  ORIGENES_QUE_LLEVAN_NOMBRE,
   MARCAS, marcaActual, admiteMarcas, TIPOS_NEGOCIO, regimenDe,
 } from "../lib/catalogos.js";
 import { ROLES, enlaceWhatsapp, hayPicker, elegirContacto } from "../lib/contactos.js";
@@ -308,8 +309,16 @@ function campos(n, falta, estado) {
     opcionesCon([["", "sin cargar"], ...ORIGENES.map(
       (o) => [o, EXPLICACION_ORIGEN[o] ? `${o} — ${EXPLICACION_ORIGEN[o]}` : o]
     )], n.origen_captacion),
-    falta.has("origen_sin_clasificar")
+    falta.has("origen_sin_clasificar"),
+    // Al cambiar de origen, el nombre de quien referia deja de tener sentido.
+    (valor) => (ORIGENES_QUE_LLEVAN_NOMBRE.has(valor) ? {} : { origen_quien: null })
   );
+
+  /* El origen ya dice quién refirió. Lo único que falta saber es quién en concreto, y solo
+     cuando el que refiere es un grupo, una oficina o un cliente. */
+  if (ORIGENES_QUE_LLEVAN_NOMBRE.has(n.origen_captacion)) {
+    agregar("origen_quien", "  ↳ ¿Quién en concreto?", "text", n.origen_quien);
+  }
 
   agregarMarcas(contenedor, n, estado);
 
@@ -356,11 +365,10 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
 
   lado("agente_vende", "Quién tenía el aviso", true);
   lado("agente_compra", "Quién trajo al comprador", true);
-  lado("referidor", "Quién te lo refirió", false);
 
-  /* Si la propiedad está en tu cartera, la estás trabajando vos: por definición no se la
-     referiste a nadie. Preguntarlo es hacerte contestar algo que la app ya sabe. */
-  if (admiteMarcas(n)) lado("referido_a", "A quién se lo referiste", false);
+  /* "A quién se lo referiste" solo tiene sentido si efectivamente lo referiste. Y "quién
+     te lo refirió" desapareció: era la misma pregunta que "cómo llegó el negocio". */
+  if (n.yo_referi) lado("referido_a", "A quién se lo referiste", false);
 }
 
 /* Suplencia y "yo la referí" van sueltas del origen: un negocio puede llegar por "Dueño

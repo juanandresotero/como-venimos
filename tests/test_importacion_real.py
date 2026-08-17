@@ -6,16 +6,25 @@ from robot import almacen
 
 class TestImportacionReal(unittest.TestCase):
     """Verifica el resultado guardado en datos/negocios.json contra lo que ya sabemos
-    del Excel del usuario (analizado a mano el 2026-08-17)."""
+    del Excel del usuario (analizado a mano el 2026-08-17).
+
+    OJO: ese archivo ya no es una foto del import — es la base VIVA de la app, y el
+    usuario carga negocios nuevos ahi. Por eso todo lo que mire cantidades se limita a los
+    negocios que vinieron del Excel (`excel-*`); los que carga a mano no son asunto de
+    este archivo de tests.
+    """
 
     @classmethod
     def setUpClass(cls):
-        cls.negocios = almacen.leer_json("negocios.json", None)
+        cls.todos = almacen.leer_json("negocios.json", None)
+        cls.negocios = [
+            n for n in (cls.todos or []) if str(n.get("id", "")).startswith("excel-")
+        ]
 
     def test_el_archivo_existe(self):
-        self.assertIsNotNone(self.negocios, "falta datos/negocios.json — corre el importador")
+        self.assertIsNotNone(self.todos, "falta datos/negocios.json — corre el importador")
 
-    def test_hay_85_negocios(self):
+    def test_siguen_estando_los_85_del_excel(self):
         self.assertEqual(len(self.negocios), 85)
 
     def test_46_alquileres_y_39_ventas(self):
@@ -27,7 +36,7 @@ class TestImportacionReal(unittest.TestCase):
         esperado = {"2022": 1770, "2023": 58984, "2024": 40125, "2025": 43965}
         real = collections.defaultdict(float)
         for n in self.negocios:
-            if n["fecha_fin"] and n["facturacion"] and n["estado"] == "cerrado":
+            if n["fecha_fin"] and n.get("facturacion") and n["estado"] == "cerrado":
                 real[n["fecha_fin"][:4]] += n["facturacion"]
         for anio, monto in esperado.items():
             self.assertAlmostEqual(real[anio], monto, delta=3, msg=f"año {anio}")
@@ -54,12 +63,17 @@ class TestImportacionReal(unittest.TestCase):
         for n in viejos:
             self.assertFalse(n["recalculado"], f"{n['id']} se recalculo y no debia")
 
-    def test_detecta_la_fila_82_como_firma_inventada(self):
-        # San Fructuoso: dada por firmada, pero la propiedad sigue reservada en RE/MAX.
-        n = next(x for x in self.negocios if x["id"] == "excel-82")
-        self.assertEqual(n["estado"], "en_curso")
-        self.assertTrue(n["fecha_fin_estimada"])
-        self.assertIsNotNone(n["entity_id_cartera"])
+    def test_ningun_negocio_con_la_propiedad_viva_figura_cobrado(self):
+        """Si la propiedad sigue publicada en RE/MAX, el negocio no puede estar cerrado.
+
+        Es la regla que cazo las firmas inventadas del Excel. No se fija en un negocio
+        concreto porque el usuario los esta corrigiendo uno por uno.
+        """
+        cartera = almacen.leer_json("cartera.json", {})
+        for n in self.todos:
+            propiedad = cartera.get(n.get("entity_id_cartera") or "")
+            if propiedad and propiedad.get("activa"):
+                self.assertNotEqual(n["estado"], "cerrado", n["id"])
 
     # Los avisos del importador ("tu Excel dice X pero la cuenta da Y") se dejaron de
     # mostrar: ese Excel quedo viejo y la app pasa a ser la fuente de verdad. Lo que se
@@ -116,7 +130,7 @@ class TestImportacionReal(unittest.TestCase):
         for n in self.negocios:
             if n["regimen_comision"] == "suplencia":
                 continue
-            if n["facturacion"] and n["ganancia"]:
+            if n.get("facturacion") and n.get("ganancia"):
                 self.assertLessEqual(n["ganancia"], n["facturacion"] + 0.01, n["id"])
 
 
