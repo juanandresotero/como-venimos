@@ -349,3 +349,26 @@ test("avanzado: lo apagado de la proyeccion tampoco entra acá", () => {
   assert.equal(c.avanzado.cantidad, 0);
   assert.equal(c.avanzado.facturacion, 0);
 });
+
+/* Lo potencial NO suma: es lo que hay dando vueltas, no lo que esta por entrar. */
+test("encaminado suma cobrado, reservado y negociacion, y deja fuera lo publicado", () => {
+  const cartera = {
+    res: { entity_id: "res", activa: true, estado: "reservada", operacion: "venta",
+           precio: 100000, usar_en_proyeccion: true },
+    pub: { entity_id: "pub", activa: true, estado: "publicada", operacion: "venta",
+           precio: 100000, usar_en_proyeccion: true },
+  };
+  const negocios = [
+    { id: "a", fecha_fin: "2026-03-01", estado: "cerrado", tipo_negocio: "venta",
+      precio_operacion: 100000, facturacion: 4000, ganancia: 1800, puntas: 1 },
+  ];
+  const c = capas(negocios, cartera, AJUSTES, "2026");
+
+  assert.equal(
+    c.encaminado.facturacion,
+    c.cobrado.facturacion + c.reservado.facturacion + c.negociacion.facturacion
+  );
+  assert.ok(c.publicado.facturacion > 0, "lo publicado existe...");
+  assert.ok(c.encaminado.facturacion < c.total.facturacion, "...pero no entra en lo encaminado");
+  assert.equal(c.total.facturacion, c.encaminado.facturacion + c.publicado.facturacion);
+});

@@ -161,16 +161,10 @@ function cabecera(anio, c) {
       </p>
 
       <div class="cierre">
-        <p class="etiqueta">Si cierra todo lo que está en negociación y reservado</p>
+        <p class="etiqueta">Si cierra lo reservado y lo que está en negociación</p>
         <p class="cifra cifra-grande" style="margin:6px 0 2px;color:var(--azul)">${plata(suma("ganancia"))}</p>
         <p class="apunte">
           a tu bolsillo · <strong>${plataUSD(suma("facturacion"))}</strong> facturados
-        </p>
-        <p class="apunte" style="margin-top:8px">
-          Son ${plata(c.avanzado.ganancia)} más de ganancia
-          (${plata(c.avanzado.facturacion)} de facturación) repartidos en
-          ${c.avanzado.cantidad} ${c.avanzado.cantidad === 1 ? "propiedad" : "propiedades"}.
-          Acá van al 100%, sin descontar probabilidad: es la pregunta "si cierra todo".
         </p>
       </div>
     </section>
@@ -215,13 +209,18 @@ function barraDeRitmo(r, objetivo, c, anio) {
 
 /* Los cuatro momentos del camino de la plata. Cada uno al 100%: la pregunta es "cuánto
    cobro si esto cierra", no "cuánto vale hoy". */
+/* Los tres momentos que SUMAN — cobrado, reservado y en negociación — y abajo, separado,
+   lo potencial: lo que está publicado y todavía no se movió.
+
+   Lo potencial no suma a propósito. Es lo que hay dando vueltas, no lo que está por
+   entrar, y mezclarlo con lo demás daba un número que no se podía leer de un vistazo. */
 function tresCapas(c) {
-  const total = c.total.facturacion || 1;
-  const ancho = (x) => `${(x / total) * 100}%`;
+  const suma = c.encaminado.facturacion || 1;
+  const ancho = (x) => `${Math.min(100, (x / suma) * 100)}%`;
   const cuantas = (n, uno, muchos) => `${n} ${n === 1 ? uno : muchos}`;
 
-  const fila = (clase, nombre, sub, grupo) => html`
-    <div class="capa">
+  const fila = (clase, nombre, sub, grupo, aparte) => html`
+    <div class="capa${aparte ? " aparte" : ""}">
       <span class="capa-punto ${clase}"></span>
       <span><span class="capa-nombre">${nombre}</span><br><span class="capa-sub">${sub}</span></span>
       <span class="capa-monto">
@@ -234,22 +233,17 @@ function tresCapas(c) {
     <section class="tarjeta">
       <div class="tarjeta-titulo">
         <h2 class="titulo">De dónde sale la plata</h2>
-        <span class="apunte">${plataUSD(c.total.ganancia)} si todo cierra</span>
+        <span class="apunte">${plataUSD(c.encaminado.ganancia)} a tu bolsillo</span>
       </div>
       <div class="capas-barra">
         <div class="capas-tramo uno" style="width:${ancho(c.cobrado.facturacion)}"></div>
         <div class="capas-tramo dos" style="width:${ancho(c.reservado.facturacion)}"></div>
         <div class="capas-tramo tres" style="width:${ancho(c.negociacion.facturacion)}"></div>
-        <div class="capas-tramo cuatro" style="width:${ancho(c.publicado.facturacion)}"></div>
       </div>
       ${fila("uno", "Cobrado", cuantas(c.cobrado.negocios, "negocio cerrado", "negocios cerrados"), c.cobrado)}
       ${fila("dos", "Reservado", `${cuantas(c.reservado.cantidad, "propiedad", "propiedades")} · falta escriturar`, c.reservado)}
       ${fila("tres", "En negociación", `${cuantas(c.negociacion.cantidad, "propiedad", "propiedades")} · hay oferta`, c.negociacion)}
-      ${fila("cuatro", "Publicado", `${cuantas(c.publicado.cantidad, "propiedad", "propiedades")} · todavía sin mover`, c.publicado)}
-      <p class="apunte" style="margin-top:12px">
-        Los tres últimos van al 100%. Con la probabilidad de cierre de cada estado, la
-        cuenta realista da <strong>${plataUSD(c.ponderado.ganancia)}</strong> a tu bolsillo.
-      </p>
+      ${fila("cuatro", "Potencial", `${cuantas(c.publicado.cantidad, "propiedad", "propiedades")} publicadas · no suma`, c.publicado, true)}
     </section>
   `);
 }
@@ -345,7 +339,7 @@ function propiedadesUsadas(publicado, estado) {
   const seccion = nodo(html`
     <section class="tarjeta">
       <div class="tarjeta-titulo">
-        <h2 class="titulo">Lo que está publicado</h2>
+        <h2 class="titulo">Lo potencial, una por una</h2>
         <span class="apunte">${publicado.cantidad} propiedades</span>
       </div>
       <div class="lista">${filas}</div>
