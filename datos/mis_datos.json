@@ -1,6 +1,8 @@
 {
  "eventos_atendidos": [
-  "2026-08-17|c9f554b2-5290-4e2f-9b88-fdac4cbd67d7|posible_duplicado"
+  "2026-08-17|c9f554b2-5290-4e2f-9b88-fdac4cbd67d7|posible_duplicado",
+  "2026-08-17|c9e235a6-5bb0-47a6-b9aa-62b2283bb94a|carga_inicial",
+  "2026-08-17|5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6|carga_inicial"
  ],
  "cartera": {
   "45e27b03-b19a-4654-a163-4d0bf3307fac": {
