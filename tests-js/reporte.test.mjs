@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { armarReporte, nombreArchivo, barras } from "../lib/reporte.js";
 import { recomendaciones, contarPendientes } from "../lib/recomendaciones.js";
-import { porMes, nivelRemax, metricas } from "../lib/salud.js";
+import { porMes, nivelRemax, metricas, capas } from "../lib/salud.js";
 
 const leer = (nombre) => JSON.parse(readFileSync(new URL(`../datos/${nombre}.json`, import.meta.url), "utf8"));
 
@@ -49,8 +49,13 @@ test("el reporte trae las seis partes que se pidieron", () => {
 
 test("el numero grande del reporte es lo cobrado, no lo esperado", () => {
   const html = armarReporte(DATOS, ANIO, HOY);
-  // 20.079 es lo realmente cobrado en 2026; 41.089 era lo que decia el Excel.
-  assert.ok(html.includes("20.079"), "tiene que mostrar lo cobrado de verdad");
+  const c = capas(DATOS.negocios, DATOS.cartera, DATOS.ajustes, ANIO);
+  const monto = (n) => Math.round(n).toLocaleString("es-UY");
+
+  // El heroe es la ganancia; la facturacion va al lado. Las dos, siempre.
+  assert.ok(html.includes(monto(c.capa1.ganancia)), "falta la ganancia cobrada");
+  assert.ok(html.includes(monto(c.capa1.facturacion)), "falta la facturacion cobrada");
+  // 41.089 era lo que decia el Excel mezclando cobrado con esperado.
   assert.ok(!html.includes("41.089"), "no puede repetir el numero inflado del Excel");
 });
 

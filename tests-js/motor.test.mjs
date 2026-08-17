@@ -424,3 +424,28 @@ test("revisar: pero no cierra solo si la propiedad sigue viva en la cartera", ()
   );
   assert.equal(n.estado, "en_curso", "la propiedad sigue publicada: no se cobro");
 });
+
+/* El caso exacto del usuario: cargo "Martin Sedes" en el campo que no movia la plata,
+   sobre una venta de 40.000 al 6%. La ganancia seguia en 1.080 en vez de bajar a 840. */
+test("revisar: el referidor viejo se absorbe y la comision se corrige sola", () => {
+  const venta = negocio({
+    precio_operacion: 40000, pct_comision_total: 0.06, puntas: 2,
+    origen_captacion: "Sin origen", referidor: "Martin Sedes",
+  });
+  const n = revisar(venta, AJUSTES, "2026-08-17");
+  assert.equal(n.origen_captacion, "Ref. Martin");
+  assert.equal(n.referidor, null, "el campo viejo se vacia para no volver a confundir");
+  assert.equal(n.regimen_comision, "ref_martin");
+  assert.equal(n.base, 2400);
+  assert.equal(n.facturacion, 1200, "la regla de Martin factura la mitad");
+  assert.equal(n.ganancia, 840, "y deja el 35% del total, no el 45%");
+});
+
+test("revisar: si el origen ya decia quien refirio, el referidor viejo no lo pisa", () => {
+  const n = revisar(
+    negocio({ origen_captacion: "Ref. Cliente", referidor: "Martin Sedes" }),
+    AJUSTES, "2026-08-17"
+  );
+  assert.equal(n.origen_captacion, "Ref. Cliente");
+  assert.equal(n.regimen_comision, "captacion_mia");
+});

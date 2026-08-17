@@ -41,9 +41,18 @@ class TestImportacionReal(unittest.TestCase):
         for anio, monto in esperado.items():
             self.assertAlmostEqual(real[anio], monto, delta=3, msg=f"año {anio}")
 
-    def test_las_puntas_promedio_dan_1_59(self):
+    def test_las_puntas_son_siempre_una_o_dos(self):
+        """El import dejo un promedio de 1,59 puntas por negocio.
+
+        No se fija ese numero exacto: el usuario esta corrigiendo las puntas negocio por
+        negocio y ese promedio se mueve. Lo que no puede pasar nunca es que una operacion
+        tenga mas de dos puntas o menos de cero.
+        """
+        for n in self.todos:
+            self.assertIn(n.get("puntas"), (0, 1, 2), n["id"])
         promedio = sum(n["puntas"] for n in self.negocios) / len(self.negocios)
-        self.assertAlmostEqual(promedio, 1.59, places=2)
+        self.assertGreater(promedio, 1.0)
+        self.assertLessEqual(promedio, 2.0)
 
     def test_los_negocios_de_2026_estan_recalculados(self):
         """Desde 2026 se recalcula con las reglas nuevas; antes se respeta el Excel.

@@ -33,10 +33,10 @@ def main() -> int:
     cerrados = [n for n in del_anio if n["estado"] == "cerrado"]
     en_curso = [n for n in del_anio if n["estado"] == "en_curso"]
 
-    cobrado = sum(n["facturacion"] or 0 for n in cerrados)
-    ganado = sum(n["ganancia"] or 0 for n in cerrados)
-    casi = sum(n["facturacion"] or 0 for n in en_curso)
-    casi_gan = sum(n["ganancia"] or 0 for n in en_curso)
+    cobrado = sum(n.get("facturacion") or 0 for n in cerrados)
+    ganado = sum(n.get("ganancia") or 0 for n in cerrados)
+    casi = sum(n.get("facturacion") or 0 for n in en_curso)
+    casi_gan = sum(n.get("ganancia") or 0 for n in en_curso)
 
     print("=" * 68)
     print(f"  SALUD DEL NEGOCIO — {ANIO}")
@@ -49,11 +49,11 @@ def main() -> int:
     # Ratios reales, con mediana para que no los rompan los errores de tipeo.
     def ratios(tipo):
         base = [n for n in negocios if n["tipo_negocio"] == tipo
-                and n["precio_operacion"] and n["facturacion"]]
+                and n.get("precio_operacion") and n.get("facturacion")]
         if not base:
             return (0.0, 0.0)
         return (st.median(n["facturacion"] / n["precio_operacion"] for n in base),
-                st.median((n["ganancia"] or 0) / n["precio_operacion"] for n in base))
+                st.median((n.get("ganancia") or 0) / n["precio_operacion"] for n in base))
 
     r_fact, r_gan = ratios("venta")
     prob = ajustes.get("probabilidades_cierre", {})

@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import {
   AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, ORIGEN_A_REGIMEN,
   regimenDe, marcaActual, admiteMarcas, MARCAS, TIPOS_NEGOCIO, YO,
+  origenSegunReferidor, esOrigenDeReferido,
 } from "../lib/catalogos.js";
 
 test("los agentes son la lista corta que se acordo", () => {
@@ -98,4 +99,25 @@ test("el vocabulario viejo del Excel sigue mapeando igual", () => {
 test("un referido de cliente no paga tajada a nadie", () => {
   assert.equal(regimenDe({ origen_captacion: "Ref. Cliente" }), "captacion_mia");
   assert.equal(ORIGEN_A_REGIMEN["Ref. Cliente"], undefined);
+});
+
+/* Hubo un campo "Quien te lo refirio" que preguntaba lo mismo que el origen pero no movia
+   la plata: se cargaba "Martin Sedes" y la comision quedaba igual. Se elimino, y lo que
+   quedo cargado ahi se absorbe al origen, que es el que manda. */
+test("lo cargado en el viejo referidor se pasa al origen", () => {
+  assert.equal(origenSegunReferidor("Martin Sedes"), "Ref. Martin");
+  assert.equal(origenSegunReferidor("Team"), "Ref. Team");
+  assert.equal(origenSegunReferidor("Ofi Único"), "Ref. Único");
+  assert.equal(origenSegunReferidor("Otra Oficina"), "Ref. Remax");
+  assert.equal(origenSegunReferidor("Juan Andrés Otero"), null, "el no se refiere solo");
+  assert.equal(origenSegunReferidor(null), null);
+});
+
+test("se reconoce cuando el origen ya dice que fue un referido", () => {
+  assert.equal(esOrigenDeReferido("Ref. Martin"), true);
+  assert.equal(esOrigenDeReferido("Referido - Martín"), true);
+  assert.equal(esOrigenDeReferido("Ref. Cliente"), true);
+  assert.equal(esOrigenDeReferido("B.d.r."), false);
+  assert.equal(esOrigenDeReferido("Sin origen"), false);
+  assert.equal(esOrigenDeReferido(null), false);
 });
