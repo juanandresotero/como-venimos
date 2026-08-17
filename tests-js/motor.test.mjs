@@ -369,3 +369,41 @@ test("revisar es idempotente: pasarlo dos veces no cambia nada", () => {
   assert.equal(dos.facturacion, una.facturacion);
   assert.equal(dos.ganancia, una.ganancia);
 });
+
+/* Lo que hizo el usuario en vivo con Juana de Ibarbourou: borro la fecha de firma que
+   habia inventado. El negocio quedaba marcado como CERRADO y sin fecha, que no puede ser:
+   sin firma no hay nada cobrado. */
+test("revisar: borrar la fecha de firma no puede dejar el negocio como cerrado", () => {
+  const conFirmaInventada = revisar(
+    negocio({ fecha_fin: "2026-12-05" }), AJUSTES, "2026-08-17"
+  );
+  assert.equal(conFirmaInventada.estado, "en_curso");
+
+  const sinFecha = revisar({ ...conFirmaInventada, fecha_fin: null }, AJUSTES, "2026-08-17");
+  assert.equal(sinFecha.estado, "en_curso", "sin firma no hay nada cobrado");
+  assert.equal(sinFecha.fecha_fin_estimada, false);
+  assert.ok(tipos(sinFecha).includes("sin_fecha_fin"));
+});
+
+test("revisar: un negocio cerrado al que le borran la firma vuelve a en curso", () => {
+  const n = revisar(negocio({ estado: "cerrado", fecha_fin: null }), AJUSTES, "2026-08-17");
+  assert.equal(n.estado, "en_curso");
+});
+
+test("revisar: con la firma cargada y pasada, si cierra", () => {
+  const n = revisar(
+    negocio({ estado: "en_curso", fecha_fin: "2026-07-01", fecha_fin_estimada: true }),
+    AJUSTES, "2026-08-17"
+  );
+  assert.equal(n.estado, "cerrado");
+  assert.equal(n.fecha_fin_estimada, false);
+});
+
+test("revisar: pero no cierra solo si la propiedad sigue viva en la cartera", () => {
+  const n = revisar(
+    negocio({ entity_id_cartera: "flam", estado: "en_curso",
+              fecha_fin: "2026-07-01", fecha_fin_estimada: true }),
+    AJUSTES, "2026-08-17", CARTERA_VIVA
+  );
+  assert.equal(n.estado, "en_curso", "la propiedad sigue publicada: no se cobro");
+});

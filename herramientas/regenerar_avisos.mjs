@@ -26,19 +26,28 @@ const cartera = fusionar(leer("cartera"), misDatos);
 const hoy = process.env.FECHA_HOY || new Date().toISOString().slice(0, 10);
 const revisados = negocios.map((n) => revisar(n, ajustes, hoy, cartera));
 
-const movidos = revisados.filter((n, i) => {
-  const antes = negocios[i];
-  return n.facturacion !== antes.facturacion || n.ganancia !== antes.ganancia
-    || n.estado !== antes.estado;
-});
-if (movidos.length) {
-  console.error(`ABORTA: ${movidos.length} negocios cambiarian de plata o de estado:`);
-  for (const n of movidos.slice(0, 10)) {
+/* La PLATA no se puede mover: si algo la cambia, es un error y se aborta. */
+const conPlataMovida = revisados.filter((n, i) =>
+  n.facturacion !== negocios[i].facturacion || n.ganancia !== negocios[i].ganancia);
+if (conPlataMovida.length) {
+  console.error(`ABORTA: ${conPlataMovida.length} negocios cambiarian de plata:`);
+  for (const n of conPlataMovida.slice(0, 10)) {
     const antes = negocios.find((x) => x.id === n.id);
-    console.error(`  ${n.id}: ${antes.facturacion}/${antes.ganancia}/${antes.estado}`
-      + ` -> ${n.facturacion}/${n.ganancia}/${n.estado}`);
+    console.error(`  ${n.id}: ${antes.facturacion}/${antes.ganancia}`
+      + ` -> ${n.facturacion}/${n.ganancia}`);
   }
   process.exit(1);
+}
+
+/* El ESTADO sí puede corregirse (un negocio sin fecha de firma no puede estar cerrado),
+   pero se avisa siempre para poder mirarlo con los ojos. */
+const conEstadoCorregido = revisados.filter((n, i) => n.estado !== negocios[i].estado);
+if (conEstadoCorregido.length) {
+  console.log(`Se corrigio el estado de ${conEstadoCorregido.length}:`);
+  for (const n of conEstadoCorregido) {
+    const antes = negocios.find((x) => x.id === n.id);
+    console.log(`  ${n.id} (${n.direccion}): ${antes.estado} -> ${n.estado}`);
+  }
 }
 
 const contar = (lista) =>

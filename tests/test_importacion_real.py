@@ -37,8 +37,14 @@ class TestImportacionReal(unittest.TestCase):
         self.assertAlmostEqual(promedio, 1.59, places=2)
 
     def test_los_negocios_de_2026_estan_recalculados(self):
+        """Desde 2026 se recalcula con las reglas nuevas; antes se respeta el Excel.
+
+        No se fija una cantidad exacta a proposito: el usuario esta corrigiendo las fechas
+        que habia inventado, y cada una que borra saca una fila de este grupo. Lo que
+        importa es que TODAS las que quedan esten recalculadas con su categoria.
+        """
         de_2026 = [n for n in self.negocios if n["fecha_fin"] and n["fecha_fin"] >= "2026-01-01"]
-        self.assertEqual(len(de_2026), 11)
+        self.assertGreater(len(de_2026), 0)
         for n in de_2026:
             self.assertTrue(n["recalculado"], f"{n['id']} no se recalculo")
             self.assertEqual(n["categoria_vigente"], "RAP")
