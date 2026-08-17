@@ -2959,12 +2959,7 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "fechas_al_reves",
-    "detalle": "La firma (2026-04-20) es anterior al boleto (2026-05-05)"
-   }
-  ],
+  "avisos": [],
   "barrio": "Zapican",
   "base": 5394,
   "categoria_vigente": "RAP",
@@ -2975,8 +2970,8 @@
   "excel_importe": 2427,
   "facturacion": 5394,
   "fecha_boleto": "2026-05-05",
-  "fecha_fin": "2026-04-20",
-  "fecha_fin_estimada": true,
+  "fecha_fin": null,
+  "fecha_fin_estimada": false,
   "fecha_inicio": "2026-03-24",
   "ficha_completa": false,
   "ganancia": 2427.3,
@@ -2994,7 +2989,8 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": false,
+  "fecha_negociacion": "2026-02-26"
  },
  {
   "agente_compra": "Juan Andrés Otero",
