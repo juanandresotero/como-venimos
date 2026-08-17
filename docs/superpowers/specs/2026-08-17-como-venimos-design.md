@@ -44,7 +44,47 @@ Mismo patrón que el proyecto *Parecidas*, que ya está probado y en uso.
 | **Robot** (Python, sin dependencias externas) | Corre 1 vez por día. Consulta la API pública de RE/MAX y registra el estado de la cartera. |
 | **GitHub Actions** | Cron diario a las 09:00 UTC (≈06:00 Uruguay). Gratis. Ejecutable a mano. |
 | **GitHub Pages** | Sirve la app estática. Se agrega a la pantalla de inicio del celular. |
-| **Datos** | Archivos JSON versionados en el repo. La app los lee; las ediciones del usuario se guardan y se commitean. |
+| **Datos** | Archivos JSON versionados en el repo (ver §3.3). |
+
+### 3.3 Quién escribe cada archivo
+
+El robot escribe desde GitHub Actions todas las mañanas; la app escribe desde el celular en
+cualquier momento. Si los dos tocaran el mismo archivo, tarde o temprano chocan y se pierde
+información. Por eso **cada archivo tiene un único dueño**:
+
+| Archivo | Dueño | Contenido |
+|---|---|---|
+| `datos/cartera.json` | **Robot** | Estado y historial de cada propiedad publicada |
+| `datos/eventos.json` | **Robot** | Bitácora de novedades |
+| `datos/estado_robot.json` | **Robot** | Resultado de la última corrida |
+| `datos/mis_datos.json` | **App** | Ediciones del usuario sobre la cartera, por `entity_id`: fecha real de captación, origen, desenlace confirmado, si entra en la proyección, notas, y qué eventos ya atendió |
+| `datos/negocios.json` | **App** | Los negocios (importados del Excel y cargados a mano) |
+| `datos/ajustes.json` | **App** | Categoría, reglas de comisión, objetivos, probabilidades |
+| `datos/calculos_renta.json` | **App** | Cálculos de renta guardados |
+
+**El robot lee `mis_datos.json` y lo respeta, pero nunca lo escribe.** Al procesar, aplica ese
+overlay sobre la cartera para saber, por ejemplo, que una propiedad ya fue marcada como "no
+usar en proyección". La regla de oro de §4.1 (nunca pisar lo del usuario) queda garantizada
+por diseño y no solo por cuidado al programar.
+
+### 3.4 Cómo guarda la app
+
+Una página estática no puede escribir en un repositorio por sí sola. La app usa la **API de
+GitHub con un token de acceso personal** (fine-grained, limitado a este único repositorio,
+permiso de contenido lectura/escritura) que el usuario genera una vez y queda guardado en el
+almacenamiento local de su teléfono.
+
+**Riesgo, dicho explícitamente:** quien acceda al teléfono desbloqueado puede modificar el
+repositorio. Es equiparable a tener la sesión de mail abierta. Mitigaciones: el token se
+limita a un solo repo, se revoca en un clic desde GitHub, y la app trae una pantalla guiada
+para crearlo y otra para reemplazarlo.
+
+**Alternativa descartada:** guardar todo solo en el navegador (localStorage / IndexedDB) sin
+respaldo. Se descartó porque si el teléfono se rompe o se limpia el navegador, se pierde
+todo el trabajo de carga manual, que es justamente lo más caro de reponer.
+
+**Si no hay conexión** la app funciona igual en modo lectura y encola los cambios; los sube
+cuando vuelve la señal.
 
 ### 3.1 Fuente de datos del robot
 
@@ -701,6 +741,22 @@ fecha de boleto**, y **2 sin agente vendedor, comprador ni origen** (filas 84 y 
 | Venta | `fecha_fin`, `precio_operacion`, `regimen_comision`, `puntas`, `pct_comision_total` | `fecha_inicio`, `fecha_boleto`, `direccion`, `barrio`, `tipo_propiedad` |
 | Alquiler | ídem venta | `fecha_inicio`, `direccion`, `barrio` |
 | Suplencia | `fecha_fin`, `precio_operacion`, `pct_comision_total` | `agente_vende`, `agente_compra`, `direccion`, `barrio` |
+
+### 9.6b Regla automática: la firma es inventada si la propiedad sigue viva
+
+Confirmado por el usuario el 2026-08-17: *"vas a ver algunos que siguen las propiedades en mi
+cartera, así que ahí no tenés el dato de firma porque claramente lo inventé"*.
+
+Al importar, todo negocio cuya propiedad **siga viva en la cartera** (§6.1) se trata así:
+
+- `estado` = `en_curso`, **no** `cerrado`.
+- `fecha_fin_estimada` = `true`, y la fecha del Excel se conserva como referencia.
+- **No suma en la capa 1 (cobrado)** de Salud del Negocio; suma en la capa 2.
+- Va a Pendientes para que el usuario ponga la fecha real cuando cobre.
+
+Sin esta regla, la facturación 2026 aparece como 41.089 cuando lo realmente cobrado está
+entre 25.165 y 27.565. Es la diferencia entre creer que se va a ritmo y saber que se va
+atrasado.
 
 ### 9.7 Cruce contra la cartera viva: hallazgos de 2026
 
