@@ -34,7 +34,9 @@ export function dibujarAjustes(estado) {
         una sola vez, sirve solo para este proyecto, y la podés anular cuando quieras.
       </p>
       <ol class="pasos">
-        <li>Tocá el botón de abajo. Se abre GitHub con casi todo completo.</li>
+        <li>Tocá el botón de abajo. Se abre GitHub.</li>
+        <li>En <strong>Token name</strong> escribí <code>Como venimos</code>. GitHub no
+            deja seguir si queda vacío.</li>
         <li>En <strong>Expiration</strong> elegí <strong>No expiration</strong>, así no
             tenés que rehacerla nunca.</li>
         <li>En <strong>Repository access</strong> elegí <strong>Only select
