@@ -1685,12 +1685,7 @@
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "posible_cruce",
-    "detalle": "Puede ser \"Flammarión 5000\", que está en tu cartera (en negociacion). Si es la misma, engancharlas."
-   }
-  ],
+  "avisos": [],
   "barrio": "Malvin norte",
   "base": 1890,
   "categoria_vigente": null,
@@ -1720,7 +1715,8 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": false,
+  "sin_propiedad_en_cartera": true
  },
  {
   "agente_compra": "Wendy Sánchez",
