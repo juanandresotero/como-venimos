@@ -2260,7 +2260,7 @@
   "fecha_fin": "2026-03-15",
   "fecha_fin_estimada": false,
   "fecha_inicio": "2024-12-15",
-  "ficha_completa": false,
+  "ficha_completa": true,
   "ganancia": 1050,
   "id": "excel-63",
   "moneda": "USD",
@@ -2276,7 +2276,8 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "ficha_completa_momento": null
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2361,14 +2362,9 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "firma_futura",
-    "detalle": "La firma dice 2026-11-05, que todavía no llegó, así que no está cobrado."
-   }
-  ],
+  "avisos": [],
   "barrio": "Malvin norte",
-  "base": 3510,
+  "base": 3600,
   "categoria_vigente": "RAP",
   "direccion": "flamarrion 5046",
   "entity_id_cartera": "45e27b03-b19a-4654-a163-4d0bf3307fac",
@@ -2377,9 +2373,9 @@
   "excel_importe": 1580,
   "facturacion": 3510,
   "fecha_boleto": null,
-  "fecha_fin": "2026-11-05",
-  "fecha_fin_estimada": true,
-  "fecha_inicio": "2026-08-17",
+  "fecha_fin": null,
+  "fecha_fin_estimada": false,
+  "fecha_inicio": "2026-07-30",
   "ficha_completa": false,
   "ganancia": 1579.5,
   "id": "excel-66",
@@ -2387,7 +2383,7 @@
   "notas": "",
   "origen_captacion": "Referido - BDR",
   "pct_comision_total": 0.06,
-  "precio_operacion": 58500,
+  "precio_operacion": 60000,
   "puntas": 2,
   "recalculado": true,
   "regimen_comision": "captacion_mia",
@@ -3181,5 +3177,36 @@
   "yo_referi": false,
   "fecha_negociacion": "2026-08-17",
   "ficha_vigente": false
+ },
+ {
+  "id": "manual-1",
+  "tipo_negocio": "venta",
+  "es_suplencia": false,
+  "yo_referi": false,
+  "puntas": 2,
+  "agente_vende": "Juan Andrés Otero",
+  "agente_compra": "Juan Andrés Otero",
+  "pct_comision_total": 0.06,
+  "fecha_inicio": "2026-07-30",
+  "fecha_boleto": null,
+  "fecha_fin": null,
+  "entity_id_cartera": "45e27b03-b19a-4654-a163-4d0bf3307fac",
+  "direccion": "Flammarión 5000",
+  "barrio": "Malvin norte",
+  "tipo_propiedad": "departamento_estandar",
+  "precio_operacion": 60000,
+  "moneda": "USD",
+  "origen_captacion": "Cliente antiguo",
+  "estado": "en_curso",
+  "ficha_completa": false,
+  "notas": "",
+  "manual": true,
+  "atajo": "venta",
+  "fecha_negociacion": "2026-08-17",
+  "avisos": [],
+  "ficha_vigente": false,
+  "regimen_comision": "captacion_mia",
+  "base": 3600,
+  "fecha_fin_estimada": false
  }
 ]
