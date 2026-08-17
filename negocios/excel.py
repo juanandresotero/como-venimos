@@ -3,13 +3,16 @@
 El Excel real tiene 80 celdas guardadas como TEXTO en columnas que deberian ser numeros
 ("150.40%", "2772.96"). Excel las suma igual casi siempre, pero cualquier formula nueva
 las puede saltear en silencio. Aca se pasan todas a numero de una vez.
+
+OJO con el import de openpyxl: va ADENTRO de leer(), no arriba del archivo. openpyxl es la
+unica dependencia que no viene con Python, y solo hace falta para la importacion inicial,
+que se corre a mano. Ni el robot ni la app la necesitan, y en GitHub no esta instalada:
+si el import fuera de arriba, cualquier test que toque este modulo reventaria en CI.
 """
 from __future__ import annotations
 
 import datetime
 import pathlib
-
-import openpyxl
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 ARCHIVO = RAIZ / "negocios.xlsx"
@@ -65,6 +68,14 @@ def a_fecha(valor):
 
 def leer(archivo=None) -> list:
     """Devuelve una lista de diccionarios, uno por negocio, con los tipos ya normalizados."""
+    try:
+        import openpyxl
+    except ImportError:
+        raise RuntimeError(
+            "Para leer el Excel hace falta openpyxl. Instalalo con:  pip install openpyxl\n"
+            "(solo se necesita para la importacion inicial; el robot y la app no lo usan)"
+        ) from None
+
     ruta = pathlib.Path(archivo) if archivo else ARCHIVO
     hoja = openpyxl.load_workbook(ruta, data_only=True).worksheets[0]
     filas = []
