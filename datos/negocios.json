@@ -2978,26 +2978,9 @@
   "ficha_vigente": false
  },
  {
-  "agente_compra": null,
-  "agente_vende": null,
-  "avisos": [
-   {
-    "tipo": "falta_fecha_inicio",
-    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
-   },
-   {
-    "tipo": "posible_cruce",
-    "detalle": "Puede ser \"Estanislao Vega 3900\", que está en tu cartera (en negociacion). Si es la misma, engancharlas."
-   },
-   {
-    "tipo": "faltan_agentes",
-    "detalle": "No dice quién tenía el aviso ni quién trajo al comprador: sin eso no se sabe cuántas puntas cobraste"
-   },
-   {
-    "tipo": "origen_sin_clasificar",
-    "detalle": "Falta de dónde salió: sin eso no se sabe qué canal te está dando plata"
-   }
-  ],
+  "agente_compra": "Juan Andrés Otero",
+  "agente_vende": "Juan Andrés Otero",
+  "avisos": [],
   "barrio": "Cerrito",
   "base": 658,
   "categoria_vigente": "RAP",
@@ -3006,28 +2989,32 @@
   "estado": "cerrado",
   "excel_facturado": 658,
   "excel_importe": 230,
-  "facturacion": 658,
+  "facturacion": 329,
   "fecha_boleto": null,
   "fecha_fin": "2026-04-20",
   "fecha_fin_estimada": false,
-  "fecha_inicio": null,
-  "ficha_completa": false,
-  "ganancia": 296.1,
+  "fecha_inicio": "2026-03-26",
+  "ficha_completa": true,
+  "ganancia": 230.3,
   "id": "excel-84",
   "moneda": "USD",
   "notas": "",
-  "origen_captacion": "Sin origen",
+  "origen_captacion": "Ref. Martin",
   "pct_comision_total": 2,
   "precio_operacion": 329,
-  "puntas": 0,
+  "puntas": 2,
   "recalculado": true,
-  "regimen_comision": "captacion_mia",
+  "regimen_comision": "ref_martin",
   "split_aplicado": 0.35,
   "tipo_negocio": "alquiler",
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "agente_vende_nombre": null,
+  "agente_compra_nombre": null,
+  "sin_propiedad_en_cartera": true,
+  "ficha_completa_momento": null
  },
  {
   "agente_compra": "Juan Andrés Otero",
