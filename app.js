@@ -2,7 +2,7 @@
 
 import { derivar } from "./lib/pendientes.js";
 import * as github from "./lib/github.js";
-import { fusionar } from "./lib/cartera.js";
+import { fusionar, completarConNegocios } from "./lib/cartera.js";
 import { revisar } from "./lib/motor.js";
 import { hayCambios, resumenCambios, sincronizar } from "./lib/guardado.js";
 import { dibujarSalud } from "./vistas/salud.js";
@@ -218,6 +218,11 @@ async function arrancar() {
   estado.datos.negocios = (estado.datos.negocios || []).map(
     (n) => revisar(n, estado.datos.ajustes, estado.hoy, estado.datos.cartera)
   );
+
+  /* Y al reves: la propiedad toma lo que ya esta cargado en sus negocios. Sin esto, un
+     dato cargado desde el negocio hace semanas seguia apareciendo en rojo en la ficha de
+     la propiedad, porque la sincronia solo corria al editar. */
+  estado.datos.cartera = completarConNegocios(estado.datos.cartera, estado.datos.negocios);
 
   leerHash();
 

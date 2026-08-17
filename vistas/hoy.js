@@ -91,7 +91,7 @@ function todoAlDia(estado) {
   const anio = estado.hoy.slice(0, 4);
   const c = capas(negocios, cartera, ajustes, anio);
   const objetivo = (ajustes.objetivo_personal || {})[anio] || 0;
-  const r = ritmo(c.capa1.facturacion, objetivo, anio, estado.hoy);
+  const r = ritmo(c.cobrado.facturacion, objetivo, anio, estado.hoy);
 
   return nodo(html`
     <section class="vacio">
@@ -100,17 +100,17 @@ function todoAlDia(estado) {
     </section>
     <section class="tarjeta">
       <p class="etiqueta">Cobrado en ${anio}</p>
-      <p class="cifra cifra-grande" style="margin:6px 0 2px">${plataUSD(c.capa1.ganancia)}</p>
-      <p class="apunte">a tu bolsillo · ${plataUSD(c.capa1.facturacion)} facturados</p>
+      <p class="cifra cifra-grande" style="margin:6px 0 2px">${plataUSD(c.cobrado.ganancia)}</p>
+      <p class="apunte">a tu bolsillo · ${plataUSD(c.cobrado.facturacion)} facturados</p>
       ${r ? html`<p class="apunte" style="margin-top:8px">${pct(r.avance)} del objetivo · ${r.aRitmo ? "vas a ritmo" : "vas atrasado"}</p>` : ""}
     </section>
     <section class="tarjeta">
       <p class="etiqueta">Si cierra lo que está en negociación y reservado</p>
       <p class="cifra cifra-grande" style="margin:6px 0 2px;color:var(--azul)">
-        ${plataUSD(c.capa1.ganancia + c.avanzado.ganancia)}
+        ${plataUSD(c.cobrado.ganancia + c.avanzado.ganancia)}
       </p>
       <p class="apunte">
-        a tu bolsillo · ${plataUSD(c.capa1.facturacion + c.avanzado.facturacion)} facturados
+        a tu bolsillo · ${plataUSD(c.cobrado.facturacion + c.avanzado.facturacion)} facturados
       </p>
     </section>
   `);

@@ -86,7 +86,7 @@ function acciones(p, estado) {
            </p>`}
       <div class="botonera" style="margin-top:0">
         ${enCurso
-          ? html`<button class="boton boton-primario" id="seguir-negocio">Seguir con su negocio</button>`
+          ? html`<button class="boton boton-primario" id="seguir-negocio">Editar su negocio</button>`
           : ""}
         ${p.operacion === "venta"
           ? html`<button class="boton" id="calcular-renta">Calcular su renta</button>`

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   fusionar, estadoVisible, listar, negociosDe, rendimiento, lineaDeTiempo, diasEnCartera,
-  desdeCuando,
+  desdeCuando, completarConNegocios,
 } from "../lib/cartera.js";
 
 const propiedad = (extra = {}) => ({
@@ -150,4 +150,43 @@ test("mientras la captacion sea una estimacion, manda lo que vio el robot", () =
     fecha_captacion_estimada: true,
   });
   assert.equal(desdeCuando(p), "2026-08-10");
+});
+
+/* La sincronia al editar no alcanzaba: los negocios ya tenian el dato cargado de antes y,
+   como nadie los estaba editando, la propiedad lo seguia mostrando en rojo. */
+test("la propiedad toma la fecha y el origen que ya estan en su negocio", () => {
+  const cartera = { aaa: propiedad({ origen_captacion: null }) };
+  const negocios = [{ entity_id_cartera: "aaa", fecha_inicio: "2025-02-03", origen_captacion: "B.d.r." }];
+  const r = completarConNegocios(cartera, negocios);
+  assert.equal(r.aaa.fecha_captacion_real, "2025-02-03");
+  assert.equal(r.aaa.fecha_captacion_estimada, false);
+  assert.equal(r.aaa.origen_captacion, "B.d.r.");
+});
+
+test("la captacion es la del negocio MAS VIEJO, no la del ultimo alquiler", () => {
+  const cartera = { aaa: propiedad({ origen_captacion: null }) };
+  const negocios = [
+    { entity_id_cartera: "aaa", fecha_inicio: "2026-07-01" },
+    { entity_id_cartera: "aaa", fecha_inicio: "2024-05-01" },
+    { entity_id_cartera: "aaa", fecha_inicio: "2025-02-03" },
+  ];
+  assert.equal(completarConNegocios(cartera, negocios).aaa.fecha_captacion_real, "2024-05-01");
+});
+
+test("lo que el usuario confirmo en la propiedad no se pisa con algo posterior", () => {
+  const cartera = { aaa: propiedad({ fecha_captacion_real: "2025-01-01", fecha_captacion_estimada: false }) };
+  const negocios = [{ entity_id_cartera: "aaa", fecha_inicio: "2026-07-01" }];
+  assert.equal(completarConNegocios(cartera, negocios).aaa.fecha_captacion_real, "2025-01-01");
+});
+
+test("completar no modifica la cartera original", () => {
+  const cartera = { aaa: propiedad({ origen_captacion: null }) };
+  completarConNegocios(cartera, [{ entity_id_cartera: "aaa", origen_captacion: "B.d.r." }]);
+  assert.equal(cartera.aaa.origen_captacion, null);
+});
+
+test("un negocio de otra propiedad no la toca", () => {
+  const cartera = { aaa: propiedad({ origen_captacion: null }) };
+  const r = completarConNegocios(cartera, [{ entity_id_cartera: "zzz", origen_captacion: "B.d.r." }]);
+  assert.equal(r.aaa.origen_captacion, null);
 });

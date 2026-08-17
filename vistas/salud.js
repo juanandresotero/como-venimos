@@ -22,7 +22,7 @@ export function dibujarSalud(estado) {
   const anio = estado.hoy.slice(0, 4);
   const c = capas(negocios, cartera, ajustes, anio);
   const objetivo = (ajustes.objetivo_personal || {})[anio] || 0;
-  const r = ritmo(c.capa1.facturacion, objetivo, anio, estado.hoy);
+  const r = ritmo(c.cobrado.facturacion, objetivo, anio, estado.hoy);
   const m = metricas(negocios, anio);
   const anios = porAnio(negocios);
   const cats = comparativaCategorias(negocios, ajustes, anio, estado.hoy);
@@ -44,7 +44,7 @@ export function dibujarSalud(estado) {
   if (anios.length) trozo.append(graficaAnual(anios, anio));
   trozo.append(metricasDelAnio(m));
   if (cats.length) trozo.append(comparativa(cats));
-  if (c.capa3.detalle.length) trozo.append(propiedadesUsadas(c.capa3, estado));
+  if (c.publicado.detalle.length) trozo.append(propiedadesUsadas(c.publicado, estado));
   trozo.append(descargarReporte(estado, anio));
   return trozo;
 }
@@ -150,14 +150,14 @@ function descargarReporte(estado, anio) {
    hoy, y lo que va a tener si cierra todo lo que ya está avanzado. Los dos con las dos
    caras de la plata: lo que factura RE/MAX y lo que le queda a él. */
 function cabecera(anio, c) {
-  const suma = (campo) => c.capa1[campo] + c.avanzado[campo];
+  const suma = (campo) => c.cobrado[campo] + c.avanzado[campo];
   return nodo(html`
     <section class="tarjeta">
       <p class="etiqueta">Cobrado en ${anio}</p>
-      <p class="cifra cifra-heroe" style="margin:6px 0 2px">${plata(c.capa1.ganancia)}</p>
+      <p class="cifra cifra-heroe" style="margin:6px 0 2px">${plata(c.cobrado.ganancia)}</p>
       <p class="apunte" style="margin-bottom:16px">
-        <strong>a tu bolsillo</strong> · ${plataUSD(c.capa1.facturacion)} facturados
-        · ${c.capa1.negocios} ${c.capa1.negocios === 1 ? "negocio" : "negocios"}
+        <strong>a tu bolsillo</strong> · ${plataUSD(c.cobrado.facturacion)} facturados
+        · ${c.cobrado.negocios} ${c.cobrado.negocios === 1 ? "negocio" : "negocios"}
       </p>
 
       <div class="cierre">
@@ -169,7 +169,7 @@ function cabecera(anio, c) {
         <p class="apunte" style="margin-top:8px">
           Son ${plata(c.avanzado.ganancia)} más de ganancia
           (${plata(c.avanzado.facturacion)} de facturación) repartidos en
-          ${c.avanzado.cantidad} ${c.avanzado.cantidad === 1 ? "negocio" : "negocios"}.
+          ${c.avanzado.cantidad} ${c.avanzado.cantidad === 1 ? "propiedad" : "propiedades"}.
           Acá van al 100%, sin descontar probabilidad: es la pregunta "si cierra todo".
         </p>
       </div>
@@ -213,16 +213,20 @@ function barraDeRitmo(r, objetivo, c, anio) {
   `);
 }
 
+/* Los cuatro momentos del camino de la plata. Cada uno al 100%: la pregunta es "cuánto
+   cobro si esto cierra", no "cuánto vale hoy". */
 function tresCapas(c) {
   const total = c.total.facturacion || 1;
   const ancho = (x) => `${(x / total) * 100}%`;
-  const fila = (clase, nombre, sub, monto, ganancia) => html`
+  const cuantas = (n, uno, muchos) => `${n} ${n === 1 ? uno : muchos}`;
+
+  const fila = (clase, nombre, sub, grupo) => html`
     <div class="capa">
       <span class="capa-punto ${clase}"></span>
       <span><span class="capa-nombre">${nombre}</span><br><span class="capa-sub">${sub}</span></span>
       <span class="capa-monto">
-        <span class="cifra cifra-media">${plata(monto)}</span><br>
-        <span class="capa-sub">${plata(ganancia)} tuyos</span>
+        <span class="cifra cifra-media">${plata(grupo.ganancia)}</span><br>
+        <span class="capa-sub">de ${plata(grupo.facturacion)} facturados</span>
       </span>
     </div>`;
 
@@ -230,16 +234,22 @@ function tresCapas(c) {
     <section class="tarjeta">
       <div class="tarjeta-titulo">
         <h2 class="titulo">De dónde sale la plata</h2>
-        <span class="apunte">${plataUSD(c.total.facturacion)}</span>
+        <span class="apunte">${plataUSD(c.total.ganancia)} si todo cierra</span>
       </div>
       <div class="capas-barra">
-        <div class="capas-tramo uno" style="width:${ancho(c.capa1.facturacion)}"></div>
-        <div class="capas-tramo dos" style="width:${ancho(c.capa2.facturacion)}"></div>
-        <div class="capas-tramo tres" style="width:${ancho(c.capa3.facturacion)}"></div>
+        <div class="capas-tramo uno" style="width:${ancho(c.cobrado.facturacion)}"></div>
+        <div class="capas-tramo dos" style="width:${ancho(c.reservado.facturacion)}"></div>
+        <div class="capas-tramo tres" style="width:${ancho(c.negociacion.facturacion)}"></div>
+        <div class="capas-tramo cuatro" style="width:${ancho(c.publicado.facturacion)}"></div>
       </div>
-      ${fila("uno", "Cobrado", `${c.capa1.negocios} negocios cerrados`, c.capa1.facturacion, c.capa1.ganancia)}
-      ${fila("dos", "Casi seguro", `${c.capa2.negocios} en curso · reservadas y en negociación`, c.capa2.facturacion, c.capa2.ganancia)}
-      ${fila("tres", "Potencial", `${c.capa3.propiedades} propiedades publicadas`, c.capa3.facturacion, c.capa3.ganancia)}
+      ${fila("uno", "Cobrado", cuantas(c.cobrado.negocios, "negocio cerrado", "negocios cerrados"), c.cobrado)}
+      ${fila("dos", "Reservado", `${cuantas(c.reservado.cantidad, "propiedad", "propiedades")} · falta escriturar`, c.reservado)}
+      ${fila("tres", "En negociación", `${cuantas(c.negociacion.cantidad, "propiedad", "propiedades")} · hay oferta`, c.negociacion)}
+      ${fila("cuatro", "Publicado", `${cuantas(c.publicado.cantidad, "propiedad", "propiedades")} · todavía sin mover`, c.publicado)}
+      <p class="apunte" style="margin-top:12px">
+        Los tres últimos van al 100%. Con la probabilidad de cierre de cada estado, la
+        cuenta realista da <strong>${plataUSD(c.ponderado.ganancia)}</strong> a tu bolsillo.
+      </p>
     </section>
   `);
 }
@@ -316,8 +326,8 @@ function comparativa(cats) {
   `);
 }
 
-function propiedadesUsadas(capa3, estado) {
-  const filas = capa3.detalle
+function propiedadesUsadas(publicado, estado) {
+  const filas = publicado.detalle
     .map(
       (p) => html`
       <button class="fila" data-propiedad="${escapar(p.entity_id)}">
@@ -335,14 +345,13 @@ function propiedadesUsadas(capa3, estado) {
   const seccion = nodo(html`
     <section class="tarjeta">
       <div class="tarjeta-titulo">
-        <h2 class="titulo">Qué se proyectó</h2>
-        <span class="apunte">${capa3.propiedades} propiedades</span>
+        <h2 class="titulo">Lo que está publicado</h2>
+        <span class="apunte">${publicado.cantidad} propiedades</span>
       </div>
       <div class="lista">${filas}</div>
       <p class="apunte" style="margin-top:12px">
-        Cada una vale su precio por la probabilidad de cerrarse según su estado, y por tu
-        propio ratio histórico de facturación. Si alguna no debería contar, entrá y
-        apagala.
+        Lo que dejaría cada una si se vendiera al precio publicado, calculado con tu propio
+        ratio histórico. Si alguna no debería contar, entrá y apagala.
       </p>
     </section>
   `);

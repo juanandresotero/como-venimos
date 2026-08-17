@@ -66,62 +66,101 @@ test("capa 1: solo lo cerrado del año", () => {
     negocio({ estado: "cerrado", fecha_fin: "2025-03-01", facturacion: 9000, ganancia: 4000 }),
   ];
   const c = capas(lista, {}, AJUSTES, "2026");
-  assert.equal(c.capa1.facturacion, 3000);
-  assert.equal(c.capa1.negocios, 1);
+  assert.equal(c.cobrado.facturacion, 3000);
+  assert.equal(c.cobrado.negocios, 1);
 });
 
-test("capa 2: los en curso van con su cifra real, sin probabilidad", () => {
-  const lista = [negocio({ estado: "en_curso", facturacion: 5394, ganancia: 2427 })];
+/* Los cuatro grupos: cobrado / reservado / en negociacion / publicado.
+
+   Un negocio EN CURSO no tiene fecha de firma: todavia no firmo. El filtro viejo pedia
+   una fecha del año y los dejaba a todos afuera, asi que "casi seguro" daba CERO teniendo
+   propiedades reservadas. */
+test("un negocio en curso sin fecha de firma igual cuenta", () => {
+  const lista = [negocio({ estado: "en_curso", fecha_fin: null, facturacion: 5394, ganancia: 2427 })];
   const c = capas(lista, {}, AJUSTES, "2026");
-  assert.equal(c.capa2.facturacion, 5394);
-  assert.equal(c.capa2.ganancia, 2427);
+  assert.equal(c.negociacion.facturacion, 5394);
+  assert.equal(c.negociacion.ganancia, 2427);
+  assert.equal(c.avanzado.facturacion, 5394);
 });
 
-test("capa 3: proyecta por ratio y probabilidad del estado", () => {
+test("cada propiedad cae en el grupo de su estado", () => {
+  const lista = [negocio({ precio_operacion: 100000, facturacion: 4500, ganancia: 1800 })];
+  const cartera = {
+    a: propiedad({ entity_id: "a", estado: "reservada", precio: 100000 }),
+    b: propiedad({ entity_id: "b", estado: "en_negociacion", precio: 100000 }),
+    c: propiedad({ entity_id: "c", estado: "publicada", precio: 100000 }),
+  };
+  const c = capas(lista, cartera, AJUSTES, "2026");
+  assert.equal(c.reservado.cantidad, 1);
+  assert.equal(c.negociacion.cantidad, 1);
+  assert.equal(c.publicado.cantidad, 1);
+});
+
+/* Al 100%: la pregunta es "cuanto cobro si esto cierra", no "cuanto vale hoy". */
+test("los grupos van al 100%, sin descontar probabilidad", () => {
   const lista = [negocio({ precio_operacion: 100000, facturacion: 4500, ganancia: 1800 })];
   const cartera = { p1: propiedad({ precio: 200000, estado: "publicada" }) };
   const c = capas(lista, cartera, AJUSTES, "2026");
-  // 200.000 x 4,5% x 25% = 2.250
-  assert.equal(Math.round(c.capa3.facturacion), 2250);
+  // 200.000 x 4,5% = 9.000, entero
+  assert.equal(Math.round(c.publicado.facturacion), 9000);
+  // La cuenta realista sí lo descuenta: cobrado (4.500) + 9.000 x 25% = 6.750
+  assert.equal(Math.round(c.ponderado.facturacion), 6750);
 });
 
-test("capa 3: la reservada pesa mucho mas que la publicada", () => {
+test("una reservada pesa mucho mas que una publicada en la cuenta realista", () => {
   const lista = [negocio({ precio_operacion: 100000, facturacion: 4500, ganancia: 1800 })];
   const publicada = capas(lista, { p1: propiedad({ estado: "publicada" }) }, AJUSTES, "2026");
   const reservada = capas(lista, { p1: propiedad({ estado: "reservada" }) }, AJUSTES, "2026");
-  assert.ok(reservada.capa3.facturacion > publicada.capa3.facturacion * 3);
+  // Se compara solo la parte proyectada, sin lo ya cobrado que es igual en las dos.
+  const soloPipeline = (x) => x.ponderado.facturacion - x.cobrado.facturacion;
+  assert.ok(soloPipeline(reservada) > soloPipeline(publicada) * 3);
 });
 
-test("capa 3: ignora las propiedades dadas de baja", () => {
-  const lista = [negocio()];
-  const c = capas(lista, { p1: propiedad({ activa: false }) }, AJUSTES, "2026");
-  assert.equal(c.capa3.propiedades, 0);
+test("ignora las propiedades dadas de baja", () => {
+  const c = capas([negocio()], { p1: propiedad({ activa: false }) }, AJUSTES, "2026");
+  assert.equal(c.publicado.cantidad, 0);
 });
 
-test("capa 3: ignora las excluidas por el usuario (duplicados)", () => {
-  const lista = [negocio()];
-  const c = capas(lista, { p1: propiedad({ usar_en_proyeccion: false }) }, AJUSTES, "2026");
-  assert.equal(c.capa3.propiedades, 0);
+test("ignora las excluidas por el usuario (duplicados)", () => {
+  const c = capas([negocio()], { p1: propiedad({ usar_en_proyeccion: false }) }, AJUSTES, "2026");
+  assert.equal(c.publicado.cantidad, 0);
 });
 
-test("anti-doble-conteo: si la propiedad ya esta en capa 2, no va en capa 3", () => {
+/* Si la propiedad ya tiene un negocio cargado, manda ESE numero: es el precio y la
+   comision de verdad, no una estimacion con el ratio historico. */
+test("una propiedad con negocio cargado usa su cifra real, no la estimada", () => {
   const lista = [
     negocio({ precio_operacion: 100000, facturacion: 4500, ganancia: 1800 }),
-    negocio({ id: "n2", estado: "en_curso", facturacion: 5394, ganancia: 2427, entity_id_cartera: "p1" }),
+    negocio({ id: "n2", estado: "en_curso", fecha_fin: null, facturacion: 5394,
+              ganancia: 2427, entity_id_cartera: "p1" }),
+  ];
+  const cartera = { p1: propiedad({ entity_id: "p1", estado: "reservada", precio: 999999 }) };
+  const c = capas(lista, cartera, AJUSTES, "2026");
+  assert.equal(c.reservado.cantidad, 1);
+  assert.equal(c.reservado.facturacion, 5394, "la cifra del negocio, no el ratio sobre 999.999");
+  assert.equal(c.reservado.detalle[0].estimado, false);
+});
+
+test("no se cuenta dos veces: la propiedad y su negocio son una sola linea", () => {
+  const lista = [
+    negocio({ precio_operacion: 100000, facturacion: 4500, ganancia: 1800 }),
+    negocio({ id: "n2", estado: "en_curso", fecha_fin: null, facturacion: 5394,
+              ganancia: 2427, entity_id_cartera: "p1" }),
   ];
   const cartera = { p1: propiedad({ entity_id: "p1", estado: "reservada" }) };
   const c = capas(lista, cartera, AJUSTES, "2026");
-  assert.equal(c.capa3.propiedades, 0);
-  assert.equal(c.capa2.facturacion, 5394);
+  assert.equal(c.reservado.cantidad + c.negociacion.cantidad + c.publicado.cantidad, 1);
+  assert.equal(c.avanzado.facturacion, 5394);
 });
 
-test("el detalle de capa 3 dice que propiedades entraron", () => {
+test("el detalle dice que propiedades entraron y si el numero es estimado", () => {
   const lista = [negocio({ precio_operacion: 100000, facturacion: 4500, ganancia: 1800 })];
   const cartera = { p1: propiedad({ direccion: "Gutenberg 6100", precio: 490000 }) };
   const c = capas(lista, cartera, AJUSTES, "2026");
-  assert.equal(c.capa3.detalle.length, 1);
-  assert.equal(c.capa3.detalle[0].direccion, "Gutenberg 6100");
-  assert.equal(c.capa3.detalle[0].probabilidad, 0.25);
+  assert.equal(c.publicado.detalle.length, 1);
+  assert.equal(c.publicado.detalle[0].direccion, "Gutenberg 6100");
+  assert.equal(c.publicado.detalle[0].estimado, true, "sin negocio cargado, es una estimacion");
+  assert.equal(c.publicado.detalle[0].probabilidad, 0.25);
 });
 
 test("el total suma las tres capas", () => {
@@ -264,7 +303,7 @@ test("comparativa: la categoria actual queda marcada y con diferencia cero", () 
 
 /* "Cuanto voy ganando y cuanto si cierro todo lo que esta en negociacion y reservado":
    los dos numeros que el usuario pidio tener siempre a mano. */
-test("avanzado: suma lo en curso y lo que esta en negociacion o reservado, al 100%", () => {
+test("avanzado: reservado mas negociacion, al 100%, sin lo apenas publicado", () => {
   const cartera = {
     pub: { entity_id: "pub", activa: true, estado: "publicada", operacion: "venta",
            precio: 100000, usar_en_proyeccion: true },
@@ -276,22 +315,15 @@ test("avanzado: suma lo en curso y lo que esta en negociacion o reservado, al 10
   const negocios = [
     { id: "a", fecha_fin: "2026-03-01", estado: "cerrado", tipo_negocio: "venta",
       precio_operacion: 100000, facturacion: 4000, ganancia: 1800, puntas: 1 },
-    { id: "b", fecha_fin: "2026-09-01", estado: "en_curso", tipo_negocio: "venta",
-      precio_operacion: 100000, facturacion: 3000, ganancia: 1350, puntas: 1 },
   ];
   const c = capas(negocios, cartera, AJUSTES, "2026");
 
-  // Lo publicado NO entra: todavia no se movio.
-  assert.equal(c.avanzado.cantidad, 3, "el negocio en curso mas las dos propiedades");
+  // Lo apenas publicado NO entra en "avanzado": todavia no se movio.
+  assert.equal(c.avanzado.cantidad, 2);
   assert.ok(!c.avanzado.detalle.some((x) => x.entity_id === "pub"));
-
-  // Al 100%: sin descontar la probabilidad de cierre.
-  const propiedades = c.avanzado.detalle.filter((x) => x.origen === "propiedad");
-  assert.equal(propiedades.length, 2);
-  assert.equal(propiedades[0].facturacion, propiedades[1].facturacion,
-    "negociacion y reservada valen igual acá: la pregunta es 'si cierra todo'");
-  assert.ok(c.avanzado.facturacion > c.capa3.facturacion,
-    "sin probabilidad tiene que dar mas que la capa 3");
+  assert.equal(c.reservado.facturacion, c.negociacion.facturacion,
+    "al 100% valen igual: la pregunta es 'si cierra todo'");
+  assert.equal(c.avanzado.facturacion, c.reservado.facturacion + c.negociacion.facturacion);
 });
 
 test("avanzado: una propiedad que ya tiene su negocio en curso no se cuenta dos veces", () => {
