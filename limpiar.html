@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Poner al día ¿Cómo venimos?</title>
+<meta name="robots" content="noindex">
+<style>
+  /* Sin hoja de estilo externa a proposito: esta pagina tiene que funcionar aunque el
+     resto de la app este cacheada y rota. Todo va acá adentro. */
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; padding: 32px 22px;
+    background: #f6f8fc; color: #0b0f1a;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px; line-height: 1.55;
+  }
+  main { max-width: 460px; margin: 0 auto; }
+  h1 { font-size: 26px; letter-spacing: -.02em; margin: 0 0 6px; }
+  p { margin: 0 0 14px; }
+  .apunte { color: #5d6880; font-size: 14px; }
+  .tarjeta {
+    background: #fff; border: 1px solid #e3e8f2; border-radius: 16px;
+    padding: 20px; margin-top: 20px;
+  }
+  #estado { font-weight: 700; }
+  ul { margin: 10px 0 0; padding-left: 20px; font-size: 14px; color: #5d6880; }
+  li { margin-bottom: 4px; }
+  a.boton {
+    display: block; text-align: center; text-decoration: none;
+    margin-top: 18px; padding: 15px 18px;
+    background: #0043ff; color: #fff; font-weight: 700;
+    border-radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0b0f1a; color: #f2f5fb; }
+    .tarjeta { background: #131926; border-color: #232c3f; }
+    .apunte, ul { color: #97a3ba; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Poniendo la app al día</h1>
+  <p class="apunte">
+    Esto borra la copia vieja que quedó guardada en el teléfono y baja la última versión.
+    <strong>No toca tus datos ni la llave de GitHub.</strong>
+  </p>
+
+  <div class="tarjeta">
+    <p id="estado">Limpiando…</p>
+    <ul id="pasos"></ul>
+    <a class="boton" id="volver" href="./">Abrir la app</a>
+  </div>
+</main>
+
+<script>
+/* Esta pagina existe para romper un circulo vicioso: la version vieja de la app es la que
+   decide que se muestra, asi que un arreglo que viene en la version nueva no puede
+   instalarse solo. Como esta direccion nunca estuvo guardada, el telefono la baja de la
+   red si o si, y desde aca se limpia todo.
+
+   Lo unico que NO se toca es localStorage: ahi vive la llave de GitHub. */
+(async () => {
+  const pasos = document.getElementById("pasos");
+  const estado = document.getElementById("estado");
+  const anotar = (texto) => {
+    const li = document.createElement("li");
+    li.textContent = texto;
+    pasos.append(li);
+  };
+
+  let algoSeLimpio = false;
+
+  try {
+    if ("serviceWorker" in navigator) {
+      const registros = await navigator.serviceWorker.getRegistrations();
+      for (const registro of registros) await registro.unregister();
+      anotar(registros.length
+        ? `Se desinstaló la versión vieja (${registros.length}).`
+        : "No había una versión vieja instalada.");
+      algoSeLimpio = algoSeLimpio || registros.length > 0;
+    }
+  } catch {
+    anotar("No se pudo desinstalar la versión vieja, pero seguimos.");
+  }
+
+  try {
+    if ("caches" in window) {
+      const claves = await caches.keys();
+      for (const clave of claves) await caches.delete(clave);
+      anotar(claves.length
+        ? `Se borraron ${claves.length} copias guardadas.`
+        : "No había copias guardadas.");
+      algoSeLimpio = algoSeLimpio || claves.length > 0;
+    }
+  } catch {
+    anotar("No se pudieron borrar las copias guardadas.");
+  }
+
+  anotar("Tu llave de GitHub y tus datos quedaron intactos.");
+  estado.textContent = algoSeLimpio ? "✓ Listo, quedó limpio" : "✓ Ya estaba al día";
+
+  // Se vuelve solo, con un respiro para poder leer lo que paso.
+  setTimeout(() => { window.location.replace("./"); }, 2200);
+})();
+</script>
+</body>
+</html>

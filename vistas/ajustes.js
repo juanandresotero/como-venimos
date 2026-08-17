@@ -174,6 +174,16 @@ export function dibujarAjustes(estado) {
   `));
 
   trozo.append(instalar(estado));
+  trozo.append(nodo(html`
+    <section class="tarjeta">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">¿Ves algo desactualizado?</h2>
+      <p class="apunte" style="margin-bottom:12px">
+        La app se pone al día sola. Si aun así ves algo viejo, esto borra la copia guardada
+        en el teléfono y baja la última versión. No toca tus datos ni la llave.
+      </p>
+      <a class="boton" href="limpiar.html">Poner la app al día</a>
+    </section>
+  `));
   trozo.append(bajarPlanilla(estado));
   trozo.append(tuNegocio(estado));
 
