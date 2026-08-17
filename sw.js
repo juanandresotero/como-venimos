@@ -4,7 +4,7 @@
    piden siempre a la red y se guarda una copia por si no hay conexion. Asi los numeros
    nunca quedan viejos cuando hay internet, pero la app abre igual en el subsuelo. */
 
-const CACHE = "como-venimos-v1";
+const CACHE = "como-venimos-v2";
 
 const ARMAZON = [
   "./",
@@ -15,9 +15,15 @@ const ARMAZON = [
   "./tipografia/bricolage.woff2",
   "./lib/formato.js",
   "./lib/salud.js",
+  "./lib/motor.js",
   "./lib/pendientes.js",
+  "./lib/github.js",
+  "./lib/guardado.js",
   "./vistas/salud.js",
   "./vistas/hoy.js",
+  "./vistas/negocios.js",
+  "./vistas/ficha.js",
+  "./vistas/ajustes.js",
 ];
 
 self.addEventListener("install", (evento) => {

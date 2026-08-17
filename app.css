@@ -299,3 +299,99 @@ body {
 }
 
 .pronto { text-align: center; padding: 60px 20px; color: var(--tinta-2); }
+
+/* ---------- Formularios ---------- */
+
+.pasos { margin: 0 0 16px; padding-left: 20px; font-size: 14px; line-height: 1.65; }
+.pasos li { margin-bottom: 7px; }
+.pasos code, .apunte code {
+  background: var(--lienzo-2); border: 1px solid var(--linea);
+  border-radius: 5px; padding: 1px 5px; font-size: 12.5px;
+}
+
+.campo {
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px 14px;
+  font: inherit;
+  color: var(--tinta);
+  background: var(--lienzo-2);
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+}
+.campo:focus { outline: 2px solid var(--azul); outline-offset: -1px; background: var(--lienzo); }
+
+.botonera { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+.boton {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 13px 18px;
+  font: inherit; font-weight: 700;
+  border: 1px solid var(--linea); border-radius: 12px;
+  background: var(--lienzo); color: var(--tinta);
+  text-decoration: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.boton-primario { background: var(--azul); border-color: var(--azul); color: #fff; }
+.boton-borrar { color: var(--rojo-tinta); border-color: var(--rojo); }
+.boton:active { transform: translateY(1px); }
+
+.campo-fila { display: grid; gap: 4px; padding: 12px 14px; background: var(--lienzo); }
+.campo-fila > label { font-size: 12.5px; color: var(--tinta-2); }
+.campo-fila .campo { margin-top: 2px; }
+.campo-fila.falta { background: var(--rojo-suave); }
+.campo-fila.falta > label { color: var(--rojo-tinta); font-weight: 700; }
+
+/* ---------- Barra de guardado ---------- */
+
+.barra-guardado {
+  position: sticky; top: 0; z-index: 9;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 9px 16px;
+  background: var(--azul-suave);
+  border-bottom: 1px solid var(--azul-claro);
+  font-size: 12.5px; font-weight: 600;
+}
+.barra-guardado.error { background: var(--rojo-suave); border-color: var(--rojo); color: var(--rojo-tinta); }
+.boton-mini {
+  padding: 6px 13px; font: inherit; font-weight: 700; font-size: 12px;
+  background: var(--azul); color: #fff; border: none; border-radius: 8px; cursor: pointer;
+  flex-shrink: 0;
+}
+.barra-guardado.error .boton-mini { background: var(--rojo); }
+
+/* ---------- Listas y filtros ---------- */
+
+.filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.filtro {
+  padding: 9px 13px;
+  font: inherit; font-size: 13px; font-weight: 600;
+  color: var(--tinta); background: var(--lienzo);
+  border: 1px solid var(--linea); border-radius: 10px;
+  cursor: pointer;
+}
+.filtro.prendido { background: var(--azul); border-color: var(--azul); color: #fff; }
+
+.lista { display: grid; gap: 1px; background: var(--linea); border-radius: var(--radio); overflow: hidden; border: 1px solid var(--linea); }
+.fila {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; padding: 14px 16px;
+  background: var(--lienzo); border: none; font: inherit; color: inherit;
+  text-align: left; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.fila:active { background: var(--lienzo-2); }
+.fila-cuerpo { min-width: 0; }
+.fila-titulo { display: block; font-weight: 600; font-size: 14.5px; }
+.fila-sub { display: block; font-size: 12px; color: var(--tinta-2); margin-top: 2px; }
+.fila-derecha { display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
+.chip-avisos {
+  min-width: 21px; height: 21px; padding: 0 6px;
+  display: grid; place-items: center;
+  background: var(--rojo); color: #fff;
+  border-radius: 7px; font-size: 11px; font-weight: 800;
+}
+.chip-curso {
+  background: var(--azul-suave); color: var(--azul);
+  padding: 1px 6px; border-radius: 5px; font-weight: 700;
+}

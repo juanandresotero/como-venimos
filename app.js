@@ -1,16 +1,29 @@
 /* Arranque: baja los datos, arma la navegacion y dibuja la vista activa. */
 
 import { derivar } from "./lib/pendientes.js";
+import * as github from "./lib/github.js";
+import { hayCambios, resumenCambios, sincronizar } from "./lib/guardado.js";
 import { dibujarSalud } from "./vistas/salud.js";
 import { dibujarHoy } from "./vistas/hoy.js";
+import { dibujarNegocios } from "./vistas/negocios.js";
+import { dibujarFicha } from "./vistas/ficha.js";
+import { dibujarAjustes } from "./vistas/ajustes.js";
 
-const ARCHIVOS = ["cartera", "negocios", "ajustes", "eventos", "estado_robot"];
-const VACIO_OBJETO = new Set(["cartera", "ajustes", "estado_robot"]);
+const ARCHIVOS = ["cartera", "negocios", "ajustes", "eventos", "estado_robot", "mis_datos"];
+const VACIO_OBJETO = new Set(["cartera", "ajustes", "estado_robot", "mis_datos"]);
 
 const estado = {
   datos: {},
   hoy: new Date().toISOString().slice(0, 10),
   vista: "hoy",
+  foco: null,          // id del negocio abierto, cuando la vista es "ficha"
+  token: github.leerToken(),
+  sucios: new Set(),
+  shas: {},
+  redibujar: () => dibujar(),
+  // La navegacion viaja en el estado y NO se importa desde las vistas: si cada vista
+  // importara app.js habria un ciclo (app.js -> vistas -> app.js).
+  irA: (vista, foco) => irA(vista, foco),
 };
 
 async function bajarDatos() {
@@ -52,9 +65,27 @@ function dibujarBarraEstado() {
   barra.textContent = `Cartera actualizada ${cuando} · ${robot.propiedades} propiedades`;
 }
 
+function dibujarBarraGuardado(mensaje, esError) {
+  const barra = document.getElementById("barra-guardado");
+  const texto = document.getElementById("texto-guardado");
+  if (!hayCambios(estado) && !mensaje) {
+    barra.hidden = true;
+    return;
+  }
+  barra.hidden = false;
+  barra.className = `barra-guardado${esError ? " error" : ""}`;
+  texto.textContent = mensaje || resumenCambios(estado);
+}
+
+/* Los eventos que el usuario ya despacho se filtran con lo anotado en mis_datos. */
+function eventosSinAtender() {
+  const atendidos = new Set((estado.datos.mis_datos || {}).eventos_atendidos || []);
+  return (estado.datos.eventos || []).filter((e) => !atendidos.has(e.id));
+}
+
 function dibujarGlobo() {
   const globo = document.getElementById("globo-pendientes");
-  const grupos = derivar(estado.datos.negocios, estado.datos.eventos, estado.hoy);
+  const grupos = derivar(estado.datos.negocios, eventosSinAtender(), estado.hoy);
   const total = grupos.reduce((t, g) => t + g.items.length, 0);
   globo.hidden = total === 0;
   globo.textContent = total > 99 ? "99+" : String(total);
@@ -63,6 +94,9 @@ function dibujarGlobo() {
 const VISTAS = {
   hoy: dibujarHoy,
   salud: dibujarSalud,
+  negocios: dibujarNegocios,
+  ficha: dibujarFicha,
+  ajustes: dibujarAjustes,
 };
 
 function dibujar() {
@@ -79,30 +113,49 @@ function dibujar() {
     const activa = boton.dataset.vista === estado.vista;
     boton.setAttribute("aria-current", activa ? "page" : "false");
   }
+  dibujarBarraGuardado();
+  dibujarGlobo();
 }
 
-function irA(vista) {
+function irA(vista, foco = null) {
   estado.vista = vista;
-  location.hash = vista;
+  estado.foco = foco;
+  location.hash = foco ? `${vista}/${foco}` : vista;
   dibujar();
+}
+
+function leerHash() {
+  const [vista, foco] = location.hash.replace("#", "").split("/");
+  if (vista) {
+    estado.vista = vista;
+    estado.foco = foco || null;
+  }
+}
+
+async function guardar() {
+  dibujarBarraGuardado("Guardando…", false);
+  const r = await sincronizar(estado, github, estado.token);
+  dibujarBarraGuardado(r.ok ? "" : r.mensaje, !r.ok);
+  if (r.ok) setTimeout(() => dibujarBarraGuardado(), 100);
 }
 
 async function arrancar() {
   estado.datos = await bajarDatos();
-  const desdeElHash = location.hash.replace("#", "");
-  if (desdeElHash) estado.vista = desdeElHash;
+  leerHash();
 
   document.getElementById("navegacion").addEventListener("click", (evento) => {
     const boton = evento.target.closest(".nav-boton");
     if (boton) irA(boton.dataset.vista);
   });
-  window.addEventListener("hashchange", () => {
-    const vista = location.hash.replace("#", "") || "hoy";
-    if (vista !== estado.vista) { estado.vista = vista; dibujar(); }
+  document.getElementById("boton-guardar").addEventListener("click", guardar);
+  window.addEventListener("hashchange", () => { leerHash(); dibujar(); });
+
+  // Si se cierra la app con cambios sin subir, avisar antes de perderlos.
+  window.addEventListener("beforeunload", (evento) => {
+    if (hayCambios(estado)) evento.preventDefault();
   });
 
   dibujarBarraEstado();
-  dibujarGlobo();
   dibujar();
 
   if ("serviceWorker" in navigator) {
