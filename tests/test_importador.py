@@ -356,6 +356,19 @@ class TestFechasRaras(unittest.TestCase):
         # Casos reales: filas 60 y 66, con firma en noviembre y diciembre de 2026.
         self.assertIn("firma_futura", self.revisar(fecha_fin="2026-12-05"))
 
+    def test_una_firma_futura_no_puede_estar_cobrada(self):
+        # No podes haber cobrado en una fecha que todavia no llego.
+        n = importador.traducir(fila(fecha_fin="2026-12-05"), AJUSTES)
+        n = importador.revisar_fechas(n, "2026-08-17")
+        self.assertEqual(n["estado"], "en_curso")
+        self.assertTrue(n["fecha_fin_estimada"])
+
+    def test_una_firma_pasada_queda_cerrada(self):
+        n = importador.traducir(fila(fecha_fin="2026-04-20"), AJUSTES)
+        n = importador.revisar_fechas(n, "2026-08-17")
+        self.assertEqual(n["estado"], "cerrado")
+        self.assertFalse(n["fecha_fin_estimada"])
+
     def test_avisa_si_la_firma_es_anterior_al_boleto(self):
         # Caso real: fila 82.
         self.assertIn("fechas_al_reves",

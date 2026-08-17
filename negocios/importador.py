@@ -274,9 +274,14 @@ def revisar_fechas(negocio: dict, hoy: str) -> dict:
     inicio, boleto, fin = negocio["fecha_inicio"], negocio["fecha_boleto"], negocio["fecha_fin"]
 
     if fin and fin > hoy:
+        # Una firma con fecha futura no ocurrio: por definicion no esta cobrada.
+        # Pasa a "en curso" para que no infle la capa 1 de Salud del Negocio.
+        negocio["estado"] = "en_curso"
+        negocio["fecha_fin_estimada"] = True
         negocio["avisos"].append(_aviso(
             "firma_futura",
-            f"La firma dice {fin}, que todavia no llego. Seguramente es una fecha estimada.",
+            f"La firma dice {fin}, que todavia no llego, asi que no esta cobrado. "
+            f"Pone la fecha real cuando cobres.",
         ))
     if inicio and boleto and boleto < inicio:
         negocio["avisos"].append(_aviso(
