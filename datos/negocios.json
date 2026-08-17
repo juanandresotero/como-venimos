@@ -2795,12 +2795,7 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "posible_cruce",
-    "detalle": "Puede ser \"Estanislao Vega 3900\", que está en tu cartera (en negociacion). Si es la misma, engancharlas."
-   }
-  ],
+  "avisos": [],
   "barrio": "Cerrito",
   "base": 692,
   "categoria_vigente": "RAP",
@@ -2814,7 +2809,7 @@
   "fecha_fin": "2026-01-12",
   "fecha_fin_estimada": false,
   "fecha_inicio": "2025-11-19",
-  "ficha_completa": false,
+  "ficha_completa": true,
   "ganancia": 242.2,
   "id": "excel-79",
   "moneda": "USD",
@@ -2830,7 +2825,11 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "referidor": "Martin Sedes",
+  "referidor_nombre": null,
+  "sin_propiedad_en_cartera": true,
+  "ficha_completa_momento": null
  },
  {
   "agente_compra": "Juan Andrés Otero",
