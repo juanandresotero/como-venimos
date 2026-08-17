@@ -129,7 +129,7 @@ Excel (2022 en adelante) no van a tener vínculo, y está bien.
 |---|---|
 | `id` | interno |
 | `entity_id_cartera` | opcional — vínculo con la propiedad |
-| `tipo_negocio` | `venta` \| `alquiler` \| `suplencia` |
+| `tipo_negocio` | `venta` \| `alquiler` \| `renovacion_alquiler` \| `suplencia` |
 | `fecha_inicio` | cuándo se empezó a trabajar |
 | `fecha_boleto` | firma del compromiso / contrato |
 | `fecha_fin` | cierre y cobro — **es la fecha que cuenta para el período** |
@@ -147,6 +147,31 @@ Excel (2022 en adelante) no van a tener vínculo, y está bien.
 | `estado` | `en_curso` \| `cerrado` \| `caido` |
 | `ficha_completa` | booleano — silencia los avisos de datos faltantes |
 | `notas` | |
+
+**Contactos del negocio** (todos con `nombre` + `telefono`, todos opcionales):
+
+| Campo | Cuándo se carga |
+|---|---|
+| `cliente_vendedor` | si tenés la punta vendedora |
+| `cliente_comprador` | si tenés la punta compradora |
+| `referidor` | quién te refirió el negocio |
+| `referido_a` | a quién se lo referiste |
+
+Se cargan con el **Contact Picker** del celular (§7.6) y cada uno lleva al lado un botón que
+abre el chat de WhatsApp. Con el tiempo esto arma solo la lista de gente que ya operó con el
+usuario — que es su BDR, el canal que hoy genera el 23 % de su ganancia.
+
+> **Una propiedad genera muchos negocios.** La relación `cartera → negocios` es **1 a
+> muchos**. Una misma propiedad puede alquilarse cinco veces en un año (inquilinos distintos
+> o renovaciones de contrato, ambas se cobran) y después venderse. Cada línea es un negocio
+> independiente. Consecuencias:
+>
+> - La ficha de una propiedad muestra **todos** los negocios que generó y **cuánta plata dio
+>   en total**. Una propiedad de alquiler que rota puede rendir más que una venta.
+> - El plazo (inicio → firma) se mide **por negocio**, nunca por propiedad.
+> - `renovacion_alquiler` existe como tipo aparte porque suele cobrarse a un porcentaje
+>   distinto que un alquiler nuevo. El `pct_comision_total` es editable; el default se fija
+>   en Ajustes cuando el usuario lo defina.
 
 > **Nota de modelado importante.** En el Excel actual la columna `Origen` mezcla dos cosas
 > distintas: *de dónde salió el cliente* (Bdr, Redes Pago, Cliente antiguo) y *quién me lo
@@ -270,7 +295,34 @@ Cada corrida compara el estado de hoy contra el de ayer y genera **pendientes**:
 vence el contrato, el dueño la retira o pasa a otro agente. Sin confirmación humana, la
 estadística de "negocios caídos" sería inventada.
 
-### 6.1 Duplicados
+### 6.1 Alarma: negocio cobrado sobre propiedad viva
+
+Detectada como necesaria el 2026-08-17 al cruzar el Excel contra la cartera real. Salta
+cuando un negocio marcado como cobrado coincide con una propiedad que **sigue viva** en
+REMAX:
+
+| Negocio | Propiedad sigue publicada como | ¿Salta? |
+|---|---|---|
+| Venta | cualquier estado | **Sí** — no podés haber cobrado una venta que sigue publicada |
+| Alquiler o renovación | en alquiler | **Sí** |
+| Alquiler o renovación | en venta | **No** — es normal alquilarla y después ponerla en venta |
+| Suplencia | — | No aplica (no es tu propiedad) |
+
+**Emparejamiento.** El cruce automático probado sobre los datos reales devolvió ~40
+coincidencias de las cuales solo **5 eran verdaderas**: emparejar por barrio es inútil
+("Punta" hace matchear Punta Rieles con Punta del Este y Punta Carretas). El algoritmo
+definitivo empareja por:
+
+1. **Nombre de calle** normalizado (sin tildes, minúsculas, tolerante a errores de tipeo —
+   `flamarrion` ↔ `Flammarión`).
+2. **Número de puerta en el mismo bloque de 100** (REMAX redondea: `3959` → `3900`).
+3. **Precio dentro de ±10 %.**
+
+Se muestra el nivel de confianza y **siempre confirma el usuario**. Nunca automático.
+
+**Casos reales encontrados** (§9.8).
+
+### 6.2 Duplicados
 
 Verificado el 2026-08-17: `29891` y `29889` son **la misma propiedad** (Gutenberg 6100,
 490.000 USD, 6.769 m² terreno, 715 m² cubiertos), publicada una vez como *casa* y otra como
@@ -327,6 +379,20 @@ Ver §8.
 ### 7.5 🧮 Renta
 
 Ver §10.
+
+### 7.6 Contactos y WhatsApp
+
+Ninguna app web puede leer los contactos de WhatsApp: no existe una API para eso y ningún
+navegador da ese acceso. La solución que da el mismo resultado:
+
+- **Contact Picker API** (`navigator.contacts.select`) — disponible en Chrome para Android.
+  Se toca *"Elegir contacto"*, se abre la agenda nativa del teléfono, se elige la persona y
+  la app recibe **nombre y teléfono** ya cargados. Como los contactos de WhatsApp son los de
+  la agenda, en la práctica es lo pedido. [PROBABLE — se verifica en el teléfono del usuario
+  en la primera iteración]
+- **Botón de WhatsApp** al lado de cada contacto: abre `https://wa.me/598…` directo al chat.
+- **Fallback:** si el navegador no soporta el picker (iOS, escritorio), carga manual de
+  nombre y teléfono. El botón de WhatsApp funciona igual.
 
 ---
 
@@ -431,9 +497,13 @@ proyeccion_fin_de_anio = facturacion_ytd / avance_calendario
 Si `avance_objetivo ≥ avance_calendario` → verde, vas a ritmo. Si no → rojo, con cuánto
 tenés que facturar por mes para recuperar.
 
-Ejemplo real al 2026-08-17: facturado 41.089, día 229 de 365 (62,7 % del año), avance del
-objetivo 63,2 %. **Va a ritmo**, proyección a fin de año 65.491 contra un objetivo de
-65.000.
+**La métrica usa solo la capa 1 (cobrado).** Ese es justamente el error que tenía el Excel:
+mezclaba plata cobrada con plata esperada y mostraba un avance que no existía.
+
+Ejemplo real al 2026-08-17: el Excel declara 41.089 y eso daría 63,2 % de avance contra
+62,7 % del calendario — *"va a ritmo"*. Pero el cruce contra la cartera viva (§9.7) muestra
+que entre 13.500 y 16.000 de esa cifra **todavía no se cobraron**. El avance real es
+**39-42 %**: va **atrasado**. La plata existe y está en la cartera, pero es capa 2, no capa 1.
 
 ### 8.5 Histórico de facturación anual (base importada)
 
@@ -458,6 +528,16 @@ Promedio de puntas por negocio: **1,59**.
 - Origen de las captaciones y facturación que generó cada canal.
 - Plazo promedio: inicio → boleto y boleto → fin, separado por venta y alquiler.
 - Distribución por tipo de propiedad.
+- **Plata total por propiedad** — ranking de las propiedades que más generaron sumando todos
+  sus negocios (alquileres, renovaciones y venta). Sale de la relación 1-a-muchos de §4.2.
+- **Clientes recurrentes** — gente que aparece en más de un negocio, de los contactos
+  cargados.
+
+> **Cuidado con `Origen`.** Los porcentajes del Excel actual están calculados contra el
+> objetivo (65.000) en vez de contra el total, y suman **123 %**. Los reales sobre 83.368 de
+> ganancia de carrera: Ref. Martín 30 %, BDR 23 %, Ref. RE/MAX 19 %, Redes Pago 14 %,
+> Cliente antiguo 5 %, Ref. BDR 4 %, resto 4 %. **Más de la mitad de la plata viene de
+> referidos de terceros, no de captación propia.**
 
 **Toda métrica que no tenga datos suficientes se muestra vacía y explicando por qué**, nunca
 con un número inventado.
@@ -582,7 +662,27 @@ fecha de boleto**, y **2 sin agente vendedor, comprador ni origen** (filas 84 y 
 | Alquiler | ídem venta | `fecha_inicio`, `direccion`, `barrio` |
 | Suplencia | `fecha_fin`, `precio_operacion`, `pct_comision_total` | `agente_vende`, `agente_compra`, `direccion`, `barrio` |
 
-### 9.7 Moneda
+### 9.7 Cruce contra la cartera viva: hallazgos de 2026
+
+Ejecutado el 2026-08-17 contra las 12 propiedades activas. El Excel declara **41.089** de
+facturación en 2026, pero varios de esos negocios **siguen vivos en la cartera**, o sea que
+todavía no se cobraron. El usuario lo confirmó: *"en el Excel inventé fecha"*.
+
+| Fila | Excel dice | Estado real en REMAX | Facturado | Confianza |
+|---|---|---|---|---|
+| 82 | `San fructuoso 1254` firmado 20/4/2026 | San Fructuoso 1200, Reducto — **reservada** | 5.394 | **Alta** (mismo precio exacto: 89.900) |
+| 60 | `juana de ibarburu` firma 5/12/2026 | Juana de Ibarbourou 200, Barros Blancos — **en negociación** | 4.620 | **Alta** (misma calle) |
+| 66 | `flamarrion 5046` firma 5/11/2026 | Flammarión 5000, Malvin Norte — **en negociación** | 3.510 | **Alta** (misma calle) |
+| 86 | `estanislao vega 3959` venta 40.000 | Estanislao Vega 3900, Cerrito — **en negociación** a 43.000 | 2.400 | Media |
+| 84 | `estanislao vega 3959` alquiler 329 | misma propiedad | 658 | **Descartada** — es un realquiler legítimo (ver fila 79, enero 2026) |
+
+**Facturación 2026 realmente cobrada: entre 25.165 y 27.565**, no 41.089. Eso es 39-42 % del
+objetivo de 65.000 contra un 62,7 % del año transcurrido.
+
+Las **11 filas de 2026 se revisan al 100 %** — el usuario confirmó que todas sus fechas son
+inventadas. Es la primera tarea de la bandeja de Pendientes al importar.
+
+### 9.8 Moneda
 
 El Excel está todo expresado en **USD**, incluidos los alquileres: el ticket mediano de
 alquiler es 427 y el mínimo 90 (un garaje en Ciudad Vieja) — cifras imposibles en pesos. El
