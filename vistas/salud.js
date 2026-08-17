@@ -231,10 +231,7 @@ function tresCapas(c) {
 
   return nodo(html`
     <section class="tarjeta">
-      <div class="tarjeta-titulo">
-        <h2 class="titulo">De dónde sale la plata</h2>
-        <span class="apunte">${plataUSD(c.encaminado.ganancia)} a tu bolsillo</span>
-      </div>
+      <h2 class="titulo" style="margin-bottom:14px">De dónde sale la plata</h2>
       <div class="capas-barra">
         <div class="capas-tramo uno" style="width:${ancho(c.cobrado.facturacion)}"></div>
         <div class="capas-tramo dos" style="width:${ancho(c.reservado.facturacion)}"></div>
@@ -243,6 +240,16 @@ function tresCapas(c) {
       ${fila("uno", "Cobrado", cuantas(c.cobrado.negocios, "negocio cerrado", "negocios cerrados"), c.cobrado)}
       ${fila("dos", "Reservado", `${cuantas(c.reservado.cantidad, "propiedad", "propiedades")} · falta escriturar`, c.reservado)}
       ${fila("tres", "En negociación", `${cuantas(c.negociacion.cantidad, "propiedad", "propiedades")} · hay oferta`, c.negociacion)}
+
+      <div class="capa capa-total">
+        <span></span>
+        <span class="capa-nombre">Total</span>
+        <span class="capa-monto">
+          <span class="cifra cifra-media">${plata(c.encaminado.ganancia)}</span><br>
+          <span class="capa-sub">de ${plata(c.encaminado.facturacion)} facturados</span>
+        </span>
+      </div>
+
       ${fila("cuatro", "Potencial", `${cuantas(c.publicado.cantidad, "propiedad", "propiedades")} publicadas · no suma`, c.publicado, true)}
     </section>
   `);

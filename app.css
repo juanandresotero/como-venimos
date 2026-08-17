@@ -202,8 +202,12 @@ body {
 .capa-nombre { font-weight: 600; font-size: 14px; }
 .capa-sub { font-size: 12px; color: var(--tinta-2); }
 .capa-monto { text-align: right; }
+/* El total de lo que suma, marcado para que se lea de un golpe. */
+.capa.capa-total { border-top: 2px solid var(--tinta); padding-top: 12px; }
+.capa.capa-total .capa-nombre { font-weight: 800; }
+.capa.capa-total .cifra { color: var(--azul); }
 /* Lo potencial va aparte: no suma, y tiene que verse que no suma. */
-.capa.aparte { border-top: 2px solid var(--linea); margin-top: 4px; padding-top: 14px; opacity: .78; }
+.capa.aparte { border-top: 1px dashed var(--linea); margin-top: 6px; padding-top: 14px; opacity: .72; }
 
 /* ---------- Pendientes ---------- */
 
