@@ -362,16 +362,30 @@ La lista de detalle muestra cada ítem indicando de dónde salió: *"del negocio
 
 ### 8.2 Cómo se proyecta
 
-Los ratios salen del **histórico real** una vez importado el Excel (≈83 negocios), separados
-por operación (venta / alquiler):
+Los ratios salen del **histórico real** del Excel importado, separados por operación:
 
 ```
-r_fact = promedio( facturacion / precio_operacion )   sobre negocios cerrados
-r_gan  = promedio( ganancia    / precio_operacion )   sobre negocios cerrados
+r_fact = mediana( facturacion / precio_operacion )   sobre negocios cerrados
+r_gan  = mediana( ganancia    / precio_operacion )   sobre negocios cerrados
 ```
+
+**Se usa mediana, no promedio.** Con los datos reales el promedio queda destruido por unas
+pocas filas con errores de tipeo (§9.4): el promedio de `r_gan` en ventas da 649 %, la
+mediana da 2,06 %. La mediana es inmune a esos outliers.
 
 Estos dos ratios ya incorporan el promedio real de puntas, los descuentos aplicados y el mix
 de regímenes de comisión, sin necesidad de estimarlos por separado.
+
+**Valores calculados sobre los 79 negocios sanos (2026-08-17):**
+
+| | Venta (n=34) | Alquiler (n=45) |
+|---|---|---|
+| `r_fact` | **4,50 %** | **200 %** |
+| `r_gan` | **2,06 %** | **70,06 %** |
+| Ticket mediano | 74.055 | 427 |
+| Ganancia mediana por negocio | 1.540 | 308 |
+
+Estos son valores de arranque; la app los recalcula sola con cada negocio nuevo.
 
 Para cada propiedad `i` marcada como `usar_en_proyeccion`:
 
@@ -402,6 +416,38 @@ verdaderas y avisa: *"tu tasa real de publicada→venta es 31 %, no 25 % — ¿l
 - Ganancia por mes (barras) y mejor mes.
 - Avance hacia el próximo nivel RE/MAX y hacia el objetivo personal, con cuánto falta.
 - **Cuánto se pierde por no ser ALTO o PURO** (§5.4).
+- **Ritmo contra calendario** (ver §8.4).
+
+### 8.4 Ritmo contra calendario
+
+La métrica más útil del tablero, porque responde *"¿voy bien o voy mal?"* en un solo número:
+
+```
+avance_objetivo = facturacion_ytd / objetivo_anual
+avance_calendario = dia_del_anio / 365
+proyeccion_fin_de_anio = facturacion_ytd / avance_calendario
+```
+
+Si `avance_objetivo ≥ avance_calendario` → verde, vas a ritmo. Si no → rojo, con cuánto
+tenés que facturar por mes para recuperar.
+
+Ejemplo real al 2026-08-17: facturado 41.089, día 229 de 365 (62,7 % del año), avance del
+objetivo 63,2 %. **Va a ritmo**, proyección a fin de año 65.491 contra un objetivo de
+65.000.
+
+### 8.5 Histórico de facturación anual (base importada)
+
+| Año | Negocios | Facturación |
+|---|---|---|
+| 2022 | 3 | 1.770 |
+| 2023 | 26 | 58.984 |
+| 2024 | 21 | 40.125 |
+| 2025 | 24 | 43.965 |
+| 2026 (a agosto) | 11 | 41.089 |
+| **Total carrera** | **85** | **185.933** |
+
+Ganancia total de carrera (corrigiendo las filas rotas de §9.4): **83.368**.
+Promedio de puntas por negocio: **1,59**.
 
 **De toda la carrera:**
 
@@ -420,52 +466,107 @@ con un número inventado.
 
 ## 9. Import del Excel
 
+Archivo entregado el 2026-08-17: `negocios.xlsx`, una hoja, **85 negocios** (2022-08 a
+2026-04), 14 columnas.
+
 ### 9.1 Mapeo de columnas
 
 | Columna del Excel | Campo destino |
 |---|---|
 | Operación | `tipo_negocio` (Venta / Alquiler) |
-| Barrio | `barrio` |
+| Barrio | `barrio` (normalizando mayúsculas) |
 | Dirección | `direccion` |
-| Agente vende | `agente_vende` |
-| Agente compra | `agente_compra` |
+| Agente vendedor | `agente_vende` |
+| Agente comprador | `agente_compra` |
 | Origen | → se separa en `origen_captacion` + `regimen_comision` |
-| Precio | `precio_operacion` |
+| Precio cierre | `precio_operacion` |
 | % Comisión | `pct_comision_total` |
-| Facturado | control (se recalcula y se compara) |
-| % Comisión₂ | `split_aplicado` (control de la categoría vigente) |
-| Importe | control de `ganancia` |
-| Fecha inicio | `fecha_inicio` |
-| Fecha boleto | `fecha_boleto` |
-| Fecha de fin | `fecha_fin` |
+| Facturado | `facturacion` (ver §9.3) |
+| % Comisión Agente | `split_aplicado` |
+| Importe Comisión Agente | `ganancia` |
+| Fecha inicio negocio | `fecha_inicio` |
+| Fecha boleto/reserva | `fecha_boleto` |
+| Fecha de firma | `fecha_fin` |
 
 ### 9.2 Derivaciones
 
-**Puntas:** 2 si `agente_vende` y `agente_compra` son ambos el usuario; 1 si uno es de otra
-parte.
+**Puntas:** 2 si `agente_vende` y `agente_compra` son ambos el usuario; 1 si solo uno lo es;
+**0 si ninguno** (7 casos en el histórico — son referidos salientes o suplencias, y el
+importador los marca como `yo_referi` para revisión).
+
+Valores encontrados en `Agente vendedor` / `Agente comprador`: *Juan Andrés Otero*, *Otro
+REMAX*, *Otro*, *Martin Sedes*, *Wendy Sánchez*, y 2 vacíos.
 
 **Régimen de comisión** a partir de `Origen`:
 
-| Valor en el Excel | `regimen_comision` | `origen_captacion` |
+| Valor en el Excel | n | `regimen_comision` | `origen_captacion` |
+|---|---|---|---|
+| Bdr | 15 | `captacion_mia` | BDR (base de relaciones) |
+| Ref. Martin | 23 | `ref_martin` | Referido — Martín |
+| Ref. Remax | 20 | `ref_otro_colega` | Referido — RE/MAX |
+| Redes Pago | 10 | `captacion_mia` | Redes pagas |
+| Cliente antiguo | 9 | `captacion_mia` | Cliente antiguo |
+| Ref. Bdr | 2 | `captacion_mia` | Referido — BDR |
+| Ref. Clientes | 2 | `ref_otro_colega` | Referido — cliente |
+| Ref. Team | 1 | `ref_otro_colega` | Referido — Team |
+| Otros | 1 | queda pendiente | Otro |
+| *(vacío)* | 2 | queda pendiente | *(pendiente)* |
+
+**Confirmación del motor:** en 11 negocios de `Ref. Remax` el usuario cargó `34 %` de split,
+que es exactamente `45 % × 75 % = 33,75 %` redondeado. La regla `ref_otro_colega` de §5.2 ya
+refleja la práctica real.
+
+### 9.3 Regla de corte 2026
+
+Decisión del usuario (2026-08-17): **RE/MAX cambió las reglas de comisión varias veces.**
+
+- **Negocios con `fecha_fin` anterior al 2026-01-01:** se importan **con los números tal
+  como están en el Excel**. La facturación y la ganancia se toman de las columnas
+  `Facturado` e `Importe Comisión Agente`, no se recalculan. El `split_aplicado` histórico
+  se guarda tal cual (aparecen 50 %, 45 %, 35 %, 34 %, y dos casos sueltos de 60 % y 80 %).
+- **Negocios con `fecha_fin` desde el 2026-01-01:** se recalculan con el motor de §5. Si el
+  resultado difiere de lo que dice el Excel, el negocio va a Pendientes con las dos cifras a
+  la vista.
+
+### 9.4 Limpieza de datos detectados
+
+El análisis del 2026-08-17 encontró **6 filas con aritmética rota**. Sumando la columna
+`Importe` tal cual, el Excel afirma una ganancia de carrera de **17.560.486 USD**; la real
+es **83.368 USD**.
+
+| Fila | Problema | Valor correcto |
 |---|---|---|
-| Bdr | `captacion_mia` | BDR (base de relaciones) |
-| Redes Pago | `captacion_mia` | Redes pagas |
-| Cliente antiguo | `captacion_mia` | Cliente antiguo |
-| Ref. Martín | `ref_martin` | Referido |
-| Ref. Team | `ref_otro_colega` | Referido |
-| Ref. Remax | `ref_otro_colega` | Referido |
-| Otro | queda pendiente | Otro |
+| 37 — Malvin Norte, manila 2326 | `Facturado` = 770.048 | 770 |
+| 53 — Las Acacias, Joaquín Artigas 4422 | `Importe` = 3.940.326 | 398 |
+| 61 — Centro, santiago de chile | `Importe` = 13.538.556 | 1.367 |
+| 51 — Palermo, durazno 1215 | `% Comisión` = 2625 % | 2,625 % |
+| 39 — Brazo Oriental, Felipe Contucci | 109.000 × 3 % = 3.270 ≠ `Facturado` 2.772,96 | a decidir |
+| 48 — Las Acacias, Salustio 3948 | 67.000 × 4 % = 2.680 ≠ `Facturado` 3.010 | el % real fue 4,49 % |
 
-### 9.3 Validación
+**El importador no corrige nada solo.** Detecta, propone el valor correcto y lo manda a
+Pendientes. Las filas 39 y 48 pueden ser descuentos reales mal anotados, no errores.
 
-Cada fila importada se recalcula con el motor de §5 y se compara contra `Facturado` e
-`Importe` del Excel. Si no coinciden, el negocio va a Pendientes con las dos cifras a la
-vista para que el usuario decida cuál vale.
+Otras anomalías a resolver desde Pendientes:
 
-### 9.4 Datos faltantes
+- **2 fechas de firma en el futuro:** fila 60 (2026-12-05) y fila 66 (2026-11-05).
+- **Fila 82:** firma (2026-04-20) anterior al boleto (2026-05-05).
+- **5 negocios con la misma fecha de firma** (2026-04-20) — probable relleno rápido.
+- **Barrios duplicados por mayúsculas:** `Cerrito`/`cerrito`, `Cerro`/`cerro`,
+  `Villa Española`/`Villa española`. Son **42** barrios reales, no 45. Se normalizan al
+  importar y se avisa.
+- **`Ref. Martin` con 5 splits distintos** (35 %, 45 %, 50 %, 60 %, 80 %). El 50 % es el
+  régimen viejo; el **60 % y el 80 % son casos sueltos** que quedan marcados para revisar.
 
-El Excel va a tener huecos: fechas de inicio, boleto o fin, negociación, reserva, y otros
-campos. La app:
+### 9.5 Validación general
+
+Cada fila se verifica en tres ejes: `Precio × % Comisión = Facturado`,
+`Facturado × % Agente = Importe`, y coherencia de fechas (`inicio ≤ boleto ≤ firma`,
+firma no futura). Toda diferencia mayor al 2 % va a Pendientes con ambas cifras visibles.
+
+### 9.6 Datos faltantes
+
+Huecos confirmados en el archivo entregado: **17 negocios sin fecha de inicio**, **19 sin
+fecha de boleto**, y **2 sin agente vendedor, comprador ni origen** (filas 84 y 86). La app:
 
 1. Importa igual, sin bloquear.
 2. Marca **cada campo faltante en rojo** en la ficha del negocio.
@@ -481,11 +582,11 @@ campos. La app:
 | Alquiler | ídem venta | `fecha_inicio`, `direccion`, `barrio` |
 | Suplencia | `fecha_fin`, `precio_operacion`, `pct_comision_total` | `agente_vende`, `agente_compra`, `direccion`, `barrio` |
 
-### 9.5 Moneda
+### 9.7 Moneda
 
-El Excel actual parece estar todo expresado en USD, incluidos los alquileres (333, 244, un
-garaje a 90). El importador lo confirma fila por fila mostrando los valores que quedan fuera
-del rango esperado, y permite corregir en bloque.
+El Excel está todo expresado en **USD**, incluidos los alquileres: el ticket mediano de
+alquiler es 427 y el mínimo 90 (un garaje en Ciudad Vieja) — cifras imposibles en pesos. El
+importador lo asume así y marca para revisión cualquier fila fuera del rango esperado.
 
 ---
 
