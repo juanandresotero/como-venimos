@@ -246,7 +246,9 @@ function campos(p, estado) {
 
   agregar("fecha_captacion_real", "Cuándo la captaste de verdad", "date",
     p.fecha_captacion_real, null, p.fecha_captacion_estimada);
-  agregar("origen_captacion", "De dónde salió", null, p.origen_captacion,
+  /* Se llama IGUAL que en la ficha del negocio a proposito: es el mismo dato, visto
+     desde otra pantalla. Con dos nombres distintos parecian dos cosas. */
+  agregar("origen_captacion", "Cómo llegó", null, p.origen_captacion,
     opcionesCon(ORIGENES, p.origen_captacion), !p.origen_captacion);
   if (!p.activa) {
     agregar("desenlace_confirmado", "Qué pasó al final", null, p.desenlace_confirmado,

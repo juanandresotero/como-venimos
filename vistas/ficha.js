@@ -303,7 +303,7 @@ function campos(n, falta, estado) {
   // En una búsqueda no hubo captación: lo que salió de algún lado es el COMPRADOR.
   agregar(
     "origen_captacion",
-    esBusqueda(n, estado.datos.ajustes) ? "Cómo llegó el comprador" : "Cómo llegó el negocio",
+    esBusqueda(n, estado.datos.ajustes) ? "Cómo llegó el comprador" : "Cómo llegó",
     "text",
     n.origen_captacion,
     opcionesCon([["", "sin cargar"], ...ORIGENES.map(
