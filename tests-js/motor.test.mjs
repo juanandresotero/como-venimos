@@ -449,3 +449,39 @@ test("revisar: si el origen ya decia quien refirio, el referidor viejo no lo pis
   assert.equal(n.origen_captacion, "Ref. Cliente");
   assert.equal(n.regimen_comision, "captacion_mia");
 });
+
+/* El bug que cazo el usuario: cambio el origen a "Ref. Martin" en una venta EN CURSO, el
+   cartel decia la regla de Martin y los numeros seguian siendo los de antes.
+
+   La causa: la plata solo se recalculaba si habia fecha de firma. Un negocio en curso no
+   la tiene todavia, asi que no se recalculaba NUNCA. */
+test("revisar: un negocio sin fecha de firma tambien recalcula la plata", () => {
+  const enCurso = negocio({
+    fecha_fin: null, precio_operacion: 40000, pct_comision_total: 0.06,
+    origen_captacion: "Ref. Martin",
+    facturacion: 2400, ganancia: 1080,   // los numeros viejos, de cuando era captacion mia
+  });
+  const n = revisar(enCurso, AJUSTES, "2026-08-17");
+  assert.equal(n.base, 2400);
+  assert.equal(n.facturacion, 1200, "Martin factura la mitad");
+  assert.equal(n.ganancia, 840, "y deja el 35% del total, no el 45%");
+});
+
+test("revisar: sin fecha de firma se usa la categoria de HOY", () => {
+  const n = revisar(
+    negocio({ fecha_fin: null, precio_operacion: 100000, pct_comision_total: 0.03 }),
+    AJUSTES, "2026-08-17"
+  );
+  assert.equal(n.categoria_vigente, "RAP");
+  assert.equal(n.ganancia, 1350, "45% de 3.000");
+});
+
+/* La regla de corte no se toca: lo anterior a 2026 sigue respetando el Excel. */
+test("revisar: un negocio viejo con fecha sigue sin recalcularse", () => {
+  const n = revisar(
+    negocio({ fecha_fin: "2024-05-01", facturacion: 999, ganancia: 111 }),
+    AJUSTES, "2026-08-17"
+  );
+  assert.equal(n.facturacion, 999);
+  assert.equal(n.ganancia, 111);
+});

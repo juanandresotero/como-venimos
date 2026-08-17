@@ -34,14 +34,24 @@ const mismaPlata = (a, b) => (a ?? null) === (b ?? null);
 const conPlataMovida = revisados.filter((n, i) =>
   !mismaPlata(n.facturacion, negocios[i].facturacion)
   || !mismaPlata(n.ganancia, negocios[i].ganancia));
-if (conPlataMovida.length) {
-  console.error(`ABORTA: ${conPlataMovida.length} negocios cambiarian de plata:`);
+if (conPlataMovida.length && !process.env.PERMITIR_CAMBIO_DE_PLATA) {
+  console.error(`ABORTA: ${conPlataMovida.length} negocios cambiarian de plata.`);
+  console.error(`Si el cambio es a proposito (se arreglo una regla), correlo asi:`);
+  console.error(`  PERMITIR_CAMBIO_DE_PLATA=1 node herramientas/regenerar_avisos.mjs`);
   for (const n of conPlataMovida.slice(0, 10)) {
     const antes = negocios.find((x) => x.id === n.id);
     console.error(`  ${n.id}: ${antes.facturacion}/${antes.ganancia}`
       + ` -> ${n.facturacion}/${n.ganancia}`);
   }
   process.exit(1);
+}
+if (conPlataMovida.length) {
+  console.log(`Se recalculo la plata de ${conPlataMovida.length}:`);
+  for (const n of conPlataMovida) {
+    const antes = negocios.find((x) => x.id === n.id);
+    console.log(`  ${n.id} (${n.direccion}): ${antes.facturacion}/${antes.ganancia}`
+      + ` -> ${n.facturacion}/${n.ganancia}`);
+  }
 }
 
 /* El ESTADO sí puede corregirse (un negocio sin fecha de firma no puede estar cerrado),

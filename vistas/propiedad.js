@@ -5,11 +5,11 @@
    lo que hay que completar a mano. */
 
 import {
-  estadoVisible, nombreEstado, lineaDeTiempo, diasEnCartera, desdeCuando,
+  estadoVisible, nombreEstado, lineaDeTiempo, diasEnCartera,
   negociosDe, rendimiento, DESENLACES,
 } from "../lib/cartera.js";
 import { ORIGENES } from "../lib/catalogos.js";
-import { editarPropiedad, crearNegocio } from "../lib/guardado.js";
+import { editarPropiedad } from "../lib/guardado.js";
 import { plata, plataUSD, fechaCorta, escapar, fechaRazonable } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -62,75 +62,42 @@ function cabecera(p, estado) {
   return marca;
 }
 
-/* Una propiedad puede generar muchos negocios (se alquila cinco veces y después se vende),
-   pero lo normal al entrar es querer SEGUIR con el que ya está, no abrir otro.
+/* Desde acá NO se crean negocios.
 
-   Antes el único botón decía "Cargar un negocio de acá" y creaba uno nuevo siempre. Con
-   eso se armó un duplicado sobre Flammarión sin que nadie se diera cuenta. */
+   Había un botón "Cargar un negocio de acá" que creaba uno nuevo siempre, aunque la
+   propiedad ya tuviera el suyo: así se armó un duplicado sobre Flammarión sin que nadie
+   se diera cuenta. Los negocios se cargan en Negocios → + Nuevo, donde se elige qué tipo
+   es, y desde la ficha se engancha la propiedad.
+
+   Lo que sí se hace acá es ENTRAR al negocio que ya existe, que es lo que uno quiere el
+   99% de las veces. */
 function acciones(p, estado) {
   const abiertos = negociosDe(estado.datos.negocios, p.entity_id)
     .filter((n) => n.estado !== "cerrado");
   const enCurso = abiertos[0] || null;
-  const hubo = negociosDe(estado.datos.negocios, p.entity_id).length > 0;
 
   const marca = nodo(html`
     <section class="tarjeta">
       ${enCurso
-        ? html`<p class="apunte" style="margin:0 0 10px">
-             Esta propiedad ya tiene un negocio abierto. Lo normal es seguir con ese.
-           </p>`
-        : ""}
+        ? ""
+        : html`<p class="apunte" style="margin:0 0 10px">
+             Todavía no tiene un negocio cargado. Se carga desde <strong>Negocios → + Nuevo</strong>
+             y ahí se engancha a esta propiedad.
+           </p>`}
       <div class="botonera" style="margin-top:0">
         ${enCurso
-          ? html`<button class="boton boton-primario" id="seguir-negocio">Seguir con su negocio</button>
-                 <button class="boton" id="nuevo-negocio">Cargar otro negocio</button>`
-          : html`<button class="boton boton-primario" id="nuevo-negocio">
-               ${hubo ? "Cargar otro negocio de acá" : "Cargar el negocio de esta propiedad"}
-             </button>`}
+          ? html`<button class="boton boton-primario" id="seguir-negocio">Seguir con su negocio</button>`
+          : ""}
         ${p.operacion === "venta"
           ? html`<button class="boton" id="calcular-renta">Calcular su renta</button>`
           : ""}
         ${p.link ? html`<a class="boton" href="${escapar(p.link)}" target="_blank" rel="noopener">Ver en RE/MAX</a>` : ""}
       </div>
-      <p class="apunte" id="aviso-otro" style="margin-top:10px" hidden></p>
     </section>
   `);
 
   const seguir = marca.getElementById("seguir-negocio");
   if (seguir) seguir.addEventListener("click", () => estado.irA("ficha", enCurso.id));
-
-  const botonNuevo = marca.getElementById("nuevo-negocio");
-  const avisoOtro = marca.getElementById("aviso-otro");
-
-  botonNuevo.addEventListener("click", () => {
-    // Si ya hay uno abierto, se pide confirmar: crear dos por la misma venta es el error
-    // que este boton provocaba sin avisar.
-    if (enCurso && botonNuevo.dataset.seguro !== "si") {
-      botonNuevo.dataset.seguro = "si";
-      botonNuevo.textContent = "Sí, es otro negocio distinto";
-      avisoOtro.hidden = false;
-      avisoOtro.textContent =
-        `Ojo: ya tenés "${enCurso.direccion || "un negocio"}" abierto en esta propiedad. `
-        + `Esto crea uno SEPARADO, para cuando de verdad son dos (un alquiler que se `
-        + `renueva, por ejemplo). Si querés corregir el que ya está, tocá "Seguir con su negocio".`;
-      return;
-    }
-    const atajo = p.operacion === "alquiler" ? "alquiler" : "venta";
-    // Las fechas del camino ya las sabe el robot: cuándo se publicó, cuándo pasó a
-    // negociación y cuándo quedó reservada. No hay por qué volver a pedirlas.
-    const nuevo = crearNegocio(estado, atajo, {
-      entity_id_cartera: p.entity_id,
-      direccion: p.direccion || "",
-      barrio: p.barrio || "",
-      tipo_propiedad: p.tipo || null,
-      precio_operacion: p.precio ?? null,
-      origen_captacion: p.origen_captacion || null,
-      fecha_inicio: desdeCuando(p),
-      fecha_negociacion: p.fecha_negociacion || null,
-      fecha_boleto: p.fecha_reservada || null,
-    });
-    estado.irA("ficha", nuevo.id);
-  });
 
   const renta = marca.getElementById("calcular-renta");
   if (renta) {
@@ -152,8 +119,8 @@ function plataQueDio(p, estado) {
       <section class="tarjeta">
         <h2 class="titulo" style="font-size:17px;margin-bottom:6px">Todavía no dio plata</h2>
         <p class="apunte">
-          Cuando cierres un negocio de esta propiedad, cargalo con el botón de arriba y
-          queda enganchado acá.
+          Cuando tenga un negocio cargado, acá vas a ver cuánto dio en total. Una propiedad
+          de alquiler que rota puede rendir más que una venta.
         </p>
       </section>
     `);
