@@ -26,6 +26,11 @@ propiedades del agente y anota los cambios en `datos/`:
 Lo que detecta: altas, cambios de precio, pasos a negociación y reserva, bajas (proponiendo
 si se vendió o se cayó), reapariciones y propiedades publicadas dos veces.
 
+**Guarda siempre, salga bien o mal.** Si la API de RE/MAX se cae, el robot igual escribe el
+error en `estado_robot.json` y lo commitea, para que la app pueda mostrar la alerta roja de
+"el robot no corre hace N días". Como ese archivo cambia todos los días (guarda la fecha de
+la corrida), el repositorio nunca pasa 60 días sin actividad y GitHub no apaga el cron.
+
 **El robot nunca decide un desenlace.** Propone, y el usuario confirma desde la app.
 
 **El robot nunca pisa lo que cargás a mano.** Fecha de captación, origen, notas y desenlace

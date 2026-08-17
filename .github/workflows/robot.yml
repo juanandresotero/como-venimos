@@ -38,12 +38,31 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      # Si la API de RE/MAX se cae, el robot igual deja escrito el error en
+      # estado_robot.json. Por eso NO se corta la corrida aca: hay que llegar al paso
+      # de guardar si o si, para que la app pueda mostrar la alerta roja.
       - name: Bajar la cartera y anotar los cambios
+        id: robot
+        continue-on-error: true
         run: python -m robot.main
+
+      # Se guarda SIEMPRE, salga bien o mal. Dos motivos:
+      #  1. Que la app se entere de que el robot fallo.
+      #  2. Que el repositorio tenga actividad todos los dias. GitHub apaga los cron de
+      #     los repos que pasan 60 dias sin commits, y estado_robot.json cambia a diario
+      #     porque guarda la fecha de la corrida.
       - name: Guardar los datos nuevos
+        if: always()
         run: |
           git config user.name "como-venimos-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add datos/
           git commit -m "datos: cartera del $(date -u +%F)" || echo "sin cambios"
           git push
+
+      # Recien ahora se marca la corrida en rojo, para que GitHub mande el mail de aviso.
+      - name: Avisar si el robot fallo
+        if: steps.robot.outcome == 'failure'
+        run: |
+          echo "La corrida del robot fallo. El detalle esta en el paso 'Bajar la cartera'."
+          exit 1
