@@ -8,7 +8,11 @@
   "2026-08-17|d8d7855f-b0bb-4122-bc7e-74c987f50396|carga_inicial",
   "2026-08-17|c9f554b2-5290-4e2f-9b88-fdac4cbd67d7|carga_inicial",
   "2026-08-17|2c76d23c-2d94-4cd4-8120-d052679e1608|carga_inicial",
-  "2026-08-17|f123f605-dc13-4aaa-ad8a-94ad44a11db6|carga_inicial"
+  "2026-08-17|f123f605-dc13-4aaa-ad8a-94ad44a11db6|carga_inicial",
+  "2026-08-17|29b0df7e-7d40-4283-99b0-f88c2f168377|carga_inicial",
+  "2026-08-17|bbc202e6-4ad7-49f3-9b7c-e667810aa8ea|carga_inicial",
+  "2026-08-17|45e27b03-b19a-4654-a163-4d0bf3307fac|carga_inicial",
+  "2026-08-17|a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f|carga_inicial"
  ],
  "cartera": {
   "45e27b03-b19a-4654-a163-4d0bf3307fac": {
@@ -50,6 +54,11 @@
    "fecha_captacion_estimada": false
   },
   "a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f": {
+   "origen_captacion": "Ref. Martin",
+   "fecha_captacion_real": "2026-06-08",
+   "fecha_captacion_estimada": false
+  },
+  "29b0df7e-7d40-4283-99b0-f88c2f168377": {
    "origen_captacion": "Ref. Martin",
    "fecha_captacion_real": "2026-06-08",
    "fecha_captacion_estimada": false
