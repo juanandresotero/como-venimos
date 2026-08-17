@@ -1251,7 +1251,7 @@
   "fecha_fin": "2024-04-04",
   "fecha_fin_estimada": false,
   "fecha_inicio": "2024-02-09",
-  "ficha_completa": false,
+  "ficha_completa": true,
   "ganancia": 347,
   "id": "excel-37",
   "moneda": "USD",
@@ -1267,7 +1267,8 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "ficha_completa_momento": null
  },
  {
   "agente_compra": "Juan Andrés Otero",
