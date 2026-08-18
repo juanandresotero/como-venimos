@@ -1471,3 +1471,18 @@ body {
    poder mandarle lo suyo sin que vea lo del otro. */
 .cliente { padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--linea); }
 .cliente:first-of-type { padding-top: 0; margin-top: 0; border-top: 0; }
+
+/* El boton que acaba de copiar. Vuelve solo a los dos segundos: es un aviso, no un estado.
+   Un renglon de texto abajo se pierde — uno mira el dedo, no el parrafo. */
+.boton.copiado {
+  background: var(--azul);
+  border-color: var(--azul);
+  color: #fff;
+  animation: latir .3s ease-out;
+}
+@keyframes latir {
+  from { transform: scale(.94); }
+  60% { transform: scale(1.04); }
+  to { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .boton.copiado { animation: none; } }

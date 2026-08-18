@@ -430,7 +430,6 @@ function paraCadaCliente(f, estado) {
           <button class="boton boton-chico" data-copiar="${escapar(p.lado)}">Copiar</button>
           <button class="boton boton-chico" data-reparto-txt="${escapar(p.lado)}">Con el reparto</button>
         </div>
-        <p class="apunte" data-aviso="${escapar(p.lado)}" style="margin-top:6px"></p>
       </div>`;
   };
 
@@ -463,35 +462,38 @@ function paraCadaCliente(f, estado) {
     {
       precio: entradas.precio,
       titulo: entradas.titulo,
-      agente: (estado.datos.ajustes || {}).agente,
       cuenta: cuentas.comoTexto(guardadas[entradas.cuenta]),
     }
   );
-  const avisar = (lado, texto) => {
-    const p = seccion.querySelector(`[data-aviso="${lado}"]`);
-    if (p) p.textContent = texto;
-  };
+  /* El boton mismo avisa que quedo copiado y vuelve solo.
 
-  const copiar = async (lado, texto, queEs) => {
+     Un renglon de texto abajo se pierde: uno mira el dedo, no el parrafo. Que cambie lo
+     que se acaba de tocar es lo unico que se ve sin tener que buscarlo. */
+  const copiar = async (boton, texto) => {
+    const dice = boton.textContent;
     try {
       await navigator.clipboard.writeText(texto);
-      avisar(lado, `${queEs} copiado. Pegalo en el chat.`);
     } catch {
       // Sin portapapeles queda WhatsApp, que en el telefono es adonde iba igual.
       window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
+      return;
     }
+    boton.textContent = "✓ Copiado";
+    boton.classList.add("copiado");
+    setTimeout(() => {
+      boton.textContent = dice;
+      boton.classList.remove("copiado");
+    }, 1800);
   };
 
   for (const boton of seccion.querySelectorAll("[data-copiar]")) {
     boton.addEventListener("click", () => {
-      const lado = boton.dataset.copiar;
-      copiar(lado, armar(lado, textoParaElCliente), "Texto");
+      copiar(boton, armar(boton.dataset.copiar, textoParaElCliente));
     });
   }
   for (const boton of seccion.querySelectorAll("[data-reparto-txt]")) {
     boton.addEventListener("click", () => {
-      const lado = boton.dataset.repartoTxt;
-      copiar(lado, armar(lado, textoConReparto), "Detalle con el reparto");
+      copiar(boton, armar(boton.dataset.repartoTxt, textoConReparto));
     });
   }
 
