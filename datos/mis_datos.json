@@ -64,6 +64,9 @@
    "origen_captacion": "Ref. Martin",
    "fecha_captacion_real": "2026-06-08",
    "fecha_captacion_estimada": false
+  },
+  "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea": {
+   "precio_negociacion": 75000
   }
  }
 }
