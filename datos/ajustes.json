@@ -62,8 +62,9 @@
   "publicada": 0.25
  },
  "tipo_cambio": {
-  "usd_uyu": null,
-  "fecha": null
+  "usd_uyu": 40.046543,
+  "fecha": "18 Aug 2026",
+  "buscada_el": "2026-08-18"
  },
  "agente": {
   "nombre": "Juan Andrés Otero",
