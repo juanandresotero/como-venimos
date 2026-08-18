@@ -32,7 +32,8 @@
   "a4b43687-a487-485c-82ae-62118b687ec1": {
    "fecha_captacion_real": "2026-06-08",
    "fecha_captacion_estimada": false,
-   "origen_captacion": "Ref. Martin"
+   "origen_captacion": "Ref. Martin",
+   "precio_negociacion": 53800
   },
   "cab1949c-02eb-445f-989a-68c5f31523df": {
    "fecha_captacion_real": "2025-01-30",
