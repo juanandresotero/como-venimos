@@ -5,7 +5,9 @@
 
 import { guardarToken, leerToken, borrarToken, probarToken, REPO } from "../lib/github.js";
 import { editarAjustes } from "../lib/guardado.js";
-import { plata, pct, fechaRazonable, numeroDesde } from "../lib/formato.js";
+import {
+  plata, pct, fechaRazonable, numeroDesde, formatearMientrasEscribe,
+} from "../lib/formato.js";
 import { negociosACsv, carteraACsv, nombrePlanilla } from "../lib/planilla.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -272,6 +274,8 @@ function tuNegocio(estado) {
           : html`<input class="campo" id="${id}" type="${tipo}" step="any" value="${valor ?? ""}">`}
     `;
     const control = fila.querySelector(".campo");
+    // Los puntos de miles aparecen mientras se escribe, no al saltar de celda.
+    if (esMoneda) formatearMientrasEscribe(control);
     control.addEventListener("change", () => {
       // El navegador avisa del cambio mientras se tipea el año. Una fecha a medio escribir
       // acá deja sin categoría vigente a todo el año y hace desaparecer la ganancia.

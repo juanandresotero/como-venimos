@@ -104,3 +104,59 @@ test("lo que se escribe y se vuelve a mostrar da lo mismo", () => {
     assert.equal(numeroDesde(plata(n)), n, `no cierra con ${n}`);
   }
 });
+
+/* ---------- Separador de miles mientras se escribe ---------- */
+
+import { separarMiles, posicionTrasFormatear, digitosHasta } from "../lib/formato.js";
+
+test("separarMiles: no se mete hasta que hay cuatro digitos", () => {
+  assert.equal(separarMiles("1"), "1");
+  assert.equal(separarMiles("999"), "999");
+  assert.equal(separarMiles("1000"), "1.000");
+  assert.equal(separarMiles("100000"), "100.000");
+  assert.equal(separarMiles("1234567"), "1.234.567");
+});
+
+test("separarMiles: al borrar un digito los puntos se reacomodan", () => {
+  // "1.000" menos un digito quedaba "100" con el punto viejo pegado: "1.00".
+  assert.equal(separarMiles("1.00"), "100");
+  assert.equal(separarMiles("12.34"), "1.234");
+});
+
+test("separarMiles: la parte decimal se respeta tal como se esta escribiendo", () => {
+  assert.equal(separarMiles("1234,"), "1.234,");
+  assert.equal(separarMiles("1234,5"), "1.234,5");
+  assert.equal(separarMiles("1234,50"), "1.234,50");
+  assert.equal(separarMiles("999,5"), "999,5");
+});
+
+test("separarMiles: vacio y casos raros no explotan", () => {
+  assert.equal(separarMiles(""), "");
+  assert.equal(separarMiles(null), "");
+  assert.equal(separarMiles("-1234"), "-1.234");
+});
+
+test("separarMiles: da la vuelta completa con numeroDesde", () => {
+  assert.equal(numeroDesde(separarMiles("1234567")), 1234567);
+  assert.equal(numeroDesde(separarMiles("1234,50")), 1234.5);
+});
+
+test("digitosHasta: cuenta digitos, no posiciones", () => {
+  assert.equal(digitosHasta("1.234", 5), 4);
+  assert.equal(digitosHasta("1.234", 1), 1);
+  assert.equal(digitosHasta("1.234", 2), 1, "el punto no cuenta");
+});
+
+/* El cursor es lo que hace usable o inusable un campo que se reformatea solo. */
+test("posicionTrasFormatear: el cursor queda despues del mismo digito", () => {
+  // Escribiendo "1000": el cursor estaba al final (4 digitos), el texto pasa a "1.000".
+  assert.equal(posicionTrasFormatear("1.000", 4), 5);
+  // Con el cursor en el medio: tras el primer digito de "1.000" es la posicion 1.
+  assert.equal(posicionTrasFormatear("1.000", 1), 1);
+  assert.equal(posicionTrasFormatear("1.234.567", 4), 5);
+});
+
+test("posicionTrasFormatear: sin digitos a la izquierda no se va del campo", () => {
+  assert.equal(posicionTrasFormatear("1.000", 0), 5);
+  assert.equal(posicionTrasFormatear("", 3), 0);
+});

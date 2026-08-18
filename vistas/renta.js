@@ -1,16 +1,24 @@
 /* La calculadora de renta: la pantalla que se usa con el cliente adelante.
 
-   Todo lo que hace falta entra sin scrollear: precio, alquiler y el numero grande. Los
-   ajustes finos van plegados con valores razonables ya puestos, para que el 90% de las
-   veces no haya que tocarlos. */
+   Da DOS numeros y esa es toda la pantalla: la renta BRUTA, que es la que el cliente ya
+   escucho en otro lado, y la REAL, que es la que va a cobrar. La distancia entre las dos
+   es el argumento.
+
+   Arriba solo entra lo que se carga siempre: precio, alquiler y moneda. Todo lo demas
+   -- plazo del contrato, gastos de compra, comision, refaccion, gastos fijos -- vive en
+   los ajustes finos, apagado por defecto. Estaba todo a la vista y la pantalla parecia un
+   formulario de AFIP: para preguntar "cuanto renta" no hace falta saber el plazo del
+   contrato. */
 
 import {
   DEFAULTS, calcular, detectarMoneda, alquilerNecesario, precioMaximo,
 } from "../lib/renta.js";
-import { traerCotizacion, cotizacionVigente } from "../lib/cambio.js";
+import { traerCotizacion, cotizacionVigente, estaVencida, comoSeDice } from "../lib/cambio.js";
 import { guardarCalculo, borrarCalculo, editarAjustes } from "../lib/guardado.js";
-import { dibujar as dibujarFicha, nombreImagen } from "../lib/ficha-imagen.js";
-import { plata, plataUSD, pct, escapar, numeroDesde } from "../lib/formato.js";
+import { dibujar as dibujarFicha, nombreImagen, RENTAS } from "../lib/ficha-imagen.js";
+import {
+  plata, plataUSD, pct, escapar, numeroDesde, formatearMientrasEscribe,
+} from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -32,8 +40,30 @@ const entradas = {
   titulo: "",
 };
 let finosAbiertos = false;
+let desgloseAbierto = false;
 let objetivoPct = 0.07;
 let cotizacionFresca = null;
+let buscandoCotizacion = false;
+let eligiendoRenta = false;
+
+/* El dolar se busca solo, una vez por dia, al abrir la calculadora.
+
+   Antes habia que apretar "Buscar la de hoy". Con un cliente adelante eso no pasa nunca:
+   se usaba la cotizacion vieja sin que nadie lo notara. Ahora se pide sola y, si no hay
+   señal, se sigue con la ultima guardada diciendo de cuando es. */
+async function refrescarCotizacion(estado) {
+  if (buscandoCotizacion || !estaVencida(estado.datos.ajustes, estado.hoy)) return;
+  buscandoCotizacion = true;
+  const fresca = await traerCotizacion();
+  buscandoCotizacion = false;
+  if (!fresca) return;
+  cotizacionFresca = fresca;
+  entradas.tipo_cambio = fresca.usd_uyu;
+  editarAjustes(estado, {
+    tipo_cambio: { usd_uyu: fresca.usd_uyu, fecha: fresca.fecha, buscada_el: estado.hoy },
+  });
+  estado.redibujar();
+}
 
 export function dibujarRenta(estado) {
   // Si se llego desde una propiedad de la cartera, el precio ya viene puesto.
@@ -45,44 +75,45 @@ export function dibujarRenta(estado) {
 
   const cotizacion = cotizacionVigente(estado.datos.ajustes, cotizacionFresca);
   if (entradas.tipo_cambio === null) entradas.tipo_cambio = cotizacion.valor;
+  refrescarCotizacion(estado);
 
   const r = calcular(entradas);
 
   const trozo = document.createDocumentFragment();
-  trozo.append(encabezado(entradas));
-  trozo.append(resultado(r, entradas));
+  trozo.append(resultado(r, entradas, cotizacion));
   trozo.append(basicos(estado, cotizacion));
-  trozo.append(desglose(r));
-  trozo.append(finos(estado));
+  trozo.append(desglose(r, entradas));
+  trozo.append(finos(estado, cotizacion));
   trozo.append(inverso(entradas, estado));
-  trozo.append(guardados(estado, r));
+  trozo.append(paraElCliente(estado, r, cotizacion));
   return trozo;
 }
 
-function encabezado(e) {
-  return nodo(html`
-    <section style="margin-bottom:14px">
-      <p class="etiqueta">Calculadora</p>
-      <h1 class="titulo" style="font-size:27px;margin-top:4px">¿Cuánto renta?</h1>
-      ${e.titulo ? html`<p class="apunte">${escapar(e.titulo)}</p>` : ""}
-    </section>
-  `);
-}
+/* ---------- Los dos numeros ---------- */
 
-function resultado(r, e) {
+function resultado(r, e, cotizacion) {
+  const encabezado = html`
+    <p class="etiqueta">Calculadora</p>
+    <h1 class="titulo" style="font-size:25px;margin:4px 0 0">¿Cuánto renta?</h1>
+    ${e.titulo ? html`<p class="apunte" style="margin-top:2px">${escapar(e.titulo)}</p>` : ""}`;
+
   if (!e.precio || !e.alquiler_mensual) {
     return nodo(html`
       <section class="tarjeta">
-        <p class="apunte">Cargá el precio y el alquiler y el número aparece solo.</p>
+        ${encabezado}
+        <p class="apunte" style="margin-top:12px">
+          Cargá el precio y el alquiler acá abajo. Los dos números salen solos.
+        </p>
       </section>
     `);
   }
   if (r.falta_cotizacion) {
     return nodo(html`
       <section class="tarjeta">
-        <p class="aviso" style="margin:0">
-          El alquiler está en pesos y no hay cotización del dólar. Cargala abajo y el
-          número sale al toque.
+        ${encabezado}
+        <p class="aviso">
+          El alquiler está en pesos y todavía no hay cotización del dólar. Se está buscando;
+          si no aparece, cargala en los ajustes finos.
         </p>
       </section>
     `);
@@ -91,14 +122,21 @@ function resultado(r, e) {
   const negativa = r.renta_neta_anual <= 0;
   return nodo(html`
     <section class="tarjeta">
-      <p class="etiqueta">Renta real, después de todo</p>
-      <p class="cifra cifra-heroe" style="margin:6px 0 4px;color:${negativa ? "var(--rojo)" : "var(--azul)"}">
-        ${pct(r.renta_real_pct)}
-      </p>
-      <p class="apunte">
-        sobre ${plataUSD(r.capital_invertido)} realmente invertidos ·
-        la bruta que se dice en la calle es ${pct(r.renta_bruta_pct)}
-      </p>
+      ${encabezado}
+      <div class="dos-rentas">
+        <div class="renta-caja principal">
+          <p class="renta-nombre">Renta real</p>
+          <p class="cifra cifra-heroe renta-cifra" style="color:${negativa ? "var(--rojo)" : "var(--azul)"}">
+            ${pct(r.renta_real_pct)}
+          </p>
+          <p class="renta-pie">con todo descontado</p>
+        </div>
+        <div class="renta-caja">
+          <p class="renta-nombre">Renta bruta</p>
+          <p class="cifra renta-cifra chica">${pct(r.renta_bruta_pct)}</p>
+          <p class="renta-pie">sin descontar nada</p>
+        </div>
+      </div>
       <div class="datos" style="margin-top:16px">
         <div class="dato"><span class="dato-nombre">Al bolsillo, por mes</span><span class="dato-valor">${plataUSD(r.bolsillo_por_mes)}</span></div>
         <div class="dato"><span class="dato-nombre">Al bolsillo, por año</span><span class="dato-valor">${plataUSD(r.renta_neta_anual)}</span></div>
@@ -106,8 +144,45 @@ function resultado(r, e) {
           r.anios_para_recuperar ? `${r.anios_para_recuperar.toFixed(1).replace(".", ",")} años` : "nunca"
         }</span></div>
       </div>
+      ${e.moneda_alquiler === "UYU" && cotizacion.valor
+        ? html`<p class="apunte" style="margin-top:10px">${escapar(comoSeDice(cotizacion))}
+             · ${escapar(cotizacion.origen)}</p>`
+        : ""}
     </section>
   `);
+}
+
+/* ---------- Los campos ---------- */
+
+/* Un campo de monto: texto con los puntos de miles puestos MIENTRAS se escribe. Un
+   <input type="number"> no admite el separador, y esperar a saltar de celda para ver
+   "100.000" obliga a contar ceros de memoria. */
+function campoMonto(clave, etiqueta, sufijo, alCambiar, valor, prefijo = "r") {
+  const fila = document.createElement("div");
+  fila.className = "campo-fila";
+  fila.innerHTML = html`
+    <label for="${prefijo}-${clave}">${etiqueta}${sufijo ? ` <span class="apunte">${sufijo}</span>` : ""}</label>
+    <input class="campo" id="${prefijo}-${clave}" type="text" inputmode="decimal"
+           value="${valor === null || valor === undefined ? "" : plata(valor)}" placeholder="0">
+  `;
+  const control = fila.querySelector(".campo");
+  formatearMientrasEscribe(control);
+  control.addEventListener("change", () => alCambiar(numeroDesde(control.value)));
+  return fila;
+}
+
+function campoNumero(clave, etiqueta, sufijo, alCambiar, valor, { paso, prefijo = "r" } = {}) {
+  const fila = document.createElement("div");
+  fila.className = "campo-fila";
+  fila.innerHTML = html`
+    <label for="${prefijo}-${clave}">${etiqueta}${sufijo ? ` <span class="apunte">${sufijo}</span>` : ""}</label>
+    <input class="campo" id="${prefijo}-${clave}" type="number" inputmode="decimal"
+           step="${paso || "any"}" value="${valor ?? ""}" placeholder="${DEFAULTS[clave] ?? 0}">
+  `;
+  fila.querySelector(".campo").addEventListener("change", (evento) => {
+    alCambiar(evento.target.value === "" ? null : Number(evento.target.value));
+  });
+  return fila;
 }
 
 function basicos(estado, cotizacion) {
@@ -117,34 +192,17 @@ function basicos(estado, cotizacion) {
     </section>
   `);
   const contenedor = seccion.getElementById("campos-renta");
-
-  /* Los montos van con los puntos de miles: 100.000 se lee de un golpe, 100000 no. Por eso
-     son campos de texto y no <input type="number">, que no admite el separador. */
-  const agregar = (clave, etiqueta, sufijo, { moneda = false, paso } = {}) => {
-    const fila = document.createElement("div");
-    fila.className = "campo-fila";
-    const valor = entradas[clave];
-    fila.innerHTML = html`
-      <label for="r-${clave}">${etiqueta}${sufijo ? ` <span class="apunte">${sufijo}</span>` : ""}</label>
-      ${moneda
-        ? html`<input class="campo" id="r-${clave}" type="text" inputmode="decimal"
-                 value="${valor === null || valor === undefined ? "" : plata(valor)}">`
-        : html`<input class="campo" id="r-${clave}" type="number" inputmode="decimal"
-                 step="${paso || "any"}" value="${valor ?? ""}">`}
-    `;
-    const control = fila.querySelector(".campo");
-    control.addEventListener("change", () => {
-      entradas[clave] = moneda
-        ? numeroDesde(control.value)
-        : (control.value === "" ? null : Number(control.value));
-      if (clave === "precio" || clave === "alquiler_mensual") ajustarMoneda();
-      estado.redibujar();
-    });
-    contenedor.append(fila);
+  const poner = (valor, clave) => {
+    entradas[clave] = valor;
+    if (clave === "precio" || clave === "alquiler_mensual") ajustarMoneda();
+    estado.redibujar();
   };
 
-  agregar("precio", "Precio de la propiedad", "USD", { moneda: true });
-  agregar("alquiler_mensual", "Alquiler por mes", entradas.moneda_alquiler, { moneda: true });
+  contenedor.append(campoMonto("precio", "Precio de la propiedad", "USD",
+    (v) => poner(v, "precio"), entradas.precio));
+  contenedor.append(campoMonto("alquiler_mensual", "Alquiler por mes",
+    entradas.moneda_alquiler === "UYU" ? "pesos" : "USD",
+    (v) => poner(v, "alquiler_mensual"), entradas.alquiler_mensual));
 
   // La moneda se propone sola por la relacion alquiler/precio, y se cambia de un toque.
   const moneda = document.createElement("div");
@@ -158,6 +216,13 @@ function basicos(estado, cotizacion) {
       <button class="filtro ${entradas.moneda_alquiler === "USD" ? "prendido" : ""}" data-moneda="USD">USD</button>
       <button class="filtro ${entradas.moneda_alquiler === "UYU" ? "prendido" : ""}" data-moneda="UYU">Pesos</button>
     </div>
+    ${entradas.moneda_alquiler === "UYU"
+      ? html`<p class="apunte" style="margin-top:8px">${
+          cotizacion.valor
+            ? `${escapar(comoSeDice(cotizacion))} · ${escapar(cotizacion.origen)}`
+            : "Buscando la cotización del día…"
+        }</p>`
+      : ""}
   `;
   for (const boton of moneda.querySelectorAll("[data-moneda]")) {
     boton.addEventListener("click", () => {
@@ -167,11 +232,10 @@ function basicos(estado, cotizacion) {
   }
   contenedor.append(moneda);
 
-  if (entradas.moneda_alquiler === "UYU") contenedor.append(filaCotizacion(estado, cotizacion));
-
-  agregar("meses_alquilados", "Meses alquilados por año", "de 12");
-  agregar("plazo_anios", "Plazo del contrato", "años");
-  agregar("irpf_pct", "Impuestos (IRPF)", "0,105 = 10,5%", { paso: "0.001" });
+  contenedor.append(campoNumero("meses_alquilados", "Meses alquilados por año", "de 12",
+    (v) => poner(v, "meses_alquilados"), entradas.meses_alquilados));
+  contenedor.append(campoNumero("irpf_pct", "Impuestos (IRPF)", "0,105 = 10,5%",
+    (v) => poner(v, "irpf_pct"), entradas.irpf_pct, { paso: "0.001" }));
 
   return seccion;
 }
@@ -183,14 +247,102 @@ function ajustarMoneda() {
   if (lectura === "misma") entradas.moneda_alquiler = "USD";
 }
 
-function filaCotizacion(estado, cotizacion) {
+/* ---------- De la bruta a la real ---------- */
+
+/* Plegado: es la explicacion de por que un numero no es el otro, y solo hace falta cuando
+   el cliente pregunta. Abierto de entrada, era media pantalla de restas. */
+function desglose(r, e) {
+  if (!r.renta_bruta_anual) return document.createDocumentFragment();
+  const resta = (nombre, monto) => (monto
+    ? html`<div class="dato"><span class="dato-nombre">${nombre}</span>
+        <span class="dato-valor">− ${plata(monto)}</span></div>`
+    : "");
+
+  const seccion = nodo(html`
+    <details class="grupo" ${desgloseAbierto ? "open" : ""}>
+      <summary class="grupo-cabeza">
+        <span class="grupo-nombre">De ${pct(r.renta_bruta_pct)} a ${pct(r.renta_real_pct)}</span>
+        <span class="grupo-flecha" aria-hidden="true">›</span>
+      </summary>
+      <div class="tarjeta" style="margin-top:6px">
+        <div class="datos">
+          <div class="dato"><span class="dato-nombre">Alquiler por 12 meses</span><span class="dato-valor">${plata(r.renta_bruta_anual)}</span></div>
+          ${resta(`Meses sin alquilar (${12 - (e.meses_alquilados ?? 11)})`, r.costo_meses_vacios)}
+          ${resta("Impuestos", r.impuesto)}
+          ${resta("Refacción y mantenimiento", r.costo_refaccion)}
+          ${resta("Comisión de alquiler", r.costo_comision)}
+          ${resta("Contribución y Primaria", r.costos_fijos)}
+          ${resta("Administración", r.costo_admin)}
+          <div class="dato"><span class="dato-nombre"><strong>Queda limpio</strong></span><span class="dato-valor">${plata(r.renta_neta_anual)}</span></div>
+          ${r.gastos_de_compra
+            ? html`<div class="dato"><span class="dato-nombre">…sobre un capital de</span><span class="dato-valor">${plata(r.capital_invertido)}</span></div>`
+            : ""}
+        </div>
+        <p class="apunte" style="margin-top:12px">
+          Se van <strong>${plata(r.perdida_por_costos)}</strong> por año entre lo que la
+          renta de la calle no cuenta.
+        </p>
+      </div>
+    </details>
+  `);
+  seccion.querySelector("details").addEventListener("toggle", (evento) => {
+    desgloseAbierto = evento.target.open;
+  });
+  return seccion;
+}
+
+/* ---------- Ajustes finos ---------- */
+
+/* Aca vive todo lo que no se toca siempre. El plazo del contrato y los gastos de compra
+   bajaron desde arriba y arrancan en CERO: si no se cargan, no ensucian la cuenta. Un
+   plazo en cero quiere decir "no lo tengo en cuenta" y entonces la comision no se
+   prorratea, en vez de multiplicarse por cien como pasaba antes. */
+function finos(estado, cotizacion) {
+  const seccion = nodo(html`
+    <details class="grupo" ${finosAbiertos ? "open" : ""}>
+      <summary class="grupo-cabeza">
+        <span class="grupo-nombre">Ajustes finos</span>
+        <span class="grupo-flecha" aria-hidden="true">›</span>
+      </summary>
+      <div class="tarjeta" style="padding:0;overflow:hidden;margin-top:6px">
+        <div id="campos-finos"></div>
+      </div>
+    </details>
+  `);
+  seccion.querySelector("details").addEventListener("toggle", (evento) => {
+    finosAbiertos = evento.target.open;
+  });
+
+  const contenedor = seccion.getElementById("campos-finos");
+  const poner = (valor, clave) => {
+    entradas[clave] = valor;
+    estado.redibujar();
+  };
+  const num = (clave, etiqueta, sufijo, opciones) =>
+    contenedor.append(campoNumero(clave, etiqueta, sufijo,
+      (v) => poner(v, clave), entradas[clave], { ...opciones, prefijo: "f" }));
+  const mon = (clave, etiqueta, sufijo) =>
+    contenedor.append(campoMonto(clave, etiqueta, sufijo,
+      (v) => poner(v, clave), entradas[clave], "f"));
+
+  num("plazo_anios", "Plazo del contrato", "años · 0 = no contarlo");
+  num("comision_meses", "Comisión de alquiler", "meses · solo cuenta con plazo cargado");
+  num("gastos_compra_pct", "Gastos de compra (ITP y escritura)", "0,07 = 7% · 0 = no contarlo",
+    { paso: "0.005" });
+  num("refaccion_meses", "Refacción por año", "meses de alquiler");
+  mon("refaccion_anual", "…o un monto fijo por año", "USD, manda sobre el de arriba");
+  mon("contribucion_anual", "Contribución inmobiliaria", "USD por año");
+  mon("primaria_anual", "Impuesto de Primaria", "USD por año");
+  num("admin_pct", "Administración", "0,05 = 5%", { paso: "0.01" });
+
+  // El dolar se busca solo; el campo queda por si hay que forzarlo.
   const fila = document.createElement("div");
   fila.className = "campo-fila";
   fila.innerHTML = html`
-    <label for="r-cambio">Dólar
+    <label for="f-cambio">Dólar
       <span class="apunte">${escapar(cotizacion.origen)}${cotizacion.fecha ? ` · ${escapar(cotizacion.fecha)}` : ""}</span>
     </label>
-    <input class="campo" id="r-cambio" type="number" inputmode="decimal" step="any"
+    <input class="campo" id="f-cambio" type="number" inputmode="decimal" step="any"
            value="${entradas.tipo_cambio ?? ""}">
     <div class="botonera" style="margin-top:6px">
       <button class="filtro" id="buscar-cambio">Buscar la de hoy</button>
@@ -209,91 +361,17 @@ function filaCotizacion(estado, cotizacion) {
     }
     cotizacionFresca = fresca;
     entradas.tipo_cambio = fresca.usd_uyu;
-    editarAjustes(estado, { tipo_cambio: { usd_uyu: fresca.usd_uyu, fecha: fresca.fecha } });
+    editarAjustes(estado, {
+      tipo_cambio: { usd_uyu: fresca.usd_uyu, fecha: fresca.fecha, buscada_el: estado.hoy },
+    });
     estado.redibujar();
   });
-  return fila;
-}
-
-function desglose(r) {
-  if (!r.renta_bruta_anual) return document.createDocumentFragment();
-  const fila = (nombre, monto) => html`
-    <div class="dato">
-      <span class="dato-nombre">${nombre}</span>
-      <span class="dato-valor">${monto ? `− ${plata(monto)}` : "—"}</span>
-    </div>`;
-  return nodo(html`
-    <section class="tarjeta">
-      <div class="tarjeta-titulo">
-        <h2 class="titulo" style="font-size:17px">Qué se lleva la renta</h2>
-        <span class="apunte">${plata(r.perdida_por_costos)} al año</span>
-      </div>
-      <div class="datos">
-        <div class="dato"><span class="dato-nombre">Alquiler cobrado en el año</span><span class="dato-valor">${plata(r.renta_bruta_anual)}</span></div>
-        ${fila("Impuestos", r.impuesto)}
-        ${fila("Comisión de alquiler prorrateada", r.costo_comision)}
-        ${fila("Refacción y mantenimiento", r.costo_refaccion)}
-        ${fila("Contribución y Primaria", r.costos_fijos)}
-        ${fila("Administración", r.costo_admin)}
-        <div class="dato"><span class="dato-nombre"><strong>Queda limpio</strong></span><span class="dato-valor">${plata(r.renta_neta_anual)}</span></div>
-      </div>
-      <p class="apunte" style="margin-top:12px">
-        Los dos que el Excel no contaba: los gastos de compra (el capital no es el precio,
-        es un 7% más) y la comisión que se vuelve a pagar cada vez que cambia el inquilino.
-      </p>
-    </section>
-  `);
-}
-
-function finos(estado) {
-  const seccion = nodo(html`
-    <details class="grupo" ${finosAbiertos ? "open" : ""}>
-      <summary class="grupo-cabeza">
-        <span class="grupo-nombre">Ajustes finos</span>
-        <span class="grupo-flecha" aria-hidden="true">›</span>
-      </summary>
-      <div class="tarjeta" style="padding:0;overflow:hidden;margin-top:6px">
-        <div id="campos-finos"></div>
-      </div>
-    </details>
-  `);
-  seccion.querySelector("details").addEventListener("toggle", (evento) => {
-    finosAbiertos = evento.target.open;
-  });
-
-  const contenedor = seccion.getElementById("campos-finos");
-  const agregar = (clave, etiqueta, sufijo, { moneda = false, paso } = {}) => {
-    const fila = document.createElement("div");
-    fila.className = "campo-fila";
-    const valor = entradas[clave];
-    fila.innerHTML = html`
-      <label for="f-${clave}">${etiqueta}${sufijo ? ` <span class="apunte">${sufijo}</span>` : ""}</label>
-      ${moneda
-        ? html`<input class="campo" id="f-${clave}" type="text" inputmode="decimal"
-                 value="${valor === null || valor === undefined ? "" : plata(valor)}" placeholder="0">`
-        : html`<input class="campo" id="f-${clave}" type="number" inputmode="decimal"
-                 step="${paso || "any"}" value="${valor ?? ""}"
-                 placeholder="${DEFAULTS[clave] ?? ""}">`}
-    `;
-    fila.querySelector(".campo").addEventListener("change", (evento) => {
-      entradas[clave] = moneda
-        ? numeroDesde(evento.target.value)
-        : (evento.target.value === "" ? null : Number(evento.target.value));
-      estado.redibujar();
-    });
-    contenedor.append(fila);
-  };
-
-  agregar("gastos_compra_pct", "Gastos de compra (ITP y escritura)", "0,07 = 7%", { paso: "0.005" });
-  agregar("comision_meses", "Comisión de alquiler", "meses");
-  agregar("refaccion_meses", "Refacción por año", "meses de alquiler");
-  agregar("refaccion_anual", "…o un monto fijo por año", "USD, manda sobre el de arriba", { moneda: true });
-  agregar("contribucion_anual", "Contribución inmobiliaria", "USD por año", { moneda: true });
-  agregar("primaria_anual", "Impuesto de Primaria", "USD por año", { moneda: true });
-  agregar("admin_pct", "Administración", "0,05 = 5%", { paso: "0.01" });
+  contenedor.append(fila);
 
   return seccion;
 }
+
+/* ---------- El inverso ---------- */
 
 function inverso(e, estado) {
   const alquiler = alquilerNecesario(e, objetivoPct);
@@ -302,7 +380,7 @@ function inverso(e, estado) {
     <section class="tarjeta">
       <div class="tarjeta-titulo">
         <h2 class="titulo" style="font-size:17px">Para que dé lo que querés</h2>
-        <span class="apunte">objetivo de renta real</span>
+        <span class="apunte">renta real objetivo</span>
       </div>
       <div class="botonera" style="margin-top:0" id="objetivos"></div>
       <div class="datos" style="margin-top:14px">
@@ -332,19 +410,57 @@ function inverso(e, estado) {
   return seccion;
 }
 
-function guardados(estado, r) {
+/* ---------- Lo que se le manda al cliente ---------- */
+
+async function mandarFicha(estado, cual, cotizacion) {
+  const r = calcular(entradas);
+  const lienzo = document.createElement("canvas");
+  await dibujarFicha(lienzo, entradas, r, estado.datos.ajustes.agente, {
+    mostrar: cual,
+    // Que quede escrito a cuanto se tomo el dolar, si es que se uso.
+    cotizacion: entradas.moneda_alquiler === "UYU" ? comoSeDice(cotizacion) : null,
+  });
+  await new Promise((listo) => {
+    lienzo.toBlob(async (blob) => {
+      if (!blob) return listo();
+      const nombre = nombreImagen(entradas.titulo || entradas.nombre_cliente, cual);
+      const archivo = new File([blob], nombre, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+        try {
+          await navigator.share({ files: [archivo] });
+        } catch {
+          // se cancelo
+        }
+        return listo();
+      }
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement("a");
+      enlace.href = url;
+      enlace.download = nombre;
+      enlace.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      listo();
+    }, "image/png");
+  });
+}
+
+function paraElCliente(estado, r, cotizacion) {
   const lista = estado.datos.calculos_renta || [];
-  const sePuedeGuardar = Boolean(entradas.precio && entradas.alquiler_mensual && !r.falta_cotizacion);
+  const sePuede = Boolean(entradas.precio && entradas.alquiler_mensual && !r.falta_cotizacion);
 
   const seccion = nodo(html`
     <section class="tarjeta">
-      <h2 class="titulo" style="font-size:17px;margin-bottom:10px">Guardar este cálculo</h2>
+      <h2 class="titulo" style="font-size:17px;margin-bottom:10px">Para el cliente</h2>
       <input class="campo" id="cliente" type="text" placeholder="Nombre del cliente"
              value="${escapar(entradas.nombre_cliente)}">
       <div class="botonera">
-        <button class="boton boton-primario" id="guardar-calculo" ${sePuedeGuardar ? "" : "disabled"}>Guardar</button>
-        <button class="boton" id="ficha-imagen" ${sePuedeGuardar ? "" : "disabled"}>Ficha para el cliente</button>
-        <button class="boton" id="compartir-calculo" ${sePuedeGuardar ? "" : "disabled"}>Mandar texto</button>
+        <button class="boton boton-primario" id="ficha-imagen" ${sePuede ? "" : "disabled"}>Mandar ficha</button>
+        <button class="boton" id="compartir-calculo" ${sePuede ? "" : "disabled"}>Mandar texto</button>
+        <button class="boton" id="guardar-calculo" ${sePuede ? "" : "disabled"}>Guardar</button>
+      </div>
+      <div id="elegir-renta" ${eligiendoRenta ? "" : "hidden"}>
+        <p class="apunte" style="margin:14px 0 8px">¿Qué número le mandás?</p>
+        <div class="menu-indicadores" id="opciones-renta"></div>
       </div>
       <div class="lista" style="margin-top:14px" id="lista-calculos"></div>
     </section>
@@ -353,6 +469,34 @@ function guardados(estado, r) {
   seccion.getElementById("cliente").addEventListener("input", (evento) => {
     entradas.nombre_cliente = evento.target.value;
   });
+
+  /* No todos los clientes quieren lo mismo: al que ya escucho "esto renta 8%" hay que
+     mostrarle las dos juntas; al que ya entendio, alcanza con la real. */
+  const cajita = seccion.getElementById("elegir-renta");
+  seccion.getElementById("ficha-imagen").addEventListener("click", () => {
+    eligiendoRenta = !eligiendoRenta;
+    cajita.hidden = !eligiendoRenta;
+  });
+
+  const opciones = seccion.getElementById("opciones-renta");
+  for (const opcion of RENTAS) {
+    const boton = document.createElement("button");
+    boton.className = "opcion opcion-boton";
+    boton.innerHTML = html`
+      <span>
+        <span class="opcion-nombre">${escapar(opcion.nombre)}</span>
+        <span class="opcion-pista">${escapar(opcion.pista)}</span>
+      </span>
+      <span class="grupo-flecha" aria-hidden="true">›</span>`;
+    boton.addEventListener("click", async () => {
+      boton.disabled = true;
+      await mandarFicha(estado, opcion.clave, cotizacion);
+      boton.disabled = false;
+      eligiendoRenta = false;
+      cajita.hidden = true;
+    });
+    opciones.append(boton);
+  }
 
   seccion.getElementById("guardar-calculo").addEventListener("click", () => {
     guardarCalculo(estado, {
@@ -369,34 +513,8 @@ function guardados(estado, r) {
     estado.redibujar();
   });
 
-  // La ficha en imagen: se dibuja en un canvas y se comparte como PNG. Si el navegador no
-  // sabe compartir archivos, se baja y el usuario la adjunta a mano.
-  seccion.getElementById("ficha-imagen").addEventListener("click", () => {
-    const lienzo = document.createElement("canvas");
-    dibujarFicha(lienzo, entradas, r, estado.datos.ajustes.agente);
-    lienzo.toBlob(async (blob) => {
-      if (!blob) return;
-      const nombre = nombreImagen(entradas.titulo || entradas.nombre_cliente);
-      const archivo = new File([blob], nombre, { type: "image/png" });
-      if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-        try {
-          await navigator.share({ files: [archivo] });
-          return;
-        } catch {
-          return;
-        }
-      }
-      const url = URL.createObjectURL(blob);
-      const enlace = document.createElement("a");
-      enlace.href = url;
-      enlace.download = nombre;
-      enlace.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }, "image/png");
-  });
-
   seccion.getElementById("compartir-calculo").addEventListener("click", () => {
-    const texto = textoParaCliente(entradas, r);
+    const texto = textoParaCliente(entradas, r, cotizacion);
     if (navigator.share) {
       navigator.share({ title: "Cálculo de renta", text: texto }).catch(() => {});
     } else {
@@ -406,7 +524,7 @@ function guardados(estado, r) {
 
   const contenedor = seccion.getElementById("lista-calculos");
   if (!lista.length) {
-    contenedor.replaceWith(nodo(html`<p class="apunte">Todavía no guardaste ninguno.</p>`));
+    contenedor.replaceWith(nodo(html`<p class="apunte" style="margin-top:14px">Todavía no guardaste ninguno.</p>`));
     return seccion;
   }
   lista.forEach((c, indice) => {
@@ -436,21 +554,23 @@ function guardados(estado, r) {
   return seccion;
 }
 
-export function textoParaCliente(e, r) {
+export function textoParaCliente(e, r, cotizacion) {
   const lineas = [
     e.titulo ? `*${e.titulo}*` : "*Cálculo de renta*",
     `Precio: USD ${plata(e.precio)}`,
     `Alquiler: ${e.moneda_alquiler === "UYU" ? "$" : "USD"} ${plata(e.alquiler_mensual)} por mes`,
     "",
-    `Renta bruta: ${pct(r.renta_bruta_pct)}`,
+    `Renta bruta: ${pct(r.renta_bruta_pct)} (sin descontar nada)`,
     `*Renta real: ${pct(r.renta_real_pct)}*`,
     `Al bolsillo: USD ${plata(r.bolsillo_por_mes)} por mes`,
     `Se paga sola en ${r.anios_para_recuperar ? `${r.anios_para_recuperar.toFixed(1).replace(".", ",")} años` : "—"}`,
     "",
-    `La renta real descuenta impuestos (${pct(e.irpf_pct)}), comisión, refacción y los`,
-    `gastos de compra (${pct(e.gastos_compra_pct)}), y cuenta ${e.meses_alquilados} meses alquilados por año.`,
-    "",
-    "Juan Andrés Otero · RE/MAX Único",
+    `La renta real descuenta los meses sin alquilar, impuestos (${pct(e.irpf_pct)}),`,
+    "refacción y gastos. La bruta es el alquiler por doce sobre el precio.",
   ];
+  if (e.moneda_alquiler === "UYU" && cotizacion && cotizacion.valor) {
+    lineas.push(comoSeDice(cotizacion) + ".");
+  }
+  lineas.push("", "Juan Andrés Otero · RE/MAX Único");
   return lineas.join("\n");
 }

@@ -4,7 +4,9 @@
    completar. Cada cambio se aplica al instante y queda en la cola para subir. */
 
 import { editarNegocio, borrarNegocio } from "../lib/guardado.js";
-import { plata, plataUSD, escapar, fechaRazonable, numeroDesde } from "../lib/formato.js";
+import {
+  plata, plataUSD, escapar, fechaRazonable, numeroDesde, formatearMientrasEscribe,
+} from "../lib/formato.js";
 import { esBusqueda, puntasSegunAgentes, momentoDeLaPropiedad } from "../lib/motor.js";
 import {
   AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, EXPLICACION_ORIGEN,
@@ -256,6 +258,8 @@ function campos(n, falta, estado) {
           : html`<input class="campo" id="${id}" type="${tipo}" value="${escapar(valor ?? "")}"${tipo === "number" ? ' step="any"' : ""}>`}
     `;
     const control = fila.querySelector(".campo");
+    // Los puntos de miles aparecen mientras se escribe, no al saltar de celda.
+    if (esMoneda) formatearMientrasEscribe(control);
     control.addEventListener("change", () => {
       const crudo = control.value;
       // El navegador avisa del cambio mientras se tipea el año: no guardar a medio escribir.

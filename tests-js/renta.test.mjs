@@ -10,23 +10,30 @@ const cerca = (a, b, tolerancia = 0.01) =>
 /* Caso de referencia: apartamento de 100.000 que se alquila a 700 por mes. */
 const CASO = { precio: 100000, alquiler_mensual: 700 };
 
-test("la renta bruta es alquiler por meses alquilados, no por doce", () => {
+/* La bruta NO descuenta nada, ni siquiera el mes vacio. Es la renta de la calle: si ya
+   viniera con algo descontado, compararla con la real no diria nada. */
+test("la renta bruta es alquiler por DOCE, sin descontar ni el mes vacio", () => {
   const r = calcular(CASO);
-  assert.equal(r.renta_bruta_anual, 700 * 11);
-  cerca(r.renta_bruta_pct, 0.077);
+  assert.equal(r.renta_bruta_anual, 700 * 12);
+  cerca(r.renta_bruta_pct, 0.084);
 });
 
-test("el capital invertido incluye los gastos de compra", () => {
-  const r = calcular(CASO);
-  assert.equal(r.capital_invertido, 107000);
+test("los gastos de compra vienen en cero y hay que pedirlos a proposito", () => {
+  assert.equal(calcular(CASO).capital_invertido, 100000);
+  const con = calcular({ ...CASO, gastos_compra_pct: 0.07 });
+  assert.equal(con.capital_invertido, 107000);
+  assert.equal(con.gastos_de_compra, 7000);
 });
 
 test("la renta real sale mas baja que la bruta y esa distancia es la que importa", () => {
   const r = calcular(CASO);
-  // bruta 7700 − comision 350 − refaccion 700 − irpf 808,50 = 5841,50
-  cerca(r.renta_neta_anual, 5841.5);
-  cerca(r.renta_real_pct, 5841.5 / 107000);
+  // cobrado 7.700 (11 meses) - refaccion 700 - irpf 808,50 = 6.191,50
+  cerca(r.renta_neta_anual, 6191.5);
+  cerca(r.renta_real_pct, 6191.5 / 100000);
   assert.ok(r.renta_real_pct < r.renta_bruta_pct);
+  // Lo que separa una de la otra, en plata: el mes vacio mas todos los costos.
+  cerca(r.costo_meses_vacios, 700);
+  cerca(r.perdida_por_costos, 8400 - 6191.5);
 });
 
 test("la comision de alquiler se prorratea por el plazo del contrato", () => {
@@ -50,7 +57,7 @@ test("una refaccion cargada a mano manda sobre el default de un mes", () => {
 
 test("los años para recuperar la inversion salen del capital, no del precio", () => {
   const r = calcular(CASO);
-  cerca(r.anios_para_recuperar, 107000 / 5841.5);
+  cerca(r.anios_para_recuperar, 100000 / 6191.5);
 });
 
 test("sin renta neta positiva no se promete un plazo de recupero", () => {
@@ -117,13 +124,53 @@ test("si el alquiler no alcanza a cubrir los costos no hay precio que sirva", ()
 test("los defaults son los que se acordaron", () => {
   assert.equal(DEFAULTS.meses_alquilados, 11);
   assert.equal(DEFAULTS.irpf_pct, 0.105);
-  assert.equal(DEFAULTS.gastos_compra_pct, 0.07);
-  assert.equal(DEFAULTS.plazo_anios, 2);
+  // Los dos que el usuario pidio apagados: no ensucian la cuenta si no los pide.
+  assert.equal(DEFAULTS.gastos_compra_pct, 0);
+  assert.equal(DEFAULTS.plazo_anios, 0);
 });
 
 test("el coeficiente por alquiler es lo que queda limpio de cada dolar", () => {
   const c = coeficientes(CASO);
-  // 11 meses − medio mes de comision − 1 mes de refaccion − 11 × 10,5% de IRPF
-  cerca(c.porAlquiler, 11 - 0.5 - 1 - 11 * 0.105);
+  // 11 meses - 1 mes de refaccion - 11 x 10,5% de IRPF. Sin plazo no hay comision.
+  cerca(c.porAlquiler, 11 - 1 - 11 * 0.105);
   assert.equal(c.fijos, 0);
+});
+
+/* ---------- Plazo en cero: la trampa que habia ---------- */
+
+/* El plazo tenia un piso de 0,01 años metido en la formula. Con el plazo en cero la
+   comision se dividia por 0,01, o sea se multiplicaba por CIEN, y la renta se iba a
+   negativo sin que nada avisara. Ahora un cero quiere decir "no lo tengo en cuenta". */
+test("plazo en cero no dispara la comision: simplemente no se cuenta", () => {
+  const sin = calcular({ ...CASO, plazo_anios: 0, comision_meses: 1 });
+  assert.equal(sin.costo_comision, 0);
+  assert.ok(sin.renta_neta_anual > 0);
+  // Con el piso viejo daba 700 / 0,01 = 70.000 de comision. Cualquier cosa cerca de eso
+  // es la trampa de vuelta.
+  assert.ok(sin.costo_comision < 1);
+});
+
+test("plazo en cero da lo mismo que no cargar comision", () => {
+  const a = calcular({ ...CASO, plazo_anios: 0, comision_meses: 1 });
+  const b = calcular({ ...CASO, plazo_anios: 0, comision_meses: 0 });
+  assert.equal(a.renta_neta_anual, b.renta_neta_anual);
+});
+
+test("cargando el plazo, la comision vuelve a prorratearse", () => {
+  const dos = calcular({ ...CASO, plazo_anios: 2, comision_meses: 1 });
+  assert.equal(dos.costo_comision, 350);
+  const uno = calcular({ ...CASO, plazo_anios: 1, comision_meses: 1 });
+  assert.equal(uno.costo_comision, 700);
+});
+
+test("el alquiler necesario tampoco se rompe con el plazo en cero", () => {
+  const objetivo = alquilerNecesario({ ...CASO, plazo_anios: 0 }, 0.07);
+  assert.ok(objetivo > 0 && Number.isFinite(objetivo));
+});
+
+test("los dos numeros que pidio el usuario estan y son distintos", () => {
+  const r = calcular(CASO);
+  assert.ok(r.renta_bruta_pct > 0, "renta total, sin descuentos");
+  assert.ok(r.renta_real_pct > 0, "renta con todas las consideraciones");
+  assert.ok(r.renta_bruta_pct > r.renta_real_pct);
 });
