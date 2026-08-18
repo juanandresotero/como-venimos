@@ -18,7 +18,8 @@
   "45e27b03-b19a-4654-a163-4d0bf3307fac": {
    "fecha_captacion_real": "2026-07-30",
    "fecha_captacion_estimada": false,
-   "origen_captacion": "Cliente antiguo"
+   "origen_captacion": "Cliente antiguo",
+   "precio_negociacion": 60000
   },
   "d8d7855f-b0bb-4122-bc7e-74c987f50396": {
    "fecha_captacion_real": "2026-05-14",
