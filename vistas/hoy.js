@@ -14,6 +14,7 @@
 import { derivar } from "../lib/pendientes.js";
 import { capas, ritmo, comparativaCategorias } from "../lib/salud.js";
 import { marcarAtendido } from "../lib/guardado.js";
+import { medir, vale_la_pena_ajustar, MINIMO_PARA_MEDIR } from "../lib/seguridad.js";
 import { plata, plataUSD, pct, fechaCorta, escapar } from "../lib/formato.js";
 
 const html = (cadenas, ...valores) =>
@@ -39,6 +40,7 @@ export function dibujarHoy(estado) {
   trozo.append(encabezado(estado, total));
   trozo.append(cuantoFalta(estado));
   trozo.append(tuCategoria(estado));
+  trozo.append(queTanSeguro(estado));
   trozo.append(pendientes(total));
   for (const grupo of grupos) trozo.append(dibujarGrupo(grupo, estado));
   return trozo;
@@ -246,4 +248,55 @@ function dibujarGrupo(grupo, estado) {
     lista.append(li);
   }
   return marca;
+}
+
+/* Qué tan seguro es cada paso del camino.
+
+   Uno es "cierra seguro" y cero es "no cierra nunca". Estos tres números son los que
+   usa la app para proyectar: cuánto de lo que está en la cartera se va a convertir en
+   plata de verdad.
+
+   Arrancan cargados a mano en Ajustes, pero la idea es que dejen de serlo. Cada vez que
+   una propiedad se va de la cartera se anota en qué estado estaba y cómo terminó, y con
+   esos casos se calcula la proporción real. Hasta que haya suficientes se sigue usando lo
+   cargado: con dos o tres casos el número salta de 0 a 100 con una sola propiedad, y eso
+   parece medido pero es azar. */
+function queTanSeguro(estado) {
+  const filas = medir(estado.datos.cartera, estado.datos.ajustes).filter((f) => f.usar !== null);
+  if (!filas.length) return document.createDocumentFragment();
+
+  const medidas = filas.filter((f) => f.alcanza);
+  const paraAjustar = filas.filter(vale_la_pena_ajustar);
+
+  return nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2 class="titulo" style="font-size:17px">Qué tan seguro es cada paso</h2>
+        <span class="apunte">${medidas.length ? "medido con lo que pasó" : "tus números"}</span>
+      </div>
+      <div class="datos">
+        ${filas.map((f) => html`
+          <div class="dato">
+            <span class="dato-nombre">${escapar(f.nombre)}
+              <br><span class="apunte">${escapar(f.sub)}</span>
+            </span>
+            <span class="dato-valor">${pct(f.usar, 0)}
+              ${f.casos
+                ? html`<br><span class="apunte">${f.cerraron} de ${f.casos}${f.alcanza ? "" : " · pocas todavía"}</span>`
+                : ""}
+            </span>
+          </div>`).join("")}
+      </div>
+      ${paraAjustar.length
+        ? html`<p class="frase alerta">
+             Lo que viste hasta ahora no coincide con lo que tenés cargado:
+             ${paraAjustar.map((f) => `${f.nombre.toLowerCase()} da ${pct(f.medido, 0)} y no ${pct(f.configurado, 0)}`).join("; ")}.
+             Cambialo en Ajustes y la proyección se acomoda.</p>`
+        : html`<p class="apunte" style="margin-top:10px">
+             ${medidas.length
+               ? "Salen de las propiedades que ya se fueron de tu cartera."
+               : `Son los que cargaste. Cuando ${MINIMO_PARA_MEDIR} propiedades se hayan ido de un estado, la app lo mide sola.`}
+           </p>`}
+    </section>
+  `);
 }
