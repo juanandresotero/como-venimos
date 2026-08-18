@@ -174,3 +174,35 @@ test("los dos numeros que pidio el usuario estan y son distintos", () => {
   assert.ok(r.renta_real_pct > 0, "renta con todas las consideraciones");
   assert.ok(r.renta_bruta_pct > r.renta_real_pct);
 });
+
+/* ---------- El candado: cada respuesta supone la otra variable quieta ---------- */
+
+/* Si la app dice "necesitas 850 de alquiler para rendir 7%", poner 850 tiene que dar 7%.
+   Sin esto, el numero se ve razonable y esta mal, que es la peor combinacion. */
+test("el alquiler necesario, puesto de vuelta, da exactamente el objetivo", () => {
+  for (const objetivo of [0.05, 0.07, 0.1]) {
+    const necesario = alquilerNecesario(CASO, objetivo);
+    const conEse = calcular({ ...CASO, alquiler_mensual: necesario });
+    cerca(conEse.renta_real_pct, objetivo, 1e-9);
+  }
+});
+
+test("el precio maximo, puesto de vuelta, da exactamente el objetivo", () => {
+  for (const objetivo of [0.05, 0.07, 0.1]) {
+    const maximo = precioMaximo(CASO, objetivo);
+    const conEse = calcular({ ...CASO, precio: maximo });
+    cerca(conEse.renta_real_pct, objetivo, 1e-9);
+  }
+});
+
+test("los dos caminos coinciden: con el alquiler necesario, el precio maximo es el que hay", () => {
+  const necesario = alquilerNecesario(CASO, 0.07);
+  const maximo = precioMaximo({ ...CASO, alquiler_mensual: necesario }, 0.07);
+  cerca(maximo, CASO.precio, 0.01);
+});
+
+test("con gastos de compra prendidos, las dos vueltas siguen cerrando", () => {
+  const conGastos = { ...CASO, gastos_compra_pct: 0.07 };
+  const necesario = alquilerNecesario(conGastos, 0.06);
+  cerca(calcular({ ...conGastos, alquiler_mensual: necesario }).renta_real_pct, 0.06, 1e-9);
+});

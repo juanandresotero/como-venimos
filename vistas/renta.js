@@ -4,11 +4,11 @@
    escucho en otro lado, y la REAL, que es la que va a cobrar. La distancia entre las dos
    es el argumento.
 
-   Arriba solo entra lo que se carga siempre: precio, alquiler y moneda. Todo lo demas
-   -- plazo del contrato, gastos de compra, comision, refaccion, gastos fijos -- vive en
-   los ajustes finos, apagado por defecto. Estaba todo a la vista y la pantalla parecia un
-   formulario de AFIP: para preguntar "cuanto renta" no hace falta saber el plazo del
-   contrato. */
+   CADA MONTO EN SU MONEDA. El precio de la propiedad va en dolares, y todo lo que sale
+   del alquiler — lo que entra al bolsillo, los costos, el alquiler que haria falta — va
+   en la moneda del alquiler. En Uruguay lo habitual es precio en dolares y alquiler en
+   pesos; decirle "cobras USD 469 por mes" a alguien que alquila en pesos lo obliga a
+   hacer la cuenta de cabeza para saber si esta bien. */
 
 import {
   DEFAULTS, calcular, detectarMoneda, alquilerNecesario, precioMaximo,
@@ -42,9 +42,18 @@ const entradas = {
 let finosAbiertos = false;
 let desgloseAbierto = false;
 let objetivoPct = 0.07;
+let candado = "precio";        // que dato se deja quieto en "para que de lo que queres"
 let cotizacionFresca = null;
 let buscandoCotizacion = false;
 let eligiendoRenta = false;
+
+/* El motor trabaja todo en la moneda del precio (dolares). Para mostrar, lo que sale del
+   alquiler se pasa a la moneda en la que el usuario lo cargo. */
+const alquilerEnPesos = () =>
+  entradas.moneda_alquiler === "UYU" && Number(entradas.tipo_cambio) > 0;
+
+const montoAlquiler = (usd) =>
+  (alquilerEnPesos() ? `$ ${plata(usd * entradas.tipo_cambio)}` : plataUSD(usd));
 
 /* El dolar se busca solo, una vez por dia, al abrir la calculadora.
 
@@ -83,8 +92,8 @@ export function dibujarRenta(estado) {
   trozo.append(resultado(r, entradas, cotizacion));
   trozo.append(basicos(estado, cotizacion));
   trozo.append(desglose(r, entradas));
-  trozo.append(finos(estado, cotizacion));
   trozo.append(inverso(entradas, estado));
+  trozo.append(finos(estado, cotizacion));
   trozo.append(paraElCliente(estado, r, cotizacion));
   return trozo;
 }
@@ -138,15 +147,16 @@ function resultado(r, e, cotizacion) {
         </div>
       </div>
       <div class="datos" style="margin-top:16px">
-        <div class="dato"><span class="dato-nombre">Al bolsillo, por mes</span><span class="dato-valor">${plataUSD(r.bolsillo_por_mes)}</span></div>
-        <div class="dato"><span class="dato-nombre">Al bolsillo, por año</span><span class="dato-valor">${plataUSD(r.renta_neta_anual)}</span></div>
+        <div class="dato"><span class="dato-nombre">Al bolsillo, por mes</span><span class="dato-valor">${montoAlquiler(r.bolsillo_por_mes)}</span></div>
+        <div class="dato"><span class="dato-nombre">Al bolsillo, por año</span><span class="dato-valor">${montoAlquiler(r.renta_neta_anual)}</span></div>
         <div class="dato"><span class="dato-nombre">Se paga sola en</span><span class="dato-valor">${
           r.anios_para_recuperar ? `${r.anios_para_recuperar.toFixed(1).replace(".", ",")} años` : "nunca"
         }</span></div>
       </div>
-      ${e.moneda_alquiler === "UYU" && cotizacion.valor
-        ? html`<p class="apunte" style="margin-top:10px">${escapar(comoSeDice(cotizacion))}
-             · ${escapar(cotizacion.origen)}</p>`
+      ${alquilerEnPesos()
+        ? html`<p class="apunte" style="margin-top:10px">
+             Lo que sale del alquiler va en pesos; el precio, en dólares.
+             ${escapar(comoSeDice(cotizacion))} · ${escapar(cotizacion.origen)}</p>`
         : ""}
     </section>
   `);
@@ -255,7 +265,7 @@ function desglose(r, e) {
   if (!r.renta_bruta_anual) return document.createDocumentFragment();
   const resta = (nombre, monto) => (monto
     ? html`<div class="dato"><span class="dato-nombre">${nombre}</span>
-        <span class="dato-valor">− ${plata(monto)}</span></div>`
+        <span class="dato-valor">− ${montoAlquiler(monto)}</span></div>`
     : "");
 
   const seccion = nodo(html`
@@ -266,21 +276,20 @@ function desglose(r, e) {
       </summary>
       <div class="tarjeta" style="margin-top:6px">
         <div class="datos">
-          <div class="dato"><span class="dato-nombre">Alquiler por 12 meses</span><span class="dato-valor">${plata(r.renta_bruta_anual)}</span></div>
+          <div class="dato"><span class="dato-nombre">Alquiler por 12 meses</span><span class="dato-valor">${montoAlquiler(r.renta_bruta_anual)}</span></div>
           ${resta(`Meses sin alquilar (${12 - (e.meses_alquilados ?? 11)})`, r.costo_meses_vacios)}
           ${resta("Impuestos", r.impuesto)}
           ${resta("Refacción y mantenimiento", r.costo_refaccion)}
-          ${resta("Comisión de alquiler", r.costo_comision)}
           ${resta("Contribución y Primaria", r.costos_fijos)}
           ${resta("Administración", r.costo_admin)}
-          <div class="dato"><span class="dato-nombre"><strong>Queda limpio</strong></span><span class="dato-valor">${plata(r.renta_neta_anual)}</span></div>
+          <div class="dato"><span class="dato-nombre"><strong>Queda limpio</strong></span><span class="dato-valor">${montoAlquiler(r.renta_neta_anual)}</span></div>
           ${r.gastos_de_compra
-            ? html`<div class="dato"><span class="dato-nombre">…sobre un capital de</span><span class="dato-valor">${plata(r.capital_invertido)}</span></div>`
+            ? html`<div class="dato"><span class="dato-nombre">…sobre un capital de</span><span class="dato-valor">${plataUSD(r.capital_invertido)}</span></div>`
             : ""}
         </div>
         <p class="apunte" style="margin-top:12px">
-          Se van <strong>${plata(r.perdida_por_costos)}</strong> por año entre lo que la
-          renta de la calle no cuenta.
+          Se van <strong>${montoAlquiler(r.perdida_por_costos)}</strong> por año entre lo
+          que la renta de la calle no cuenta.
         </p>
       </div>
     </details>
@@ -293,10 +302,8 @@ function desglose(r, e) {
 
 /* ---------- Ajustes finos ---------- */
 
-/* Aca vive todo lo que no se toca siempre. El plazo del contrato y los gastos de compra
-   bajaron desde arriba y arrancan en CERO: si no se cargan, no ensucian la cuenta. Un
-   plazo en cero quiere decir "no lo tengo en cuenta" y entonces la comision no se
-   prorratea, en vez de multiplicarse por cien como pasaba antes. */
+/* Aca vive lo que no se toca siempre. Los gastos de compra arrancan en CERO: si no se
+   cargan, no ensucian la cuenta. */
 function finos(estado, cotizacion) {
   const seccion = nodo(html`
     <details class="grupo" ${finosAbiertos ? "open" : ""}>
@@ -325,12 +332,14 @@ function finos(estado, cotizacion) {
     contenedor.append(campoMonto(clave, etiqueta, sufijo,
       (v) => poner(v, clave), entradas[clave], "f"));
 
-  num("plazo_anios", "Plazo del contrato", "años · 0 = no contarlo");
-  num("comision_meses", "Comisión de alquiler", "meses · solo cuenta con plazo cargado");
+  /* Salieron de aca, a pedido: el PLAZO DEL CONTRATO (y con el la comision de alquiler,
+     que sin plazo no se puede prorratear y quedaba como un campo que no hacia nada) y el
+     MONTO FIJO DE REFACCION, que competia con el campo de arriba y obligaba a acordarse
+     de cual le ganaba a cual. El motor los sigue entendiendo, asi que los calculos
+     guardados de antes se abren igual con los valores que tenian. */
   num("gastos_compra_pct", "Gastos de compra (ITP y escritura)", "0,07 = 7% · 0 = no contarlo",
     { paso: "0.005" });
   num("refaccion_meses", "Refacción por año", "meses de alquiler");
-  mon("refaccion_anual", "…o un monto fijo por año", "USD, manda sobre el de arriba");
   mon("contribucion_anual", "Contribución inmobiliaria", "USD por año");
   mon("primaria_anual", "Impuesto de Primaria", "USD por año");
   num("admin_pct", "Administración", "0,05 = 5%", { paso: "0.01" });
@@ -371,11 +380,51 @@ function finos(estado, cotizacion) {
   return seccion;
 }
 
-/* ---------- El inverso ---------- */
+/* ---------- El inverso, con candado ---------- */
 
+/* Antes se movian los dos numeros a la vez — el alquiler que hace falta Y el precio
+   maximo — y no se entendia nada: son dos respuestas a dos preguntas distintas, y cada
+   una supone que la otra variable esta quieta. Ahora se elige cual se deja quieta.
+
+   El candado arranca en el PRECIO, con el que ya esta cargado arriba: la pregunta de
+   todos los dias es "esta propiedad, a este precio, ¿cuanto tiene que rendir de
+   alquiler?". */
 function inverso(e, estado) {
+  const hayPrecio = Boolean(e.precio);
+  const hayAlquiler = Boolean(e.alquiler_mensual);
+  const fijandoPrecio = candado === "precio";
+
   const alquiler = alquilerNecesario(e, objetivoPct);
   const precio = precioMaximo(e, objetivoPct);
+
+  // Cuanto hay que mover lo que NO esta con candado, respecto de lo que hay cargado hoy.
+  const actual = fijandoPrecio ? e.alquiler_mensual : e.precio;
+  const hace_falta = fijandoPrecio
+    ? (alquiler !== null && alquilerEnPesos() ? alquiler * e.tipo_cambio : alquiler)
+    : precio;
+  const diferencia = actual && hace_falta ? hace_falta - actual : null;
+
+  /* Ojo con el signo, que es distinto de cada lado y facil de decir al reves:
+
+       Con el precio quieto, lo que sale es el ALQUILER que hace falta. Si da mas que el
+       cargado, falta alquiler. Si da menos, ya rinde de mas.
+
+       Con el alquiler quieto, lo que sale es el PRECIO MAXIMO que se puede pagar. Si el
+       maximo queda POR DEBAJO del precio real, la propiedad esta cara para ese objetivo —
+       no "sobra" nada, que era justo lo contrario de lo que pasa. */
+  const comparar = (fijaElPrecio, dif) => {
+    const enPlata = (x) => (fijaElPrecio && alquilerEnPesos() ? `$ ${plata(x)}` : plataUSD(x));
+    if (fijaElPrecio) {
+      return dif > 0
+        ? html`Con lo que tenés cargado falta <strong>${enPlata(dif)}</strong> de alquiler por mes.`
+        : html`Ya rinde más que tu objetivo: te sobran <strong>${enPlata(-dif)}</strong> de alquiler.`;
+    }
+    return dif > 0
+      ? html`Podés pagar hasta <strong>${plataUSD(dif)}</strong> más y sigue dando el objetivo.`
+      : html`A ese alquiler, la propiedad está <strong>${plataUSD(-dif)}</strong> por encima
+          de lo que deberías pagar para llegar al objetivo.`;
+  };
+
   const seccion = nodo(html`
     <section class="tarjeta">
       <div class="tarjeta-titulo">
@@ -383,16 +432,36 @@ function inverso(e, estado) {
         <span class="apunte">renta real objetivo</span>
       </div>
       <div class="botonera" style="margin-top:0" id="objetivos"></div>
+
+      <p class="apunte" style="margin:14px 0 6px">Dejo quieto</p>
+      <div class="botonera" style="margin-top:0">
+        <button class="filtro ${fijandoPrecio ? "prendido" : ""}" data-candado="precio">
+          🔒 El precio${hayPrecio ? ` · ${plataUSD(e.precio)}` : ""}
+        </button>
+        <button class="filtro ${fijandoPrecio ? "" : "prendido"}" data-candado="alquiler">
+          🔒 El alquiler${hayAlquiler ? ` · ${alquilerEnPesos() ? `$ ${plata(e.alquiler_mensual)}` : plataUSD(e.alquiler_mensual)}` : ""}
+        </button>
+      </div>
+
       <div class="datos" style="margin-top:14px">
         <div class="dato">
-          <span class="dato-nombre">Alquiler que necesitás${e.precio ? "" : " (cargá el precio)"}</span>
-          <span class="dato-valor">${alquiler ? plataUSD(alquiler) : "—"}</span>
-        </div>
-        <div class="dato">
-          <span class="dato-nombre">Precio máximo a pagar${e.alquiler_mensual ? "" : " (cargá el alquiler)"}</span>
-          <span class="dato-valor">${precio ? plataUSD(precio) : "—"}</span>
+          <span class="dato-nombre">
+            ${fijandoPrecio ? "Alquiler que necesitás" : "Precio máximo a pagar"}
+            ${fijandoPrecio && !hayPrecio ? " (cargá el precio)" : ""}
+            ${!fijandoPrecio && !hayAlquiler ? " (cargá el alquiler)" : ""}
+          </span>
+          <span class="dato-valor">${
+            hace_falta
+              ? (fijandoPrecio
+                  ? (alquilerEnPesos() ? `$ ${plata(hace_falta)}` : plataUSD(hace_falta))
+                  : plataUSD(hace_falta))
+              : "—"
+          }</span>
         </div>
       </div>
+      ${diferencia !== null && Math.abs(diferencia) > 1
+        ? html`<p class="apunte" style="margin-top:10px">${comparar(fijandoPrecio, diferencia)}</p>`
+        : ""}
     </section>
   `);
 
@@ -407,6 +476,12 @@ function inverso(e, estado) {
     });
     botonera.append(boton);
   }
+  for (const boton of seccion.querySelectorAll("[data-candado]")) {
+    boton.addEventListener("click", () => {
+      candado = boton.dataset.candado;
+      estado.redibujar();
+    });
+  }
   return seccion;
 }
 
@@ -418,7 +493,7 @@ async function mandarFicha(estado, cual, cotizacion) {
   await dibujarFicha(lienzo, entradas, r, estado.datos.ajustes.agente, {
     mostrar: cual,
     // Que quede escrito a cuanto se tomo el dolar, si es que se uso.
-    cotizacion: entradas.moneda_alquiler === "UYU" ? comoSeDice(cotizacion) : null,
+    cotizacion: alquilerEnPesos() ? comoSeDice(cotizacion) : null,
   });
   await new Promise((listo) => {
     lienzo.toBlob(async (blob) => {
@@ -462,6 +537,7 @@ function paraElCliente(estado, r, cotizacion) {
         <p class="apunte" style="margin:14px 0 8px">¿Qué número le mandás?</p>
         <div class="menu-indicadores" id="opciones-renta"></div>
       </div>
+      <p class="apunte" id="aviso-guardado" style="margin-top:10px"></p>
       <div class="lista" style="margin-top:14px" id="lista-calculos"></div>
     </section>
   `);
@@ -498,7 +574,10 @@ function paraElCliente(estado, r, cotizacion) {
     opciones.append(boton);
   }
 
-  seccion.getElementById("guardar-calculo").addEventListener("click", () => {
+  /* Guardar es UN toque. Antes guardaba en memoria y despues habia que acordarse de
+     apretar el "Guardar" de la barra de arriba para que subiera al repo — dos pasos para
+     una sola intencion, y el segundo se olvidaba. */
+  seccion.getElementById("guardar-calculo").addEventListener("click", async (evento) => {
     guardarCalculo(estado, {
       fecha: estado.hoy,
       nombre_cliente: entradas.nombre_cliente || entradas.titulo || "Sin nombre",
@@ -510,6 +589,9 @@ function paraElCliente(estado, r, cotizacion) {
       },
       notas: "",
     });
+    evento.target.disabled = true;
+    evento.target.textContent = "Guardando…";
+    await estado.guardar();
     estado.redibujar();
   });
 
@@ -528,21 +610,25 @@ function paraElCliente(estado, r, cotizacion) {
     return seccion;
   }
   lista.forEach((c, indice) => {
+    const suyo = c.entradas || {};
+    const enPesos = suyo.moneda_alquiler === "UYU";
     const fila = nodo(html`
       <button class="fila" data-abrir="${indice}">
         <span class="fila-cuerpo">
           <span class="fila-titulo">${escapar(c.nombre_cliente)}</span>
-          <span class="fila-sub">${escapar(c.fecha)} · ${plata(c.entradas.precio)} · alquiler ${plata(c.entradas.alquiler_mensual)}</span>
+          <span class="fila-sub">${escapar(c.fecha)} · ${plataUSD(suyo.precio)} · alquiler
+            ${enPesos ? `$ ${plata(suyo.alquiler_mensual)}` : plataUSD(suyo.alquiler_mensual)}</span>
         </span>
         <span class="fila-derecha">
-          <span class="cifra cifra-media">${pct(c.resultados.renta_real_pct)}</span>
+          <span class="cifra cifra-media">${pct((c.resultados || {}).renta_real_pct)}</span>
           <span class="chip-apagado" data-borrar="${indice}">borrar</span>
         </span>
       </button>
     `);
-    fila.querySelector("[data-abrir]").addEventListener("click", (evento) => {
+    fila.querySelector("[data-abrir]").addEventListener("click", async (evento) => {
       if (evento.target.dataset.borrar !== undefined) {
         borrarCalculo(estado, Number(evento.target.dataset.borrar));
+        await estado.guardar();
       } else {
         Object.assign(entradas, c.entradas);
       }
@@ -555,22 +641,24 @@ function paraElCliente(estado, r, cotizacion) {
 }
 
 export function textoParaCliente(e, r, cotizacion) {
+  const enPesos = e.moneda_alquiler === "UYU" && Number(e.tipo_cambio) > 0;
+  const delAlquiler = (usd) =>
+    (enPesos ? `$ ${plata(usd * e.tipo_cambio)}` : `USD ${plata(usd)}`);
+
   const lineas = [
     e.titulo ? `*${e.titulo}*` : "*Cálculo de renta*",
     `Precio: USD ${plata(e.precio)}`,
-    `Alquiler: ${e.moneda_alquiler === "UYU" ? "$" : "USD"} ${plata(e.alquiler_mensual)} por mes`,
+    `Alquiler: ${enPesos ? "$" : "USD"} ${plata(e.alquiler_mensual)} por mes`,
     "",
     `Renta bruta: ${pct(r.renta_bruta_pct)} (sin descontar nada)`,
     `*Renta real: ${pct(r.renta_real_pct)}*`,
-    `Al bolsillo: USD ${plata(r.bolsillo_por_mes)} por mes`,
+    `Al bolsillo: ${delAlquiler(r.bolsillo_por_mes)} por mes`,
     `Se paga sola en ${r.anios_para_recuperar ? `${r.anios_para_recuperar.toFixed(1).replace(".", ",")} años` : "—"}`,
     "",
     `La renta real descuenta los meses sin alquilar, impuestos (${pct(e.irpf_pct)}),`,
     "refacción y gastos. La bruta es el alquiler por doce sobre el precio.",
   ];
-  if (e.moneda_alquiler === "UYU" && cotizacion && cotizacion.valor) {
-    lineas.push(comoSeDice(cotizacion) + ".");
-  }
+  if (enPesos && cotizacion && cotizacion.valor) lineas.push(`${comoSeDice(cotizacion)}.`);
   lineas.push("", "Juan Andrés Otero · RE/MAX Único");
   return lineas.join("\n");
 }

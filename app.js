@@ -37,13 +37,44 @@ const estado = {
   guardar: () => guardar(),
 };
 
-async function bajarDatos() {
+/* Los cuatro que escribe la APP. Se leen distinto que los del robot, y hay un motivo. */
+const MIOS = { negocios: "datos/negocios.json", mis_datos: "datos/mis_datos.json",
+  ajustes: "datos/ajustes.json", calculos_renta: "datos/calculos_renta.json" };
+
+async function bajarDeLaWeb(nombre) {
+  const respuesta = await fetch(`datos/${nombre}.json`, { cache: "no-cache" });
+  if (!respuesta.ok) throw new Error(respuesta.status);
+  return respuesta.json();
+}
+
+/* GitHub Pages tarda cerca de un minuto en publicar un archivo recien subido.
+
+   Eso hacia perder datos a la vista: guardabas un calculo de renta, la app lo mandaba al
+   repo, recargabas para verlo y Pages todavia servia el JSON viejo. El dato estaba —
+   nunca se perdio ninguno — pero no aparecia, que a los ojos del que lo cargo es lo
+   mismo. Paso de verdad con un calculo guardado a nombre de un cliente.
+
+   Con token, los cuatro archivos que escribe la app se leen por la API de GitHub, que
+   devuelve el contenido del repo al instante. Los del robot (cartera, eventos, estado)
+   siguen por la web: ahi no hay apuro, y son los mas pesados. Sin token o sin señal, todo
+   cae a la web como antes. */
+async function bajarDatos(token, shas) {
   const pares = await Promise.all(
     ARCHIVOS.map(async (nombre) => {
       try {
-        const respuesta = await fetch(`datos/${nombre}.json`, { cache: "no-cache" });
-        if (!respuesta.ok) throw new Error(respuesta.status);
-        return [nombre, await respuesta.json()];
+        if (token && MIOS[nombre]) {
+          try {
+            const { datos, sha } = await github.leerArchivo(MIOS[nombre], token);
+            if (datos !== null) {
+              // De paso queda el sha de entrada: el primer guardado no choca.
+              if (shas) shas[MIOS[nombre]] = sha;
+              return [nombre, datos];
+            }
+          } catch {
+            // Token vencido, sin señal o rate limit: se sigue por la web.
+          }
+        }
+        return [nombre, await bajarDeLaWeb(nombre)];
       } catch {
         // Si falta un archivo la app tiene que abrir igual, no quedarse en blanco.
         return [nombre, VACIO_OBJETO.has(nombre) ? {} : []];
@@ -205,7 +236,8 @@ async function guardar() {
 }
 
 async function arrancar() {
-  estado.datos = await bajarDatos();
+  estado.shas = estado.shas || {};
+  estado.datos = await bajarDatos(estado.token, estado.shas);
   // Lo que el usuario edito de la cartera vive aparte (§3.3) y se superpone al leer.
   estado.datos.cartera = fusionar(estado.datos.cartera, estado.datos.mis_datos);
 

@@ -143,3 +143,45 @@ test("renglones: corta por palabras y no deja renglones vacios", () => {
   assert.ok(r.every((x) => x.length));
   assert.equal(r.join(" "), "uno dos tres cuatro cinco");
 });
+
+/* ---------- Cada monto en su moneda ---------- */
+
+const EN_PESOS = {
+  precio: 110000, alquiler_mensual: 25500, moneda_alquiler: "UYU", tipo_cambio: 40,
+  meses_alquilados: 11, irpf_pct: 0.105, refaccion_meses: 1,
+};
+
+test("con el alquiler en pesos, lo que sale del alquiler va en pesos", () => {
+  const d = contenido(EN_PESOS, calcular(EN_PESOS));
+  const bolsillo = d.remate.find(([n]) => n.includes("bolsillo"))[1];
+  assert.ok(bolsillo.startsWith("$ "), `decia "${bolsillo}" y el alquiler esta en pesos`);
+  const gastos = d.filas.find(([n]) => n.includes("Gastos del año"));
+  if (gastos) assert.ok(gastos[1].startsWith("$ "));
+});
+
+test("el precio de la propiedad se queda en dolares aunque el alquiler sea en pesos", () => {
+  const d = contenido(EN_PESOS, calcular(EN_PESOS));
+  const precio = d.filas.find(([n]) => n === "Precio")[1];
+  assert.ok(precio.startsWith("USD "), `el precio decia "${precio}"`);
+});
+
+test("con todo en dolares no aparece un signo de pesos por ningun lado", () => {
+  const d = contenido(ENTRADAS, calcular(ENTRADAS));
+  const todo = JSON.stringify(d);
+  assert.ok(!todo.includes("$ "), "se colo un monto en pesos");
+});
+
+test("la conversion usa la cotizacion cargada, no una inventada", () => {
+  const r = calcular(EN_PESOS);
+  const d = contenido(EN_PESOS, r);
+  const bolsillo = d.remate.find(([n]) => n.includes("bolsillo"))[1];
+  const esperado = Math.round(r.bolsillo_por_mes * 40).toLocaleString("es-UY");
+  assert.equal(bolsillo, `$ ${esperado}`);
+});
+
+test("sin cotizacion no se inventa una conversion: queda en dolares", () => {
+  const sinCambio = { ...EN_PESOS, tipo_cambio: null };
+  const d = contenido(sinCambio, calcular(sinCambio));
+  const bolsillo = d.remate.find(([n]) => n.includes("bolsillo"))[1];
+  assert.ok(bolsillo.startsWith("USD "));
+});
