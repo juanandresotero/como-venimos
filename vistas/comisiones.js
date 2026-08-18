@@ -60,7 +60,7 @@ export function dibujarComisiones(estado) {
   trozo.append(cabecera(estado, r, f, split));
   trozo.append(basicos(estado));
   for (const [i] of activas.entries()) trozo.append(campoPunta(i, estado));
-  if (entradas.cantidad === 2) trozo.append(repartirDiferencia(estado));
+  trozo.append(repartirDiferencia(estado));
   trozo.append(quienCobra(estado, split));
   if (r.neto) trozo.append(detalle(r, split));
   if (r.neto) trozo.append(paraCadaCliente(f));
@@ -243,40 +243,76 @@ function campoPunta(indice, estado) {
   return seccion;
 }
 
-/* Poner plata de tu comisión para juntar dos precios que no se tocan. Reparte el monto
-   entre las dos puntas y lo deja cargado como descuento, para poder retocarlo después. */
+/* Poner plata de tu comisión para juntar dos precios que no se tocan.
+
+   Se carga POR PUNTA, porque casi nunca sale mitad y mitad: podés resignar del lado del
+   comprador para que llegue y no tocar lo del vendedor. Con una sola punta se pregunta
+   solo por esa — no hay otra de la cual sacar.
+
+   Es la misma plata que el "descuento en monto fijo" de cada punta y se escribe ahí: no
+   son dos cosas distintas, son dos formas de decir lo mismo. Lo que cambia es desde dónde
+   lo estás pensando: "le hago un descuento" o "pongo para cerrar". */
 function repartirDiferencia(estado) {
+  const activas = entradas.puntas.slice(0, entradas.cantidad);
+  const puestoEn = (p) => (p.descuentoTipo === "monto" ? p.descuentoValor : null);
+  const total = activas.reduce((t, p) => t + (puestoEn(p) || 0), 0);
+  const unaSola = entradas.cantidad === 1;
+
   const seccion = nodo(html`
     <section class="tarjeta">
       <h2 class="titulo" style="font-size:17px;margin-bottom:4px">Poner plata para cerrar</h2>
       <p class="apunte" style="margin-bottom:12px">
-        Si el comprador no llega y ponés vos la diferencia, cargá cuánto y se reparte entre
-        las puntas. Después podés retocar cada una arriba.
+        ${unaSola
+          ? "Si ponés plata de tu comisión para que el negocio cierre, cargá cuánto."
+          : "Si ponés plata de tu comisión para que el negocio cierre, cargá cuánto sale de cada lado."}
       </p>
-      <div id="campo-dif"></div>
-      <div class="botonera" style="margin-top:8px">
-        <button class="filtro" data-reparto="parejo">Mitad y mitad</button>
-        <button class="filtro" data-reparto="vendedora">Toda de la vendedora</button>
-        <button class="filtro" data-reparto="compradora">Toda de la compradora</button>
-      </div>
+      <div id="campos-poner"></div>
+      ${total
+        ? html`<p class="frase" style="margin-top:14px">
+             Ponés <strong>${plataUSD(total)}</strong> en total.
+             ${unaSola ? "" : "Se descuenta de cada punta como lo cargaste."}</p>`
+        : ""}
+      ${unaSola ? "" : html`
+        <p class="apunte" style="margin:16px 0 6px">O cargá un total y lo reparto</p>
+        <div id="campo-total"></div>
+        <div class="botonera" style="margin-top:8px">
+          <button class="filtro" data-reparto="parejo">Mitad y mitad</button>
+          <button class="filtro" data-reparto="vendedora">Toda de la vendedora</button>
+          <button class="filtro" data-reparto="compradora">Toda de la compradora</button>
+        </div>`}
     </section>
   `);
 
-  let monto = null;
-  seccion.getElementById("campo-dif").append(
-    campoMonto("c-diferencia", "Cuánto ponés", "USD", monto, (v) => { monto = v; })
+  const contenedor = seccion.getElementById("campos-poner");
+  activas.forEach((p, i) => {
+    const nombre = unaSola
+      ? "Cuánto ponés"
+      : `De la punta ${p.lado}`;
+    contenedor.append(campoMonto(`c-pone-${i}`, nombre, "USD", puestoEn(p), (v) => {
+      // Cargar un monto acá ES hacerle un descuento a esa punta: se escribe donde va.
+      p.descuentoTipo = v ? "monto" : "nada";
+      p.descuentoValor = v;
+      estado.redibujar();
+    }));
+  });
+
+  if (unaSola) return seccion;
+
+  let aRepartir = null;
+  seccion.getElementById("campo-total").append(
+    campoMonto("c-diferencia", "Total a repartir", "USD", null, (v) => { aRepartir = v; })
   );
 
   for (const boton of seccion.querySelectorAll("[data-reparto]")) {
     boton.addEventListener("click", () => {
       const campo = document.getElementById("c-diferencia");
-      const valor = monto ?? numeroDesde(campo ? campo.value : "");
+      const valor = aRepartir ?? numeroDesde(campo ? campo.value : "");
       if (!valor) return;
-      const [a, b] = repartir(valor, 2, boton.dataset.reparto);
-      entradas.puntas[0].descuentoTipo = "monto";
-      entradas.puntas[0].descuentoValor = a;
-      entradas.puntas[1].descuentoTipo = "monto";
-      entradas.puntas[1].descuentoValor = b;
+      const partes = repartir(valor, 2, boton.dataset.reparto);
+      partes.forEach((monto, i) => {
+        entradas.puntas[i].descuentoTipo = monto ? "monto" : "nada";
+        entradas.puntas[i].descuentoValor = monto || null;
+      });
       estado.redibujar();
     });
   }
