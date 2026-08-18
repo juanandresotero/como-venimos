@@ -11,8 +11,8 @@
   "entity_id": "29b0df7e-7d40-4283-99b0-f88c2f168377",
   "estado": "publicada",
   "estado_al_desaparecer": null,
-  "fecha_captacion_estimada": true,
-  "fecha_captacion_real": "2026-08-17",
+  "fecha_captacion_estimada": false,
+  "fecha_captacion_real": "2026-06-08",
   "fecha_desaparicion": null,
   "fecha_negociacion": null,
   "fecha_reservada": null,
@@ -37,7 +37,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "Ref. Martin",
   "posible_duplicado_de": null,
   "precio": 94000.0,
   "slug": "venta-2-casas-mismo-padron-flor-de-maronas-cochera",
@@ -45,7 +45,7 @@
   "titulo": "Venta 2 casas mismo padron flor de Maroñas cochera",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  },
  "2c76d23c-2d94-4cd4-8120-d052679e1608": {
   "activa": true,
@@ -59,8 +59,8 @@
   "entity_id": "2c76d23c-2d94-4cd4-8120-d052679e1608",
   "estado": "publicada",
   "estado_al_desaparecer": null,
-  "fecha_captacion_estimada": true,
-  "fecha_captacion_real": "2026-08-17",
+  "fecha_captacion_estimada": false,
+  "fecha_captacion_real": "2026-01-30",
   "fecha_desaparicion": null,
   "fecha_negociacion": null,
   "fecha_reservada": null,
@@ -85,7 +85,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "Redes sociales Campaña",
   "posible_duplicado_de": null,
   "precio": 490000.0,
   "slug": "venta-gran-casa-en-colon-5-dorm-con-gran-terreno",
@@ -93,7 +93,7 @@
   "titulo": "Venta gran casa en colon 5 dorm. con gran terreno",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  },
  "45e27b03-b19a-4654-a163-4d0bf3307fac": {
   "activa": true,
@@ -107,8 +107,8 @@
   "entity_id": "45e27b03-b19a-4654-a163-4d0bf3307fac",
   "estado": "en_negociacion",
   "estado_al_desaparecer": null,
-  "fecha_captacion_estimada": true,
-  "fecha_captacion_real": "2026-08-17",
+  "fecha_captacion_estimada": false,
+  "fecha_captacion_real": "2026-07-30",
   "fecha_desaparicion": null,
   "fecha_negociacion": "2026-08-17",
   "fecha_reservada": null,
@@ -133,7 +133,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "Cliente antiguo",
   "posible_duplicado_de": null,
   "precio": 60000.0,
   "slug": "venta-apartamento-en-malvin-norte-de-2-dormitorios",
@@ -141,7 +141,7 @@
   "titulo": "Venta Apartamento en Malvin Norte de 2 dormitorios",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  },
  "5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6": {
   "activa": true,
@@ -181,7 +181,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "Ref. B.d.r.",
   "posible_duplicado_de": null,
   "precio": 89900.0,
   "slug": "venta-apartamento-2-dormitiros-reducto-con-cochera",
@@ -189,7 +189,7 @@
   "titulo": "Venta apartamento 2 dormitiros Reducto con cochera",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  },
  "a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f": {
   "activa": true,
@@ -203,8 +203,8 @@
   "entity_id": "a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f",
   "estado": "publicada",
   "estado_al_desaparecer": null,
-  "fecha_captacion_estimada": true,
-  "fecha_captacion_real": "2026-08-17",
+  "fecha_captacion_estimada": false,
+  "fecha_captacion_real": "2026-08-03",
   "fecha_desaparicion": null,
   "fecha_negociacion": null,
   "fecha_reservada": null,
@@ -229,7 +229,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "Ref. Remax",
   "posible_duplicado_de": null,
   "precio": 240000.0,
   "slug": "venta-2-casas-en-maronas-con-cochera-y-gran-salon",
@@ -237,7 +237,7 @@
   "titulo": "Venta 2 casas en Maroñas con cochera y gran salón",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  },
  "a4b43687-a487-485c-82ae-62118b687ec1": {
   "activa": true,
@@ -251,8 +251,8 @@
   "entity_id": "a4b43687-a487-485c-82ae-62118b687ec1",
   "estado": "en_negociacion",
   "estado_al_desaparecer": null,
-  "fecha_captacion_estimada": true,
-  "fecha_captacion_real": "2026-08-17",
+  "fecha_captacion_estimada": false,
+  "fecha_captacion_real": "2026-06-08",
   "fecha_desaparicion": null,
   "fecha_negociacion": "2026-08-17",
   "fecha_reservada": null,
@@ -277,7 +277,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "Ref. Martin",
   "posible_duplicado_de": null,
   "precio": 56000.0,
   "slug": "venta-casa-3-dormitorios-playa-pascual-parrillero",
@@ -285,7 +285,7 @@
   "titulo": "Venta Casa 3 dormitorios playa pascual parrillero",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  },
  "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea": {
   "activa": true,
@@ -333,7 +333,7 @@
   "titulo": "Venta terreno y gran Casa 4 dorm. Barros Blancos",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  },
  "c9e235a6-5bb0-47a6-b9aa-62b2283bb94a": {
   "activa": true,
@@ -381,7 +381,7 @@
   "titulo": "Venta Apartamento 2 dormitorios Cordon con jacuzzi",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  },
  "c9f554b2-5290-4e2f-9b88-fdac4cbd67d7": {
   "activa": true,
@@ -395,8 +395,8 @@
   "entity_id": "c9f554b2-5290-4e2f-9b88-fdac4cbd67d7",
   "estado": "publicada",
   "estado_al_desaparecer": null,
-  "fecha_captacion_estimada": true,
-  "fecha_captacion_real": "2026-08-17",
+  "fecha_captacion_estimada": false,
+  "fecha_captacion_real": "2026-01-30",
   "fecha_desaparicion": null,
   "fecha_negociacion": null,
   "fecha_reservada": null,
@@ -421,7 +421,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "Redes sociales Campaña",
   "posible_duplicado_de": "2c76d23c-2d94-4cd4-8120-d052679e1608",
   "precio": 490000.0,
   "slug": "venta-gran-casa-en-colon-5-dorm-con-gran-terreno-1",
@@ -429,7 +429,7 @@
   "titulo": "Venta gran casa en colon 5 dorm. con gran terreno",
   "usar_en_proyeccion": false,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  },
  "cab1949c-02eb-445f-989a-68c5f31523df": {
   "activa": true,
@@ -443,8 +443,8 @@
   "entity_id": "cab1949c-02eb-445f-989a-68c5f31523df",
   "estado": "en_negociacion",
   "estado_al_desaparecer": null,
-  "fecha_captacion_estimada": true,
-  "fecha_captacion_real": "2026-08-17",
+  "fecha_captacion_estimada": false,
+  "fecha_captacion_real": "2025-01-30",
   "fecha_desaparicion": null,
   "fecha_negociacion": "2026-08-17",
   "fecha_reservada": null,
@@ -469,7 +469,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "Ref. Martin",
   "posible_duplicado_de": null,
   "precio": 54000.0,
   "slug": "venta-salon-3-dormitorios-cochera-paso-de-la-arena",
@@ -477,7 +477,7 @@
   "titulo": "Venta salón 3 dormitorios cochera paso de la arena",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  },
  "d8d7855f-b0bb-4122-bc7e-74c987f50396": {
   "activa": true,
@@ -491,8 +491,8 @@
   "entity_id": "d8d7855f-b0bb-4122-bc7e-74c987f50396",
   "estado": "en_negociacion",
   "estado_al_desaparecer": null,
-  "fecha_captacion_estimada": true,
-  "fecha_captacion_real": "2026-08-17",
+  "fecha_captacion_estimada": false,
+  "fecha_captacion_real": "2026-05-14",
   "fecha_desaparicion": null,
   "fecha_negociacion": "2026-08-17",
   "fecha_reservada": null,
@@ -517,7 +517,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "Ref. Martin",
   "posible_duplicado_de": null,
   "precio": 43000.0,
   "slug": "casa-1-dormitorio-cochera-cerrito-ideal-negocio",
@@ -525,7 +525,7 @@
   "titulo": "Casa 1 Dormitorio cochera Cerrito ideal negocio",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  },
  "f123f605-dc13-4aaa-ad8a-94ad44a11db6": {
   "activa": true,
@@ -539,8 +539,8 @@
   "entity_id": "f123f605-dc13-4aaa-ad8a-94ad44a11db6",
   "estado": "publicada",
   "estado_al_desaparecer": null,
-  "fecha_captacion_estimada": true,
-  "fecha_captacion_real": "2026-08-17",
+  "fecha_captacion_estimada": false,
+  "fecha_captacion_real": "2025-07-08",
   "fecha_desaparicion": null,
   "fecha_negociacion": null,
   "fecha_reservada": null,
@@ -565,7 +565,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "Ref. Martin",
   "posible_duplicado_de": null,
   "precio": 245000.0,
   "slug": "venta-gran-padron-punta-de-rieles-casa-y-terreno",
@@ -573,6 +573,6 @@
   "titulo": "Venta gran padrón punta de rieles casa y terreno",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-17"
+  "visto_ultima_vez": "2026-08-18"
  }
 }
