@@ -261,7 +261,16 @@ test("lleva lo que el usuario pidió: porcentaje, plata, IVA y total", () => {
   assert.match(t, /IVA \(22%\): USD 508/);
   assert.match(t, /Total a pagar: USD 2\.818/);
   assert.match(t, /Eusebio Vidal 3100/);
-  assert.match(t, /Juan Andrés Otero/);
+  assert.match(t, /Oficina RE\/MAX Único/);
+});
+
+/* El nombre y el telefono del agente NO van: el cliente ya esta hablando con el por
+   WhatsApp y los tiene en la pantalla del chat. Va la oficina y nada mas. */
+test("el texto va firmado por la oficina, no por el agente", () => {
+  const t = textoParaElCliente(facturaDe(["yo"]), { precio: 100000, agente: AGENTE });
+  assert.match(t, /Oficina RE\/MAX Único/);
+  assert.ok(!t.includes("Juan Andrés Otero"), "el nombre no va");
+  assert.ok(!t.includes("099616633"), "el telefono tampoco");
 });
 
 /* Si factura con IVA una parte sola, el recargo no es el 22% y nombrarlo se contradice
@@ -291,7 +300,7 @@ test("sin titulo ni precio sigue saliendo un texto usable", () => {
   const t = textoParaElCliente(facturaDe(["yo"]), {});
   assert.match(t, /Comisión inmobiliaria/);
   assert.match(t, /Total a pagar/);
-  assert.match(t, /RE\/MAX Único/);
+  assert.match(t, /Oficina RE\/MAX Único/);
   assert.ok(!t.includes("undefined"));
   assert.ok(!t.includes("Precio de la operación"));
 });
