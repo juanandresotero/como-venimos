@@ -9,7 +9,7 @@
    Y abajo, plegada, la cuenta al revés: "pago 100.000 con tu comisión adentro". */
 
 import {
-  calcular, conComisionAdentro, repartir, facturar, repartoDeLaPunta,
+  calcular, conComisionAdentro, repartir, facturar, repartoDeLaPunta, textoParaElCliente,
   LADOS, DESCUENTOS, IVA,
 } from "../lib/comisiones.js";
 import {
@@ -26,6 +26,7 @@ function nodo(marca) {
 
 /* Vive entre redibujados: si se perdiera al tocar un campo, la pantalla es inusable. */
 const entradas = {
+  titulo: "",
   precio: null,
   cantidad: 2,
   puntas: [
@@ -63,7 +64,7 @@ export function dibujarComisiones(estado) {
   trozo.append(repartirDiferencia(estado));
   trozo.append(quienCobra(estado, split));
   if (r.neto) trozo.append(detalle(r, split));
-  if (r.neto) trozo.append(paraCadaCliente(f));
+  if (r.neto) trozo.append(paraCadaCliente(f, estado));
   trozo.append(comisionAdentro(estado));
   return trozo;
 }
@@ -155,6 +156,16 @@ function basicos(estado) {
     </section>
   `);
   const contenedor = seccion.getElementById("campos");
+
+  const titulo = document.createElement("div");
+  titulo.className = "campo-fila";
+  titulo.innerHTML = html`
+    <label for="c-titulo">Propiedad o cliente <span class="apunte">para el texto que le mandás</span></label>
+    <input class="campo" id="c-titulo" type="text" value="${escapar(entradas.titulo)}"
+           placeholder="Eusebio Vidal 3100">
+  `;
+  titulo.querySelector(".campo").addEventListener("input", (e) => { entradas.titulo = e.target.value; });
+  contenedor.append(titulo);
 
   contenedor.append(campoMonto("c-precio", "Precio de la propiedad", "USD", entradas.precio,
     (v) => { entradas.precio = v; estado.redibujar(); }));
@@ -385,7 +396,7 @@ function quienCobra(estado, split) {
 
    Va separado por punta porque son dos personas distintas: el vendedor no tiene por qué
    ver lo que paga el comprador, y a cada uno se le manda lo suyo. */
-function paraCadaCliente(f) {
+function paraCadaCliente(f, estado) {
   const bloque = (p) => {
     // "a el vendedor" no lo dice nadie.
     const quien = p.lado === "vendedora" ? "al vendedor" : "al comprador";
@@ -412,10 +423,15 @@ function paraCadaCliente(f) {
             <span class="dato-valor"><strong>${plata(p.total)}</strong></span>
           </div>
         </div>
+        <div class="botonera">
+          <button class="boton boton-chico" data-mandar="${escapar(p.lado)}">Mandarle esto</button>
+          <button class="boton boton-chico" data-copiar="${escapar(p.lado)}">Copiar</button>
+        </div>
+        <p class="apunte" data-aviso="${escapar(p.lado)}" style="margin-top:6px"></p>
       </div>`;
   };
 
-  return nodo(html`
+  const seccion = nodo(html`
     <section class="tarjeta">
       <div class="tarjeta-titulo">
         <h2 class="titulo" style="font-size:17px">Para cada cliente</h2>
@@ -433,6 +449,46 @@ function paraCadaCliente(f) {
         : ""}
     </section>
   `);
+
+  /* Lo que se le manda al cliente lleva SOLO lo suyo: su porcentaje, su plata, su IVA y su
+     total. Nada del reparto interno — al cliente no le incumbe cuánto va a la oficina, y
+     meterlo abre una conversación que no tiene que ver con lo que está por firmar. */
+  const armar = (lado) => textoParaElCliente(
+    f.puntas.find((p) => p.lado === lado),
+    {
+      precio: entradas.precio,
+      titulo: entradas.titulo,
+      agente: (estado.datos.ajustes || {}).agente,
+    }
+  );
+  const avisar = (lado, texto) => {
+    const p = seccion.querySelector(`[data-aviso="${lado}"]`);
+    if (p) p.textContent = texto;
+  };
+
+  for (const boton of seccion.querySelectorAll("[data-mandar]")) {
+    boton.addEventListener("click", () => {
+      const lado = boton.dataset.mandar;
+      const texto = armar(lado);
+      if (navigator.share) {
+        navigator.share({ text: texto }).catch(() => {});
+        return;
+      }
+      window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
+    });
+  }
+  for (const boton of seccion.querySelectorAll("[data-copiar]")) {
+    boton.addEventListener("click", async () => {
+      const lado = boton.dataset.copiar;
+      try {
+        await navigator.clipboard.writeText(armar(lado));
+        avisar(lado, "Copiado.");
+      } catch {
+        avisar(lado, "El navegador no dejó copiar. Usá «Mandarle esto».");
+      }
+    });
+  }
+  return seccion;
 }
 
 /* ---------- El detalle, punta por punta ---------- */
