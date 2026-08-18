@@ -49,6 +49,14 @@ const MAXIMO_SUPERPUESTO = 3;
    cerraria en cada toque. Habria que volver a abrirlo para cada eleccion. */
 let panelAbierto = null;
 
+/* El modo ordenar se prende desde el menu y saca las flechas en cada tarjeta.
+
+   Antes esto era "mantener apretada la tarjeta", y en un telefono no funciona: apenas se
+   apoya el dedo sobre algo que se puede scrollear, el navegador se queda con el gesto y
+   manda un `pointercancel`. El temporizador se cancelaba solo y no pasaba nada — ni el
+   arrastre ni el toque. Un modo explicito ademas se descubre; un gesto escondido no. */
+let ordenando = false;
+
 export function dibujarSalud(estado) {
   const { negocios, cartera, ajustes } = estado.datos;
   const anioActual = estado.hoy.slice(0, 4);
@@ -112,6 +120,15 @@ export function dibujarSalud(estado) {
 
 /* ---------- La barra de menu ---------- */
 
+/* Cuatro desplegables. Ninguno se parece a una tarjeta del tablero, a proposito: si el
+   menu se ve igual que el contenido, deja de leerse como un menu.
+
+     Años e Indicadores  una columnita angosta colgando de su boton, sin explicaciones
+     Que hacer           una ventana en el medio de la pantalla, que es texto para leer
+     Reporte             dos iconos, sin una sola palabra
+
+   El panel angosto se ancla al boton que lo abrio; los dos ultimos se pegan a la derecha
+   para no irse de la pantalla. */
 const PANELES = [
   { clave: "anios", nombre: "Años" },
   { clave: "indicadores", nombre: "Indicadores" },
@@ -131,11 +148,12 @@ function barraDeMenu(ctx) {
     reporte: "",
   };
 
-  /* El panel flota sobre el contenido y el telon lo cierra al tocar afuera. Estando en el
-     flujo de la pagina empujaba todo para abajo y parecia una tarjeta mas del tablero. */
+  const indice = PANELES.findIndex((p) => p.clave === panelAbierto);
+  const enVentana = panelAbierto === "quehacer";
+  const colgando = Boolean(panelAbierto) && !enVentana;
+
   const barra = nodo(html`
     <div class="menu-caja">
-      ${panelAbierto ? '<button class="menu-telon" id="menu-telon" aria-label="Cerrar"></button>' : ""}
       <div class="barra-menu">
         ${PANELES.map((p) => html`
           <button class="menu-boton ${panelAbierto === p.clave ? "abierto" : ""}"
@@ -144,11 +162,13 @@ function barraDeMenu(ctx) {
             ${resumen[p.clave] ? html`<span class="menu-dato">${resumen[p.clave]}</span>` : ""}
           </button>`).join("")}
       </div>
-      ${panelAbierto ? '<div class="menu-panel" id="menu-panel"></div>' : ""}
+      ${colgando
+        ? html`<div class="menu-globo ${indice >= 2 ? "derecha" : ""}"
+                    style="--desde:${indice}" id="menu-panel"></div>`
+        : ""}
     </div>
   `);
 
-  const panel = barra.getElementById("menu-panel");
   for (const boton of barra.querySelectorAll("[data-panel]")) {
     boton.addEventListener("click", () => {
       // Tocar el que ya esta abierto lo cierra: es la unica forma de sacarlo del medio.
@@ -156,41 +176,53 @@ function barraDeMenu(ctx) {
       estado.redibujar();
     });
   }
-  const telon = barra.getElementById("menu-telon");
-  if (telon) {
+
+  const panel = barra.getElementById("menu-panel");
+  if (panel) {
+    if (panelAbierto === "anios") {
+      panel.append(panelDeAnios(disponibles, preferencias.anios, anioActual, guardar));
+    }
+    if (panelAbierto === "indicadores") {
+      panel.append(panelDeIndicadores(preferencias, guardar, estado));
+    }
+    if (panelAbierto === "reporte") panel.append(panelReporte(estado, anioActual));
+  }
+
+  /* El telon va DEBAJO del panel en el apilado.
+
+     Estaba por encima y lo tapaba entero: cada toque en un boton del menu caia en el
+     telon, cuyo unico trabajo es cerrar. Se veia como que la app "tintineaba y no pasaba
+     nada", y era eso — el menu se cerraba solo antes de que el boton se enterara. */
+  if (colgando) {
+    const telon = document.createElement("button");
+    telon.className = "menu-telon";
+    telon.setAttribute("aria-label", "Cerrar");
     telon.addEventListener("click", () => {
       panelAbierto = null;
       estado.redibujar();
     });
+    barra.querySelector(".menu-caja").prepend(telon);
   }
 
-  if (panel) {
-    if (panelAbierto === "anios") panel.append(panelDeAnios(disponibles, preferencias.anios, anioActual, guardar));
-    if (panelAbierto === "indicadores") panel.append(panelDeIndicadores(preferencias, guardar));
-    if (panelAbierto === "quehacer") panel.append(panelQueHacer(consejos));
-    if (panelAbierto === "reporte") panel.append(panelReporte(estado, anioActual));
-  }
-
+  if (enVentana) barra.append(ventanaQueHacer(consejos, estado));
   return barra;
 }
 
+/* Una columna de años y nada mas. Sin parrafos: lo que hace cada opcion se ve tocandola. */
 function panelDeAnios(disponibles, elegidos, anioActual, guardar) {
   const activos = new Set(elegidos === null ? [anioActual] : elegidos);
   const todos = elegidos !== null && elegidos.length === 0;
+  const tilde = '<span class="tilde" aria-hidden="true">✓</span>';
 
   const caja = nodo(html`
-    <div>
-      <div class="tags">
-        ${disponibles.map((a) => html`
-          <button class="tag ${activos.has(a) && !todos ? "activo" : ""}" data-anio="${a}">
-            ${a}
-          </button>`).join("")}
-        <button class="tag ${todos ? "activo" : ""}" data-anio="todos">Todos</button>
-      </div>
-      <p class="apunte" style="margin-top:10px">
-        Con dos o tres años elegidos las curvas se superponen para comparar. Con
-        <strong>Todos</strong> se suman todos los eneros, todos los febreros y así.
-      </p>
+    <div class="menu-lista">
+      ${[...disponibles].reverse().map((a) => html`
+        <button class="menu-opcion ${activos.has(a) && !todos ? "activo" : ""}" data-anio="${a}">
+          <span>${a}</span>${activos.has(a) && !todos ? tilde : ""}
+        </button>`).join("")}
+      <button class="menu-opcion ${todos ? "activo" : ""}" data-anio="todos">
+        <span>Todos</span>${todos ? tilde : ""}
+      </button>
     </div>
   `);
 
@@ -210,34 +242,36 @@ function panelDeAnios(disponibles, elegidos, anioActual, guardar) {
   return caja;
 }
 
-function panelDeIndicadores(preferencias, guardar) {
+/* Lista corta de nombres. Todos y Ninguno van arriba, como titulo de la columna. */
+function panelDeIndicadores(preferencias, guardar, estado) {
   const elegidos = new Set(preferencias.indicadores);
+  const tilde = '<span class="tilde" aria-hidden="true">✓</span>';
+
   const caja = nodo(html`
-    <div>
-      <div class="botonera" style="margin:0 0 12px">
-        <button class="filtro" data-todos="si">Prender todos</button>
-        <button class="filtro" data-todos="no">Apagar todos</button>
+    <div class="menu-lista">
+      <div class="menu-cabeza">
+        <button class="menu-mini" data-todos="si">Todos</button>
+        <button class="menu-mini" data-todos="no">Ninguno</button>
       </div>
       ${prefs.INDICADORES.map((i) => html`
-        <label class="opcion">
-          <input type="checkbox" data-indicador="${i.clave}" ${elegidos.has(i.clave) ? "checked" : ""}>
-          <span>
-            <span class="opcion-nombre">${escapar(i.nombre)}</span>
-            <span class="opcion-pista">${escapar(i.pista)}</span>
-          </span>
-        </label>`).join("")}
-      <div class="ranura-reparto"></div>
+        <button class="menu-opcion ${elegidos.has(i.clave) ? "activo" : ""}"
+                data-indicador="${i.clave}">
+          <span>${escapar(i.nombre)}</span>${elegidos.has(i.clave) ? tilde : ""}
+        </button>`).join("")}
+      <button class="menu-opcion aparte ${ordenando ? "activo" : ""}" data-ordenar="si">
+        <span>${ordenando ? "Terminar de ordenar" : "Ordenar tarjetas"}</span>
+      </button>
     </div>
   `);
 
-  for (const casilla of caja.querySelectorAll("[data-indicador]")) {
-    casilla.addEventListener("change", () => {
-      const clave = casilla.dataset.indicador;
+  for (const boton of caja.querySelectorAll("[data-indicador]")) {
+    boton.addEventListener("click", () => {
+      const clave = boton.dataset.indicador;
       // Prender uno lo manda al FINAL: aparece abajo de todo, donde se lo ve entrar.
       // Si se colara en el medio, el orden que el usuario armo se le desarma solo.
-      const nuevos = casilla.checked
-        ? [...preferencias.indicadores, clave]
-        : preferencias.indicadores.filter((c) => c !== clave);
+      const nuevos = elegidos.has(clave)
+        ? preferencias.indicadores.filter((c) => c !== clave)
+        : [...preferencias.indicadores, clave];
       guardar({ indicadores: nuevos });
     });
   }
@@ -246,49 +280,72 @@ function panelDeIndicadores(preferencias, guardar) {
       guardar({ indicadores: boton.dataset.todos === "si" ? prefs.todos() : [] });
     });
   }
-
-  // El tipo de grafica del reparto solo se ofrece si hay algun indicador que lo use.
-  if (["origenes", "barrios", "cartera_canal"].some((c) => elegidos.has(c))) {
-    const ranura = caja.querySelector(".ranura-reparto");
-    ranura.append(nodo(html`<p class="apunte" style="margin:14px 0 6px">Barrios y canales, en</p>`));
-    ranura.append(selectorDeTipo("graficoReparto", preferencias.graficoReparto, guardar));
-  }
+  caja.querySelector("[data-ordenar]").addEventListener("click", () => {
+    ordenando = !ordenando;
+    panelAbierto = null;
+    estado.redibujar();
+  });
   return caja;
 }
 
 const ROJAS = new Set(["falta_volumen", "categoria", "concentracion", "trabadas"]);
 
-/* Aca no se elige nada: son los comentarios sobre tus numeros, para leer y cerrar. */
-function panelQueHacer(consejos) {
-  if (!consejos.length) {
-    return nodo(html`<p class="apunte">Nada que marcarte hoy. Los números vienen prolijos.</p>`);
-  }
-  return nodo(html`
-    <div>
-      <p class="apunte" style="margin-bottom:12px">Con tus propios números.</p>
-      ${consejos.map((c) => html`
-        <div class="consejo ${ROJAS.has(c.clave) ? "rojo" : ""}">
-          <p class="consejo-titulo">${escapar(c.titulo)}</p>
-          <p class="consejo-detalle">${escapar(c.detalle)}</p>
-        </div>`).join("")}
+/* Aca no se elige nada: son los comentarios sobre tus numeros, para leer y cerrar.
+
+   Por eso va en una ventana en el medio de la pantalla y no colgando de un boton: es lo
+   unico del menu que se LEE, y leer parrafos en una columna de 200px es incomodo. */
+function ventanaQueHacer(consejos, estado) {
+  const caja = nodo(html`
+    <div class="ventana-fondo" id="ventana-fondo">
+      <div class="ventana" role="dialog" aria-label="Qué hacer">
+        <div class="ventana-cabeza">
+          <h2 class="titulo" style="font-size:17px">Qué hacer</h2>
+          <button class="ventana-cerrar" id="cerrar-ventana" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="ventana-cuerpo">
+          ${consejos.length
+            ? consejos.map((c) => html`
+                <div class="consejo ${ROJAS.has(c.clave) ? "rojo" : ""}">
+                  <p class="consejo-titulo">${escapar(c.titulo)}</p>
+                  <p class="consejo-detalle">${escapar(c.detalle)}</p>
+                </div>`).join("")
+            : '<p class="apunte">Nada que marcarte hoy. Los números vienen prolijos.</p>'}
+        </div>
+      </div>
     </div>
   `);
+  const cerrar = () => { panelAbierto = null; estado.redibujar(); };
+  caja.getElementById("cerrar-ventana").addEventListener("click", cerrar);
+  caja.getElementById("ventana-fondo").addEventListener("click", (evento) => {
+    if (evento.target.id === "ventana-fondo") cerrar();
+  });
+  return caja;
 }
+
+/* Dos iconos y ninguna palabra: bajar y compartir se entienden en cualquier idioma. */
+const ICONO_BAJAR = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+  + '<path d="M12 3v11m0 0 4-4m-4 4-4-4" fill="none" stroke="currentColor" stroke-width="2"'
+  + ' stroke-linecap="round" stroke-linejoin="round"/>'
+  + '<path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="currentColor"'
+  + ' stroke-width="2" stroke-linecap="round"/></svg>';
+
+const ICONO_COMPARTIR = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+  + '<circle cx="18" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/>'
+  + '<circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/>'
+  + '<circle cx="18" cy="19" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/>'
+  + '<path d="m8.4 10.8 7.2-4.2m0 10.8-7.2-4.2" fill="none" stroke="currentColor"'
+  + ' stroke-width="2" stroke-linecap="round"/></svg>';
 
 /* El reporte se arma en el momento y se baja como archivo. No hay servidor atras: es el
    mismo navegador el que escribe el HTML. */
 function panelReporte(estado, anio) {
   const caja = nodo(html`
-    <div>
-      <p class="apunte" style="margin-bottom:12px">
-        Un archivo con todo esto adentro: capas, ritmo, gráficas y qué hacer para llegar.
-        Se abre en cualquier teléfono, aunque no haya señal.
-      </p>
-      <div class="botonera" style="margin-top:0">
-        <button class="boton boton-primario" id="bajar-reporte">Descargar</button>
-        <button class="boton" id="compartir-reporte">Compartir</button>
-      </div>
-      <p class="apunte" id="aviso-reporte" style="margin-top:10px"></p>
+    <div class="menu-iconos">
+      <button class="boton-icono" id="bajar-reporte" aria-label="Descargar el reporte"
+              title="Descargar">${ICONO_BAJAR}</button>
+      <button class="boton-icono" id="compartir-reporte" aria-label="Compartir el reporte"
+              title="Compartir">${ICONO_COMPARTIR}</button>
+      <p class="apunte" id="aviso-reporte"></p>
     </div>
   `);
 
@@ -316,7 +373,7 @@ function panelReporte(estado, anio) {
         return;   // se cancelo
       }
     }
-    aviso.textContent = "Este navegador no comparte archivos. Descargalo y adjuntalo.";
+    aviso.textContent = "Este navegador no comparte archivos. Descargalo.";
   });
 
   return caja;
@@ -514,11 +571,15 @@ function graficaAnual(anios, activos, preferencias, guardar) {
 
 /* Las tarjetas de los indicadores, en el orden que el usuario dejo.
 
-   Un toque corto abre la pantalla del indicador; mantener apretado lo agarra para
-   moverlo de lugar. Distinguirlos por el TIEMPO es lo unico que funciona en un telefono,
-   donde no hay boton derecho ni sitio para una manija de arrastre en cada tarjeta. */
-const MS_PARA_AGARRAR = 400;
+   Un toque abre la pantalla del indicador. Para moverlas de lugar hay un MODO ORDENAR que
+   se prende desde el menu: mientras esta prendido cada tarjeta muestra sus flechas y el
+   toque no navega.
 
+   Antes esto era "mantener apretada la tarjeta" y no funcionaba en el telefono. Apenas se
+   apoya el dedo sobre algo que se puede scrollear, el navegador se queda con el gesto para
+   ver si vas a scrollear y manda `pointercancel`: el temporizador se cancelaba solo, asi
+   que no salia ni el arrastre ni el toque. Un `click` de toda la vida no tiene ese
+   problema, y un modo con nombre se descubre — un gesto escondido no. */
 function indicadoresElegidos(estado, ctx, preferencias, guardar) {
   const contenedor = document.createElement("div");
   contenedor.className = "indicadores";
@@ -526,6 +587,12 @@ function indicadoresElegidos(estado, ctx, preferencias, guardar) {
   const armados = preferencias.indicadores
     .map((clave) => ({ clave, armado: armar(clave, ctx) }))
     .filter((x) => x.armado);
+
+  if (ordenando) {
+    contenedor.append(nodo(html`
+      <p class="aviso-orden">Movelas con las flechas. Terminá desde
+      <strong>Indicadores → Terminar de ordenar</strong>.</p>`));
+  }
 
   if (!armados.length) {
     contenedor.append(nodo(html`
@@ -536,82 +603,43 @@ function indicadoresElegidos(estado, ctx, preferencias, guardar) {
     return contenedor;
   }
 
-  for (const { clave, armado } of armados) {
+  armados.forEach(({ clave, armado }, i) => {
     const tarjeta = nodo(html`
-      <section class="tarjeta tarjeta-indicador" data-clave="${clave}" tabindex="0">
+      <section class="tarjeta tarjeta-indicador ${ordenando ? "ordenando" : ""}"
+               data-clave="${clave}" ${ordenando ? "" : 'role="button" tabindex="0"'}>
+        ${ordenando ? html`
+          <div class="mover">
+            <button class="boton boton-chico" data-mover="-1" ${i === 0 ? "disabled" : ""}>↑</button>
+            <button class="boton boton-chico" data-mover="1"
+                    ${i === armados.length - 1 ? "disabled" : ""}>↓</button>
+            <span class="apunte">${i + 1} de ${armados.length}</span>
+          </div>` : ""}
         <div class="tarjeta-titulo">
           <h2 class="titulo">${escapar(armado.titulo)}</h2>
           <span class="apunte">${escapar(armado.apunte || "")}</span>
         </div>
         ${armado.resumen}
-        <div class="mover" hidden>
-          <button class="boton boton-chico" data-mover="-1">↑ Subir</button>
-          <button class="boton boton-chico" data-mover="1">↓ Bajar</button>
-          <button class="boton boton-chico" data-mover="listo">Listo</button>
-        </div>
+        ${ordenando ? "" : '<p class="ver-mas">Ver todo ›</p>'}
       </section>`).firstElementChild;
 
-    engancharTarjeta(tarjeta, clave, estado, preferencias, guardar);
-    contenedor.append(tarjeta);
-  }
-  return contenedor;
-}
-
-/* Un toque corto entra al detalle; mantener apretado saca los botones de mover.
-
-   Se cancela si el dedo se corre mas de unos pixeles: eso es scrollear, no apretar. Sin
-   eso, bajar por la pantalla con el dedo apoyado en una tarjeta la agarraba sola. */
-function engancharTarjeta(tarjeta, clave, estado, preferencias, guardar) {
-  const controles = tarjeta.querySelector(".mover");
-  let reloj = null;
-  let desde = null;
-  let agarrada = false;
-
-  const soltar = () => {
-    clearTimeout(reloj);
-    reloj = null;
-  };
-
-  tarjeta.addEventListener("pointerdown", (evento) => {
-    if (evento.target.closest("button")) return;
-    desde = { x: evento.clientX, y: evento.clientY };
-    agarrada = false;
-    reloj = setTimeout(() => {
-      agarrada = true;
-      tarjeta.classList.add("agarrada");
-      controles.hidden = false;
-      if (navigator.vibrate) navigator.vibrate(12);
-    }, MS_PARA_AGARRAR);
-  });
-
-  tarjeta.addEventListener("pointermove", (evento) => {
-    if (!desde || !reloj) return;
-    const corrido = Math.abs(evento.clientX - desde.x) + Math.abs(evento.clientY - desde.y);
-    if (corrido > 10) soltar();
-  });
-
-  tarjeta.addEventListener("pointerup", (evento) => {
-    const estabaEsperando = Boolean(reloj);
-    soltar();
-    if (evento.target.closest("button")) return;
-    // Toque corto, sin haberla agarrado y sin los botones de mover afuera: se entra.
-    if (estabaEsperando && !agarrada && controles.hidden) estado.irA("indicador", clave);
-  });
-  tarjeta.addEventListener("pointercancel", soltar);
-  tarjeta.addEventListener("pointerleave", soltar);
-
-  for (const boton of tarjeta.querySelectorAll("[data-mover]")) {
-    boton.addEventListener("click", (evento) => {
-      evento.stopPropagation();
-      const que = boton.dataset.mover;
-      if (que === "listo") {
-        controles.hidden = true;
-        tarjeta.classList.remove("agarrada");
-        return;
+    if (ordenando) {
+      for (const boton of tarjeta.querySelectorAll("[data-mover]")) {
+        boton.addEventListener("click", () => {
+          guardar({ indicadores: prefs.mover(preferencias.indicadores, clave, Number(boton.dataset.mover)) });
+        });
       }
-      guardar({ indicadores: prefs.mover(preferencias.indicadores, clave, Number(que)) });
-    });
-  }
+    } else {
+      tarjeta.addEventListener("click", () => estado.irA("indicador", clave));
+      tarjeta.addEventListener("keydown", (evento) => {
+        if (evento.key === "Enter" || evento.key === " ") {
+          evento.preventDefault();
+          estado.irA("indicador", clave);
+        }
+      });
+    }
+    contenedor.append(tarjeta);
+  });
+  return contenedor;
 }
 
 /* ---------- Los cuatro momentos de la plata ---------- */
