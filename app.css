@@ -125,6 +125,90 @@ body {
   box-shadow: var(--sombra);
 }
 .tarjeta-titulo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.tarjeta-apretada { padding: 14px 16px; }
+
+/* ---------- Selector de años y de tipo de grafica ---------- */
+
+.tags { display: flex; flex-wrap: wrap; gap: 7px; }
+.tag {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--linea);
+  background: var(--lienzo);
+  color: var(--tinta-2);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.tag.activo { background: var(--azul); border-color: var(--azul); color: #fff; }
+.tag:active { transform: translateY(1px); }
+
+/* Mas chicas que los tags: eligen COMO se ve un dato, no CUAL. La jerarquia visual tiene
+   que decir que son una decision menor. */
+.pastillas { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+.pastilla {
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--linea);
+  background: transparent;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+.pastilla.activo { background: var(--azul-suave); border-color: var(--azul-claro); color: var(--azul); }
+.pastilla:active { transform: translateY(1px); }
+
+/* ---------- Graficas en SVG ---------- */
+
+.grafico-svg { display: block; width: 100%; height: 130px; overflow: visible; }
+.grafico-pies {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 10.5px;
+  color: var(--tinta-2);
+  font-variant-numeric: tabular-nums;
+}
+.grafico-pies span { flex: 1; text-align: center; }
+.grafico-torta { display: block; width: 132px; height: 132px; margin: 0 auto; }
+.torta-caja { margin-bottom: 16px; }
+
+.leyenda { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+.leyenda-item { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--tinta-2); font-weight: 600; }
+.leyenda-punto { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; display: inline-block; }
+
+/* ---------- Reparto: barras horizontales con su cantidad debajo ---------- */
+
+.reparto-fila { margin-bottom: 13px; }
+.reparto-fila:last-child { margin-bottom: 0; }
+.reparto-cabeza { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.reparto-nombre { font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.reparto-valor { font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.reparto-pista { height: 7px; border-radius: 4px; background: var(--lienzo-2); margin: 5px 0 4px; overflow: hidden; }
+.reparto-relleno { height: 100%; border-radius: 4px; background: var(--azul); transition: width .6s cubic-bezier(.2, .7, .3, 1); }
+.reparto-pie { font-size: 11.5px; color: var(--tinta-2); }
+
+/* ---------- Menu de indicadores ---------- */
+
+.indicadores { display: contents; }
+.menu-indicadores { display: grid; gap: 2px; margin-top: 12px; }
+.opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 2px;
+  cursor: pointer;
+  border-top: 1px solid var(--linea);
+}
+.opcion input { width: 19px; height: 19px; margin: 1px 0 0; accent-color: var(--azul); flex-shrink: 0; }
+.opcion-nombre { display: block; font-size: 14px; font-weight: 600; }
+.opcion-pista { display: block; font-size: 12px; color: var(--tinta-2); margin-top: 1px; }
+.boton-chico { padding: 5px 12px; font-size: 12.5px; }
 
 /* ---------- Barra de estado del robot ---------- */
 
@@ -253,9 +337,17 @@ body {
 
 /* ---------- Grafica de barras ---------- */
 
-.barras { display: flex; align-items: flex-end; gap: 8px; height: 116px; margin-top: 6px; }
-.barras-columna { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; height: 100%; }
-.barras-cana { background: var(--azul-claro); border-radius: 5px 5px 0 0; min-height: 3px; transition: height .8s cubic-bezier(.2, .7, .3, 1); }
+/* El alto de la cana va en % del HUECO, no de la columna entera.
+
+   Estaba mal y mentia: la columna mide 116px, pero el numerito de arriba y la etiqueta de
+   abajo se comen ~38px. Una cana que pedia 116px (la mas alta) y otra que pedia 79px (el
+   68%) terminaban las DOS aplastadas contra los 78px libres, o sea identicas. Todo lo que
+   pasara de dos tercios se dibujaba igual: 59k, 44k y 40k salian a la misma altura.
+   El hueco con flex:1 se queda con el sobrante y ahi si el porcentaje es de verdad. */
+.barras { display: flex; align-items: flex-end; gap: 8px; height: 132px; margin-top: 6px; }
+.barras-columna { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; height: 100%; }
+.barras-hueco { flex: 1; min-height: 0; display: flex; align-items: flex-end; }
+.barras-cana { width: 100%; background: var(--azul-claro); border-radius: 5px 5px 0 0; min-height: 3px; transition: height .8s cubic-bezier(.2, .7, .3, 1); }
 .barras-columna.actual .barras-cana { background: var(--azul); }
 .barras-pie { text-align: center; font-size: 10.5px; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
 .barras-tope { text-align: center; font-size: 10.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
