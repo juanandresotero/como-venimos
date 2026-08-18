@@ -38,7 +38,8 @@
   "cab1949c-02eb-445f-989a-68c5f31523df": {
    "fecha_captacion_real": "2025-01-30",
    "fecha_captacion_estimada": false,
-   "origen_captacion": "Ref. Martin"
+   "origen_captacion": "Ref. Martin",
+   "precio_negociacion": 52000
   },
   "2c76d23c-2d94-4cd4-8120-d052679e1608": {
    "origen_captacion": "Redes sociales Campaña",
