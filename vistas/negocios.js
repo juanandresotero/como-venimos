@@ -13,7 +13,31 @@ function nodo(marca) {
   return molde.content;
 }
 
-const filtro = { anio: "todos", tipo: "todos", conAvisos: false };
+/* Como se ordena la lista. Cada uno tiene su desempate y su direccion natural: las fechas
+   y la plata van de mayor a menor (lo ultimo y lo mas grande primero), la direccion al
+   reves. Los que no tienen el dato caen al final en vez de mezclarse arriba con ceros. */
+export const ORDENES = [
+  { clave: "fecha", nombre: "Fecha", campo: (n) => n.fecha_fin || n.fecha_inicio || "" },
+  { clave: "ticket", nombre: "Ticket", campo: (n) => n.precio_operacion || 0 },
+  { clave: "ganancia", nombre: "Ganancia", campo: (n) => n.ganancia || 0 },
+  { clave: "direccion", nombre: "Dirección", campo: (n) => (n.direccion || "").toLowerCase() },
+];
+
+export function ordenar(negocios, clave) {
+  const orden = ORDENES.find((o) => o.clave === clave) || ORDENES[0];
+  const alReves = orden.clave === "direccion";
+  return [...negocios].sort((a, b) => {
+    const x = orden.campo(a);
+    const y = orden.campo(b);
+    // Sin dato, al fondo: un negocio sin precio no es "el mas barato".
+    const vacio = (v) => v === "" || v === 0 || v === null || v === undefined;
+    if (vacio(x) !== vacio(y)) return vacio(x) ? 1 : -1;
+    if (typeof x === "string") return alReves ? x.localeCompare(y) : y.localeCompare(x);
+    return y - x;
+  });
+}
+
+const filtro = { anio: "todos", tipo: "todos", conAvisos: false, orden: "fecha" };
 let altaAbierta = false;
 // Fuera del dibujado: tocar una propiedad redibuja, y si el estado viviera en el HTML la
 // solapa se cerraria sola en cada toque.
@@ -32,8 +56,13 @@ export function dibujarNegocios(estado) {
   const todos = estado.datos.negocios || [];
   const anios = [...new Set(todos.map((n) => (n.fecha_fin || "").slice(0, 4)).filter(Boolean))]
     .sort().reverse();
-  const lista = aplicarFiltros(todos)
-    .sort((a, b) => (b.fecha_fin || "").localeCompare(a.fecha_fin || ""));
+  const filtrados = aplicarFiltros(todos);
+  /* Las BUSQUEDAS van al final, con su propio titulo. No son de tu cartera: la propiedad
+     era de otro agente y vos pusiste el comprador. Mezcladas con los negocios propios
+     ensuciaban la lista de lo que de verdad captaste. */
+  const propios = ordenar(filtrados.filter((n) => !esBusqueda(n, estado.datos.ajustes)), filtro.orden);
+  const busquedas = ordenar(filtrados.filter((n) => esBusqueda(n, estado.datos.ajustes)), filtro.orden);
+  const lista = filtrados;
 
   const totalFact = lista.reduce((t, n) => t + (n.estado === "cerrado" ? n.facturacion || 0 : 0), 0);
   const totalGan = lista.reduce((t, n) => t + (n.estado === "cerrado" ? n.ganancia || 0 : 0), 0);
@@ -63,6 +92,9 @@ export function dibujarNegocios(estado) {
       <button class="filtro ${filtro.conAvisos ? "prendido" : ""}" id="f-avisos">
         ${filtro.conAvisos ? "● " : ""}Con pendientes
       </button>
+      <select class="filtro" id="f-orden" aria-label="Ordenar por">
+        ${ORDENES.map((o) => `<option value="${o.clave}"${filtro.orden === o.clave ? " selected" : ""}>Por ${o.nombre.toLowerCase()}</option>`).join("")}
+      </select>
     </section>
   `));
 
@@ -75,13 +107,32 @@ export function dibujarNegocios(estado) {
     estado.hoy.slice(0, 4));
   if (c.publicado.detalle.length) trozo.append(loPotencial(c.publicado, estado));
 
-  const contenedor = document.createElement("div");
-  contenedor.className = "lista";
-  for (const n of lista) contenedor.append(fila(n, estado));
   if (!lista.length) {
-    contenedor.append(nodo(html`<p class="pronto">Ningún negocio con esos filtros.</p>`));
+    trozo.append(nodo(html`<p class="pronto">Ningún negocio con esos filtros.</p>`));
   }
-  trozo.append(contenedor);
+
+  if (propios.length) {
+    const contenedor = document.createElement("div");
+    contenedor.className = "lista";
+    for (const n of propios) contenedor.append(fila(n, estado));
+    trozo.append(contenedor);
+  }
+
+  if (busquedas.length) {
+    const ganancia = busquedas.reduce((t, n) => t + (n.estado === "cerrado" ? n.ganancia || 0 : 0), 0);
+    trozo.append(nodo(html`
+      <div class="separador-indicadores">
+        <span class="separador-nombre">Búsquedas · ${busquedas.length}</span>
+      </div>
+      <p class="apunte" style="margin:-4px 0 10px">
+        La propiedad era de otro agente y vos pusiste el comprador.
+        ${ganancia ? `<strong>${plataUSD(ganancia)}</strong> a tu bolsillo.` : ""}
+      </p>`));
+    const contenedor = document.createElement("div");
+    contenedor.className = "lista";
+    for (const n of busquedas) contenedor.append(fila(n, estado));
+    trozo.append(contenedor);
+  }
 
   trozo.getElementById("f-anio").addEventListener("change", (e) => {
     filtro.anio = e.target.value;
@@ -89,6 +140,10 @@ export function dibujarNegocios(estado) {
   });
   trozo.getElementById("f-tipo").addEventListener("change", (e) => {
     filtro.tipo = e.target.value;
+    estado.redibujar();
+  });
+  trozo.getElementById("f-orden").addEventListener("change", (e) => {
+    filtro.orden = e.target.value;
     estado.redibujar();
   });
   trozo.getElementById("f-avisos").addEventListener("click", () => {
