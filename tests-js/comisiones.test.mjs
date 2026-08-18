@@ -287,9 +287,9 @@ test("el 22% solo se nombra cuando TODO lleva IVA", () => {
   assert.ok(!parcial.includes("IVA (22%)"), "ese 22% no cerraría con el monto");
 });
 
-test("sin IVA marcado, el renglón no aparece", () => {
+test("sin IVA marcado, no se le cobra IVA", () => {
   const t = textoParaElCliente(facturaDe([]), { precio: 100000, agente: AGENTE });
-  assert.ok(!t.includes("IVA"));
+  assert.ok(!/^IVA/m.test(t), "no hay nada de IVA para cobrarle");
   assert.match(t, /Total a pagar: USD 3\.000/);
 });
 
@@ -391,7 +391,7 @@ test("el descuento se dice en el texto, con el total que hubiera pagado", () => 
   );
   assert.match(t, /Total a pagar: USD 2\.818/);
   assert.match(t, /Descuento aplicado: 23%/);
-  assert.match(t, /sin el descuento el total sería USD 3\.660/);
+  assert.match(t, /sin descuento, el 3% \+ IVA sería USD 3\.660/);
 });
 
 test("sin descuento no aparece el renglón", () => {
@@ -406,22 +406,41 @@ test("el texto con reparto también lo lleva", () => {
     facturaDe(["yo"], { descuentoTipo: "monto", descuentoValor: 300 }),
     { precio: 100000 }
   );
-  assert.match(t, /Descuento aplicado: 10%/);
+  assert.match(t, /Descuento aplicado: 18,9%/);
 });
 
-/* El IVA NO mueve el porcentaje de descuento, aunque parezca que sí: multiplica igual al
-   número con descuento y al número sin descuento, así que se simplifica. Lo que cambia es
-   la plata ahorrada. Si esto dejara de cumplirse, el texto le estaría diciendo al cliente
-   un porcentaje que no puede verificar dividiendo los dos totales que tiene enfrente. */
-test("el porcentaje de descuento es el mismo lleve IVA o no; lo que cambia es la plata", () => {
-  const donde = { descuentoTipo: "pct", descuentoValor: 0.23 };
-  const conIva = facturaDe(["yo", "colega", "oficina"], donde);
-  const sinIva = facturaDe([], donde);
+/* La referencia es SIEMPRE la cuenta completa: comisión entera + IVA entero. Por eso no
+   hace falta tocar el 3% para que haya descuento — alcanza con no cobrar el IVA. */
+test("descontarle solo el IVA ya es un descuento, y se dice", () => {
+  const f = facturaDe([]);
+  assert.equal(f.comision, 3000);
+  assert.equal(f.total, 3000);
+  assert.ok(Math.abs(f.total_lista - 3660) < 0.01);
+  assert.ok(Math.abs(f.pct_descuento - 0.1803) < 0.0001);
 
-  assert.ok(Math.abs(conIva.pct_descuento - 0.23) < 1e-9);
-  assert.ok(Math.abs(sinIva.pct_descuento - 0.23) < 1e-9);
-  assert.ok(Math.abs(sinIva.ahorro - 690) < 0.01);
-  assert.ok(Math.abs(conIva.ahorro - 690 * 1.22) < 0.01);
+  const t = textoParaElCliente(f, { precio: 100000 });
+  assert.match(t, /Descuento aplicado: 18%/);
+  assert.match(t, /sin descuento, el 3% \+ IVA sería USD 3\.660/);
+});
+
+test("con el IVA de una sola parte el descuento ronda el 10%", () => {
+  const f = facturaDe(["yo"]);
+  assert.ok(Math.abs(f.total - 3297) < 0.01);
+  assert.ok(Math.abs(f.pct_descuento - 0.0992) < 0.0001);
+});
+
+test("el descuento de la comisión y el del IVA se suman en un solo número", () => {
+  const f = facturaDe([], { descuentoTipo: "pct", descuentoValor: 0.23 });
+  assert.equal(f.total, 2310);
+  assert.ok(Math.abs(f.pct_descuento - (1 - 2310 / 3660)) < 1e-12);
+  assert.match(textoParaElCliente(f, {}), /Descuento aplicado: 36,9%/);
+});
+
+test("cobrando todo como corresponde no hay descuento que anunciar", () => {
+  const f = facturaDe(["yo", "colega", "oficina"]);
+  assert.ok(Math.abs(f.total - 3660) < 0.01);
+  assert.ok(f.pct_descuento < 1e-12);
+  assert.ok(!textoParaElCliente(f, {}).includes("Descuento aplicado"));
 });
 
 test("el porcentaje que se muestra se verifica dividiendo los dos totales", () => {
