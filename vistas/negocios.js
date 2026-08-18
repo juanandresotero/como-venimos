@@ -56,13 +56,11 @@ export function dibujarNegocios(estado) {
   const todos = estado.datos.negocios || [];
   const anios = [...new Set(todos.map((n) => (n.fecha_fin || "").slice(0, 4)).filter(Boolean))]
     .sort().reverse();
-  const filtrados = aplicarFiltros(todos);
-  /* Las BUSQUEDAS van al final, con su propio titulo. No son de tu cartera: la propiedad
-     era de otro agente y vos pusiste el comprador. Mezcladas con los negocios propios
-     ensuciaban la lista de lo que de verdad captaste. */
-  const propios = ordenar(filtrados.filter((n) => !esBusqueda(n, estado.datos.ajustes)), filtro.orden);
-  const busquedas = ordenar(filtrados.filter((n) => esBusqueda(n, estado.datos.ajustes)), filtro.orden);
-  const lista = filtrados;
+  /* Una sola lista, con el orden que el usuario haya elegido. Las busquedas van mezcladas
+     y se reconocen por su chip: separarlas es util en Cartera, donde se mira lo que esta
+     en marcha, pero aca se viene a buscar UN negocio y partir la lista solo obliga a
+     mirar en dos lugares. */
+  const lista = ordenar(aplicarFiltros(todos), filtro.orden);
 
   const totalFact = lista.reduce((t, n) => t + (n.estado === "cerrado" ? n.facturacion || 0 : 0), 0);
   const totalGan = lista.reduce((t, n) => t + (n.estado === "cerrado" ? n.ganancia || 0 : 0), 0);
@@ -107,32 +105,13 @@ export function dibujarNegocios(estado) {
     estado.hoy.slice(0, 4));
   if (c.publicado.detalle.length) trozo.append(loPotencial(c.publicado, estado));
 
+  const contenedor = document.createElement("div");
+  contenedor.className = "lista";
+  for (const n of lista) contenedor.append(fila(n, estado));
   if (!lista.length) {
-    trozo.append(nodo(html`<p class="pronto">Ningún negocio con esos filtros.</p>`));
+    contenedor.append(nodo(html`<p class="pronto">Ningún negocio con esos filtros.</p>`));
   }
-
-  if (propios.length) {
-    const contenedor = document.createElement("div");
-    contenedor.className = "lista";
-    for (const n of propios) contenedor.append(fila(n, estado));
-    trozo.append(contenedor);
-  }
-
-  if (busquedas.length) {
-    const ganancia = busquedas.reduce((t, n) => t + (n.estado === "cerrado" ? n.ganancia || 0 : 0), 0);
-    trozo.append(nodo(html`
-      <div class="separador-indicadores">
-        <span class="separador-nombre">Búsquedas · ${busquedas.length}</span>
-      </div>
-      <p class="apunte" style="margin:-4px 0 10px">
-        La propiedad era de otro agente y vos pusiste el comprador.
-        ${ganancia ? `<strong>${plataUSD(ganancia)}</strong> a tu bolsillo.` : ""}
-      </p>`));
-    const contenedor = document.createElement("div");
-    contenedor.className = "lista";
-    for (const n of busquedas) contenedor.append(fila(n, estado));
-    trozo.append(contenedor);
-  }
+  trozo.append(contenedor);
 
   trozo.getElementById("f-anio").addEventListener("change", (e) => {
     filtro.anio = e.target.value;

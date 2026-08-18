@@ -86,23 +86,29 @@ function busquedasAbiertas(estado) {
   const anio = Number(estado.hoy.slice(0, 4));
   const trozo = nodo(html`
     <div class="separador-indicadores">
-      <span class="separador-nombre">Negocios · búsquedas abiertas · ${abiertas.length}</span>
+      <span class="separador-nombre">Búsquedas en curso</span>
     </div>
-    <p class="apunte" style="margin:-4px 0 10px">
-      La propiedad es de otro agente y vos tenés el comprador. El robot no las ve.
-    </p>
     <div class="lista" id="lista-busquedas"></div>
   `);
 
   const lista = trozo.getElementById("lista-busquedas");
   for (const n of abiertas) {
+    /* Una busqueda NO es una venta: es una compra.
+
+       El `tipo_negocio` dice "venta" porque para la plata lo es — se cobra la comision de
+       una venta — pero desde tu lado estas del lado del que COMPRA. Decir "venta" ahi
+       confunde con las propiedades que tenes publicadas, que son lo contrario.
+
+       Y el estado se muestra igual que en una propiedad en negociacion, con el mismo
+       cartel: una busqueda abierta ESTA en negociacion. */
+    const operacion = n.tipo_negocio === "venta" ? "compra" : "alquiler";
     const fila = nodo(html`
       <button class="fila" data-negocio="${escapar(n.id)}">
         <span class="fila-cuerpo">
           <span class="fila-titulo">${escapar(n.direccion || "Sin dirección")}</span>
           <span class="fila-sub">
-            ${escapar(n.barrio || "sin barrio")} · ${escapar(n.tipo_negocio || "")} ·
-            <span class="chip-curso">en curso</span>
+            ${escapar(n.barrio || "sin barrio")} · ${operacion} ·
+            <span class="chip-estado chip-negociacion">${nombreEstado("en_negociacion")}</span>
             ${n.fecha_negociacion ? ` · desde ${fechaCorta(n.fecha_negociacion, anio)}` : ""}
           </span>
         </span>
