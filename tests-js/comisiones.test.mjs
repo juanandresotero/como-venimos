@@ -343,8 +343,8 @@ test("la cuenta se adjunta al final del texto", () => {
   const cuenta = comoTexto({ titular: "Juan Andrés Otero", banco: "Banco BBVA", dolares: "24026123" });
   const t = textoParaElCliente(facturaDe(["yo"]), { precio: 100000, agente: AGENTE, cuenta });
   assert.match(t, /Para transferir:/);
-  assert.match(t, /Banco BBVA/);
-  assert.match(t, /Cuenta en dólares: 24026123/);
+  assert.match(t, /Banco: Banco BBVA/);
+  assert.match(t, /N° de Cuenta: 24026123/);
 });
 
 test("una cuenta vacía no ensucia el texto con renglones sin dato", () => {
@@ -356,7 +356,7 @@ test("una cuenta vacía no ensucia el texto con renglones sin dato", () => {
 
 test("solo se listan los renglones que tienen algo cargado", () => {
   const solo = comoTexto({ banco: "Itaú", pesos: "1925345" });
-  assert.deepEqual(solo, ["Para transferir:", "Itaú", "Cuenta en pesos: 1925345"]);
+  assert.deepEqual(solo, ["Para transferir:", "Banco: Itaú", "N° de Cuenta: 1925345"]);
 });
 
 test("tieneDatos distingue una cuenta cargada de una vacía", () => {
@@ -369,4 +369,63 @@ test("sanear deja siempre las dos cuentas, aunque venga basura", () => {
   const c = sanearCuentas(null);
   assert.deepEqual(Object.keys(c), ["mia", "remax"]);
   assert.equal(c.mia.banco, "");
+});
+
+test("con las dos monedas cargadas se aclara cual es cual", () => {
+  const dos = comoTexto({ titular: "Cafirun S.A.", banco: "Itaú", pesos: "1925345", dolares: "1925353" });
+  assert.deepEqual(dos, [
+    "Para transferir:",
+    "Titular: Cafirun S.A.",
+    "Banco: Itaú",
+    "N° de Cuenta (pesos): 1925345",
+    "N° de Cuenta (dólares): 1925353",
+  ]);
+});
+
+/* El descuento total, que es lo que el cliente entiende. */
+
+test("el descuento se dice en el texto, con el total que hubiera pagado", () => {
+  const t = textoParaElCliente(
+    facturaDe(["yo", "colega", "oficina"], { descuentoTipo: "pct", descuentoValor: 0.23 }),
+    { precio: 100000 }
+  );
+  assert.match(t, /Total a pagar: USD 2\.818/);
+  assert.match(t, /Descuento aplicado: 23%/);
+  assert.match(t, /sin el descuento el total sería USD 3\.660/);
+});
+
+test("sin descuento no aparece el renglón", () => {
+  for (const armar of [textoParaElCliente, textoConReparto]) {
+    const t = armar(facturaDe(["yo", "colega", "oficina"]), { precio: 100000 });
+    assert.ok(!t.includes("Descuento aplicado"));
+  }
+});
+
+test("el texto con reparto también lo lleva", () => {
+  const t = textoConReparto(
+    facturaDe(["yo"], { descuentoTipo: "monto", descuentoValor: 300 }),
+    { precio: 100000 }
+  );
+  assert.match(t, /Descuento aplicado: 10%/);
+});
+
+/* El IVA NO mueve el porcentaje de descuento, aunque parezca que sí: multiplica igual al
+   número con descuento y al número sin descuento, así que se simplifica. Lo que cambia es
+   la plata ahorrada. Si esto dejara de cumplirse, el texto le estaría diciendo al cliente
+   un porcentaje que no puede verificar dividiendo los dos totales que tiene enfrente. */
+test("el porcentaje de descuento es el mismo lleve IVA o no; lo que cambia es la plata", () => {
+  const donde = { descuentoTipo: "pct", descuentoValor: 0.23 };
+  const conIva = facturaDe(["yo", "colega", "oficina"], donde);
+  const sinIva = facturaDe([], donde);
+
+  assert.ok(Math.abs(conIva.pct_descuento - 0.23) < 1e-9);
+  assert.ok(Math.abs(sinIva.pct_descuento - 0.23) < 1e-9);
+  assert.ok(Math.abs(sinIva.ahorro - 690) < 0.01);
+  assert.ok(Math.abs(conIva.ahorro - 690 * 1.22) < 0.01);
+});
+
+test("el porcentaje que se muestra se verifica dividiendo los dos totales", () => {
+  const f = facturaDe(["yo"], { descuentoTipo: "monto", descuentoValor: 450 });
+  assert.ok(Math.abs(1 - f.total / f.total_lista - f.pct_descuento) < 1e-12);
+  assert.ok(Math.abs(f.total_lista - f.total - f.ahorro) < 1e-9);
 });
