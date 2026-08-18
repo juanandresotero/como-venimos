@@ -75,6 +75,7 @@ async function refrescarCotizacion(estado) {
 }
 
 export function dibujarRenta(estado) {
+  estadoActual = estado;
   // Si se llego desde una propiedad de la cartera, el precio ya viene puesto.
   if (estado.precargaRenta) {
     entradas.precio = estado.precargaRenta.precio ?? entradas.precio;
@@ -102,22 +103,23 @@ export function dibujarRenta(estado) {
 
 function resultado(r, e, cotizacion) {
   const encabezado = html`
-    <p class="etiqueta">Calculadora</p>
+    <button class="volver" id="volver-herramientas">‹ Herramientas</button>
+    <p class="etiqueta" style="margin-top:10px">Calculadora</p>
     <h1 class="titulo" style="font-size:25px;margin:4px 0 0">¿Cuánto renta?</h1>
     ${e.titulo ? html`<p class="apunte" style="margin-top:2px">${escapar(e.titulo)}</p>` : ""}`;
 
   if (!e.precio || !e.alquiler_mensual) {
-    return nodo(html`
+    return conVolver(nodo(html`
       <section class="tarjeta">
         ${encabezado}
         <p class="apunte" style="margin-top:12px">
           Cargá el precio y el alquiler acá abajo. Los dos números salen solos.
         </p>
       </section>
-    `);
+    `), estadoActual);
   }
   if (r.falta_cotizacion) {
-    return nodo(html`
+    return conVolver(nodo(html`
       <section class="tarjeta">
         ${encabezado}
         <p class="aviso">
@@ -125,11 +127,11 @@ function resultado(r, e, cotizacion) {
           si no aparece, cargala en los ajustes finos.
         </p>
       </section>
-    `);
+    `), estadoActual);
   }
 
   const negativa = r.renta_neta_anual <= 0;
-  return nodo(html`
+  return conVolver(nodo(html`
     <section class="tarjeta">
       ${encabezado}
       <div class="dos-rentas">
@@ -159,7 +161,16 @@ function resultado(r, e, cotizacion) {
              ${escapar(comoSeDice(cotizacion))} · ${escapar(cotizacion.origen)}</p>`
         : ""}
     </section>
-  `);
+  `), estadoActual);
+}
+
+/* El boton de volver a Herramientas. Se engancha aparte porque el encabezado se arma como
+   texto y se reusa en las tres salidas de resultado(). */
+let estadoActual = null;
+function conVolver(trozo, estado) {
+  const boton = trozo.getElementById("volver-herramientas");
+  if (boton && estado) boton.addEventListener("click", () => estado.irA("herramientas"));
+  return trozo;
 }
 
 /* ---------- Los campos ---------- */

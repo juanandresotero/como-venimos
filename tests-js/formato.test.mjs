@@ -160,3 +160,10 @@ test("posicionTrasFormatear: sin digitos a la izquierda no se va del campo", () 
   assert.equal(posicionTrasFormatear("1.000", 0), 5);
   assert.equal(posicionTrasFormatear("", 3), 0);
 });
+
+test("pct: un decimal por defecto, dos cuando se pide", () => {
+  assert.equal(pct(0.0231), "2,3%");
+  assert.equal(pct(0.0231, 2), "2,31%");
+  assert.equal(pct(0.03, 2), "3,00%");
+  assert.equal(pct(null, 2), "—");
+});
