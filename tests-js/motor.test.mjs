@@ -1,8 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { base, splitVigente, calcular, pctPorDefecto, revisar, REGIMENES } from "../lib/motor.js";
+import {
+  base, splitVigente, calcular, pctPorDefecto, revisar, REGIMENES,
+  plantillaNegocio, esBusqueda, ATAJOS,
+} from "../lib/motor.js";
 
 const AJUSTES = {
+  agente: { nombre: "Juan Andrés Otero" },
   categorias: [{ categoria: "RAP", split_pct: 0.45, fee_mensual_usd: 70, desde: "2026-01-01", hasta: null }],
   defaults_comision: { venta: { 1: 0.03, 2: 0.06 }, alquiler: { 1: 1.0, 2: 2.0 } },
   regla_martin: { facturacion: 0.5, ganancia: 0.35 },
@@ -484,4 +488,38 @@ test("revisar: un negocio viejo con fecha sigue sin recalcularse", () => {
   );
   assert.equal(n.facturacion, 999);
   assert.equal(n.ganancia, 111);
+});
+
+/* ---------- Una busqueda no tiene fecha de publicacion propia ---------- */
+
+/* La propiedad la publico OTRO agente: cuando salio a la venta no se sabe y no sirve. Y la
+   negociacion arranca el dia que se carga el negocio, que es cuando aparecio el comprador. */
+test("una busqueda arranca sin fecha de publicacion y con la negociacion de hoy", () => {
+  for (const atajo of ["busqueda", "busqueda_alquiler"]) {
+    const p = plantillaNegocio(atajo, AJUSTES, "2026-08-18");
+    assert.equal(p.fecha_inicio, null, `${atajo} no deberia inventar cuando se publico`);
+    assert.equal(p.fecha_negociacion, "2026-08-18");
+    assert.equal(esBusqueda(p, AJUSTES), true);
+  }
+});
+
+test("los demas atajos siguen arrancando con la fecha de inicio de hoy", () => {
+  for (const atajo of ["suplencia", "yo_referi"]) {
+    const p = plantillaNegocio(atajo, AJUSTES, "2026-08-18");
+    assert.equal(p.fecha_inicio, "2026-08-18");
+    assert.equal(p.fecha_negociacion, null);
+  }
+});
+
+test("a una busqueda no se le reclama la fecha de publicacion", () => {
+  const p = plantillaNegocio("busqueda", AJUSTES, "2026-08-18");
+  const r = revisar({ ...p, id: "n1" }, AJUSTES, "2026-08-18", {});
+  assert.ok(!(r.avisos || []).some((a) => a.tipo === "falta_fecha_inicio"),
+    "no tiene por que saber cuando publico otro agente");
+});
+
+test("a un negocio propio sin fecha de inicio SI se le reclama", () => {
+  const p = plantillaNegocio("venta", AJUSTES, "2026-08-18");
+  const r = revisar({ ...p, id: "n1", fecha_inicio: null }, AJUSTES, "2026-08-18", {});
+  assert.ok((r.avisos || []).some((a) => a.tipo === "falta_fecha_inicio"));
 });

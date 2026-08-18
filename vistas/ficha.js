@@ -282,15 +282,44 @@ function campos(n, falta, estado) {
      Los alquileres casi nunca pasan por negociación: el campo está, pero se avisa que lo
      normal es que quede vacío. */
   const esAlquiler = n.tipo_negocio !== "venta";
-  agregar("fecha_inicio", "1 · Cuándo se publicó", "date", n.fecha_inicio);
-  agregar(
-    "fecha_negociacion",
-    `2 · Cuándo pasó a negociación${esAlquiler ? " (los alquileres casi nunca pasan por acá)" : ""}`,
-    "date",
-    n.fecha_negociacion
-  );
-  agregar("fecha_boleto", "3 · Cuándo quedó reservada (boleto)", "date", n.fecha_boleto);
-  agregar("fecha_fin", "4 · Cuándo cerró y cobraste", "date", n.fecha_fin);
+
+  /* En una BUSQUEDA las dos primeras fechas no se preguntan.
+
+     La propiedad la publicó otro agente: cuándo salió a la venta no lo sabés y no te sirve
+     para nada. Y la negociación arrancó el día que cargaste el negocio, que es cuando
+     apareció tu comprador — la app ya la puso sola. Los campos siguen apareciendo si
+     tienen algo cargado, para poder verlo y corregirlo, pero no se piden en blanco. */
+  const busqueda = esBusqueda(n, estado.datos.ajustes);
+  let paso = 0;
+  const fecha = (clave, nombre, valor, saltear) => {
+    if (saltear && !valor) return;
+    paso += 1;
+    agregar(clave, `${paso} · ${nombre}`, "date", valor);
+  };
+
+  // La de publicacion se esconde solo si esta vacia: un negocio viejo que la trae del
+  // Excel tiene que seguir viendose y pudiendose corregir.
+  fecha("fecha_inicio", "Cuándo se publicó", n.fecha_inicio, busqueda);
+
+  if (busqueda) {
+    contenedor.append(nodo(html`
+      <div class="campo-fila">
+        <label>Cuándo pasó a negociación</label>
+        <p class="apunte" style="margin:2px 0 0">
+          ${n.fecha_negociacion
+            ? `El ${escapar(n.fecha_negociacion)}, cuando cargaste el negocio.`
+            : "El día que cargaste el negocio."}
+          En una búsqueda la propiedad es de otro agente: la negociación arranca cuando
+          aparece tu comprador.
+        </p>
+      </div>`));
+  } else {
+    fecha("fecha_negociacion",
+      `Cuándo pasó a negociación${esAlquiler ? " (los alquileres casi nunca pasan por acá)" : ""}`,
+      n.fecha_negociacion);
+  }
+  fecha("fecha_boleto", "Cuándo quedó reservada (boleto)", n.fecha_boleto);
+  fecha("fecha_fin", "Cuándo cerró y cobraste", n.fecha_fin);
   agregar("direccion", "Dirección", "text", n.direccion);
   agregar("barrio", "Barrio", "text", n.barrio);
   agregar("precio_operacion", "Precio de la operación (USD)", "moneda", n.precio_operacion);
