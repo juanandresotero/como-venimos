@@ -9,9 +9,10 @@
    Y abajo, plegada, la cuenta al revés: "pago 100.000 con tu comisión adentro". */
 
 import {
-  calcular, conComisionAdentro, repartir, facturar, repartoDeLaPunta, textoParaElCliente,
-  LADOS, DESCUENTOS, IVA,
+  calcular, conComisionAdentro, repartir, facturar, repartoDeLaPunta,
+  textoParaElCliente, textoConReparto, LADOS, DESCUENTOS, IVA,
 } from "../lib/comisiones.js";
+import * as cuentas from "../lib/cuentas.js";
 import {
   plata, plataUSD, pct, pctFino, escapar, numeroDesde, formatearMientrasEscribe,
 } from "../lib/formato.js";
@@ -37,6 +38,8 @@ const entradas = {
   regimen: "captacion_mia",
   // Quien de los tres factura con IVA. Los tres marcados = 22% sobre toda la comision.
   conIva: ["yo"],
+  // Que cuenta bancaria se le manda al cliente para que transfiera.
+  cuenta: "ninguna",
   // La cuenta al revés, aparte.
   adentroTotal: null,
   adentroPct: 0.03,
@@ -424,8 +427,8 @@ function paraCadaCliente(f, estado) {
           </div>
         </div>
         <div class="botonera">
-          <button class="boton boton-chico" data-mandar="${escapar(p.lado)}">Mandarle esto</button>
           <button class="boton boton-chico" data-copiar="${escapar(p.lado)}">Copiar</button>
+          <button class="boton boton-chico" data-reparto-txt="${escapar(p.lado)}">Con el reparto</button>
         </div>
         <p class="apunte" data-aviso="${escapar(p.lado)}" style="margin-top:6px"></p>
       </div>`;
@@ -437,6 +440,7 @@ function paraCadaCliente(f, estado) {
         <h2 class="titulo" style="font-size:17px">Para cada cliente</h2>
         <span class="apunte">${f.puntas.length === 1 ? "una punta" : "las dos puntas"}</span>
       </div>
+      <div id="elegir-cuenta"></div>
       ${f.puntas.map(bloque).join("")}
       ${f.puntas.length > 1
         ? html`<div class="datos" style="margin-top:14px">
@@ -453,12 +457,14 @@ function paraCadaCliente(f, estado) {
   /* Lo que se le manda al cliente lleva SOLO lo suyo: su porcentaje, su plata, su IVA y su
      total. Nada del reparto interno — al cliente no le incumbe cuánto va a la oficina, y
      meterlo abre una conversación que no tiene que ver con lo que está por firmar. */
-  const armar = (lado) => textoParaElCliente(
+  const guardadas = cuentas.leer();
+  const armar = (lado, comoTexto) => comoTexto(
     f.puntas.find((p) => p.lado === lado),
     {
       precio: entradas.precio,
       titulo: entradas.titulo,
       agente: (estado.datos.ajustes || {}).agente,
+      cuenta: cuentas.comoTexto(guardadas[entradas.cuenta]),
     }
   );
   const avisar = (lado, texto) => {
@@ -466,28 +472,30 @@ function paraCadaCliente(f, estado) {
     if (p) p.textContent = texto;
   };
 
-  for (const boton of seccion.querySelectorAll("[data-mandar]")) {
-    boton.addEventListener("click", () => {
-      const lado = boton.dataset.mandar;
-      const texto = armar(lado);
-      if (navigator.share) {
-        navigator.share({ text: texto }).catch(() => {});
-        return;
-      }
+  const copiar = async (lado, texto, queEs) => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      avisar(lado, `${queEs} copiado. Pegalo en el chat.`);
+    } catch {
+      // Sin portapapeles queda WhatsApp, que en el telefono es adonde iba igual.
       window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
-    });
-  }
+    }
+  };
+
   for (const boton of seccion.querySelectorAll("[data-copiar]")) {
-    boton.addEventListener("click", async () => {
+    boton.addEventListener("click", () => {
       const lado = boton.dataset.copiar;
-      try {
-        await navigator.clipboard.writeText(armar(lado));
-        avisar(lado, "Copiado.");
-      } catch {
-        avisar(lado, "El navegador no dejó copiar. Usá «Mandarle esto».");
-      }
+      copiar(lado, armar(lado, textoParaElCliente), "Texto");
     });
   }
+  for (const boton of seccion.querySelectorAll("[data-reparto-txt]")) {
+    boton.addEventListener("click", () => {
+      const lado = boton.dataset.repartoTxt;
+      copiar(lado, armar(lado, textoConReparto), "Detalle con el reparto");
+    });
+  }
+
+  seccion.getElementById("elegir-cuenta").append(selectorDeCuenta(estado));
   return seccion;
 }
 
@@ -578,4 +586,41 @@ function comisionAdentro(estado) {
   contenedor.append(campoPct("c-adentro-pct", "Tu comisión", entradas.adentroPct,
     (v) => { entradas.adentroPct = v; estado.redibujar(); }));
   return seccion;
+}
+
+/* Que cuenta bancaria se le manda al cliente para que transfiera.
+
+   Las cuentas se cargan en Ajustes y viven en el TELEFONO, no en el repo: el repositorio
+   de esta app es publico, y un numero de cuenta es justo la pieza que le falta a alguien
+   para mandarle a un cliente "cambio mi cuenta, transferi aca". */
+function selectorDeCuenta(estado) {
+  const guardadas = cuentas.leer();
+  const hay = cuentas.CUALES.filter(
+    (c) => c.clave === "ninguna" || cuentas.tieneDatos(guardadas[c.clave])
+  );
+
+  if (hay.length === 1) {
+    const caja = nodo(html`
+      <p class="apunte" style="margin:0 0 14px">
+        Podés adjuntar tu cuenta para que te transfieran: cargala en
+        <strong>Ajustes → Cuentas para cobrar</strong>.
+      </p>`);
+    return caja;
+  }
+
+  const caja = nodo(html`
+    <div style="margin-bottom:16px">
+      <p class="apunte" style="margin:0 0 6px">Cuenta para transferir</p>
+      <div class="botonera" style="margin-top:0">
+        ${hay.map((c) => `<button class="filtro ${entradas.cuenta === c.clave ? "prendido" : ""}" data-cuenta="${c.clave}">${c.nombre}</button>`).join("")}
+      </div>
+    </div>
+  `);
+  for (const boton of caja.querySelectorAll("[data-cuenta]")) {
+    boton.addEventListener("click", () => {
+      entradas.cuenta = boton.dataset.cuenta;
+      estado.redibujar();
+    });
+  }
+  return caja;
 }

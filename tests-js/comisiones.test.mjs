@@ -230,7 +230,7 @@ test("facturar: una factura por punta y el total de la operación", () => {
 
 /* ---------- El texto para el cliente ---------- */
 
-import { textoParaElCliente } from "../lib/comisiones.js";
+import { textoParaElCliente, textoConReparto } from "../lib/comisiones.js";
 
 const AGENTE = { nombre: "Juan Andrés Otero", oficina: "RE/MAX Único", telefono: "099616633" };
 const facturaDe = (conIva, descuento) => {
@@ -289,11 +289,17 @@ test("sin IVA marcado, el renglón no aparece", () => {
   assert.match(t, /Total a pagar: USD 3\.000/);
 });
 
-test("dice de qué lado es, para que cada cliente sepa que es lo suyo", () => {
+/* NO dice de que lado es. Muchos clientes no saben que una operacion tiene dos puntas, y
+   leer "parte compradora" solo abre preguntas sobre como funciona el negocio justo cuando
+   se esta por firmar. */
+test("el texto no aclara si es la punta compradora o la vendedora", () => {
   const r = calcular({ precio: 100000, split: 0.45, puntas: [punta(), punta({ lado: "compradora" })] });
   const f = facturar(r, { regimen: "captacion_mia", split: 0.45, conIva: ["yo"] });
-  assert.match(textoParaElCliente(f.puntas[0], { agente: AGENTE }), /parte vendedora/);
-  assert.match(textoParaElCliente(f.puntas[1], { agente: AGENTE }), /parte compradora/);
+  for (const p of f.puntas) {
+    const t = textoParaElCliente(p, { agente: AGENTE });
+    assert.ok(!/compradora|vendedora/.test(t), "no tiene por que enterarse de las puntas");
+    assert.match(t, /Comisión: /);
+  }
 });
 
 test("sin titulo ni precio sigue saliendo un texto usable", () => {
@@ -303,4 +309,61 @@ test("sin titulo ni precio sigue saliendo un texto usable", () => {
   assert.match(t, /Oficina RE\/MAX Único/);
   assert.ok(!t.includes("undefined"));
   assert.ok(!t.includes("Precio de la operación"));
+});
+
+/* ---------- El texto con el reparto, para cuando hay que explicar ---------- */
+
+test("el texto con reparto SÍ abre el detalle, que es para lo que está", () => {
+  const t = textoConReparto(facturaDe(["yo"]), { precio: 100000, agente: AGENTE });
+  assert.match(t, /Cómo se reparte/);
+  assert.match(t, /Vos: 45%/);
+  assert.match(t, /Colega: 35%/);
+  assert.match(t, /RE\/MAX: 20%/);
+  assert.match(t, /Total a pagar/);
+});
+
+test("los dos textos dan el MISMO total: es la misma cuenta contada distinto", () => {
+  for (const conIva of [[], ["yo"], ["yo", "colega", "oficina"]]) {
+    const f = facturaDe(conIva);
+    const limpio = textoParaElCliente(f, { precio: 100000, agente: AGENTE });
+    const detallado = textoConReparto(f, { precio: 100000, agente: AGENTE });
+    const total = /Total a pagar: (USD [\d.]+)/;
+    assert.equal(limpio.match(total)[1], detallado.match(total)[1]);
+  }
+});
+
+/* ---------- Las cuentas para cobrar ---------- */
+
+import { comoTexto, tieneDatos, sanear as sanearCuentas } from "../lib/cuentas.js";
+
+test("la cuenta se adjunta al final del texto", () => {
+  const cuenta = comoTexto({ titular: "Juan Andrés Otero", banco: "Banco BBVA", dolares: "24026123" });
+  const t = textoParaElCliente(facturaDe(["yo"]), { precio: 100000, agente: AGENTE, cuenta });
+  assert.match(t, /Para transferir:/);
+  assert.match(t, /Banco BBVA/);
+  assert.match(t, /Cuenta en dólares: 24026123/);
+});
+
+test("una cuenta vacía no ensucia el texto con renglones sin dato", () => {
+  assert.deepEqual(comoTexto({}), []);
+  assert.deepEqual(comoTexto(null), []);
+  const t = textoParaElCliente(facturaDe(["yo"]), { precio: 100000, agente: AGENTE, cuenta: [] });
+  assert.ok(!t.includes("Para transferir"));
+});
+
+test("solo se listan los renglones que tienen algo cargado", () => {
+  const solo = comoTexto({ banco: "Itaú", pesos: "1925345" });
+  assert.deepEqual(solo, ["Para transferir:", "Itaú", "Cuenta en pesos: 1925345"]);
+});
+
+test("tieneDatos distingue una cuenta cargada de una vacía", () => {
+  assert.equal(tieneDatos({ banco: "Itaú" }), true);
+  assert.equal(tieneDatos({ titular: "", banco: "", pesos: "", dolares: "" }), false);
+  assert.equal(tieneDatos(null), false);
+});
+
+test("sanear deja siempre las dos cuentas, aunque venga basura", () => {
+  const c = sanearCuentas(null);
+  assert.deepEqual(Object.keys(c), ["mia", "remax"]);
+  assert.equal(c.mia.banco, "");
 });

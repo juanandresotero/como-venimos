@@ -6,8 +6,9 @@
 import { guardarToken, leerToken, borrarToken, probarToken, REPO } from "../lib/github.js";
 import { editarAjustes } from "../lib/guardado.js";
 import {
-  plata, pct, fechaRazonable, numeroDesde, formatearMientrasEscribe,
+  plata, pct, fechaRazonable, numeroDesde, formatearMientrasEscribe, escapar,
 } from "../lib/formato.js";
+import * as cuentas from "../lib/cuentas.js";
 import { negociosACsv, carteraACsv, nombrePlanilla } from "../lib/planilla.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -188,6 +189,7 @@ export function dibujarAjustes(estado) {
   `));
   trozo.append(bajarPlanilla(estado));
   trozo.append(tuNegocio(estado));
+  trozo.append(cuentasParaCobrar(estado));
 
   const campo = trozo.getElementById("campo-token");
   const resultado = trozo.getElementById("resultado");
@@ -404,5 +406,72 @@ function tuNegocio(estado) {
          ${pct(vigente.split_pct || 0)} de ahora.`.replace(/\s+/g, " "));
   contenedor.append(resumen);
 
+  return seccion;
+}
+
+/* ---------- Cuentas para cobrar ---------- */
+
+/* Los datos bancarios NO van al repositorio.
+
+   El repo de esta app es publico: cualquiera puede leer los archivos. Un objetivo de
+   facturacion ahi adentro no le sirve a nadie, pero un numero de cuenta si — es la pieza
+   que falta para hacerse pasar por el agente y mandarle a un cliente "cambio mi cuenta,
+   transferi aca". Por eso se guardan en el telefono, como las preferencias de pantalla, y
+   hay que cargarlas una vez en cada aparato. Para un dato bancario, es barato. */
+function cuentasParaCobrar(estado) {
+  const guardadas = cuentas.leer();
+
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2 class="titulo" style="font-size:17px">Cuentas para cobrar</h2>
+        <span class="apunte">solo en este aparato</span>
+      </div>
+      <p class="apunte" style="margin-bottom:14px">
+        Para adjuntarlas al texto que le mandás al cliente desde la calculadora de
+        comisiones. <strong>No se suben a GitHub</strong>: el repositorio de esta app es
+        público, y un número de cuenta ahí adentro es justo lo que le falta a alguien para
+        mandarle a un cliente "cambió mi cuenta, transferí acá". Quedan en este teléfono,
+        así que hay que cargarlas una vez en cada aparato.
+      </p>
+      <div id="cuentas"></div>
+    </section>
+  `);
+
+  const contenedor = seccion.getElementById("cuentas");
+  const CAMPOS = [
+    ["titular", "A nombre de"],
+    ["banco", "Banco"],
+    ["pesos", "Cuenta en pesos"],
+    ["dolares", "Cuenta en dólares"],
+    ["nota", "Algo más (opcional)"],
+  ];
+
+  for (const [clave, nombre] of [["mia", "La tuya"], ["remax", "La de RE/MAX"]]) {
+    const bloque = nodo(html`
+      <p class="etiqueta" style="margin-top:14px">${escapar(nombre)}</p>
+      <div class="lista" style="border-radius:12px" id="bloque-${clave}"></div>
+    `);
+    const caja = bloque.getElementById(`bloque-${clave}`);
+
+    for (const [campo, etiqueta] of CAMPOS) {
+      const fila = document.createElement("div");
+      fila.className = "campo-fila";
+      const id = `cuenta-${clave}-${campo}`;
+      fila.innerHTML = html`
+        <label for="${id}">${etiqueta}</label>
+        <input class="campo" id="${id}" type="text"
+               value="${escapar(guardadas[clave][campo] || "")}">
+      `;
+      fila.querySelector(".campo").addEventListener("change", (evento) => {
+        const nuevas = cuentas.leer();
+        nuevas[clave][campo] = evento.target.value;
+        cuentas.guardar(nuevas);
+        estado.redibujar();
+      });
+      caja.append(fila);
+    }
+    contenedor.append(bloque);
+  }
   return seccion;
 }
