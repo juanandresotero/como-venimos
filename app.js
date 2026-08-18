@@ -12,6 +12,7 @@ import { dibujarFicha } from "./vistas/ficha.js";
 import { dibujarCartera } from "./vistas/cartera.js";
 import { dibujarPropiedad } from "./vistas/propiedad.js";
 import { dibujarRenta } from "./vistas/renta.js";
+import { dibujarIndicador } from "./vistas/indicador.js";
 import { dibujarAjustes } from "./vistas/ajustes.js";
 
 const ARCHIVOS = [
@@ -148,11 +149,12 @@ const VISTAS = {
   propiedad: dibujarPropiedad,
   renta: dibujarRenta,
   ajustes: dibujarAjustes,
+  indicador: dibujarIndicador,
 };
 
 // La ficha de un negocio se llega desde Negocios, y la de una propiedad desde Cartera:
 // la barra de abajo tiene que quedar marcada en la pantalla de la que salio.
-const PADRE = { ficha: "negocios", propiedad: "cartera" };
+const PADRE = { ficha: "negocios", propiedad: "cartera", indicador: "salud" };
 
 /* Cambiar de pantalla sube arriba de todo. Corregir un dato NO: hay que quedarse donde
    estaba y con el cursor en el mismo campo.

@@ -16,10 +16,10 @@
 import { capas, ritmo, porAnio } from "../lib/salud.js";
 import {
   aniosDisponibles, cerradosDe, etiquetaDeAnios, mesesDe, mesesPorAnio, acumular,
-  mejorYPeorMes, barrios, porOrigen, ventaVsAlquiler, concentracion, carteraPorCanal,
-  plazos,
+  mejorYPeorMes,
 } from "../lib/indicadores.js";
-import { lineas, torta, colorear, agruparCola } from "../lib/graficos.js";
+import { armar } from "./indicadores.js";
+import { lineas } from "../lib/graficos.js";
 import * as prefs from "../lib/preferencias.js";
 import { recomendaciones, contarPendientes } from "../lib/recomendaciones.js";
 import { armarReporte, nombreArchivo } from "../lib/reporte.js";
@@ -103,7 +103,10 @@ export function dibujarSalud(estado) {
   const anios = porAnio(negocios);
   if (anios.length) trozo.append(graficaAnual(anios, activos, preferencias, guardar));
 
-  trozo.append(indicadoresElegidos(estado, negocios, cartera, ajustes, activos, preferencias));
+  trozo.append(indicadoresElegidos(estado, {
+    negocios, cartera, ajustes, activos, preferencias, hoy: estado.hoy,
+    aniosDisponibles: disponibles,
+  }, preferencias, guardar));
   return trozo;
 }
 
@@ -128,16 +131,21 @@ function barraDeMenu(ctx) {
     reporte: "",
   };
 
+  /* El panel flota sobre el contenido y el telon lo cierra al tocar afuera. Estando en el
+     flujo de la pagina empujaba todo para abajo y parecia una tarjeta mas del tablero. */
   const barra = nodo(html`
-    <div class="barra-menu">
-      ${PANELES.map((p) => html`
-        <button class="menu-boton ${panelAbierto === p.clave ? "abierto" : ""}"
-                data-panel="${p.clave}" aria-expanded="${panelAbierto === p.clave}">
-          <span class="menu-nombre">${escapar(p.nombre)}</span>
-          ${resumen[p.clave] ? html`<span class="menu-dato">${resumen[p.clave]}</span>` : ""}
-        </button>`).join("")}
+    <div class="menu-caja">
+      ${panelAbierto ? '<button class="menu-telon" id="menu-telon" aria-label="Cerrar"></button>' : ""}
+      <div class="barra-menu">
+        ${PANELES.map((p) => html`
+          <button class="menu-boton ${panelAbierto === p.clave ? "abierto" : ""}"
+                  data-panel="${p.clave}" aria-expanded="${panelAbierto === p.clave}">
+            <span class="menu-nombre">${escapar(p.nombre)}</span>
+            ${resumen[p.clave] ? html`<span class="menu-dato">${resumen[p.clave]}</span>` : ""}
+          </button>`).join("")}
+      </div>
+      ${panelAbierto ? '<div class="menu-panel" id="menu-panel"></div>' : ""}
     </div>
-    <div class="menu-panel" id="menu-panel" ${panelAbierto ? "" : "hidden"}></div>
   `);
 
   const panel = barra.getElementById("menu-panel");
@@ -148,11 +156,20 @@ function barraDeMenu(ctx) {
       estado.redibujar();
     });
   }
+  const telon = barra.getElementById("menu-telon");
+  if (telon) {
+    telon.addEventListener("click", () => {
+      panelAbierto = null;
+      estado.redibujar();
+    });
+  }
 
-  if (panelAbierto === "anios") panel.append(panelDeAnios(disponibles, preferencias.anios, anioActual, guardar));
-  if (panelAbierto === "indicadores") panel.append(panelDeIndicadores(preferencias, guardar));
-  if (panelAbierto === "quehacer") panel.append(panelQueHacer(consejos));
-  if (panelAbierto === "reporte") panel.append(panelReporte(estado, anioActual));
+  if (panel) {
+    if (panelAbierto === "anios") panel.append(panelDeAnios(disponibles, preferencias.anios, anioActual, guardar));
+    if (panelAbierto === "indicadores") panel.append(panelDeIndicadores(preferencias, guardar));
+    if (panelAbierto === "quehacer") panel.append(panelQueHacer(consejos));
+    if (panelAbierto === "reporte") panel.append(panelReporte(estado, anioActual));
+  }
 
   return barra;
 }
@@ -197,6 +214,10 @@ function panelDeIndicadores(preferencias, guardar) {
   const elegidos = new Set(preferencias.indicadores);
   const caja = nodo(html`
     <div>
+      <div class="botonera" style="margin:0 0 12px">
+        <button class="filtro" data-todos="si">Prender todos</button>
+        <button class="filtro" data-todos="no">Apagar todos</button>
+      </div>
       ${prefs.INDICADORES.map((i) => html`
         <label class="opcion">
           <input type="checkbox" data-indicador="${i.clave}" ${elegidos.has(i.clave) ? "checked" : ""}>
@@ -212,10 +233,17 @@ function panelDeIndicadores(preferencias, guardar) {
   for (const casilla of caja.querySelectorAll("[data-indicador]")) {
     casilla.addEventListener("change", () => {
       const clave = casilla.dataset.indicador;
+      // Prender uno lo manda al FINAL: aparece abajo de todo, donde se lo ve entrar.
+      // Si se colara en el medio, el orden que el usuario armo se le desarma solo.
       const nuevos = casilla.checked
         ? [...preferencias.indicadores, clave]
         : preferencias.indicadores.filter((c) => c !== clave);
       guardar({ indicadores: nuevos });
+    });
+  }
+  for (const boton of caja.querySelectorAll("[data-todos]")) {
+    boton.addEventListener("click", () => {
+      guardar({ indicadores: boton.dataset.todos === "si" ? prefs.todos() : [] });
     });
   }
 
@@ -484,212 +512,106 @@ function graficaAnual(anios, activos, preferencias, guardar) {
 
 /* ---------- Indicadores ---------- */
 
-/* Una lista de barras horizontales o una torta, segun lo que el usuario haya elegido. Es
-   el mismo dato: la torta se lee mejor para "cuanto pesa cada uno" y la barra para
-   comparar valores. */
-function reparto(filas, preferencias, opciones = {}) {
-  const unidad = opciones.unidad || "negocios";
-  const conCola = agruparCola(filas, opciones.cuantas || 5);
-  const pintadas = colorear(conCola, opciones.cuantas || 5);
-  const total = pintadas.reduce((t, f) => t + (f.ganancia || 0), 0);
-  const tope = Math.max(...pintadas.map((f) => f.ganancia || 0), 1);
+/* Las tarjetas de los indicadores, en el orden que el usuario dejo.
 
-  const lista = pintadas
-    .map((f) => html`
-      <div class="reparto-fila">
-        <div class="reparto-cabeza">
-          <span class="reparto-nombre">
-            <span class="leyenda-punto" style="background:${f.color}"></span>
-            ${escapar(f.nombre)}
-          </span>
-          <span class="reparto-valor">${plata(f.ganancia)}</span>
-        </div>
-        <div class="reparto-pista">
-          <div class="reparto-relleno" style="width:${((f.ganancia || 0) / tope) * 100}%;background:${f.color}"></div>
-        </div>
-        <span class="reparto-pie">
-          ${cuantos(f[unidad] || 0, unidad === "propiedades" ? "propiedad" : "negocio",
-            unidad === "propiedades" ? "propiedades" : "negocios")}
-          ${total ? html` · ${pct((f.ganancia || 0) / total)} de la plata` : ""}
-          ${f.negocios && unidad === "negocios" && !f.esCola
-            ? html` · ${plata(f.ganancia / f.negocios)} por negocio` : ""}
-        </span>
-      </div>`)
-    .join("");
+   Un toque corto abre la pantalla del indicador; mantener apretado lo agarra para
+   moverlo de lugar. Distinguirlos por el TIEMPO es lo unico que funciona en un telefono,
+   donde no hay boton derecho ni sitio para una manija de arrastre en cada tarjeta. */
+const MS_PARA_AGARRAR = 400;
 
-  if (preferencias.graficoReparto === "torta") {
-    return html`<div class="torta-caja">${torta(pintadas)}</div>${lista}`;
+function indicadoresElegidos(estado, ctx, preferencias, guardar) {
+  const contenedor = document.createElement("div");
+  contenedor.className = "indicadores";
+
+  const armados = preferencias.indicadores
+    .map((clave) => ({ clave, armado: armar(clave, ctx) }))
+    .filter((x) => x.armado);
+
+  if (!armados.length) {
+    contenedor.append(nodo(html`
+      <section class="tarjeta">
+        <p class="apunte">No tenés ningún indicador prendido. Elegilos en
+        <strong>Indicadores</strong>, acá arriba.</p>
+      </section>`));
+    return contenedor;
   }
-  return lista;
+
+  for (const { clave, armado } of armados) {
+    const tarjeta = nodo(html`
+      <section class="tarjeta tarjeta-indicador" data-clave="${clave}" tabindex="0">
+        <div class="tarjeta-titulo">
+          <h2 class="titulo">${escapar(armado.titulo)}</h2>
+          <span class="apunte">${escapar(armado.apunte || "")}</span>
+        </div>
+        ${armado.resumen}
+        <div class="mover" hidden>
+          <button class="boton boton-chico" data-mover="-1">↑ Subir</button>
+          <button class="boton boton-chico" data-mover="1">↓ Bajar</button>
+          <button class="boton boton-chico" data-mover="listo">Listo</button>
+        </div>
+      </section>`).firstElementChild;
+
+    engancharTarjeta(tarjeta, clave, estado, preferencias, guardar);
+    contenedor.append(tarjeta);
+  }
+  return contenedor;
 }
 
-function tarjeta(titulo, apunte, cuerpo, extra = "") {
-  return html`
-    <section class="tarjeta">
-      <div class="tarjeta-titulo">
-        <h2 class="titulo">${escapar(titulo)}</h2>
-        ${apunte ? html`<span class="apunte">${escapar(apunte)}</span>` : ""}
-      </div>
-      ${cuerpo}
-      ${extra}
-    </section>`;
-}
+/* Un toque corto entra al detalle; mantener apretado saca los botones de mover.
 
-function indicadorVentaAlquiler(negocios, activos) {
-  const r = ventaVsAlquiler(negocios, activos);
-  if (!r.venta.negocios && !r.alquiler.negocios) return "";
-  const fila = (d, nombre) => html`
-    <div class="reparto-fila">
-      <div class="reparto-cabeza">
-        <span class="reparto-nombre">${nombre}</span>
-        <span class="reparto-valor">${plata(d.ganancia)}</span>
-      </div>
-      <div class="reparto-pista">
-        <div class="reparto-relleno" style="width:${d.parteDeLaPlata * 100}%"></div>
-      </div>
-      <span class="reparto-pie">
-        ${cuantos(d.negocios)} · ${pct(d.parteDeLosNegocios)} de tu trabajo ·
-        <strong>${plata(d.porNegocio)} por negocio</strong>
-      </span>
-    </div>`;
-  return tarjeta("Venta vs alquiler", "lo que deja cada una",
-    fila(r.venta, "Venta") + fila(r.alquiler, "Alquiler"),
-    r.veces > 1 ? html`<p class="aviso">Una venta te deja
-      <strong>${decimal(r.veces, 1)} veces</strong> lo que te deja un alquiler.
-      Los alquileres son ${pct(r.alquiler.parteDeLosNegocios)} de tus cierres y
-      ${pct(r.alquiler.parteDeLaPlata)} de tu plata.</p>` : "");
-}
+   Se cancela si el dedo se corre mas de unos pixeles: eso es scrollear, no apretar. Sin
+   eso, bajar por la pantalla con el dedo apoyado en una tarjeta la agarraba sola. */
+function engancharTarjeta(tarjeta, clave, estado, preferencias, guardar) {
+  const controles = tarjeta.querySelector(".mover");
+  let reloj = null;
+  let desde = null;
+  let agarrada = false;
 
-function indicadorOrigenes(negocios, activos, preferencias) {
-  const filas = porOrigen(negocios, activos);
-  if (!filas.length) return "";
-  return tarjeta("De dónde vino la plata", "por canal de captación",
-    reparto(filas, preferencias));
-}
-
-function indicadorBarrios(negocios, activos, preferencias) {
-  const b = barrios(negocios, activos);
-  if (!b.total) return "";
-  const cuerpo = reparto(b.top, preferencias, { cuantas: 5 });
-  const extra = html`
-    <div class="datos" style="margin-top:14px">
-      <div class="dato"><span class="dato-nombre">Barrios trabajados</span><span class="dato-valor">${b.total}</span></div>
-      <div class="dato"><span class="dato-nombre">De una sola vez</span><span class="dato-valor">${b.unaVez}</span></div>
-      ${b.masPlata ? html`
-        <div class="dato"><span class="dato-nombre">El que más plata te dio</span>
-          <span class="dato-valor">${escapar(b.masPlata.nombre)} · ${plata(b.masPlata.ganancia)}
-            <br><span class="apunte">${cuantos(b.masPlata.negocios)}</span></span></div>` : ""}
-      ${b.mejorPorNegocio ? html`
-        <div class="dato"><span class="dato-nombre">El que mejor te paga por negocio</span>
-          <span class="dato-valor">${escapar(b.mejorPorNegocio.nombre)} · ${plata(b.mejorPorNegocio.porNegocio)}
-            <br><span class="apunte">${cuantos(b.mejorPorNegocio.negocios)}</span></span></div>` : ""}
-    </div>
-    ${b.mejorPorNegocio && b.masPlata && b.mejorPorNegocio.nombre !== b.masPlata.nombre
-      ? html`<p class="apunte" style="margin-top:10px">
-          El de más plata puede ser un solo negocio grande y no repetirse nunca. El que
-          mejor paga por negocio se mide solo entre los que trabajaste
-          ${b.minimoParaPromediar} veces o más — ese es el que sirve para decidir.</p>`
-      : ""}`;
-  return tarjeta("Barrios", `top ${Math.min(5, b.top.length)} por repetición`, cuerpo, extra);
-}
-
-function indicadorMeses(negocios, activos, hoy) {
-  const { mejor, peor, evaluados, empatadosEnPeor } = mejorYPeorMes(negocios, activos, hoy);
-  if (!mejor) return "";
-  const meses = mesesDe(negocios, activos, hoy);
-  const sinTerminar = meses.filter((m) => !m.terminado).length;
-  return tarjeta("Mejor y peor mes", `sobre ${cuantos(evaluados, "mes cerrado", "meses cerrados")}`,
-    html`<div class="datos">
-      <div class="dato"><span class="dato-nombre">Tu mejor mes</span>
-        <span class="dato-valor">${escapar(mejor.nombre)} · ${plata(mejor.ganancia)}
-          <br><span class="apunte">${cuantos(mejor.negocios, "cierre", "cierres")}</span></span></div>
-      <div class="dato"><span class="dato-nombre">El más flojo</span>
-        <span class="dato-valor">${escapar(peor.nombre)} · ${plata(peor.ganancia)}
-          <br><span class="apunte">${cuantos(peor.negocios, "cierre", "cierres")}</span></span></div>
-    </div>`,
-    html`${sinTerminar ? html`<p class="apunte" style="margin-top:10px">
-        Quedan ${sinTerminar} ${sinTerminar === 1 ? "mes" : "meses"} sin terminar en el
-        recorte: no se juzgan, un mes que no llegó no es un mes malo.</p>` : ""}
-      ${empatadosEnPeor > 1 ? html`<p class="apunte" style="margin-top:6px">
-        Hay ${empatadosEnPeor} meses empatados abajo. Se eligió el que peor viene en toda
-        tu carrera.</p>` : ""}`);
-}
-
-function indicadorDependencia(negocios, activos) {
-  const filas = concentracion(negocios, activos).filter((f) => f.negocios);
-  if (!filas.length) return "";
-  const cuerpo = html`<div class="datos">
-    ${filas.map((f) => html`
-      <div class="dato">
-        <span class="dato-nombre">${f.anio} · ${cuantos(f.negocios, "cierre", "cierres")}</span>
-        <span class="dato-valor">${pct(f.parte)}
-          <br><span class="apunte">el mejor solo: ${pct(f.parteDelMejor)}</span></span>
-      </div>`).join("")}
-  </div>`;
-  const fragil = filas.filter((f) => f.parte > 0.6 && f.negocios >= 3);
-  return tarjeta("De cuánto dependés", "peso de tus 3 mejores negocios", cuerpo,
-    fragil.length ? html`<p class="aviso">En ${fragil.map((f) => f.anio).join(", ")} tres
-      negocios trajeron más de la mitad del año. Si uno se cae, se cae el año.</p>` : "");
-}
-
-function indicadorCarteraCanal(cartera, negocios, ajustes, preferencias) {
-  const filas = carteraPorCanal(cartera, negocios, ajustes);
-  if (!filas.length) return "";
-  return tarjeta("Cartera viva por canal", "de dónde va a venir lo que viene",
-    reparto(filas, preferencias, { unidad: "propiedades" }),
-    html`<p class="apunte" style="margin-top:10px">Esto es tu cartera de HOY, no cambia con
-      el año elegido. Lo que no tiene negocio cargado va estimado con tus puntas.</p>`);
-}
-
-function indicadorPuntas(negocios, activos) {
-  const r = ventaVsAlquiler(negocios, activos);
-  if (!r.puntasTotales) return "";
-  return tarjeta("Puntas y tickets", "tu volumen real de trabajo",
-    html`<div class="datos">
-      <div class="dato"><span class="dato-nombre">Puntas totales</span><span class="dato-valor">${r.puntasTotales}</span></div>
-      <div class="dato"><span class="dato-nombre">Puntas en venta</span><span class="dato-valor">${r.venta.puntas} · ${decimal(r.venta.puntasPromedio)} por negocio</span></div>
-      <div class="dato"><span class="dato-nombre">Puntas en alquiler</span><span class="dato-valor">${r.alquiler.puntas} · ${decimal(r.alquiler.puntasPromedio)} por negocio</span></div>
-      <div class="dato"><span class="dato-nombre">Ticket mediano de venta</span><span class="dato-valor">${plata(r.venta.ticket)}</span></div>
-      <div class="dato"><span class="dato-nombre">Ticket mediano de alquiler</span><span class="dato-valor">${plata(r.alquiler.ticket)}</span></div>
-    </div>`);
-}
-
-function indicadorPlazos(negocios, activos) {
-  const p = plazos(negocios, activos);
-  if (!p.venta && !p.alquiler) return "";
-  const dias = (d) => (d ? `${d} días` : "—");
-  return tarjeta("Cuánto tardás en cerrar", "mediana, de captación a firma",
-    html`<div class="datos">
-      <div class="dato"><span class="dato-nombre">Venta</span><span class="dato-valor">${dias(p.venta)}</span></div>
-      <div class="dato"><span class="dato-nombre">Alquiler</span><span class="dato-valor">${dias(p.alquiler)}</span></div>
-      <div class="dato"><span class="dato-nombre">Hasta el boleto (venta)</span><span class="dato-valor">${dias(p.boleto)}</span></div>
-    </div>`);
-}
-
-/* Los indicadores que el usuario dejo prendidos. La eleccion vive en el menu de arriba.
-
-   Reemplaza a la vieja tarjeta "Como trabajas", que era una lista fija de seis datos. */
-function indicadoresElegidos(estado, negocios, cartera, ajustes, activos, preferencias) {
-  const elegidos = new Set(preferencias.indicadores);
-  const arma = {
-    venta_alquiler: () => indicadorVentaAlquiler(negocios, activos),
-    origenes: () => indicadorOrigenes(negocios, activos, preferencias),
-    barrios: () => indicadorBarrios(negocios, activos, preferencias),
-    meses: () => indicadorMeses(negocios, activos, estado.hoy),
-    dependencia: () => indicadorDependencia(negocios, activos),
-    cartera_canal: () => indicadorCarteraCanal(cartera, negocios, ajustes, preferencias),
-    puntas: () => indicadorPuntas(negocios, activos),
-    plazos: () => indicadorPlazos(negocios, activos),
+  const soltar = () => {
+    clearTimeout(reloj);
+    reloj = null;
   };
 
-  const cuerpo = prefs.INDICADORES
-    .filter((i) => elegidos.has(i.clave) && arma[i.clave])
-    .map((i) => arma[i.clave]())
-    .filter(Boolean)
-    .join("");
+  tarjeta.addEventListener("pointerdown", (evento) => {
+    if (evento.target.closest("button")) return;
+    desde = { x: evento.clientX, y: evento.clientY };
+    agarrada = false;
+    reloj = setTimeout(() => {
+      agarrada = true;
+      tarjeta.classList.add("agarrada");
+      controles.hidden = false;
+      if (navigator.vibrate) navigator.vibrate(12);
+    }, MS_PARA_AGARRAR);
+  });
 
-  if (!cuerpo) return document.createDocumentFragment();
-  return nodo(cuerpo);
+  tarjeta.addEventListener("pointermove", (evento) => {
+    if (!desde || !reloj) return;
+    const corrido = Math.abs(evento.clientX - desde.x) + Math.abs(evento.clientY - desde.y);
+    if (corrido > 10) soltar();
+  });
+
+  tarjeta.addEventListener("pointerup", (evento) => {
+    const estabaEsperando = Boolean(reloj);
+    soltar();
+    if (evento.target.closest("button")) return;
+    // Toque corto, sin haberla agarrado y sin los botones de mover afuera: se entra.
+    if (estabaEsperando && !agarrada && controles.hidden) estado.irA("indicador", clave);
+  });
+  tarjeta.addEventListener("pointercancel", soltar);
+  tarjeta.addEventListener("pointerleave", soltar);
+
+  for (const boton of tarjeta.querySelectorAll("[data-mover]")) {
+    boton.addEventListener("click", (evento) => {
+      evento.stopPropagation();
+      const que = boton.dataset.mover;
+      if (que === "listo") {
+        controles.hidden = true;
+        tarjeta.classList.remove("agarrada");
+        return;
+      }
+      guardar({ indicadores: prefs.mover(preferencias.indicadores, clave, Number(que)) });
+    });
+  }
 }
 
 /* ---------- Los cuatro momentos de la plata ---------- */

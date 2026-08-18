@@ -704,13 +704,120 @@ body {
 }
 .menu-boton.abierto .menu-dato { color: var(--azul); }
 
+/* El panel FLOTA sobre el contenido, como cualquier menu desplegable.
+
+   Estaba en el flujo de la pagina, asi que al abrirlo empujaba todo para abajo y se leia
+   como una tarjeta mas del tablero — se perdia que era un menu. Flotando, se abre encima,
+   se cierra y la pagina no se movio. */
+.barra-menu { position: sticky; }
+.menu-caja { position: relative; z-index: 20; }
 .menu-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  max-height: min(66vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--lienzo);
-  border: 1px solid var(--azul-claro);
-  border-radius: var(--radio);
+  border: 1px solid var(--linea);
+  border-radius: 14px;
   padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: var(--sombra);
+  box-shadow: 0 4px 10px rgba(11, 15, 26, .08), 0 18px 40px rgba(11, 15, 26, .18);
+  animation: bajar .16s ease-out;
+}
+@keyframes bajar { from { opacity: 0; transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .menu-panel { animation: none; } }
+
+/* Tocar afuera cierra. Va detras del panel pero delante de todo lo demas. */
+.menu-telon {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  background: rgba(11, 15, 26, .12);
+  border: 0;
+  padding: 0;
 }
 .menu-panel .opcion:first-child { border-top: 0; padding-top: 0; }
 .menu-panel .consejo:last-child { margin-bottom: 0; }
+
+
+/* ---------- Tarjetas de indicador: se tocan y se mueven ---------- */
+
+.tarjeta-indicador { cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.tarjeta-indicador:active { transform: scale(.995); }
+.tarjeta-indicador:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+
+/* Agarrada: se levanta de la pagina para que se vea que quedo suelta y se puede mover. */
+.tarjeta-indicador.agarrada {
+  border-color: var(--azul);
+  box-shadow: 0 6px 14px rgba(11, 15, 26, .1), 0 20px 44px rgba(11, 15, 26, .16);
+  transform: scale(1.01);
+}
+.mover {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--linea);
+}
+
+/* Volver, arriba de una pantalla de detalle. */
+.volver {
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--azul);
+  background: transparent;
+  border: 0;
+  padding: 4px 0;
+  cursor: pointer;
+}
+.volver:active { opacity: .6; }
+
+/* ---------- El camino al objetivo (Hoy) ---------- */
+
+/* Una sola barra que cuenta otra historia que la de Salud: alla el protagonista es lo
+   cobrado, aca es lo que FALTA. Tres tramos sobre el objetivo entero — lo que ya entro,
+   lo que esta en marcha y lo que todavia no existe. */
+.camino {
+  position: relative;
+  display: flex;
+  height: 26px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--lienzo-2);
+  border: 1px solid var(--linea);
+}
+.camino-tramo { height: 100%; transition: width .7s cubic-bezier(.2, .7, .3, 1); }
+.camino-tramo.cobrado { background: var(--azul); }
+.camino-tramo.encaminado { background: var(--azul-claro); }
+.camino-marca {
+  position: absolute; top: -3px; bottom: -3px; width: 2px;
+  background: var(--tinta);
+  border-radius: 2px;
+}
+.camino-pies { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; }
+.camino-pie { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--tinta-2); }
+.camino-pie strong { color: var(--tinta); font-variant-numeric: tabular-nums; }
+.camino-punto { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.camino-punto.cobrado { background: var(--azul); }
+.camino-punto.encaminado { background: var(--azul-claro); }
+/* Se llamaba ".vacio" y choco con la clase del cartel de "no hay nada esperandote", que
+   trae 44px de padding: el puntito de 9px salia como un rectangulo enorme. Los nombres de
+   clase sueltos y genericos se pisan entre pantallas sin que nadie se entere. */
+.camino-punto.sin-cubrir { background: var(--lienzo-2); box-shadow: inset 0 0 0 1px var(--linea); }
+
+/* Una frase, no una tabla: la conclusion escrita, arriba de los numeros. */
+.frase {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--azul-suave);
+  color: var(--tinta);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.frase.alerta { background: var(--rojo-suave); color: var(--rojo-tinta); }
+.frase + .datos { margin-top: 14px; }

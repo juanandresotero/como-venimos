@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sanear, leer, guardar, POR_DEFECTO, INDICADORES, TIPOS } from "../lib/preferencias.js";
+import {
+  sanear, leer, guardar, mover, todos, POR_DEFECTO, INDICADORES, TIPOS,
+} from "../lib/preferencias.js";
 
 /* Un localStorage de mentira, para probar sin navegador. */
 function almacen(inicial = {}) {
@@ -69,4 +71,39 @@ test("los cinco indicadores de fabrica existen en el catalogo", () => {
 test("no se ofrece una torta de doce meses: es ilegible", () => {
   assert.ok(!TIPOS.graficoMes.some((t) => t.clave === "torta"));
   assert.ok(TIPOS.graficoReparto.some((t) => t.clave === "torta"));
+});
+
+/* ---------- El orden de las tarjetas ---------- */
+
+/* El orden de la lista ES el orden en pantalla: mover una tarjeta es mover su clave. */
+test("mover: sube y baja de a uno", () => {
+  assert.deepEqual(mover(["a", "b", "c"], "c", -1), ["a", "c", "b"]);
+  assert.deepEqual(mover(["a", "b", "c"], "a", 1), ["b", "a", "c"]);
+});
+
+test("mover: en los bordes no se cae de la lista", () => {
+  assert.deepEqual(mover(["a", "b", "c"], "a", -1), ["a", "b", "c"]);
+  assert.deepEqual(mover(["a", "b", "c"], "c", 1), ["a", "b", "c"]);
+  assert.deepEqual(mover(["a", "b", "c"], "a", 99), ["b", "c", "a"]);
+});
+
+test("mover: una clave que no esta no rompe nada", () => {
+  assert.deepEqual(mover(["a", "b"], "z", 1), ["a", "b"]);
+});
+
+test("mover: no toca la lista que recibe", () => {
+  const original = ["a", "b", "c"];
+  mover(original, "a", 1);
+  assert.deepEqual(original, ["a", "b", "c"], "mutar la original rompe el redibujado");
+});
+
+test("mover: el orden sobrevive al guardado", () => {
+  const caja = almacen();
+  guardar({ indicadores: mover(["barrios", "meses", "puntas"], "puntas", -2) }, caja);
+  assert.deepEqual(leer(caja).indicadores, ["puntas", "barrios", "meses"]);
+});
+
+test("todos: prende el catalogo entero", () => {
+  assert.equal(todos().length, INDICADORES.length);
+  assert.deepEqual(sanear({ indicadores: todos() }).indicadores, todos());
 });
