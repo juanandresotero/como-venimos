@@ -15,6 +15,9 @@ function nodo(marca) {
 
 const filtro = { anio: "todos", tipo: "todos", conAvisos: false };
 let altaAbierta = false;
+// Fuera del dibujado: tocar una propiedad redibuja, y si el estado viviera en el HTML la
+// solapa se cerraria sola en cada toque.
+let potencialesAbierto = false;
 
 function aplicarFiltros(negocios) {
   return negocios.filter((n) => {
@@ -201,12 +204,20 @@ function loPotencial(publicado, estado) {
     .join("");
 
   const muestra = publicado.detalle.find((p) => p.estimado);
+  /* Plegado: son propiedades que TODAVIA no son un negocio, y abiertas empujaban la lista
+     de los que si lo son. Se abre cuando hay ganas de mirarlas. */
   const seccion = nodo(html`
-    <section class="tarjeta">
-      <div class="tarjeta-titulo">
-        <h2 class="titulo" style="font-size:17px">Lo potencial, una por una</h2>
-        <span class="apunte">${publicado.cantidad} publicadas · ${plataUSD(publicado.ganancia)}</span>
-      </div>
+    <details class="grupo" ${potencialesAbierto ? "open" : ""}>
+      <summary class="grupo-cabeza">
+        <span class="grupo-cuenta">${publicado.cantidad}</span>
+        <span class="grupo-nombre">Negocios potenciales</span>
+        <span class="grupo-flecha" aria-hidden="true">›</span>
+      </summary>
+      <div class="tarjeta" style="margin-top:6px">
+      <p class="apunte" style="margin-bottom:12px">
+        ${publicado.cantidad} publicadas · <strong>${plataUSD(publicado.ganancia)}</strong>
+        a tu bolsillo si cerraran todas
+      </p>
       <div class="lista">${filas}</div>
       ${muestra
         ? html`<p class="apunte" style="margin-top:12px">
@@ -217,8 +228,12 @@ function loPotencial(publicado, estado) {
              entrá y apagala.
            </p>`
         : ""}
-    </section>
+      </div>
+    </details>
   `);
+  seccion.querySelector("details").addEventListener("toggle", (evento) => {
+    potencialesAbierto = evento.target.open;
+  });
   for (const boton of seccion.querySelectorAll("[data-propiedad]")) {
     boton.addEventListener("click", () => estado.irA("propiedad", boton.dataset.propiedad));
   }
