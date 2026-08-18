@@ -54,6 +54,12 @@
 
 * { box-sizing: border-box; }
 
+/* Un `display` explicito le gana al atributo `hidden`, que solo trae un `display: none`
+   de baja prioridad. Por eso la barra de guardado (display: flex) se veia SIEMPRE, con el
+   boton "Guardar" prendido aunque no hubiera un solo cambio para subir. Lo mismo pasaba
+   con el globo de pendientes en cero. Esta regla lo arregla para todo lo que venga. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--lienzo-2);
@@ -650,3 +656,61 @@ body {
 }
 .opcion-boton:active { background: var(--lienzo-2); }
 .opcion-boton:disabled { opacity: .5; }
+
+/* ---------- Barra de menu de Salud ---------- */
+
+/* Cuatro desplegables arriba: años, indicadores, qué hacer y reporte. Todo lo que es
+   elegir o leer aparte vive acá y no ocupa lugar entre los números. Se pega arriba al
+   scrollear, que es lo que la hace una barra de menú y no una tarjeta más. */
+.barra-menu {
+  display: flex;
+  gap: 6px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 8px 0;
+  margin-bottom: 4px;
+  background: var(--lienzo-2);
+}
+/* Sin flecha y con la letra justa: en un telefono de 420px cada boton se queda con 89px,
+   y con la flecha puesta "Indicadores" se cortaba en "Indicado…". Que este abierto ya se
+   ve por el color; la flecha costaba 13px que hacian falta para leer el nombre. */
+.menu-boton {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 9px 5px;
+  border-radius: 12px;
+  border: 1px solid var(--linea);
+  background: var(--lienzo);
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.menu-boton.abierto { background: var(--azul-suave); border-color: var(--azul-claro); color: var(--azul); }
+.menu-boton:active { transform: translateY(1px); }
+.menu-nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-dato {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--tinta);
+}
+.menu-boton.abierto .menu-dato { color: var(--azul); }
+
+.menu-panel {
+  background: var(--lienzo);
+  border: 1px solid var(--azul-claro);
+  border-radius: var(--radio);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--sombra);
+}
+.menu-panel .opcion:first-child { border-top: 0; padding-top: 0; }
+.menu-panel .consejo:last-child { margin-bottom: 0; }

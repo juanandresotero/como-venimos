@@ -1,22 +1,23 @@
 /* Salud del Negocio: la plata del recorte elegido, el ritmo contra el calendario y los
    indicadores que el usuario decide mirar.
 
-   La barra de ritmo sigue siendo el elemento central: muestra el avance real contra un
-   marcador de calendario, y la distancia entre los dos es toda la informacion.
+   Arriba de todo hay una BARRA DE MENU con cuatro desplegables — años, indicadores, qué
+   hacer y reporte. Todo lo que es "elegir" o "leer aparte" vive ahí y no ocupa lugar en
+   la pantalla: abajo quedan solo los números. Antes cada una de esas cosas era una
+   tarjeta más y había que scrollear entre ellas para llegar a lo que se venía a ver.
 
-   Arriba de todo hay un selector de años. Lo que cambia con el año y lo que NO:
+   Lo que cambia con el año elegido y lo que NO:
 
-     - Cobrado, ritmo, graficas e indicadores: se recortan al año elegido.
-     - Cartera viva (reservado / en negociacion / potencial): NO. Esa es la de HOY y no
-       tiene version historica. Si el recorte no incluye el año en curso, esas tarjetas se
-       esconden en vez de mostrar la cartera de hoy bajo un titulo de 2023, que seria
-       directamente mentira. */
+     - Cobrado, ritmo, gráficas e indicadores: se recortan al año elegido.
+     - Cartera viva (reservado / en negociación): NO. Esa es la de HOY y no tiene versión
+       histórica. Si el recorte no incluye el año en curso, esas tarjetas se esconden en
+       vez de mostrar la cartera de hoy bajo un título de 2023, que sería mentira. */
 
-import { capas, ritmo, porAnio, comparativaCategorias } from "../lib/salud.js";
+import { capas, ritmo, porAnio } from "../lib/salud.js";
 import {
   aniosDisponibles, cerradosDe, etiquetaDeAnios, mesesDe, mesesPorAnio, acumular,
   mejorYPeorMes, barrios, porOrigen, ventaVsAlquiler, concentracion, carteraPorCanal,
-  plazos, MESES,
+  plazos,
 } from "../lib/indicadores.js";
 import { lineas, torta, colorear, agruparCola } from "../lib/graficos.js";
 import * as prefs from "../lib/preferencias.js";
@@ -43,10 +44,10 @@ const decimal = (n, cifras = 2) => n.toFixed(cifras).replace(".", ",");
 /* Mas de tres curvas encima no se leen en un telefono. Pasado ese punto se suman. */
 const MAXIMO_SUPERPUESTO = 3;
 
-/* Si el menu de indicadores estuviera abierto o cerrado segun el HTML, cada tilde lo
-   cerraria: tildar redibuja la pantalla entera y volveria a nacer cerrado. Habria que
-   abrirlo de nuevo para cada uno de los nueve. Vive afuera del dibujado a proposito. */
-let menuAbierto = false;
+/* Que panel del menu esta abierto. Vive AFUERA del dibujado: elegir un año o tildar un
+   indicador redibuja la pantalla entera, y si el estado viviera en el HTML el panel se
+   cerraria en cada toque. Habria que volver a abrirlo para cada eleccion. */
+let panelAbierto = null;
 
 export function dibujarSalud(estado) {
   const { negocios, cartera, ajustes } = estado.datos;
@@ -77,48 +78,91 @@ export function dibujarSalud(estado) {
     ? ritmo(cobrado.facturacion, objetivo, unSoloAnio, cerroElAnio ? `${unSoloAnio}-12-31` : estado.hoy)
     : null;
 
-  const guardarPreferencias = (cambios) => {
+  const guardar = (cambios) => {
     prefs.guardar({ ...preferencias, ...cambios });
     estado.redibujar();
   };
 
+  const eventosSinAtender = (estado.datos.eventos || []).filter((e) => {
+    const atendidos = new Set((estado.datos.mis_datos || {}).eventos_atendidos || []);
+    return !atendidos.has(e.id) && !e.atendido;
+  });
+  const consejos = recomendaciones(
+    estado.datos, anioActual, estado.hoy, contarPendientes(negocios, eventosSinAtender)
+  );
+
   const trozo = document.createDocumentFragment();
-  trozo.append(selectorDeAnios(disponibles, preferencias.anios, anioActual, guardarPreferencias));
+  trozo.append(barraDeMenu({
+    estado, disponibles, preferencias, anioActual, etiqueta, consejos, guardar,
+  }));
   trozo.append(cabecera(etiqueta, cobrado, incluyeHoy ? c : null));
   if (r) trozo.append(barraDeRitmo(r, objetivo, c, unSoloAnio, incluyeHoy, cerroElAnio));
+  if (incluyeHoy) trozo.append(tresCapas(c));
 
-  if (incluyeHoy) {
-    trozo.append(tresCapas(c));
-    const eventosSinAtender = (estado.datos.eventos || []).filter((e) => {
-      const atendidos = new Set((estado.datos.mis_datos || {}).eventos_atendidos || []);
-      return !atendidos.has(e.id) && !e.atendido;
-    });
-    const consejos = recomendaciones(
-      estado.datos, anioActual, estado.hoy, contarPendientes(negocios, eventosSinAtender)
-    );
-    if (consejos.length) trozo.append(queHacer(consejos));
-  }
-
-  trozo.append(graficaMensual(negocios, activos, estado.hoy, preferencias, guardarPreferencias));
+  trozo.append(graficaMensual(negocios, activos, estado.hoy, preferencias, guardar));
   const anios = porAnio(negocios);
-  if (anios.length) trozo.append(graficaAnual(anios, activos, preferencias, guardarPreferencias));
+  if (anios.length) trozo.append(graficaAnual(anios, activos, preferencias, guardar));
 
-  trozo.append(seccionIndicadores(estado, negocios, cartera, ajustes, activos, etiqueta,
-    preferencias, guardarPreferencias));
-
-  if (incluyeHoy && c.publicado.detalle.length) trozo.append(propiedadesUsadas(c.publicado, estado));
-  trozo.append(descargarReporte(estado, anioActual));
+  trozo.append(indicadoresElegidos(estado, negocios, cartera, ajustes, activos, preferencias));
   return trozo;
 }
 
-/* ---------- Selector de años ---------- */
+/* ---------- La barra de menu ---------- */
 
-function selectorDeAnios(disponibles, elegidos, anioActual, guardar) {
+const PANELES = [
+  { clave: "anios", nombre: "Años" },
+  { clave: "indicadores", nombre: "Indicadores" },
+  { clave: "quehacer", nombre: "Qué hacer" },
+  { clave: "reporte", nombre: "Reporte" },
+];
+
+function barraDeMenu(ctx) {
+  const { estado, disponibles, preferencias, anioActual, etiqueta, consejos, guardar } = ctx;
+
+  // Cada boton dice de un vistazo que hay adentro: el año elegido, cuantos indicadores
+  // estan prendidos, cuantos comentarios hay. Un menu que no adelanta nada no se abre.
+  const resumen = {
+    anios: escapar(etiqueta),
+    indicadores: `${preferencias.indicadores.length}`,
+    quehacer: consejos.length ? `${consejos.length}` : "",
+    reporte: "",
+  };
+
+  const barra = nodo(html`
+    <div class="barra-menu">
+      ${PANELES.map((p) => html`
+        <button class="menu-boton ${panelAbierto === p.clave ? "abierto" : ""}"
+                data-panel="${p.clave}" aria-expanded="${panelAbierto === p.clave}">
+          <span class="menu-nombre">${escapar(p.nombre)}</span>
+          ${resumen[p.clave] ? html`<span class="menu-dato">${resumen[p.clave]}</span>` : ""}
+        </button>`).join("")}
+    </div>
+    <div class="menu-panel" id="menu-panel" ${panelAbierto ? "" : "hidden"}></div>
+  `);
+
+  const panel = barra.getElementById("menu-panel");
+  for (const boton of barra.querySelectorAll("[data-panel]")) {
+    boton.addEventListener("click", () => {
+      // Tocar el que ya esta abierto lo cierra: es la unica forma de sacarlo del medio.
+      panelAbierto = panelAbierto === boton.dataset.panel ? null : boton.dataset.panel;
+      estado.redibujar();
+    });
+  }
+
+  if (panelAbierto === "anios") panel.append(panelDeAnios(disponibles, preferencias.anios, anioActual, guardar));
+  if (panelAbierto === "indicadores") panel.append(panelDeIndicadores(preferencias, guardar));
+  if (panelAbierto === "quehacer") panel.append(panelQueHacer(consejos));
+  if (panelAbierto === "reporte") panel.append(panelReporte(estado, anioActual));
+
+  return barra;
+}
+
+function panelDeAnios(disponibles, elegidos, anioActual, guardar) {
   const activos = new Set(elegidos === null ? [anioActual] : elegidos);
   const todos = elegidos !== null && elegidos.length === 0;
 
-  const seccion = nodo(html`
-    <section class="tarjeta tarjeta-apretada">
+  const caja = nodo(html`
+    <div>
       <div class="tags">
         ${disponibles.map((a) => html`
           <button class="tag ${activos.has(a) && !todos ? "activo" : ""}" data-anio="${a}">
@@ -126,10 +170,14 @@ function selectorDeAnios(disponibles, elegidos, anioActual, guardar) {
           </button>`).join("")}
         <button class="tag ${todos ? "activo" : ""}" data-anio="todos">Todos</button>
       </div>
-    </section>
+      <p class="apunte" style="margin-top:10px">
+        Con dos o tres años elegidos las curvas se superponen para comparar. Con
+        <strong>Todos</strong> se suman todos los eneros, todos los febreros y así.
+      </p>
+    </div>
   `);
 
-  for (const boton of seccion.querySelectorAll("[data-anio]")) {
+  for (const boton of caja.querySelectorAll("[data-anio]")) {
     boton.addEventListener("click", () => {
       const cual = boton.dataset.anio;
       if (cual === "todos") return guardar({ anios: [] });
@@ -142,7 +190,108 @@ function selectorDeAnios(disponibles, elegidos, anioActual, guardar) {
       guardar({ anios: nuevo.sort() });
     });
   }
-  return seccion;
+  return caja;
+}
+
+function panelDeIndicadores(preferencias, guardar) {
+  const elegidos = new Set(preferencias.indicadores);
+  const caja = nodo(html`
+    <div>
+      ${prefs.INDICADORES.map((i) => html`
+        <label class="opcion">
+          <input type="checkbox" data-indicador="${i.clave}" ${elegidos.has(i.clave) ? "checked" : ""}>
+          <span>
+            <span class="opcion-nombre">${escapar(i.nombre)}</span>
+            <span class="opcion-pista">${escapar(i.pista)}</span>
+          </span>
+        </label>`).join("")}
+      <div class="ranura-reparto"></div>
+    </div>
+  `);
+
+  for (const casilla of caja.querySelectorAll("[data-indicador]")) {
+    casilla.addEventListener("change", () => {
+      const clave = casilla.dataset.indicador;
+      const nuevos = casilla.checked
+        ? [...preferencias.indicadores, clave]
+        : preferencias.indicadores.filter((c) => c !== clave);
+      guardar({ indicadores: nuevos });
+    });
+  }
+
+  // El tipo de grafica del reparto solo se ofrece si hay algun indicador que lo use.
+  if (["origenes", "barrios", "cartera_canal"].some((c) => elegidos.has(c))) {
+    const ranura = caja.querySelector(".ranura-reparto");
+    ranura.append(nodo(html`<p class="apunte" style="margin:14px 0 6px">Barrios y canales, en</p>`));
+    ranura.append(selectorDeTipo("graficoReparto", preferencias.graficoReparto, guardar));
+  }
+  return caja;
+}
+
+const ROJAS = new Set(["falta_volumen", "categoria", "concentracion", "trabadas"]);
+
+/* Aca no se elige nada: son los comentarios sobre tus numeros, para leer y cerrar. */
+function panelQueHacer(consejos) {
+  if (!consejos.length) {
+    return nodo(html`<p class="apunte">Nada que marcarte hoy. Los números vienen prolijos.</p>`);
+  }
+  return nodo(html`
+    <div>
+      <p class="apunte" style="margin-bottom:12px">Con tus propios números.</p>
+      ${consejos.map((c) => html`
+        <div class="consejo ${ROJAS.has(c.clave) ? "rojo" : ""}">
+          <p class="consejo-titulo">${escapar(c.titulo)}</p>
+          <p class="consejo-detalle">${escapar(c.detalle)}</p>
+        </div>`).join("")}
+    </div>
+  `);
+}
+
+/* El reporte se arma en el momento y se baja como archivo. No hay servidor atras: es el
+   mismo navegador el que escribe el HTML. */
+function panelReporte(estado, anio) {
+  const caja = nodo(html`
+    <div>
+      <p class="apunte" style="margin-bottom:12px">
+        Un archivo con todo esto adentro: capas, ritmo, gráficas y qué hacer para llegar.
+        Se abre en cualquier teléfono, aunque no haya señal.
+      </p>
+      <div class="botonera" style="margin-top:0">
+        <button class="boton boton-primario" id="bajar-reporte">Descargar</button>
+        <button class="boton" id="compartir-reporte">Compartir</button>
+      </div>
+      <p class="apunte" id="aviso-reporte" style="margin-top:10px"></p>
+    </div>
+  `);
+
+  const construir = () => armarReporte(estado.datos, anio, estado.hoy);
+  const aviso = caja.getElementById("aviso-reporte");
+
+  caja.getElementById("bajar-reporte").addEventListener("click", () => {
+    const blob = new Blob([construir()], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = nombreArchivo(anio, estado.hoy);
+    enlace.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    aviso.textContent = "Descargado.";
+  });
+
+  caja.getElementById("compartir-reporte").addEventListener("click", async () => {
+    const archivo = new File([construir()], nombreArchivo(anio, estado.hoy), { type: "text/html" });
+    if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+      try {
+        await navigator.share({ files: [archivo], title: `¿Cómo venimos? ${anio}` });
+        return;
+      } catch {
+        return;   // se cancelo
+      }
+    }
+    aviso.textContent = "Este navegador no comparte archivos. Descargalo y adjuntalo.";
+  });
+
+  return caja;
 }
 
 /* ---------- Cabecera y ritmo ---------- */
@@ -206,24 +355,6 @@ function barraDeRitmo(r, objetivo, c, anio, incluyeHoy, cerroElAnio) {
              ${plata(c.total.facturacion)}. Te faltan <strong>${plata(objetivo - c.total.facturacion)}</strong>
              de negocio nuevo para el objetivo.</p>`
         : ""}
-    </section>
-  `);
-}
-
-const ROJAS = new Set(["falta_volumen", "categoria", "concentracion", "trabadas"]);
-
-function queHacer(consejos) {
-  return nodo(html`
-    <section class="tarjeta">
-      <div class="tarjeta-titulo">
-        <h2 class="titulo">Qué hacer</h2>
-        <span class="apunte">con tus propios números</span>
-      </div>
-      ${consejos.map((c) => html`
-        <div class="consejo ${ROJAS.has(c.clave) ? "rojo" : ""}">
-          <p class="consejo-titulo">${escapar(c.titulo)}</p>
-          <p class="consejo-detalle">${escapar(c.detalle)}</p>
-        </div>`).join("")}
     </section>
   `);
 }
@@ -315,9 +446,6 @@ function graficaMensual(negocios, activos, hoy, preferencias, guardar) {
       </div>
       <div class="ranura-pastillas"></div>
       ${dibujo}
-      ${superponer ? html`<p class="apunte" style="margin-top:10px">
-           Comparando ${activos.length} años. Con <strong>Todos</strong> se suman todos los
-           eneros, todos los febreros y así.</p>` : ""}
       ${mejor && mejor.ganancia ? html`
         <p class="apunte" style="margin-top:10px">
           Tu mejor mes fue <strong>${mejor.nombre}</strong>, con ${plataUSD(mejor.ganancia)}
@@ -498,9 +626,9 @@ function indicadorDependencia(negocios, activos) {
           <br><span class="apunte">el mejor solo: ${pct(f.parteDelMejor)}</span></span>
       </div>`).join("")}
   </div>`;
-  const frágil = filas.filter((f) => f.parte > 0.6 && f.negocios >= 3);
+  const fragil = filas.filter((f) => f.parte > 0.6 && f.negocios >= 3);
   return tarjeta("De cuánto dependés", "peso de tus 3 mejores negocios", cuerpo,
-    frágil.length ? html`<p class="aviso">En ${frágil.map((f) => f.anio).join(", ")} tres
+    fragil.length ? html`<p class="aviso">En ${fragil.map((f) => f.anio).join(", ")} tres
       negocios trajeron más de la mitad del año. Si uno se cae, se cae el año.</p>` : "");
 }
 
@@ -538,31 +666,10 @@ function indicadorPlazos(negocios, activos) {
     </div>`);
 }
 
-function indicadorCategoria(negocios, ajustes, activos, hoy) {
-  const anio = activos.length === 1 ? activos[0] : hoy.slice(0, 4);
-  const cats = comparativaCategorias(negocios, ajustes, anio, hoy);
-  if (!cats.length) return "";
-  const mejor = [...cats].sort((a, b) => b.neto - a.neto)[0];
-  const actual = cats.find((c) => c.actual);
-  const filas = cats.map((c) => html`
-    <div class="dato">
-      <span class="dato-nombre">${escapar(c.categoria)} · ${Math.round(c.split * 100)}%${c.actual ? " (tu categoría)" : ""}</span>
-      <span class="dato-valor" style="${c.diferencia > 0 ? "color:var(--azul)" : ""}">
-        ${plata(c.neto)}${c.diferencia ? ` (${c.diferencia > 0 ? "+" : ""}${plata(c.diferencia)})` : ""}
-      </span>
-    </div>`).join("");
-  return tarjeta("Tu categoría", `ganancia neta de ${anio}`, html`<div class="datos">${filas}</div>`,
-    mejor && actual && mejor.categoria !== actual.categoria
-      ? html`<p class="aviso">Con <strong>${escapar(mejor.categoria)}</strong> habrías ganado
-          <strong>${plata(mejor.neto - actual.neto)}</strong> más, descontando el fee mensual.</p>`
-      : "");
-}
+/* Los indicadores que el usuario dejo prendidos. La eleccion vive en el menu de arriba.
 
-/* Reemplaza a la vieja tarjeta "Como trabajas", que era una lista fija de seis datos.
-   Ahora el usuario elige cuales quiere ver y la eleccion queda guardada, asi la pantalla
-   no crece hasta volverse un deposito de numeros que no se mira. */
-function seccionIndicadores(estado, negocios, cartera, ajustes, activos, etiqueta,
-  preferencias, guardar) {
+   Reemplaza a la vieja tarjeta "Como trabajas", que era una lista fija de seis datos. */
+function indicadoresElegidos(estado, negocios, cartera, ajustes, activos, preferencias) {
   const elegidos = new Set(preferencias.indicadores);
   const arma = {
     venta_alquiler: () => indicadorVentaAlquiler(negocios, activos),
@@ -573,78 +680,26 @@ function seccionIndicadores(estado, negocios, cartera, ajustes, activos, etiquet
     cartera_canal: () => indicadorCarteraCanal(cartera, negocios, ajustes, preferencias),
     puntas: () => indicadorPuntas(negocios, activos),
     plazos: () => indicadorPlazos(negocios, activos),
-    categoria: () => indicadorCategoria(negocios, ajustes, activos, estado.hoy),
   };
 
   const cuerpo = prefs.INDICADORES
-    .filter((i) => elegidos.has(i.clave))
+    .filter((i) => elegidos.has(i.clave) && arma[i.clave])
     .map((i) => arma[i.clave]())
     .filter(Boolean)
     .join("");
 
-  const usaReparto = ["origenes", "barrios", "cartera_canal"].some((c) => elegidos.has(c));
-
-  const seccion = nodo(html`
-    <div class="indicadores">
-      <div class="tarjeta tarjeta-apretada">
-        <div class="tarjeta-titulo" style="margin-bottom:0">
-          <h2 class="titulo">Cómo trabajás</h2>
-          <button class="boton boton-chico" id="elegir-indicadores">
-            ${menuAbierto ? "Listo" : "Elegir"}
-          </button>
-        </div>
-        <p class="apunte" style="margin-top:6px">
-          ${elegidos.size} de ${prefs.INDICADORES.length} · ${escapar(etiqueta)}
-        </p>
-        <div class="menu-indicadores" id="menu-indicadores" ${menuAbierto ? "" : "hidden"}>
-          ${prefs.INDICADORES.map((i) => html`
-            <label class="opcion">
-              <input type="checkbox" data-indicador="${i.clave}" ${elegidos.has(i.clave) ? "checked" : ""}>
-              <span>
-                <span class="opcion-nombre">${escapar(i.nombre)}</span>
-                <span class="opcion-pista">${escapar(i.pista)}</span>
-              </span>
-            </label>`).join("")}
-          <div class="ranura-reparto"></div>
-        </div>
-      </div>
-      ${cuerpo}
-    </div>
-  `);
-
-  const menu = seccion.getElementById("menu-indicadores");
-  seccion.getElementById("elegir-indicadores").addEventListener("click", (e) => {
-    menuAbierto = menu.hidden;
-    menu.hidden = !menuAbierto;
-    e.currentTarget.textContent = menuAbierto ? "Listo" : "Elegir";
-  });
-
-  for (const casilla of seccion.querySelectorAll("[data-indicador]")) {
-    casilla.addEventListener("change", () => {
-      const clave = casilla.dataset.indicador;
-      const nuevos = casilla.checked
-        ? [...preferencias.indicadores, clave]
-        : preferencias.indicadores.filter((c) => c !== clave);
-      guardar({ indicadores: nuevos });
-    });
-  }
-
-  // El tipo de grafica del reparto solo se ofrece si hay algun indicador que lo use.
-  if (usaReparto) {
-    const ranura = seccion.querySelector(".ranura-reparto");
-    ranura.append(nodo(html`<p class="apunte" style="margin:10px 0 6px">Barrios y canales</p>`));
-    ranura.append(selectorDeTipo("graficoReparto", preferencias.graficoReparto, guardar));
-  }
-  return seccion;
+  if (!cuerpo) return document.createDocumentFragment();
+  return nodo(cuerpo);
 }
 
-/* ---------- Lo potencial y el reporte ---------- */
+/* ---------- Los cuatro momentos de la plata ---------- */
 
-/* Los cuatro momentos del camino de la plata. Los tres que SUMAN — cobrado, reservado y
-   en negociacion — y abajo, separado, lo potencial: lo publicado que todavia no se movio.
+/* Los tres momentos que SUMAN — cobrado, reservado y en negociacion — y abajo, separado,
+   lo potencial: lo que esta publicado y todavia no se movio.
 
    Lo potencial no suma a proposito. Es lo que hay dando vueltas, no lo que esta por
-   entrar, y mezclarlo daba un numero que no se podia leer de un vistazo. */
+   entrar, y mezclarlo daba un numero que no se podia leer de un vistazo. El detalle
+   propiedad por propiedad vive en Negocios, que es donde se va a hacer algo con el. */
 function tresCapas(c) {
   const suma = c.encaminado.facturacion || 1;
   const ancho = (x) => `${Math.min(100, (x / suma) * 100)}%`;
@@ -681,97 +736,7 @@ function tresCapas(c) {
       </div>
 
       ${fila("cuatro", "Potencial", `${cuantos(c.publicado.cantidad, "propiedad", "propiedades")} publicadas · no suma`, c.publicado, true)}
+      <p class="apunte" style="margin-top:12px">Lo potencial, una por una, está en Negocios.</p>
     </section>
   `);
-}
-
-function propiedadesUsadas(publicado, estado) {
-  const filas = publicado.detalle
-    .map(
-      (p) => html`
-      <button class="fila" data-propiedad="${escapar(p.entity_id)}">
-        <span class="fila-cuerpo">
-          <span class="fila-titulo">${escapar(p.direccion || "Sin dirección")}</span>
-          <span class="fila-sub">
-            ${plata(p.precio)}${p.estimado ? ` × ${pct(p.pct)}` : " · con tu negocio ya cargado"}
-          </span>
-        </span>
-        <span class="fila-plata">
-          <span class="cifra cifra-media">${plata(p.ganancia)}</span>
-          <span class="fila-sub">${plata(p.facturacion)} fact.</span>
-        </span>
-      </button>`
-    )
-    .join("");
-
-  const muestra = publicado.detalle.find((p) => p.estimado);
-  const seccion = nodo(html`
-    <section class="tarjeta">
-      <div class="tarjeta-titulo">
-        <h2 class="titulo">Lo potencial, una por una</h2>
-        <span class="apunte">${publicado.cantidad} propiedades</span>
-      </div>
-      <div class="lista">${filas}</div>
-      ${muestra
-        ? html`<p class="apunte" style="margin-top:12px">
-             El <strong>${pct(muestra.pct)}</strong> sale de tu propia forma de cerrar:
-             ${pct(muestra.unaPunta)} de comisión por punta, y cerrás con
-             <strong>${decimal(muestra.puntas)} puntas</strong> en promedio. De ahí se
-             descuenta tu tajada de hoy. Si alguna no debería contar, entrá y apagala.
-           </p>`
-        : ""}
-    </section>
-  `);
-  for (const boton of seccion.querySelectorAll("[data-propiedad]")) {
-    boton.addEventListener("click", () => estado.irA("propiedad", boton.dataset.propiedad));
-  }
-  return seccion;
-}
-
-/* El reporte se arma en el momento y se baja como archivo. No hay servidor atras: es el
-   mismo navegador el que escribe el HTML. */
-function descargarReporte(estado, anio) {
-  const seccion = nodo(html`
-    <section class="tarjeta">
-      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">Llevate el reporte</h2>
-      <p class="apunte" style="margin-bottom:12px">
-        Un archivo con todo esto adentro: capas, ritmo, gráficas y qué hacer para llegar.
-        Se abre en cualquier teléfono, aunque no haya señal.
-      </p>
-      <div class="botonera" style="margin-top:0">
-        <button class="boton boton-primario" id="bajar-reporte">Descargar</button>
-        <button class="boton" id="compartir-reporte">Compartir</button>
-      </div>
-      <p class="apunte" id="aviso-reporte" style="margin-top:10px"></p>
-    </section>
-  `);
-
-  const construir = () => armarReporte(estado.datos, anio, estado.hoy);
-  const aviso = seccion.getElementById("aviso-reporte");
-
-  seccion.getElementById("bajar-reporte").addEventListener("click", () => {
-    const blob = new Blob([construir()], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const enlace = document.createElement("a");
-    enlace.href = url;
-    enlace.download = nombreArchivo(anio, estado.hoy);
-    enlace.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    aviso.textContent = "Descargado.";
-  });
-
-  seccion.getElementById("compartir-reporte").addEventListener("click", async () => {
-    const archivo = new File([construir()], nombreArchivo(anio, estado.hoy), { type: "text/html" });
-    if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-      try {
-        await navigator.share({ files: [archivo], title: `¿Cómo venimos? ${anio}` });
-        return;
-      } catch {
-        return;   // se cancelo
-      }
-    }
-    aviso.textContent = "Este navegador no comparte archivos. Descargalo y adjuntalo.";
-  });
-
-  return seccion;
 }

@@ -1,6 +1,7 @@
 /* La lista de los 85 negocios, con filtros. Tocar uno abre su ficha. */
 
-import { plata, plataUSD, fechaCorta, escapar } from "../lib/formato.js";
+import { plata, plataUSD, pct, fechaCorta, escapar } from "../lib/formato.js";
+import { capas } from "../lib/salud.js";
 import { crearNegocio } from "../lib/guardado.js";
 import { ATAJOS, GRUPOS_ATAJOS, esBusqueda } from "../lib/motor.js";
 
@@ -63,6 +64,13 @@ export function dibujarNegocios(estado) {
   `));
 
   if (altaAbierta) trozo.append(alta(estado));
+
+  // Lo publicado que todavia no se movio. Vive aca y no en Salud porque es una lista de
+  // propiedades sobre las que hay algo para HACER: entrar, revisar el precio, o apagarla
+  // si no deberia contar. En Salud era un dato mas para mirar.
+  const c = capas(estado.datos.negocios, estado.datos.cartera, estado.datos.ajustes,
+    estado.hoy.slice(0, 4));
+  if (c.publicado.detalle.length) trozo.append(loPotencial(c.publicado, estado));
 
   const contenedor = document.createElement("div");
   contenedor.className = "lista";
@@ -168,4 +176,51 @@ function fila(n, estado) {
   `);
   trozo.querySelector(".fila").addEventListener("click", () => estado.irA("ficha", n.id));
   return trozo;
+}
+
+/* Las propiedades publicadas que todavia no se movieron, una por una.
+
+   Lo que se factura sale del negocio ya cargado si existe; si no, se estima con las
+   puntas promedio del usuario. Tocar una abre su ficha de propiedad, donde se puede
+   apagar para que deje de contar en la proyeccion. */
+function loPotencial(publicado, estado) {
+  const filas = publicado.detalle
+    .map((p) => html`
+      <button class="fila" data-propiedad="${escapar(p.entity_id)}">
+        <span class="fila-cuerpo">
+          <span class="fila-titulo">${escapar(p.direccion || "Sin dirección")}</span>
+          <span class="fila-sub">
+            ${plata(p.precio)}${p.estimado ? ` × ${pct(p.pct)}` : " · con tu negocio ya cargado"}
+          </span>
+        </span>
+        <span class="fila-plata">
+          <span class="cifra cifra-media">${plata(p.ganancia)}</span>
+          <span class="fila-sub">${plata(p.facturacion)} fact.</span>
+        </span>
+      </button>`)
+    .join("");
+
+  const muestra = publicado.detalle.find((p) => p.estimado);
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2 class="titulo" style="font-size:17px">Lo potencial, una por una</h2>
+        <span class="apunte">${publicado.cantidad} publicadas · ${plataUSD(publicado.ganancia)}</span>
+      </div>
+      <div class="lista">${filas}</div>
+      ${muestra
+        ? html`<p class="apunte" style="margin-top:12px">
+             El <strong>${pct(muestra.pct)}</strong> sale de tu propia forma de cerrar:
+             ${pct(muestra.unaPunta)} de comisión por punta, y cerrás con
+             <strong>${muestra.puntas.toFixed(2).replace(".", ",")} puntas</strong> en
+             promedio. De ahí se descuenta tu tajada de hoy. Si alguna no debería contar,
+             entrá y apagala.
+           </p>`
+        : ""}
+    </section>
+  `);
+  for (const boton of seccion.querySelectorAll("[data-propiedad]")) {
+    boton.addEventListener("click", () => estado.irA("propiedad", boton.dataset.propiedad));
+  }
+  return seccion;
 }
