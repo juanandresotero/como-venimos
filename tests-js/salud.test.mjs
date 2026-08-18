@@ -426,3 +426,40 @@ test("una propiedad publicada se proyecta con esa comision y la tajada de hoy", 
   assert.equal(Math.round(p.ganancia), Math.round(29400 * 0.45));
   assert.equal(p.estimado, true);
 });
+
+/* ---------- El precio de negociacion manda sobre el publicado ---------- */
+
+test("si se cargo a que precio se negocia, ESE se usa para proyectar", () => {
+  const cerrado = negocio({ tipo_negocio: "venta", puntas: 2, estado: "cerrado" });
+  const cartera = {
+    p1: propiedad({
+      entity_id: "p1", estado: "en_negociacion", operacion: "venta",
+      precio: 240000, precio_negociacion: 200000,
+    }),
+  };
+  const c = capas([cerrado], cartera, AJUSTES, "2026");
+  const fila = c.negociacion.detalle[0];
+  // 2 puntas x 3% = 6% sobre 200.000 (lo negociado) y no sobre 240.000 (lo publicado).
+  assert.ok(Math.abs(fila.facturacion - 12000) < 1e-6, `dio ${fila.facturacion}`);
+  assert.equal(fila.precio, 200000);
+  assert.equal(fila.precio_publicado, 240000);
+  assert.equal(fila.negociado, true);
+});
+
+test("sin precio de negociacion se sigue usando el publicado", () => {
+  const cerrado = negocio({ tipo_negocio: "venta", puntas: 2, estado: "cerrado" });
+  const cartera = {
+    p1: propiedad({ entity_id: "p1", estado: "en_negociacion", operacion: "venta", precio: 240000 }),
+  };
+  const fila = capas([cerrado], cartera, AJUSTES, "2026").negociacion.detalle[0];
+  assert.ok(Math.abs(fila.facturacion - 14400) < 1e-6);
+  assert.equal(fila.negociado, false);
+});
+
+test("proyectar sobre el publicado infla justo lo que esta por entrar", () => {
+  const cerrado = negocio({ tipo_negocio: "venta", puntas: 2, estado: "cerrado" });
+  const como = (extra) => capas([cerrado],
+    { p1: propiedad({ entity_id: "p1", estado: "en_negociacion", operacion: "venta", precio: 240000, ...extra }) },
+    AJUSTES, "2026").negociacion.facturacion;
+  assert.ok(como({ precio_negociacion: 200000 }) < como({}));
+});

@@ -20,7 +20,10 @@ function opcionesCon(lista, actual) {
   return opciones;
 }
 import { editarPropiedad } from "../lib/guardado.js";
-import { plata, plataUSD, fechaCorta, escapar, fechaRazonable } from "../lib/formato.js";
+import {
+  plata, plataUSD, fechaCorta, escapar, fechaRazonable, numeroDesde,
+  formatearMientrasEscribe,
+} from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -229,13 +232,20 @@ function campos(p, estado) {
              <option value=""></option>
              ${opciones.map(([v, t]) => `<option value="${escapar(v)}"${String(v) === String(valor ?? "") ? " selected" : ""}>${escapar(t)}</option>`).join("")}
            </select>`
-        : html`<input class="campo" id="${id}" type="${tipo}" value="${escapar(valor ?? "")}">`}
+        : tipo === "monto"
+          ? html`<input class="campo" id="${id}" type="text" inputmode="decimal"
+                   value="${valor === null || valor === undefined ? "" : plata(valor)}"
+                   placeholder="${escapar(String(Math.round(p.precio || 0)))}">`
+          : html`<input class="campo" id="${id}" type="${tipo}" value="${escapar(valor ?? "")}">`}
     `;
     const control = fila.querySelector(".campo");
+    if (tipo === "monto") formatearMientrasEscribe(control);
     control.addEventListener("change", () => {
       // El navegador avisa del cambio mientras se tipea el año: no guardar a medio escribir.
       if (tipo === "date" && !fechaRazonable(control.value)) return;
-      const cambios = { [clave]: control.value || null };
+      const cambios = {
+        [clave]: tipo === "monto" ? numeroDesde(control.value) : (control.value || null),
+      };
       // Si toca la fecha de captacion, deja de ser una estimacion del robot.
       if (clave === "fecha_captacion_real") cambios.fecha_captacion_estimada = false;
       editarPropiedad(estado, p.entity_id, cambios);
@@ -243,6 +253,13 @@ function campos(p, estado) {
     });
     contenedor.append(fila);
   };
+
+  /* Solo cuando esta en negociacion: preguntarlo antes no tiene sentido, y despues de
+     cerrada el numero de verdad ya vive en el negocio. */
+  if (p.activa && p.estado === "en_negociacion") {
+    agregar("precio_negociacion", "A qué precio se está negociando", "monto",
+      p.precio_negociacion, null, !p.precio_negociacion);
+  }
 
   agregar("fecha_captacion_real", "Cuándo la captaste de verdad", "date",
     p.fecha_captacion_real, null, p.fecha_captacion_estimada);

@@ -384,7 +384,7 @@ function panelReporte(estado, anio) {
 function cabecera(etiqueta, cobrado, c) {
   const suma = c ? (campo) => c.cobrado[campo] + c.avanzado[campo] : null;
   return nodo(html`
-    <section class="tarjeta">
+    <section class="tarjeta tarjeta-fija">
       <p class="etiqueta">Cobrado en ${escapar(etiqueta)}</p>
       <p class="cifra cifra-heroe" style="margin:6px 0 2px">${plata(cobrado.ganancia)}</p>
       <p class="apunte" style="margin-bottom:${c ? "16px" : "0"}">
@@ -411,7 +411,7 @@ function barraDeRitmo(r, objetivo, c, anio, incluyeHoy, cerroElAnio) {
     : (r.aRitmo ? "Vas a ritmo" : "Vas atrasado");
   const bien = cerroElAnio ? r.avance >= 1 : r.aRitmo;
   return nodo(html`
-    <section class="tarjeta">
+    <section class="tarjeta tarjeta-fija">
       <div class="tarjeta-titulo">
         <h2 class="titulo">Ritmo</h2>
         <span class="ritmo-veredicto ${bien ? "bien" : "mal"}">${veredicto}</span>
@@ -524,7 +524,7 @@ function graficaMensual(negocios, activos, hoy, preferencias, guardar) {
   }
 
   const seccion = nodo(html`
-    <section class="tarjeta">
+    <section class="tarjeta tarjeta-fija">
       <div class="tarjeta-titulo">
         <h2 class="titulo">Tu ganancia mes a mes</h2>
         <span class="apunte">${plataUSD(total)}</span>
@@ -553,7 +553,7 @@ function graficaAnual(anios, activos, preferencias, guardar) {
     : columnas(anios, "facturacion", (a) => a.anio.slice(2), (a) => activos.includes(a.anio));
 
   const seccion = nodo(html`
-    <section class="tarjeta">
+    <section class="tarjeta tarjeta-fija">
       <div class="tarjeta-titulo">
         <h2 class="titulo">Tu carrera</h2>
         <span class="apunte">${plataUSD(total)} facturados</span>
@@ -587,6 +587,13 @@ function indicadoresElegidos(estado, ctx, preferencias, guardar) {
   const armados = preferencias.indicadores
     .map((clave) => ({ clave, armado: armar(clave, ctx) }))
     .filter((x) => x.armado);
+
+  /* Una linea que separa el tablero fijo de lo que el usuario prendio. Sin esto las
+     tarjetas se leian todas como una sola lista y no se entendia cuales se podian mover. */
+  contenedor.append(nodo(html`
+    <div class="separador-indicadores">
+      <span class="separador-nombre">Tus indicadores</span>
+    </div>`));
 
   if (ordenando) {
     contenedor.append(nodo(html`
@@ -665,7 +672,7 @@ function tresCapas(c) {
     </div>`;
 
   return nodo(html`
-    <section class="tarjeta">
+    <section class="tarjeta tarjeta-fija">
       <h2 class="titulo" style="margin-bottom:14px">De dónde sale la plata</h2>
       <div class="capas-barra">
         <div class="capas-tramo uno" style="width:${ancho(c.cobrado.facturacion)}"></div>

@@ -150,7 +150,8 @@ function eventosSinAtender() {
 
 function dibujarGlobo() {
   const globo = document.getElementById("globo-pendientes");
-  const grupos = derivar(estado.datos.negocios, eventosSinAtender(), estado.hoy);
+  const grupos = derivar(estado.datos.negocios, eventosSinAtender(), estado.hoy,
+    estado.datos.cartera);
   const total = grupos.reduce((t, g) => t + g.items.length, 0);
   globo.hidden = total === 0;
   globo.textContent = total > 99 ? "99+" : String(total);
@@ -187,12 +188,23 @@ function dibujar({ desdeArriba = false } = {}) {
   const idEnfocado = enfocado && enfocado.id && contenedor.contains(enfocado)
     ? enfocado.id : null;
 
+  /* La animacion de entrada corre SOLO al cambiar de pantalla.
+
+     Estaba en todos los elementos siempre, y como cualquier cambio redibuja la vista
+     entera, tocar un año o tildar un indicador hacia que la pantalla completa se
+     desvaneciera y volviera a entrar deslizandose. Eso era el pestañeo.
+
+     Y se reemplaza de una sola vez con replaceChildren en vez de vaciar y despues
+     llenar: vaciar primero deja un cuadro en blanco visible entre las dos cosas. */
   const fabrica = VISTAS[estado.vista];
-  contenedor.innerHTML = "";
-  if (!fabrica) {
-    contenedor.innerHTML = `<p class="pronto">Esta pantalla llega en la próxima etapa.</p>`;
+  contenedor.classList.toggle("entrando", desdeArriba);
+  if (fabrica) {
+    contenedor.replaceChildren(fabrica(estado));
   } else {
-    contenedor.append(fabrica(estado));
+    const aviso = document.createElement("p");
+    aviso.className = "pronto";
+    aviso.textContent = "Esta pantalla llega en la próxima etapa.";
+    contenedor.replaceChildren(aviso);
   }
 
   if (desdeArriba) {
@@ -214,13 +226,25 @@ function dibujar({ desdeArriba = false } = {}) {
   dibujarGlobo();
 }
 
+/* Cambiar el hash dispara `hashchange`, que tambien redibuja. Sin esta bandera cada
+   navegacion dibujaba DOS veces — una desde aca con la animacion de entrada y otra desde
+   el evento sin ella, que ademas pisaba a la primera. El trabajo se hacia al pedo y la
+   animacion no llegaba a verse. */
+let navegando = false;
+
 function irA(vista, foco = null) {
   // De donde vino, para que "Ficha completa" sepa a donde devolverlo.
   if (vista !== estado.vista) estado.anterior = estado.vista;
   estado.vista = vista;
   estado.foco = foco;
-  location.hash = foco ? `${vista}/${foco}` : vista;
-  dibujar({ desdeArriba: true });
+  const destino = foco ? `${vista}/${foco}` : vista;
+  if (location.hash.slice(1) === destino) {
+    // El hash ya era ese: no va a haber evento, hay que dibujar aca.
+    dibujar({ desdeArriba: true });
+    return;
+  }
+  navegando = true;
+  location.hash = destino;   // el `hashchange` dibuja
 }
 
 function leerHash() {
@@ -290,7 +314,12 @@ async function arrancar() {
     dibujarBotonTema();
   });
   document.getElementById("boton-ajustes").addEventListener("click", () => irA("ajustes"));
-  window.addEventListener("hashchange", () => { leerHash(); dibujar(); });
+  window.addEventListener("hashchange", () => {
+    leerHash();
+    // Volver con el boton de atras tambien es cambiar de pantalla, y tambien anima.
+    dibujar({ desdeArriba: true });
+    navegando = false;
+  });
 
   // Si se cierra la app con cambios sin subir, avisar antes de perderlos.
   window.addEventListener("beforeunload", (evento) => {

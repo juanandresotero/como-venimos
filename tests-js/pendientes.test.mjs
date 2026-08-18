@@ -124,3 +124,43 @@ test("dos negocios abiertos SIN propiedad no se toman por duplicados", () => {
   ], [], "2026-08-17");
   assert.equal(grupos.find((g) => g.clave === "negocio_duplicado"), undefined);
 });
+
+/* ---------- El precio al que se esta negociando ---------- */
+
+const enNegociacion = (x = {}) => ({
+  entity_id: "p1", direccion: "Gutenberg 6100", activa: true,
+  estado: "en_negociacion", precio: 240000, fecha_negociacion: "2026-07-01", ...x,
+});
+
+/* El robot ve el precio PUBLICADO, y una oferta aceptada casi nunca es por ese numero.
+   Mientras no se cargue, lo que esta mas cerca de entrar se proyecta sobre un precio que
+   ya no existe. */
+test("una propiedad en negociacion sin precio cargado pide el precio", () => {
+  const grupos = derivar([], [], "2026-08-18", { p1: enNegociacion() });
+  const grupo = grupos.find((g) => g.clave === "falta_precio_negociacion");
+  assert.ok(grupo, "tendria que pedirlo");
+  assert.equal(grupo.items[0].entity_id, "p1");
+  assert.match(grupo.items[0].detalle, /240\.000/);
+  assert.ok(grupo.urgente, "es plata que esta por entrar, no tramite");
+});
+
+test("cargado el precio, deja de pedirlo", () => {
+  const grupos = derivar([], [], "2026-08-18",
+    { p1: enNegociacion({ precio_negociacion: 225000 }) });
+  assert.ok(!grupos.some((g) => g.clave === "falta_precio_negociacion"));
+});
+
+test("solo se pide para las que estan EN negociacion y siguen activas", () => {
+  const cartera = {
+    a: enNegociacion({ entity_id: "a", estado: "publicada" }),
+    b: enNegociacion({ entity_id: "b", estado: "reservada" }),
+    c: enNegociacion({ entity_id: "c", activa: false }),
+  };
+  const grupos = derivar([], [], "2026-08-18", cartera);
+  assert.ok(!grupos.some((g) => g.clave === "falta_precio_negociacion"));
+});
+
+test("sin cartera no explota", () => {
+  assert.doesNotThrow(() => derivar([], [], "2026-08-18"));
+  assert.doesNotThrow(() => derivar([], [], "2026-08-18", null));
+});

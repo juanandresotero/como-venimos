@@ -131,11 +131,14 @@ body {
 /* ---------- Estructura ---------- */
 
 .vista { padding: 8px 16px 28px; max-width: 640px; margin: 0 auto; outline: none; }
-.vista > * { animation: entrar .45s cubic-bezier(.2, .7, .3, 1) backwards; }
-.vista > *:nth-child(2) { animation-delay: .05s; }
-.vista > *:nth-child(3) { animation-delay: .1s; }
-.vista > *:nth-child(4) { animation-delay: .15s; }
-.vista > *:nth-child(n+5) { animation-delay: .2s; }
+/* Solo al ENTRAR a la pantalla. Sin el `.entrando`, esta animacion se disparaba en cada
+   redibujado — o sea cada vez que se tocaba cualquier cosa — y la pantalla entera
+   parpadeaba y volvia a deslizarse hacia arriba. */
+.vista.entrando > * { animation: entrar .45s cubic-bezier(.2, .7, .3, 1) backwards; }
+.vista.entrando > *:nth-child(2) { animation-delay: .05s; }
+.vista.entrando > *:nth-child(3) { animation-delay: .1s; }
+.vista.entrando > *:nth-child(4) { animation-delay: .15s; }
+.vista.entrando > *:nth-child(n+5) { animation-delay: .2s; }
 
 @keyframes entrar {
   from { opacity: 0; transform: translateY(10px); }
@@ -143,7 +146,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .vista > * { animation: none; }
+  .vista.entrando > * { animation: none; }
 }
 
 .tarjeta {
@@ -739,7 +742,7 @@ body {
 
 .menu-globo {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 7px);
   /* Cuelga del boton que lo abrio: cuatro botones, 25% cada uno. */
   left: calc(var(--desde, 0) * 25%);
   min-width: 168px;
@@ -754,6 +757,27 @@ body {
 }
 /* Los dos ultimos se pegan a la derecha o se irian de la pantalla. */
 .menu-globo.derecha { left: auto; right: 0; }
+
+/* El pico que lo cuelga de su palabra.
+
+   Sin el, el globo aparecia flotando suelto abajo de la barra y no se veia de cual de los
+   cuatro botones habia salido — se entendia por contexto y nada mas. Es un cuadradito
+   girado 45 grados, tapando el borde de arriba del globo: asi el pico y la caja se leen
+   como una sola figura y no como dos dibujos pegados. */
+.menu-globo::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: 38px;
+  width: 12px;
+  height: 12px;
+  background: var(--lienzo);
+  border-left: 1px solid var(--linea);
+  border-top: 1px solid var(--linea);
+  border-radius: 2px 0 0 0;
+  transform: rotate(45deg);
+}
+.menu-globo.derecha::before { left: auto; right: 38px; }
 @keyframes bajar { from { opacity: 0; transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { .menu-globo { animation: none; } }
 
@@ -1411,3 +1435,34 @@ body {
 }
 .frase.alerta { background: var(--rojo-suave); color: var(--rojo-tinta); }
 .frase + .datos { margin-top: 14px; }
+
+
+/* ---------- Lo fijo del tablero contra lo que elegis ---------- */
+
+/* Las cuatro primeras estan SIEMPRE y no se pueden sacar: son el tablero. Las de abajo
+   las prende y las ordena el usuario. Se distinguen por el fondo — con el mismo aspecto,
+   no habia forma de saber cual se podia mover y cual no. */
+.tarjeta-fija {
+  background: var(--lienzo-2);
+  border-color: var(--linea);
+  box-shadow: none;
+}
+.separador-indicadores {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 22px 0 12px;
+}
+.separador-indicadores::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--linea);
+}
+.separador-nombre {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}

@@ -32,7 +32,7 @@ export function dibujarHoy(estado) {
   // Los eventos que el usuario ya despacho no se vuelven a mostrar.
   const atendidos = new Set((estado.datos.mis_datos || {}).eventos_atendidos || []);
   const eventos = (estado.datos.eventos || []).filter((e) => !atendidos.has(e.id));
-  const grupos = derivar(estado.datos.negocios, eventos, estado.hoy);
+  const grupos = derivar(estado.datos.negocios, eventos, estado.hoy, estado.datos.cartera);
   const total = grupos.reduce((t, g) => t + g.items.length, 0);
 
   const trozo = document.createDocumentFragment();
@@ -225,11 +225,17 @@ function dibujarGrupo(grupo, estado) {
       <div class="botonera">
         ${item.negocio_id
           ? `<button class="boton" data-ir="${item.negocio_id}" style="padding:8px 13px;font-size:13px">Abrir y completar</button>`
-          : `<button class="boton" data-listo="${item.evento_id}" style="padding:8px 13px;font-size:13px">Ya lo resolví</button>`}
+          : item.evento_id
+            ? `<button class="boton" data-listo="${item.evento_id}" style="padding:8px 13px;font-size:13px">Ya lo resolví</button>`
+            : `<button class="boton" data-propiedad="${item.entity_id}" style="padding:8px 13px;font-size:13px">Abrir la propiedad</button>`}
       </div>
     `;
     const abrir = li.querySelector("[data-ir]");
     if (abrir) abrir.addEventListener("click", () => estado.irA("ficha", abrir.dataset.ir));
+    const propiedad = li.querySelector("[data-propiedad]");
+    if (propiedad) {
+      propiedad.addEventListener("click", () => estado.irA("propiedad", propiedad.dataset.propiedad));
+    }
     const listo = li.querySelector("[data-listo]");
     if (listo) {
       listo.addEventListener("click", () => {
