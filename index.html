@@ -7,10 +7,25 @@
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="iconos/icono-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="iconos/icono-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="¿Cómo venimos?">
 <link rel="preload" href="tipografia/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="app.css">
+<script>
+  /* El tema se aplica ANTES de pintar nada.
+     app.js es un modulo, o sea que se ejecuta despues de armar la pagina: si el tema se
+     escribiera recien ahi, al abrir en modo oscuro se veria un fogonazo blanco. Son tres
+     lineas y evitan justamente eso. */
+  try {
+    var elegido = localStorage.getItem("como-venimos:tema");
+    if (elegido !== "claro" && elegido !== "oscuro") {
+      elegido = matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro";
+    }
+    document.documentElement.setAttribute("data-tema", elegido);
+  } catch (e) { /* sin localStorage se usa lo del sistema, que ya hace el CSS */ }
+</script>
 </head>
 <body>
 
@@ -20,7 +35,9 @@
   <button class="boton-mini" id="boton-guardar">Guardar</button>
 </div>
 
-<div class="cinta">
+<div class="cinta" id="cinta">
+  <button class="boton-ajustes" id="boton-tema" aria-label="Cambiar a modo oscuro"
+          title="Modo claro u oscuro"></button>
   <button class="boton-ajustes" id="boton-ajustes" aria-label="Ajustes" title="Ajustes">⚙</button>
 </div>
 

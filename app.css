@@ -34,8 +34,16 @@
   --barra-alta: calc(66px + env(safe-area-inset-bottom));
 }
 
+/* El modo oscuro va escrito UNA vez y se aplica en dos situaciones:
+
+     - el telefono esta en oscuro y el usuario no eligio nada a mano
+     - el usuario eligio oscuro, sin importar como este el telefono
+
+   El `:not([data-tema="claro"])` es lo que deja pasar la eleccion del usuario por encima
+   de la del sistema: sin eso, en un telefono en modo oscuro el boton de "claro" no haria
+   nada y quedaria como un boton roto. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-tema="claro"]) {
     --lienzo: #0b0f1a;
     --lienzo-2: #131926;
     --linea: #232c3f;
@@ -50,6 +58,22 @@
     --azul-suave: #131c33;
     --sombra: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
   }
+}
+
+:root[data-tema="oscuro"] {
+  --lienzo: #0b0f1a;
+  --lienzo-2: #131926;
+  --linea: #232c3f;
+  --tinta: #f2f5fb;
+  --tinta-2: #97a3ba;
+  --rojo: #ff4433;
+  --rojo-tinta: #ff7a6d;
+  --rojo-suave: #2a1210;
+  --azul: #4d7cff;
+  --azul-medio: #7b9bff;
+  --azul-claro: #37477a;
+  --azul-suave: #131c33;
+  --sombra: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
 }
 
 * { box-sizing: border-box; }
@@ -596,8 +620,10 @@ body {
 /* ---------- Engranaje de Ajustes ----------
    Va en el flujo y no fijo: asi no se le monta encima al titulo de ninguna pantalla. */
 
+/* Los dos botones sueltos de arriba. Solo se ven en Hoy: en el resto de las pantallas
+   robaban una franja entera y no se usaban nunca. */
 .cinta {
-  display: flex; justify-content: flex-end;
+  display: flex; justify-content: flex-end; gap: 8px;
   max-width: 640px; margin: 0 auto; padding: 10px 16px 0;
 }
 .boton-ajustes {

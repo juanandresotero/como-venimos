@@ -2,6 +2,7 @@
 
 import { derivar } from "./lib/pendientes.js";
 import * as github from "./lib/github.js";
+import * as tema from "./lib/tema.js";
 import { fusionar, completarConNegocios } from "./lib/cartera.js";
 import { revisar } from "./lib/motor.js";
 import { hayCambios, resumenCambios, sincronizar } from "./lib/guardado.js";
@@ -85,6 +86,21 @@ async function bajarDatos(token, shas) {
   return Object.fromEntries(pares);
 }
 
+/* El engranaje y el sol/luna solo en Hoy: en el resto de las pantallas se comian una
+   franja entera de alto y no se usaban nunca. */
+function dibujarCinta() {
+  document.getElementById("cinta").hidden = estado.vista !== "hoy";
+}
+
+function dibujarBotonTema() {
+  const boton = document.getElementById("boton-tema");
+  const actual = tema.vigente();
+  const otro = tema.opuesto(actual);
+  // El boton muestra a donde VA, no donde esta: es lo que se entiende sin pensarlo.
+  boton.textContent = otro === tema.OSCURO ? "☾" : "☀";
+  boton.setAttribute("aria-label", `Cambiar a modo ${otro}`);
+}
+
 function dibujarBarraEstado() {
   const barra = document.getElementById("barra-estado");
   const robot = estado.datos.estado_robot;
@@ -163,6 +179,8 @@ const PADRE = { ficha: "negocios", propiedad: "cartera", indicador: "salud" };
    que scrollear de nuevo hasta donde uno estaba. Con una ficha de veinte campos, eso hace
    la app inusable. */
 function dibujar({ desdeArriba = false } = {}) {
+  dibujarCinta();
+  dibujarBotonTema();
   const contenedor = document.getElementById("vista");
   const alturaPrevia = window.scrollY;
   const enfocado = document.activeElement;
@@ -238,6 +256,8 @@ async function guardar() {
 }
 
 async function arrancar() {
+  // Antes de bajar nada: si no, la pantalla parpadea en claro y despues se pone oscura.
+  tema.aplicar(tema.vigente());
   estado.shas = estado.shas || {};
   estado.datos = await bajarDatos(estado.token, estado.shas);
   // Lo que el usuario edito de la cartera vive aparte (§3.3) y se superpone al leer.
@@ -265,6 +285,10 @@ async function arrancar() {
     if (boton) irA(boton.dataset.vista);
   });
   document.getElementById("boton-guardar").addEventListener("click", guardar);
+  document.getElementById("boton-tema").addEventListener("click", () => {
+    tema.aplicar(tema.guardar(tema.opuesto(tema.vigente())));
+    dibujarBotonTema();
+  });
   document.getElementById("boton-ajustes").addEventListener("click", () => irA("ajustes"));
   window.addEventListener("hashchange", () => { leerHash(); dibujar(); });
 
