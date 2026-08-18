@@ -301,22 +301,22 @@ function campos(n, falta, estado) {
   // Excel tiene que seguir viendose y pudiendose corregir.
   fecha("fecha_inicio", "Cuándo se publicó", n.fecha_inicio, busqueda);
 
+  /* En una busqueda la fecha de negociacion viene puesta con el dia de la carga, pero
+     queda EDITABLE. Estaba como un texto fijo y era un error: si la cargas tarde — te
+     acordaste recien cuando quedo reservada — esa fecha esta mal y tenes que poder
+     corregirla. Que venga contestada no es lo mismo que no poder cambiarla. */
+  fecha("fecha_negociacion",
+    busqueda
+      ? "Cuándo pasó a negociación"
+      : `Cuándo pasó a negociación${esAlquiler ? " (los alquileres casi nunca pasan por acá)" : ""}`,
+    n.fecha_negociacion);
+
   if (busqueda) {
     contenedor.append(nodo(html`
-      <div class="campo-fila">
-        <label>Cuándo pasó a negociación</label>
-        <p class="apunte" style="margin:2px 0 0">
-          ${n.fecha_negociacion
-            ? `El ${escapar(n.fecha_negociacion)}, cuando cargaste el negocio.`
-            : "El día que cargaste el negocio."}
-          En una búsqueda la propiedad es de otro agente: la negociación arranca cuando
-          aparece tu comprador.
-        </p>
-      </div>`));
-  } else {
-    fecha("fecha_negociacion",
-      `Cuándo pasó a negociación${esAlquiler ? " (los alquileres casi nunca pasan por acá)" : ""}`,
-      n.fecha_negociacion);
+      <p class="apunte" style="margin:-6px 0 0;padding:0 16px 12px">
+        Viene puesta con el día que cargaste el negocio, que es cuando apareció tu
+        comprador. Si la cargaste tarde, corregila.
+      </p>`));
   }
   fecha("fecha_boleto", "Cuándo quedó reservada (boleto)", n.fecha_boleto);
   fecha("fecha_fin", "Cuándo cerró y cobraste", n.fecha_fin);

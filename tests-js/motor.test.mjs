@@ -523,3 +523,29 @@ test("a un negocio propio sin fecha de inicio SI se le reclama", () => {
   const r = revisar({ ...p, id: "n1", fecha_inicio: null }, AJUSTES, "2026-08-18", {});
   assert.ok((r.avisos || []).some((a) => a.tipo === "falta_fecha_inicio"));
 });
+
+/* Si la busqueda se carga tarde, la reserva puede quedar antes que su propia negociacion. */
+test("avisa cuando el boleto es anterior a la negociacion", () => {
+  const r = revisar({
+    id: "n1", tipo_negocio: "venta", estado: "en_curso",
+    fecha_negociacion: "2026-08-18", fecha_boleto: "2026-08-10",
+  }, AJUSTES, "2026-08-18", {});
+  assert.ok((r.avisos || []).some((a) => a.tipo === "fechas_al_reves"
+    && /anterior a la negociación/.test(a.detalle)));
+});
+
+test("en el orden correcto no avisa nada", () => {
+  const r = revisar({
+    id: "n1", tipo_negocio: "venta", estado: "en_curso",
+    fecha_negociacion: "2026-08-10", fecha_boleto: "2026-08-18",
+  }, AJUSTES, "2026-08-18", {});
+  assert.ok(!(r.avisos || []).some((a) => a.tipo === "fechas_al_reves"));
+});
+
+test("con una sola de las dos fechas no inventa un aviso", () => {
+  for (const parcial of [{ fecha_negociacion: "2026-08-18" }, { fecha_boleto: "2026-08-10" }]) {
+    const r = revisar({ id: "n1", tipo_negocio: "venta", estado: "en_curso", ...parcial },
+      AJUSTES, "2026-08-18", {});
+    assert.ok(!(r.avisos || []).some((a) => a.tipo === "fechas_al_reves"));
+  }
+});
