@@ -9,9 +9,12 @@
    Y abajo, plegada, la cuenta al revés: "pago 100.000 con tu comisión adentro". */
 
 import {
-  calcular, conComisionAdentro, repartir, LADOS, DESCUENTOS,
+  calcular, conComisionAdentro, repartir, facturar, repartoDeLaPunta,
+  LADOS, DESCUENTOS, IVA,
 } from "../lib/comisiones.js";
-import { plata, plataUSD, pct, escapar, numeroDesde, formatearMientrasEscribe } from "../lib/formato.js";
+import {
+  plata, plataUSD, pct, pctFino, escapar, numeroDesde, formatearMientrasEscribe,
+} from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -29,6 +32,10 @@ const entradas = {
     { lado: "vendedora", pct: 0.03, descuentoTipo: "nada", descuentoValor: null },
     { lado: "compradora", pct: 0.03, descuentoTipo: "nada", descuentoValor: null },
   ],
+  // Como llego el negocio: de eso depende quien cobra cada pedazo de la comision.
+  regimen: "captacion_mia",
+  // Quien de los tres factura con IVA. Los tres marcados = 22% sobre toda la comision.
+  conIva: ["yo"],
   // La cuenta al revés, aparte.
   adentroTotal: null,
   adentroPct: 0.03,
@@ -47,19 +54,23 @@ export function dibujarComisiones(estado) {
   const activas = entradas.puntas.slice(0, entradas.cantidad);
   const r = calcular({ precio: entradas.precio, split, puntas: activas });
 
+  const f = facturar(r, { regimen: entradas.regimen, split, conIva: entradas.conIva });
+
   const trozo = document.createDocumentFragment();
-  trozo.append(cabecera(estado, r, split));
+  trozo.append(cabecera(estado, r, f, split));
   trozo.append(basicos(estado));
   for (const [i] of activas.entries()) trozo.append(campoPunta(i, estado));
   if (entradas.cantidad === 2) trozo.append(repartirDiferencia(estado));
+  trozo.append(quienCobra(estado, split));
   if (r.neto) trozo.append(detalle(r, split));
+  if (r.neto) trozo.append(paraCadaCliente(f));
   trozo.append(comisionAdentro(estado));
   return trozo;
 }
 
 /* ---------- El número grande ---------- */
 
-function cabecera(estado, r, split) {
+function cabecera(estado, r, f, split) {
   const hayDescuento = r.descuento > 0;
   const seccion = nodo(html`
     <section class="tarjeta">
@@ -72,7 +83,7 @@ function cabecera(estado, r, split) {
             <div class="renta-caja principal">
               <p class="renta-nombre">Te queda</p>
               <p class="cifra cifra-heroe renta-cifra" style="color:var(--azul)">${plata(r.neto)}</p>
-              <p class="renta-pie">${pct(r.pct_efectivo, 2)} del precio</p>
+              <p class="renta-pie">${pctFino(r.pct_efectivo)} del precio</p>
             </div>
             <div class="renta-caja">
               <p class="renta-nombre">A tu bolsillo</p>
@@ -80,9 +91,14 @@ function cabecera(estado, r, split) {
               <p class="renta-pie">con tu ${Math.round(split * 100)}%</p>
             </div>
           </div>
+          ${f.iva
+            ? html`<p class="apunte" style="margin-top:12px">
+                 Con IVA, entre todos los clientes pagan <strong>${plataUSD(f.total)}</strong>
+                 — son ${plataUSD(f.iva)} de IVA.</p>`
+            : ""}
           ${hayDescuento
             ? html`<p class="apunte" style="margin-top:12px">
-                 Sin el descuento serían <strong>${plataUSD(r.bruto)}</strong> (${pct(r.pct_bruto, 2)}).
+                 Sin el descuento serían <strong>${plataUSD(r.bruto)}</strong> (${pctFino(r.pct_bruto)}).
                  Resignás ${plataUSD(r.descuento)}, que de tu bolsillo son
                  <strong>${plataUSD(r.costo_del_descuento)}</strong>.</p>`
             : ""}`
@@ -267,6 +283,122 @@ function repartirDiferencia(estado) {
   return seccion;
 }
 
+/* ---------- Quién cobra cada pedazo y quién factura con IVA ---------- */
+
+const REGIMENES = [
+  { clave: "captacion_mia", nombre: "La captaste vos" },
+  { clave: "ref_martin", nombre: "Te lo refirió Martín" },
+  { clave: "ref_otro_colega", nombre: "Te lo refirió un colega" },
+];
+
+/* Una comisión no la cobra una sola persona. Marcando quién factura con IVA se sabe cuánto
+   paga de verdad cada cliente — y ese es el número que hay que mandarle, no la comisión
+   pelada. */
+function quienCobra(estado, split) {
+  const trozos = repartoDeLaPunta(entradas.regimen, split).filter((t) => t.parte > 0);
+  const marcados = new Set(entradas.conIva);
+
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:4px">Quién cobra e IVA</h2>
+      <p class="apunte" style="margin-bottom:12px">
+        La oficina se lleva siempre el 20%. Marcá quién factura con IVA y se suma el
+        ${Math.round(IVA * 100)}% sobre esa parte.
+      </p>
+
+      <p class="apunte" style="margin-bottom:6px">Cómo llegó el negocio</p>
+      <div class="botonera" style="margin:0 0 14px">
+        ${REGIMENES.map((r) => `<button class="filtro ${entradas.regimen === r.clave ? "prendido" : ""}" data-regimen="${r.clave}">${r.nombre}</button>`).join("")}
+      </div>
+
+      <div class="menu-indicadores">
+        ${trozos.map((t) => html`
+          <label class="opcion">
+            <input type="checkbox" data-iva="${t.clave}" ${marcados.has(t.clave) ? "checked" : ""}>
+            <span>
+              <span class="opcion-nombre">IVA de ${escapar(t.nombre.toLowerCase())}</span>
+              <span class="opcion-pista">${pctFino(t.parte)} de la comisión</span>
+            </span>
+          </label>`).join("")}
+      </div>
+    </section>
+  `);
+
+  for (const boton of seccion.querySelectorAll("[data-regimen]")) {
+    boton.addEventListener("click", () => {
+      entradas.regimen = boton.dataset.regimen;
+      // Los que ya no existen en el reparto nuevo se caen solos.
+      const validos = new Set(repartoDeLaPunta(entradas.regimen, split).map((t) => t.clave));
+      entradas.conIva = entradas.conIva.filter((c) => validos.has(c));
+      estado.redibujar();
+    });
+  }
+  for (const casilla of seccion.querySelectorAll("[data-iva]")) {
+    casilla.addEventListener("change", () => {
+      const clave = casilla.dataset.iva;
+      entradas.conIva = casilla.checked
+        ? [...entradas.conIva, clave]
+        : entradas.conIva.filter((c) => c !== clave);
+      estado.redibujar();
+    });
+  }
+  return seccion;
+}
+
+/* Lo que hay que mandarle a CADA cliente.
+
+   Va separado por punta porque son dos personas distintas: el vendedor no tiene por qué
+   ver lo que paga el comprador, y a cada uno se le manda lo suyo. */
+function paraCadaCliente(f) {
+  const bloque = (p) => {
+    // "a el vendedor" no lo dice nadie.
+    const quien = p.lado === "vendedora" ? "al vendedor" : "al comprador";
+    return html`
+      <div class="cliente">
+        <div class="tarjeta-titulo" style="margin-bottom:10px">
+          <h3 class="titulo" style="font-size:15px">Le facturás ${quien}</h3>
+          <span class="apunte">${pctFino(p.pct_efectivo)} del precio</span>
+        </div>
+        <div class="datos">
+          ${p.trozos.map((t) => html`
+            <div class="dato">
+              <span class="dato-nombre">${escapar(t.nombre)}
+                <br><span class="apunte">${pctFino(t.parte)}${t.lleva_iva ? ` · +${Math.round(IVA * 100)}% de IVA` : " · sin IVA"}</span>
+              </span>
+              <span class="dato-valor">${plata(t.total)}
+                ${t.iva ? html`<br><span class="apunte">${plata(t.monto)} + ${plata(t.iva)}</span>` : ""}
+              </span>
+            </div>`).join("")}
+          <div class="dato">
+            <span class="dato-nombre"><strong>Paga en total</strong>
+              ${p.iva ? html`<br><span class="apunte">comisión ${plata(p.comision)} + IVA ${plata(p.iva)}</span>` : ""}
+            </span>
+            <span class="dato-valor"><strong>${plata(p.total)}</strong></span>
+          </div>
+        </div>
+      </div>`;
+  };
+
+  return nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2 class="titulo" style="font-size:17px">Para cada cliente</h2>
+        <span class="apunte">${f.puntas.length === 1 ? "una punta" : "las dos puntas"}</span>
+      </div>
+      ${f.puntas.map(bloque).join("")}
+      ${f.puntas.length > 1
+        ? html`<div class="datos" style="margin-top:14px">
+             <div class="dato">
+               <span class="dato-nombre"><strong>Entre los dos</strong></span>
+               <span class="dato-valor"><strong>${plata(f.total)}</strong>
+                 <br><span class="apunte">${plata(f.comision)} + ${plata(f.iva)} de IVA</span></span>
+             </div>
+           </div>`
+        : ""}
+    </section>
+  `);
+}
+
 /* ---------- El detalle, punta por punta ---------- */
 
 function detalle(r, split) {
@@ -282,8 +414,8 @@ function detalle(r, split) {
       <span class="reparto-pie">
         ${p.descuento
           ? html`${plata(p.bruto)} − ${plata(p.descuento)} de descuento ·
-             le cobrás <strong>${pct(p.pct_efectivo, 2)}</strong> en vez de ${pct(p.pct, 2)}`
-          : html`<strong>${pct(p.pct, 2)}</strong> del precio`}
+             le cobrás <strong>${pctFino(p.pct_efectivo)}</strong> en vez de ${pctFino(p.pct)}`
+          : html`<strong>${pctFino(p.pct)}</strong> del precio`}
       </span>
     </div>`;
 
@@ -299,7 +431,7 @@ function detalle(r, split) {
         <div class="dato"><span class="dato-nombre">A tu bolsillo</span><span class="dato-valor">${plata(r.bolsillo)}</span></div>
         <div class="dato">
           <span class="dato-nombre">${r.puntas.length > 1 ? "Entre los dos lados pagan" : "Le sale al cliente"}</span>
-          <span class="dato-valor">${pct(r.pct_efectivo, 2)} del precio</span>
+          <span class="dato-valor">${pctFino(r.pct_efectivo)} del precio</span>
         </div>
       </div>
     </section>
@@ -338,7 +470,7 @@ function comisionAdentro(estado) {
               La cuenta se despeja dividiendo por ${decimal(1 + r.pct, 2)}, no restándole el
               ${pct(r.pct)} al total. Restando daría ${plata(r.comision_ingenua)} de comisión,
               que sobre los ${plata(r.oferta_ingenua)} que se escrituran es
-              ${pct(r.comision_ingenua / (r.oferta_ingenua || 1))} y no ${pct(r.pct)}.
+              ${pctFino(r.comision_ingenua / (r.oferta_ingenua || 1))} y no ${pctFino(r.pct)}.
             </p>`
           : ""}
       </div>

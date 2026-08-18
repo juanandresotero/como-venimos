@@ -107,7 +107,7 @@ test("lo que se escribe y se vuelve a mostrar da lo mismo", () => {
 
 /* ---------- Separador de miles mientras se escribe ---------- */
 
-import { separarMiles, posicionTrasFormatear, digitosHasta } from "../lib/formato.js";
+import { separarMiles, posicionTrasFormatear, digitosHasta, pctFino } from "../lib/formato.js";
 
 test("separarMiles: no se mete hasta que hay cuatro digitos", () => {
   assert.equal(separarMiles("1"), "1");
@@ -166,4 +166,14 @@ test("pct: un decimal por defecto, dos cuando se pide", () => {
   assert.equal(pct(0.0231, 2), "2,31%");
   assert.equal(pct(0.03, 2), "3,00%");
   assert.equal(pct(null, 2), "—");
+});
+
+test("pctFino: hasta tres decimales, sin ceros de relleno", () => {
+  assert.equal(pctFino(0.03), "3%", "3,000% hace dudar de si hay algo escondido");
+  assert.equal(pctFino(0.0231), "2,31%");
+  assert.equal(pctFino(0.023077), "2,308%");
+  assert.equal(pctFino(0.0230774), "2,308%", "se corta en tres, no sigue");
+  assert.equal(pctFino(0.02), "2%");
+  assert.equal(pctFino(0), "0%");
+  assert.equal(pctFino(null), "—");
 });

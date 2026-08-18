@@ -121,3 +121,109 @@ test("los vocabularios estan completos", () => {
   assert.deepEqual(LADOS.map((l) => l.clave), ["vendedora", "compradora"]);
   assert.deepEqual(DESCUENTOS.map((d) => d.clave), ["nada", "pct", "monto"]);
 });
+
+/* ---------- Quién factura cada pedazo, y el IVA ---------- */
+
+import {
+  repartoDeLaPunta, facturaDeLaPunta, facturar, PARTE_OFICINA, IVA,
+} from "../lib/comisiones.js";
+
+const suma = (r) => r.reduce((t, x) => t + x.parte, 0);
+const parte = (r, clave) => (r.find((x) => x.clave === clave) || {}).parte || 0;
+
+test("captación propia: 20 oficina, 45 vos, 35 colega", () => {
+  const r = repartoDeLaPunta("captacion_mia", 0.45);
+  cerca(parte(r, "oficina"), 0.20, 1e-9);
+  cerca(parte(r, "yo"), 0.45, 1e-9);
+  cerca(parte(r, "colega"), 0.35, 1e-9);
+  cerca(suma(r), 1, 1e-9);
+});
+
+test("referido de Martín: él 45, vos 35, y no escala con la categoría", () => {
+  for (const split of [0.45, 0.60, 0.80]) {
+    const r = repartoDeLaPunta("ref_martin", split);
+    cerca(parte(r, "yo"), 0.35, 1e-9);
+    cerca(parte(r, "colega"), 0.45, 1e-9);
+    cerca(suma(r), 1, 1e-9);
+  }
+});
+
+test("referido de un colega: el 25% sale primero y el resto se reparte sobre el 75", () => {
+  const r = repartoDeLaPunta("ref_otro_colega", 0.45);
+  cerca(parte(r, "referidor"), 0.25, 1e-9);
+  cerca(parte(r, "yo"), 0.3375, 1e-9, "el 45% del 75% restante");
+  cerca(suma(r), 1, 1e-9);
+});
+
+/* El reparto tiene que dar lo MISMO que el motor de plata, o la app se contradice sola. */
+test("tu parte coincide con lo que ya calculaba el motor", () => {
+  cerca(parte(repartoDeLaPunta("captacion_mia", 0.45), "yo"), 0.45, 1e-9);
+  cerca(parte(repartoDeLaPunta("ref_martin", 0.45), "yo"), 0.35, 1e-9);
+  cerca(parte(repartoDeLaPunta("ref_otro_colega", 0.45), "yo"), 0.45 * 0.75, 1e-9);
+});
+
+test("con una categoría más alta, el colega absorbe la diferencia", () => {
+  const alto = repartoDeLaPunta("captacion_mia", 0.60);
+  cerca(parte(alto, "yo"), 0.60, 1e-9);
+  cerca(parte(alto, "colega"), 0.20, 1e-9);
+  cerca(parte(alto, "oficina"), PARTE_OFICINA, 1e-9);
+  // Con PURO no queda nada para el colega, y no puede dar negativo.
+  const puro = repartoDeLaPunta("captacion_mia", 0.80);
+  assert.ok(parte(puro, "colega") >= 0);
+  cerca(suma(puro), 1, 1e-9);
+});
+
+const unaPunta = { lado: "vendedora", neto: 3000, pct_efectivo: 0.03 };
+
+test("las tres casillas marcadas: IVA sobre toda la comisión", () => {
+  const f = facturaDeLaPunta(unaPunta, {
+    regimen: "captacion_mia", split: 0.45, conIva: ["yo", "colega", "oficina"],
+  });
+  cerca(f.iva, 3000 * IVA);
+  cerca(f.total, 3000 * 1.22);
+  cerca(f.pct_recargo, IVA, 1e-9);
+});
+
+test("solo tu IVA: se suma únicamente sobre tu parte", () => {
+  const f = facturaDeLaPunta(unaPunta, {
+    regimen: "captacion_mia", split: 0.45, conIva: ["yo"],
+  });
+  cerca(f.iva, 1350 * IVA, 0.01);
+  cerca(f.total, 3000 + 297);
+  const mio = f.trozos.find((t) => t.clave === "yo");
+  cerca(mio.monto, 1350);
+  cerca(mio.total, 1647);
+  // Los otros dos aparecen igual, sin IVA: hay que verlos para saber qué se factura.
+  assert.equal(f.trozos.find((t) => t.clave === "colega").iva, 0);
+  assert.equal(f.trozos.find((t) => t.clave === "oficina").iva, 0);
+});
+
+test("ninguna casilla: no se suma nada", () => {
+  const f = facturaDeLaPunta(unaPunta, { regimen: "captacion_mia", split: 0.45, conIva: [] });
+  assert.equal(f.iva, 0);
+  cerca(f.total, 3000);
+});
+
+test("los pedazos suman la comisión entera, marque lo que marque", () => {
+  for (const conIva of [[], ["yo"], ["yo", "oficina"], ["yo", "colega", "oficina"]]) {
+    const f = facturaDeLaPunta(unaPunta, { regimen: "captacion_mia", split: 0.45, conIva });
+    cerca(f.trozos.reduce((t, x) => t + x.monto, 0), 3000, 0.01);
+    cerca(f.total, 3000 + f.iva, 0.01);
+  }
+});
+
+/* Cada punta es un cliente distinto: al vendedor hay que mandarle lo suyo y nada mas. */
+test("facturar: una factura por punta y el total de la operación", () => {
+  const r = calcular({
+    precio: 100000, split: 0.45,
+    puntas: [punta(), punta({ lado: "compradora", descuentoTipo: "pct", descuentoValor: 0.23 })],
+  });
+  const f = facturar(r, { regimen: "captacion_mia", split: 0.45, conIva: ["yo"] });
+  assert.equal(f.puntas.length, 2);
+  cerca(f.puntas[0].comision, 3000);
+  cerca(f.puntas[1].comision, 2310, 0.01);
+  cerca(f.comision, 5310, 0.01);
+  // El IVA sale solo de tu 45% de cada punta.
+  cerca(f.iva, (3000 + 2310) * 0.45 * IVA, 0.01);
+  cerca(f.total, f.comision + f.iva, 0.01);
+});
