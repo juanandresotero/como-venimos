@@ -1533,7 +1533,9 @@ body {
 
 /* La ventanita para controlar una carta que esta en transito, sin abrirla. */
 .mirada-estado { margin: 2px 0 12px; font-size: 13px; font-weight: 650; color: var(--azul); }
-.mirada-previa { max-height: 26vh; }
+/* El documento es lo que se viene a mirar: se le da todo el alto que se pueda sin que los
+   botones de abajo se caigan de la pantalla. */
+.mirada-previa { max-height: 46vh; }
 .mirada-aviso { color: var(--rojo-tinta); margin: 8px 0 0; }
 
 /* El tablero de las cartas mandadas: quién la tiene y quién ya contestó. */

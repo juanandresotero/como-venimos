@@ -10,7 +10,7 @@
    Se abre encima de lo que se esté haciendo y se cierra sin tocar nada. */
 
 import { armar } from "../lib/carta-oferta.js";
-import { comoVaLaCarta, estadoDeCarta, estaPronta } from "../lib/carta-transito.js";
+import { comoVaLaCarta, estadoDeCarta, tieneLasDosFirmas } from "../lib/carta-transito.js";
 import { comoSeLlamaLaCarta } from "../lib/carta-guardado.js";
 import { telon } from "./ventana.js";
 import { mandarCartaA, mandarCartaCompleta, bajarCarta } from "./carta-acciones.js";
@@ -35,7 +35,9 @@ export function mirarCarta(carta, {
   alAbrir, alDesarchivar, alMandar, alEntregar,
 } = {}) {
   const archivada = estadoDeCarta(carta) === "completa";
-  const pronta = estaPronta(carta);
+  /* Lo que decide el boton es si el DOCUMENTO esta completo, no en que lista esta guardada:
+     una carta archivada tambien se tiene que poder volver a mandar entera. */
+  const completa = tieneLasDosFirmas(carta);
   const marca = nodo(html`
     <div class="panel-firma">
       <p class="etiqueta">${escapar(comoSeLlamaLaCarta(carta))}</p>
@@ -44,14 +46,14 @@ export function mirarCarta(carta, {
       <p class="etiqueta" style="margin-top:12px">Cómo quedó el documento</p>
       <div class="previa-carta mirada-previa"></div>
 
-      ${alMandar && pronta ? html`
+      ${alMandar && completa ? html`
         <div class="botonera" style="margin-top:14px">
           <button class="boton boton-primario boton-ancho" data-hacer="completa">
             Enviar carta oferta completa</button>
         </div>
         <p class="apunte mirada-aviso" hidden></p>` : ""}
 
-      ${alMandar && !pronta ? html`
+      ${alMandar && !completa ? html`
         <p class="etiqueta" style="margin-top:14px">Mandársela de nuevo</p>
         <div class="botonera">
           <button class="boton boton-chico" data-hacer="mandar" data-turno="comprador">Al comprador</button>

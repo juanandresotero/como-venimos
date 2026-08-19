@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   nuevoId, anotarMandada, anotarVuelta, anotarEntregada,
   estadoDeCarta, comoVaLaCarta, estaPronta, faltanVolver, mandadas, vueltas,
-  ordenarParaElHistorial,
+  ordenarParaElHistorial, tieneLasDosFirmas,
 } from "../lib/carta-transito.js";
 
 const vacia = () => ({ valores: {}, quitadas: [], firmas: {} });
@@ -152,4 +152,22 @@ test("la firma del depositario no cuenta: es la del propio agente", () => {
   let c = anotarMandada(vacia(), "comprador", "2026-08-19");
   c = { ...c, firmas: { depositario: Uint8Array.from([9]) } };
   assert.deepEqual(faltanVolver(c), ["comprador"]);
+});
+
+/* Juan: "me gusta como lo dejaste en transito cuando esta completa la carta oferta, tendria
+   que ser igual para cuando esta en historial". Lo que decide es el documento, no la lista. */
+test("una carta archivada sigue estando completa", () => {
+  let c = anotarMandada(vacia(), "comprador", "2026-08-19");
+  c = { ...c, firmas: { oferente: Uint8Array.from([1]), propietario: Uint8Array.from([2]) } };
+  assert.equal(tieneLasDosFirmas(c), true);
+  assert.equal(estaPronta(c), true);
+
+  c = anotarEntregada(c, "2026-08-21");
+  assert.equal(estaPronta(c), false, "ya no esta en el tablero");
+  assert.equal(tieneLasDosFirmas(c), true, "pero el documento sigue completo");
+});
+
+test("con una sola firma el documento NO esta completo", () => {
+  const c = { ...vacia(), firmas: { oferente: Uint8Array.from([1]), depositario: Uint8Array.from([9]) } };
+  assert.equal(tieneLasDosFirmas(c), false, "la del depositario es la del propio agente");
 });
