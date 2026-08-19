@@ -29,6 +29,13 @@ export const HERRAMIENTAS = [
       + "con la comisión ya incluida en lo que paga el comprador.",
     icono: "≡",
   },
+  {
+    vista: "reajuste",
+    nombre: "Reajuste de alquiler",
+    pista: "A cuánto se ajusta un alquiler este mes, por IPC o por el coeficiente legal. "
+      + "Con el texto para mandarle al inquilino.",
+    icono: "↑",
+  },
 ];
 
 export function dibujarHerramientas(estado) {
