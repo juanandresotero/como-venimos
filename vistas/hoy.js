@@ -87,7 +87,7 @@ function cuantoFalta(estado) {
 
   return nodo(html`
     <section class="tarjeta">
-      <div class="tarjeta-titulo" style="margin-bottom:16px">
+      <div class="tarjeta-titulo" style="margin-bottom:2px">
         <h2 class="titulo" style="font-size:17px">Para llegar a ${plata(objetivo)}</h2>
         <span class="ritmo-veredicto ${r.aRitmo ? "bien" : "mal"}">
           ${r.aRitmo ? "Vas a ritmo" : "Vas atrasado"}

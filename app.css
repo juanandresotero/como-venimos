@@ -1040,46 +1040,30 @@ body {
 }
 /* La marca de "donde deberias estar hoy" se explica sola con una etiqueta abajo, en vez
    del parrafo que habia antes. La caja necesita lugar para esa etiqueta. */
-.camino-caja { position: relative; padding-top: 19px; }
-.camino-hoy {
-  position: absolute; bottom: 100%; margin-bottom: 6px;
-  transform: translateX(-50%);
-  font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
-  color: var(--tinta-2); white-space: nowrap;
-}
-/* Una linea que BAJA HASTA la raya: sin esto el texto flota arriba y no se sabe de que
-   habla. El alto tiene que cubrir el margen del cartel mas el hueco que reserva la caja
-   (6 + 19), si no queda un pico corto que no llega y se ve peor que nada. */
-.camino-hoy::after {
-  content: ""; position: absolute; top: 100%; left: 50%;
-  width: 2px; height: 25px; margin-left: -1px;
-  background: var(--tinta); opacity: .45; border-radius: 2px;
-}
+/* La marca de "donde deberias estar hoy".
 
-/* La barra del nivel de RE/MAX: los montos van adentro de su tramo, y el que no entra
-   sale en un globo de historieta que apunta al suyo. */
-.nivel-caja { position: relative; padding-top: 30px; margin-top: 6px; }
-.nivel-numero {
-  display: flex; align-items: center; justify-content: center;
-  height: 100%; padding: 0 6px;
-  font-size: 12.5px; font-weight: 700; color: #fff;
-  font-variant-numeric: tabular-nums; white-space: nowrap;
-}
-.nivel-numero.apagado { color: var(--tinta-2); }
-.nivel-globo {
-  /* Adentro del hueco que reserva .nivel-caja, no encima del texto de arriba. */
+   No es un cartel al lado de una raya: es la MISMA raya que sube y se ensancha en un
+   globito. Por eso el tallo y el globo comparten color y ancho de trazo — si el tallo
+   fuera gris y el globo negro se verian como dos cosas puestas una cerca de la otra, que
+   es lo que pasaba antes.
+
+   La caja reserva el alto del globo mas el tallo; el globo va adentro de ese hueco y no
+   colgando por fuera, si no se le monta al titulo de la tarjeta. */
+.camino-caja { position: relative; padding-top: 36px; }
+.camino-hoy {
   position: absolute; top: 0;
   transform: translateX(-50%);
-  padding: 3px 9px; border-radius: 9px;
+  padding: 3px 10px; border-radius: 999px;
   background: var(--tinta); color: var(--lienzo);
-  font-size: 12px; font-weight: 700;
-  font-variant-numeric: tabular-nums; white-space: nowrap;
+  font-size: 11px; font-weight: 700; letter-spacing: .01em;
+  white-space: nowrap;
 }
-/* El pico que lo cuelga del tramo, como en las historietas. */
-.nivel-globo::after {
+/* El tallo: mismo ancho y mismo color que la marca de la barra, para que se lea como una
+   sola pieza que arranca en la raya y termina en el globo. */
+.camino-hoy::after {
   content: ""; position: absolute; top: 100%; left: 50%;
-  margin-left: -5px; border: 5px solid transparent;
-  border-top-color: var(--tinta); border-bottom: 0;
+  width: 2px; height: 15px; margin-left: -1px;
+  background: var(--tinta);
 }
 
 .camino-pies { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; }
