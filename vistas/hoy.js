@@ -51,12 +51,14 @@ export function dibujarHoy(estado) {
 function encabezado(estado, total) {
   const mes = MESES[Number(estado.hoy.slice(5, 7)) - 1];
   return nodo(html`
-    <section style="margin-bottom:16px">
-      <p class="etiqueta">${mes} de ${estado.hoy.slice(0, 4)}</p>
-      <h1 class="titulo" style="font-size:27px;margin-top:4px">¿Cómo venimos?</h1>
-      <p class="apunte">${total
-        ? `${total} ${total === 1 ? "cosa" : "cosas"} para revisar`
-        : "Todo al día"}</p>
+    <section class="cabecera-hoy">
+      <p class="etiqueta cabecera-mes">${mes} de ${estado.hoy.slice(0, 4)}</p>
+      <div class="cabecera-linea">
+        <h1 class="titulo" style="font-size:27px">¿Cómo venimos?</h1>
+        ${total
+          ? html`<span class="chapa-atencion">⚠ Atención ${total}</span>`
+          : html`<span class="apunte">Todo al día</span>`}
+      </div>
     </section>
   `);
 }
@@ -85,7 +87,7 @@ function cuantoFalta(estado) {
 
   return nodo(html`
     <section class="tarjeta">
-      <div class="tarjeta-titulo" style="margin-bottom:12px">
+      <div class="tarjeta-titulo" style="margin-bottom:16px">
         <h2 class="titulo" style="font-size:17px">Para llegar a ${plata(objetivo)}</h2>
         <span class="ritmo-veredicto ${r.aRitmo ? "bien" : "mal"}">
           ${r.aRitmo ? "Vas a ritmo" : "Vas atrasado"}
@@ -100,8 +102,8 @@ function cuantoFalta(estado) {
         </div>
         <!-- La marca decia con un parrafo lo que ahora dice ella misma. Se corre para
              adentro en los bordes para que la etiqueta no se salga de la tarjeta. -->
-        <span class="camino-hoy" style="left:${Math.min(93, Math.max(7, (r.calendario * 100)))}%">
-          hoy</span>
+        <span class="camino-hoy" style="left:${Math.min(78, Math.max(22, (r.calendario * 100)))}%">
+          deberías ir acá</span>
       </div>
 
       <div class="camino-pies">
@@ -148,20 +150,17 @@ function tuNivel(estado) {
 
   return nodo(html`
     <section class="tarjeta">
-      <div class="tarjeta-titulo" style="margin-bottom:10px">
-        <h2 class="titulo" style="font-size:17px">Tu nivel RE/MAX</h2>
-        <span class="apunte">facturado en ${escapar(anio)}</span>
-      </div>
+      <h2 class="titulo" style="font-size:17px;margin-bottom:10px">Tu nivel RE/MAX</h2>
       <p class="cifra cifra-grande" style="margin:0 0 2px">
         ${n.actual ? escapar(n.actual.nombre) : "Todavía sin nivel"}
       </p>
       ${n.esElUltimo
         ? html`<p class="frase">✓ Es el nivel más alto. ${plata(n.facturacion)} facturados.</p>`
         : html`
-          <p class="apunte">Te faltan <strong>${plata(n.falta)}</strong> para
-            <strong>${escapar(n.siguiente.nombre)}</strong>${coincide
-              ? ", que es justo tu objetivo del año"
-              : ""}.</p>
+          ${coincide
+            ? html`<p class="apunte"><strong>${escapar(n.siguiente.nombre)}</strong> es justo
+                tu objetivo del año.</p>`
+            : ""}
           ${barraDelNivel(n)}
           <div class="datos" style="margin-top:10px">
             <div class="dato">

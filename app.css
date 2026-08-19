@@ -629,6 +629,27 @@ body {
   display: flex; justify-content: flex-end; gap: 8px;
   max-width: 640px; margin: 0 auto; padding: 10px 16px 0;
 }
+
+/* El mes comparte renglon con el engranaje y el sol/luna en vez de comerse uno propio.
+   La cinta vive en index.html, arriba de la vista, asi que el mes se sube hasta su altura
+   con un margen negativo — la cinta deja libre todo el lado izquierdo. */
+.cabecera-hoy { margin-bottom: 16px; }
+.cabecera-mes { margin-top: -34px; height: 26px; display: flex; align-items: center; }
+.cabecera-linea {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; margin-top: 6px;
+}
+
+/* "2 cosas para revisar" en gris se pasaba de largo. Es lo unico de esta pantalla que
+   pide una accion, asi que se ve como un aviso y no como una nota al pie. */
+.chapa-atencion {
+  flex-shrink: 0;
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 800; letter-spacing: .02em;
+  color: var(--rojo-tinta); background: var(--rojo-suave);
+  border: 1px solid var(--rojo);
+  white-space: nowrap;
+}
 .boton-ajustes {
   width: 36px; height: 36px;
   display: grid; place-items: center;
@@ -973,7 +994,7 @@ body {
 }
 /* La marca de "donde deberias estar hoy" se explica sola con una etiqueta abajo, en vez
    del parrafo que habia antes. La caja necesita lugar para esa etiqueta. */
-.camino-caja { position: relative; padding-top: 15px; }
+.camino-caja { position: relative; padding-top: 19px; }
 .camino-hoy {
   position: absolute; bottom: 100%; margin-bottom: 1px;
   transform: translateX(-50%);
