@@ -154,10 +154,12 @@ test("cargado el precio, deja de pedirlo", () => {
   assert.ok(!grupos.some((g) => g.clave === "falta_precio_negociacion"));
 });
 
-test("solo se pide para las que estan EN negociacion y siguen activas", () => {
+/* Este test pedia lo contrario hasta el 2026-08-19: exigia que una RESERVADA no lo
+   pidiera. Estaba mal y tapaba el agujero — ver "una reservada sin precio de cierre"
+   mas abajo. Se cambio a proposito. */
+test("no se pide ni antes de negociar ni cuando ya se fue de la cartera", () => {
   const cartera = {
     a: enNegociacion({ entity_id: "a", estado: "publicada" }),
-    b: enNegociacion({ entity_id: "b", estado: "reservada" }),
     c: enNegociacion({ entity_id: "c", activa: false }),
   };
   const grupos = derivar([], [], "2026-08-18", cartera);
@@ -281,4 +283,55 @@ test("ninguna pantalla llama a derivar por su cuenta", () => {
   const culpables = archivos.filter((a) => trae.test(readFileSync(a, "utf-8")));
   assert.deepEqual(culpables.map((a) => a.split(/[\\/]/).pop()), [],
     "usar bandeja(), que ademas junta los repetidos");
+});
+
+/* Una propiedad podia pasar de negociacion a RESERVADA sin que se le hubiera cargado
+   nunca a que precio se cierra, y ahi la app dejaba de pedirlo Y la pantalla dejaba de
+   ofrecerlo: quedaba proyectando sobre el precio publicado justo en lo que esta mas
+   cerca de cobrarse. Paso de verdad con San Fructuoso 1200. */
+test("una reservada sin precio de cierre sigue pidiendo el dato", () => {
+  const cartera = {
+    p1: { entity_id: "p1", activa: true, estado: "reservada", direccion: "San Fructuoso 1200",
+      precio: 89900, fecha_reservada: "2026-08-14" },
+  };
+  const grupo = derivar([], [], "2026-08-19", cartera)
+    .find((g) => g.clave === "falta_precio_negociacion");
+  assert.ok(grupo, "una reservada sin precio tiene que aparecer en la bandeja");
+  assert.match(grupo.items[0].detalle, /Está reservada desde el 2026-08-14/);
+  assert.match(grupo.items[0].detalle, /89\.900/);
+});
+
+test("la que esta en negociacion lo sigue pidiendo igual que antes", () => {
+  const cartera = {
+    p1: { entity_id: "p1", activa: true, estado: "en_negociacion", direccion: "Minas 1600",
+      precio: 165000, fecha_negociacion: "2026-08-17" },
+  };
+  const grupo = derivar([], [], "2026-08-19", cartera)
+    .find((g) => g.clave === "falta_precio_negociacion");
+  assert.match(grupo.items[0].detalle, /Está en negociación desde el 2026-08-17/);
+});
+
+test("con el precio cargado deja de molestar, este como este", () => {
+  for (const estado of ["en_negociacion", "reservada"]) {
+    const cartera = { p1: { entity_id: "p1", activa: true, estado, precio: 90000,
+      precio_negociacion: 85000 } };
+    assert.equal(derivar([], [], "2026-08-19", cartera)
+      .find((g) => g.clave === "falta_precio_negociacion"), undefined, estado);
+  }
+});
+
+test("una publicada NO lo pide: todavia no hay nada que negociar", () => {
+  const cartera = { p1: { entity_id: "p1", activa: true, estado: "publicada", precio: 90000 } };
+  assert.equal(derivar([], [], "2026-08-19", cartera)
+    .find((g) => g.clave === "falta_precio_negociacion"), undefined);
+});
+
+/* El que PIDE el dato y la pantalla que lo OFRECE tienen que usar la misma regla. Si se
+   separan, la app pide un dato que no se puede cargar — que es exactamente el agujero
+   que se esta tapando. */
+test("la pantalla ofrece el campo en los mismos estados en que la bandeja lo pide", () => {
+  const raiz = fileURLToPath(new URL("..", import.meta.url));
+  const pantalla = readFileSync(join(raiz, "vistas", "propiedad.js"), "utf-8");
+  assert.match(pantalla, /PRECIO_NEGOCIADO_VISIBLE\.has\(p\.estado\)/,
+    "propiedad.js tiene que usar la misma constante, no su propia lista");
 });

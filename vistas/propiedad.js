@@ -7,6 +7,7 @@
 import {
   estadoVisible, nombreEstado, lineaDeTiempo, diasEnCartera,
   negociosDe, rendimiento, DESENLACES,
+  PRECIO_NEGOCIADO_VISIBLE, etiquetaDelPrecioNegociado,
 } from "../lib/cartera.js";
 import { ORIGENES } from "../lib/catalogos.js";
 
@@ -254,10 +255,16 @@ function campos(p, estado) {
     contenedor.append(fila);
   };
 
-  /* Solo cuando esta en negociacion: preguntarlo antes no tiene sentido, y despues de
-     cerrada el numero de verdad ya vive en el negocio. */
-  if (p.activa && p.estado === "en_negociacion") {
-    agregar("precio_negociacion", "A qué precio se está negociando", "monto",
+  /* Desde que entra en negociacion hasta que se cierra el negocio.
+
+     Antes se mostraba SOLO en negociacion, y desaparecia al pasar a reservada — o sea
+     justo cuando el numero es mas firme y mas caro de tener mal: una reservada es lo mas
+     cerca que hay de cobrar, y la proyeccion la calcula sobre este precio (salud.js). Una
+     propiedad podia pasar de negociacion a reservada sin que se lo hubieran cargado nunca,
+     y ya no habia donde. Despues de cerrada si desaparece: ahi el numero vive en el
+     negocio, que es el que manda. */
+  if (p.activa && PRECIO_NEGOCIADO_VISIBLE.has(p.estado)) {
+    agregar("precio_negociacion", etiquetaDelPrecioNegociado(p.estado), "monto",
       p.precio_negociacion, null, !p.precio_negociacion);
   }
 
