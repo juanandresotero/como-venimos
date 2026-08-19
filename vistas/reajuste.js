@@ -255,9 +255,11 @@ function mandar(estado, cuenta, indice, deuda) {
         <input class="campo" id="rj-titulo" type="text" placeholder="Av. Italia 1234"
                value="${escapar(entradas.titulo)}">
       </div>
-      <button class="boton boton-primario" id="rj-copiar" style="margin-top:12px;width:100%">
-        Copiar para el cliente
-      </button>
+      <!-- Sin .boton-primario a proposito: el azul esta reservado para el aviso de que
+           copio (.copiado). Un boton que ya es azul no puede ponerse azul para avisar. -->
+      <div class="botonera">
+        <button class="boton" id="rj-copiar" style="flex:1">Copiar para el cliente</button>
+      </div>
     </section>
   `);
 
