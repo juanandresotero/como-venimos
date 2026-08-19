@@ -14,28 +14,16 @@ function nodo(marca) {
   return molde.content;
 }
 
+/* El nombre dice lo que la herramienta HACE, y con eso alcanza.
+
+   Antes cada una llevaba dos renglones de explicacion abajo. Servian el primer dia; despues
+   son tres parrafos que hay que saltear para llegar a lo que uno venia a tocar. El titulo
+   empieza con el verbo por la misma razon: "Comisiones" es un tema, "Calcula tu comision"
+   es lo que vas a hacer al entrar. */
 export const HERRAMIENTAS = [
-  {
-    vista: "renta",
-    nombre: "¿Cuánto renta?",
-    pista: "Lo que deja de verdad una propiedad para alquilar, con todos los costos "
-      + "descontados. Con ficha para mandarle al cliente.",
-    icono: "%",
-  },
-  {
-    vista: "comisiones",
-    nombre: "Comisiones",
-    pista: "Tu comisión con descuentos, con la diferencia que ponés vos para cerrar, o "
-      + "con la comisión ya incluida en lo que paga el comprador.",
-    icono: "≡",
-  },
-  {
-    vista: "reajuste",
-    nombre: "Reajuste de alquiler",
-    pista: "A cuánto se ajusta un alquiler este mes, por IPC o por el coeficiente legal. "
-      + "Con el texto para mandarle al inquilino.",
-    icono: "↑",
-  },
+  { vista: "renta", nombre: "Calculá cuánto renta una propiedad" },
+  { vista: "comisiones", nombre: "Calculá tu comisión" },
+  { vista: "reajuste", nombre: "Averiguá el reajuste de un alquiler" },
 ];
 
 export function dibujarHerramientas(estado) {
@@ -43,9 +31,7 @@ export function dibujarHerramientas(estado) {
 
   trozo.append(nodo(html`
     <section style="margin-bottom:16px">
-      <p class="etiqueta">Herramientas</p>
-      <h1 class="titulo" style="font-size:27px;margin-top:4px">Para usar con el cliente</h1>
-      <p class="apunte">Cuentas que se hacen adelante de la otra persona.</p>
+      <h1 class="titulo" style="font-size:27px">Herramientas</h1>
     </section>
   `));
 
@@ -56,7 +42,6 @@ export function dibujarHerramientas(estado) {
       <button class="fila" data-ir="${escapar(h.vista)}">
         <span class="fila-cuerpo">
           <span class="fila-titulo">${escapar(h.nombre)}</span>
-          <span class="fila-sub">${escapar(h.pista)}</span>
         </span>
         <span class="fila-derecha"><span class="apunte">›</span></span>
       </button>
