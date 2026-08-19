@@ -39,6 +39,8 @@ const CASA = `<path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M6 10.2V20h12v-9.8"/>`;
 const PORCIENTO = `<circle cx="7.6" cy="7.6" r="2.6"/><circle cx="16.4" cy="16.4" r="2.6"/>`
   + `<path d="M18 6 6 18"/>`;
 const ESCALONES = `<path d="M3.5 20.5v-4h5v-4h5v-4h5v-4"/><path d="M3.5 20.5h16"/>`;
+const CHAPA = `<path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5z"/>`
+  + `<path d="M12 10.2v3.6"/><path d="M10.4 11.4h3.2"/>`;
 const HOJA_FIRMADA = `<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>`
   + `<path d="M8.8 16.6c1.6-3.4 2.6-3.4 3.2-1.4.5 1.7 1.6 1.9 3.2-1"/>`;
 
@@ -47,6 +49,7 @@ const HOJA_FIRMADA = `<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>`
    la primera vez, pero despues es texto que hay que saltear cada vez que se abre el menu
    apurado. El orden de la linea ya cuenta lo mismo sin decirlo. */
 export const HERRAMIENTAS = [
+  { vista: "padron", nombre: "Averiguar el padrón", dibujo: CHAPA },
   { vista: "renta", nombre: "Calcular renta", dibujo: CASA },
   { vista: "carta_oferta", nombre: "Enviar carta oferta", dibujo: HOJA_FIRMADA },
   { vista: "comisiones", nombre: "Calcular comisión", dibujo: PORCIENTO },
