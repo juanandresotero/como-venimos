@@ -72,6 +72,11 @@
   },
   "c9e235a6-5bb0-47a6-b9aa-62b2283bb94a": {
    "precio_negociacion": 150000
+  },
+  "ef3b2daf-c46d-4f0b-901b-2686f89b915e": {
+   "fecha_captacion_real": "2026-08-18",
+   "fecha_captacion_estimada": false,
+   "origen_captacion": "Ref. Martin"
   }
  }
 }
