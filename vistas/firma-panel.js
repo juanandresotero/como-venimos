@@ -9,6 +9,7 @@
 import { deTrazos, aBytes, GRILLA } from "../lib/firma.js";
 import { recortar } from "../lib/firma-foto.js";
 import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
+import { telon } from "./ventana.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -16,21 +17,6 @@ function nodo(marca) {
   const molde = document.createElement("template");
   molde.innerHTML = marca.trim();
   return molde.content;
-}
-
-function telon(contenido) {
-  const caja = document.createElement("div");
-  caja.className = "telon-firma";
-  caja.append(contenido);
-  document.body.append(caja);
-  document.body.style.overflow = "hidden";
-  return {
-    caja,
-    cerrar() {
-      caja.remove();
-      document.body.style.overflow = "";
-    },
-  };
 }
 
 /* Firmar con el dedo. Llama a `alFirmar(bytes)` con la firma lista para guardar. */

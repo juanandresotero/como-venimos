@@ -20,6 +20,7 @@ import { cargarMembrete } from "../lib/membrete.js";
 import { deBytes } from "../lib/firma.js";
 import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
 import { pedirFirma } from "./firma-panel.js";
+import { mirarCarta } from "./carta-mirada.js";
 import {
   leerBorrador, guardarBorrador, borrarBorrador,
   leerFirmaPropia, leerPadron, guardarPadron,
@@ -714,7 +715,14 @@ function filaDeTransito(guardada, estado, abrir) {
     </button>
     ${pronta ? html`<button class="boton-mini boton-mini-urgente" data-cerrar="1">Ya la envié</button>` : ""}
   `;
-  li.querySelector("[data-abrir]").addEventListener("click", () => abrir(guardada));
+  /* Tocarla NO la abre: muestra una ventanita para controlar lo que llenó el cliente sin
+     perder lo que se esté haciendo. Adentro está el botón para abrirla de verdad. */
+  li.querySelector("[data-abrir]").addEventListener("click", () => {
+    mirarCarta(guardada, {
+      agente: nombrePropio(estado.datos.ajustes),
+      alAbrir: () => abrir(guardada),
+    });
+  });
 
   /* "Ya la envié" es el final del camino: la carta deja el tablero y pasa al historial como
      completa. Se abre además, porque lo que sigue es mandarles el PDF final con el botón

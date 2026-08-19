@@ -89,3 +89,22 @@ test("no vuelven a quedar bloques duplicados al reordenar el archivo", () => {
   const repetidos = bloques.filter((b) => (vistos.has(b) ? true : (vistos.add(b), false)));
   assert.deepEqual(repetidos, [], "hay reglas escritas dos veces: gana la de abajo");
 });
+
+/* Una variable de color usada y NO definida no rompe nada y no avisa: el navegador
+   simplemente no pinta. Pasó de verdad — `--tarjeta` nunca existió, y el panel donde se
+   firma quedó transparente, con la pantalla de atrás leyéndose a través del texto. */
+test("no se usa ninguna variable de color que el CSS no defina", () => {
+  const definidas = new Set(
+    [...css.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map((m) => m[1]),
+  );
+  const sinComentarios = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const usadas = new Set(
+    [...sinComentarios.matchAll(/var\(\s*(--[a-z0-9-]+)/g)].map((m) => m[1]),
+  );
+  /* Las que traen valor de respaldo —`var(--x, #fff)`— no cuentan: ahí hay con qué pintar. */
+  const conRespaldo = new Set(
+    [...sinComentarios.matchAll(/var\(\s*(--[a-z0-9-]+)\s*,/g)].map((m) => m[1]),
+  );
+  const huerfanas = [...usadas].filter((v) => !definidas.has(v) && !conRespaldo.has(v));
+  assert.deepEqual(huerfanas, [], "variables usadas que nadie define en app.css");
+});
