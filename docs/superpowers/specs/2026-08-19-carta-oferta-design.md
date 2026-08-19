@@ -192,18 +192,80 @@ maltrata, se cambia de plan **antes** de construir el PDF, que es la parte cara.
 
 ## 5. La firma
 
+Hay **dos clases** de firma, porque hay dos situaciones distintas.
+
+### a) Dibujada con el dedo — la de las partes
+
 Se captura como **trazos de puntos**, no como imagen. Un dibujo de puntos ocupa una
 fracción de lo que ocupa un PNG, se dibuja nítido a cualquier tamaño, y en el PDF entra
 como trazo vectorial de verdad.
 
 - Cada trazo se remuestrea a un máximo de 60 puntos y se guarda como diferencias en una
   grilla de 1024×512. La mayoría de las diferencias entran en un byte.
-- Una firma ronda los 400 bytes; tres, poco más de 1 KB.
-- El panel de firma se dibuja con eventos `pointer` sobre un `<canvas>`, con botones
-  **Borrar** y **Listo**. Sin `long-press` — ya se sabe que en el teléfono se cancela solo.
+- Una firma ronda los 400 bytes; en el enlace, unos 550 caracteres.
+- El panel se dibuja con eventos `pointer` sobre un `<canvas>`, con botones **Borrar** y
+  **Listo**. Sin `long-press` — ya se sabe que en el teléfono se cancela solo.
 
-**La firma del usuario se guarda una vez** en `localStorage` y se reusa en cada carta. No
-la redibuja nunca más.
+### b) Recortada de una foto — la del usuario
+
+El usuario entregó su firma real fotografiada (`Firma mia.jpeg`, 2016×1134). Su firma no
+se dibuja con el dedo: se recorta de esa foto una sola vez y se reusa siempre.
+
+**El recorte se hace por color, no por brillo.** La foto tiene sombra despareja, así que
+umbralar por oscuridad falla. Pero la tinta es azul y el fondo es gris neutro:
+
+| | B − R |
+|---|---|
+| Fondo gris | ≈ 8 |
+| Tinta azul | hasta 94 |
+
+Con `(B - R) > 35` la tinta se separa entera y la sombra no molesta, porque la diferencia
+de color no depende de cuánta luz haya. Medido sobre la foto real: recortó de 2016×1134 a
+un rectángulo de 1427×584 sin arrastrar una sola mota del fondo.
+
+**Se guarda como máscara de 1 bit, 300 px de ancho**, comprimida con `deflate`:
+
+| Ancho | Comprimido | En el enlace | Calidad |
+|---|---|---|---|
+| 200 px | 561 B | 748 car. | Los trazos finos se cortan |
+| **300 px** | **915 B** | **1.220 car.** | **Nítida — la elegida** |
+| 400 px | 1.286 B | 1.716 car. | Igual de nítida, el doble de peso |
+
+**La conversión la hace la app, no un script de una sola vez.** El navegador decodifica el
+JPEG en un `<canvas>` sin librerías; el resto es aritmética de píxeles. El usuario saca la
+foto, ve el recorte y lo acepta o repite. Así puede cambiar su firma sin depender de nadie.
+
+Detalles que hay que respetar:
+- **Se guarda la máscara, nunca la foto.** Más liviana y menos expuesta.
+- **Antes de calcular el rectángulo se descartan las manchitas sueltas** (grupos de menos
+  de ~20 píxeles), o una mota de polvo agranda el recorte.
+- **Si la separación por azul es débil** (el usuario firmó con lapicera negra), se cae a
+  umbral por oscuridad y se avisa. La red de seguridad real es que el recorte se muestra
+  antes de guardarlo.
+
+### El presupuesto del enlace, con las firmas de verdad
+
+El tramo más pesado es el último, cuando la carta va del usuario al propietario:
+
+```
+firma del comprador (dibujada)      ~550
+firma del usuario (la foto)       ~1.220
+las quince casillas                 ~350
+                                  ───────
+                                   ~2.120  de 3.000 (§4)
+```
+
+Entra con margen. Si algún día no entrara, la salida es no mandar la firma del usuario en
+ese tramo y componerla solo en el PDF.
+
+### Dónde NO va la firma
+
+**Nunca al repositorio.** Es público: una firma escaneada ahí la baja cualquiera y la pega
+en cualquier documento. `Firma mia.jpeg` y todo `*firma*.{jpg,jpeg,png}` están en
+`.gitignore` desde el 2026-08-19. La máscara vive en `localStorage` y nada más.
+
+Que la firma viaje dentro del enlace hacia el propietario **sí es normal**: es lo mismo
+que mandarle un PDF firmado.
 
 ---
 
@@ -216,7 +278,8 @@ los usan tanto la app como la página del cliente.
 |---|---|
 | `lib/carta-oferta.js` | La plantilla como datos y `armar(valores, quitadas)` → los párrafos resueltos |
 | `lib/numero-a-letras.js` | `134000` → `"ciento treinta y cuatro mil"` |
-| `lib/firma.js` | Capturar, codificar, decodificar y dibujar una firma |
+| `lib/firma.js` | Codificar, decodificar y dibujar las dos clases de firma (trazos y máscara) |
+| `lib/firma-foto.js` | Foto → máscara recortada. Solo lo usa la app; el cliente no lo necesita |
 | `lib/carta-enlace.js` | Empaquetar y desempaquetar el estado de la carta en el `#` de una URL |
 | `lib/pdf.js` | Escribir un PDF a mano: texto justificado, saltos de página y trazos |
 | `vistas/carta-oferta.js` | La pantalla de la app: llenar, previsualizar, firmar, enviar |
@@ -286,7 +349,8 @@ Al estilo del proyecto: `node --test tests-js/*.test.mjs`.
 | `numero-a-letras.test.mjs` | Los casos molestos: 1, 15, 21, 100, 101, 1000, 134000, cero |
 | `carta-oferta.test.mjs` | Los tres estados. Sobre todo: **quitar una casilla deja prosa correcta** — sin espacios dobles, sin comas huérfanas, sin frases cortadas |
 | `carta-oferta.test.mjs` | Que el TERCERO y el QUINTO escriban la misma cifra en letra y en número |
-| `firma.test.mjs` | Codificar y decodificar devuelve el mismo dibujo, y una firma normal pesa menos de 600 bytes |
+| `firma.test.mjs` | Codificar y decodificar devuelve el mismo dibujo (trazos y máscara), y una firma dibujada pesa menos de 600 bytes |
+| `firma-foto.test.mjs` | Sobre una imagen armada a mano: separa la tinta azul del gris, descarta las manchitas sueltas, y el rectángulo recortado es el que corresponde |
 | `carta-enlace.test.mjs` | Ida y vuelta completa, y **el enlace de una carta llena con tres firmas mide menos de 3.000 caracteres** |
 | `pdf.test.mjs` | El PDF resultante abre: tabla `xref` coherente, dos páginas, y los acentos codificados en WinAnsi |
 | `estilos.test.mjs` | (ya existe) que las clases nuevas tengan regla en `app.css` |
@@ -302,7 +366,8 @@ Primero lo que puede tumbar el diseño, después lo caro.
 
 1. **`numero-a-letras.js`** — chico, puro, sin sorpresas. Calienta motores.
 2. **`carta-oferta.js`** — la plantilla y los tres estados. Es el corazón.
-3. **`firma.js` + `carta-enlace.js`** — y el test de tamaño del enlace.
+3. **`firma.js` + `firma-foto.js` + `carta-enlace.js`** — y el test de tamaño del enlace,
+   con la firma real del usuario adentro. Es el que decide si el diseño se sostiene.
 4. **PARAR. Probar el enlace en el celular del usuario, por WhatsApp, de verdad.** Si
    WhatsApp lo maltrata, acá se replantea, no después.
 5. **`vistas/carta-oferta.js`** — la pantalla de la app.

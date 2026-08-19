@@ -6,3 +6,13 @@ negocios.xlsx
 # El templete lo dio el usuario; trae el nombre de una tercera persona
 # en sus metadatos y este repositorio es publico.
 Carta oferta templete.docx
+
+# LA FIRMA NUNCA VA AL REPOSITORIO. Es publico: una firma escaneada ahi
+# la puede bajar cualquiera y pegarla en cualquier documento.
+Firma mia.jpeg
+*firma*.jpg
+*firma*.jpeg
+*firma*.png
+*Firma*.jpg
+*Firma*.jpeg
+*Firma*.png
