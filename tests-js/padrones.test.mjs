@@ -63,21 +63,10 @@ test("sugerir encuentra por el principio y tambien por el medio", () => {
 /* Estas direcciones no estan documentadas: salieron de leer el javascript del propio
    visor de Catastro, y estan probadas contra el servidor — devuelven un PDF de verdad.
    Si alguien las toca sin volver a probarlas, el usuario manda enlaces rotos. */
-test("los papeles de Catastro apuntan a donde tienen que apuntar", () => {
+test("los papeles de una casa apuntan a donde tienen que apuntar", () => {
   const papeles = papelesDeCatastro("62295");
   assert.deepEqual(papeles.map((p) => p.clave), ["cedula", "parcela", "territorial", "visor"]);
-  assert.match(papeles[0].url, /apwebimpresioncedulasgeocatastro\?C,V,AA,62295,,,$/);
-  assert.match(papeles[1].url, /arwebmvdeocomunpublico\?62295,N$/);
   assert.equal(papeles.filter((p) => p.pdf).length, 2, "dos bajan PDF directo");
-});
-
-/* Una casa es propiedad comun (C); un apartamento es propiedad horizontal (H) y necesita
-   la unidad. Con la direccion equivocada Catastro devuelve la cedula de otra cosa. */
-test("un apartamento pide la cedula de propiedad horizontal, con su unidad", () => {
-  const conApto = papelesDeCatastro("422399", { apartamento: "202", bloque: "B" });
-  assert.match(conApto[0].url, /\?H,V,AA,422399,B,,202$/);
-  const sinBloque = papelesDeCatastro("422399", { apartamento: "202" });
-  assert.match(sinBloque[0].url, /\?H,V,AA,422399,,,202$/);
 });
 
 test("el departamento cubierto es Montevideo, y esta dicho en un solo lugar", () => {
@@ -121,23 +110,69 @@ test("un numero que no existe ofrece los de al lado", { skip: !hayIndice }, asyn
   assert.ok(r.cercanos.every((c) => c.padron), "cada uno con su padron");
 });
 
-/* Catastro separa la dirección CON COMAS. Una coma escrita en el apartamento la partía en
-   ocho pedazos en vez de siete, y Catastro devolvía otro documento o un error. */
-test("lo que se escribe en apartamento y bloque no puede romper la dirección", () => {
-  for (const [apartamento, bloque] of [
+/* Catastro separa la dirección CON COMAS. Una coma escrita en la unidad la partía en ocho
+   pedazos en vez de siete, y Catastro devolvía otro documento o un error. */
+test("lo que se escribe en unidad y bloque no puede romper la dirección", () => {
+  for (const [unidad, bloque] of [
     ["202,X", ""], ["", "B,999"], ["202 ", " B"], ["2/3", ""], ["ñ&=?", ""], ["a?b=c", "x&y"],
   ]) {
-    const url = papelesDeCatastro("422399", { apartamento, bloque })[0].url;
-    const cola = url.split("?")[1];
-    assert.equal(cola.split(",").length, 7,
-      `"${apartamento}" / "${bloque}" dejó la dirección en ${cola}`);
-    assert.doesNotMatch(cola, /[\s&=?/]/, `quedaron caracteres de URL en ${cola}`);
+    for (const papel of papelesDeCatastro("422399", { apartamento: "1", unidad, bloque })) {
+      if (!papel.url.includes("catastro.gub.uy:8443")) continue;
+      const cola = papel.url.split("?")[1];
+      assert.equal(cola.split(",").length, 7,
+        `"${unidad}" / "${bloque}" dejó la dirección en ${cola}`);
+      assert.doesNotMatch(cola, /[\s&=?/]/, `quedaron caracteres de URL en ${cola}`);
+    }
   }
 });
 
-test("un apartamento normal sigue pasando entero", () => {
-  assert.match(papelesDeCatastro("422399", { apartamento: "202", bloque: "B" })[0].url,
-    /\?H,V,AA,422399,B,,202$/);
-  assert.match(papelesDeCatastro("422399", { apartamento: "1A" })[0].url,
-    /\?H,V,AA,422399,,,1A$/);
+/* Todo lo de acá abajo está PROBADO contra el servidor de Catastro, no deducido. Si algún
+   día cambia, se prueba de nuevo con curl antes de tocar estos valores. */
+const urlDe = (padron, opciones, clave) =>
+  (papelesDeCatastro(padron, opciones).find((p) => p.clave === clave) || {}).url;
+
+test("una casa pide la cédula de propiedad común", () => {
+  assert.match(urlDe("62295", {}, "cedula"), /apwebimpresioncedulasgeocatastro\?C,V,AA,62295,,,$/);
+  assert.match(urlDe("62295", {}, "parcela"), /arwebmvdeocomunpublico\?62295,N$/);
+});
+
+/* La "unidad" de Catastro NO es el número de apartamento: para el padrón 82447 la unidad 1
+   devuelve la cédula y la 202 devuelve un archivo vacío. Inventarla entrega el papel de
+   OTRA unidad sin avisar, así que sin unidad NO se ofrece cédula. */
+test("un apartamento sin unidad conocida no ofrece cédula, pero sí los datos de la parcela", () => {
+  const papeles = papelesDeCatastro("84290", { apartamento: "202" });
+  assert.equal(papeles.find((p) => p.clave === "cedula"), undefined,
+    "no puede inventar la unidad");
+  assert.match(urlDe("84290", { apartamento: "202" }, "parcela"),
+    /arwebphmvdeopublico\?V,AA,84290,,,,N$/);
+});
+
+test("con la unidad puesta a mano sí sale la cédula de propiedad horizontal", () => {
+  assert.match(urlDe("84290", { apartamento: "202", unidad: "1" }, "cedula"),
+    /apwebimpresioncedulasgeocatastro\?H,V,AA,84290,,,1$/);
+  assert.match(urlDe("84290", { apartamento: "202", unidad: "0001", bloque: "B" }, "cedula"),
+    /apwebimpresioncedulasgeocatastro\?H,V,AA,84290,B,,0001$/);
+});
+
+/* Los dos que se aprendieron a los golpes: la app va por https y el navegador planta una
+   pantalla de peligro antes de abrir un http en puerto 8080; y el visor no tiene https. */
+test("los papeles de Catastro van por https, y el visor por http porque no tiene otra", () => {
+  for (const opciones of [{}, { apartamento: "202" }, { apartamento: "202", unidad: "1" }]) {
+    for (const papel of papelesDeCatastro("84290", opciones)) {
+      if (papel.clave === "visor") {
+        assert.equal(papel.url, "http://visor.catastro.gub.uy/visordnc/");
+      } else {
+        assert.match(papel.url, /^https:/, `${papel.clave} tiene que ir por https`);
+      }
+    }
+  }
+});
+
+test("siempre están los datos territoriales de la Intendencia y el visor", () => {
+  for (const opciones of [{}, { apartamento: "202" }, { apartamento: "202", unidad: "1" }]) {
+    const claves = papelesDeCatastro("84290", opciones).map((p) => p.clave);
+    assert.ok(claves.includes("territorial"), "faltan los datos de la Intendencia");
+    assert.ok(claves.includes("visor"), "falta el visor, que es lo único que da croquis y planos");
+    assert.ok(claves.includes("parcela"), "los datos de la parcela salen siempre");
+  }
 });

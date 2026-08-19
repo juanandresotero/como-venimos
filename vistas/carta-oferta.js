@@ -77,6 +77,34 @@ function refrescarLoQueCambia(agente) {
   if (vivos.previa) pintarPrevia(vivos.previa, agente);
 }
 
+/* Lo que deja la herramienta del padrón para que esta pantalla lo levante.
+
+   Juan arranca una carta nueva desde el padrón: busca la dirección, saca el número y
+   recién ahí empieza a llenar. Antes esto se hacía escribiendo el borrador en el teléfono
+   y navegando, pero no servía: `carta` vive en memoria y sólo se lee lo guardado cuando
+   está vacía, así que si ya había abierto la carta alguna vez el padrón se perdía. */
+let semilla = null;
+
+export function empezarConPadron(datos) {
+  semilla = datos;
+}
+
+/* Lo que viene puesto de fabrica no cuenta como "hay algo cargado". Se mira AL TOCAR y no
+   al dibujar: si se mirara al dibujar, lo que se escribio despues no contaria y el boton
+   borraria el trabajo sin preguntar. Paso en la prueba. */
+const DE_FABRICA = ["dias_reserva", "dias_validez", "fecha_oferta"];
+
+const hayAlgoCargado = () =>
+  Boolean(carta) && (
+    Object.keys(carta.valores).some((k) => !DE_FABRICA.includes(k) && carta.valores[k])
+    || Object.keys(carta.firmas).length > 0);
+
+function plantarSemilla(estado) {
+  Object.assign(carta.valores, semilla);
+  semilla = null;
+  guardar(estado);
+}
+
 function arrancar(estado) {
   const guardado = leerBorrador();
   carta = guardado || { valores: {}, quitadas: [], firmas: {} };
@@ -92,6 +120,14 @@ const guardar = (estado) => guardarBorrador(carta, estado.hoy);
 
 export function dibujarCartaOferta(estado) {
   if (!carta) arrancar(estado);
+
+  /* Vino un padrón de la otra herramienta. Si no hay nada escrito se planta y listo; si
+     hay una carta a medio hacer NO se pisa sin avisar: se abre el mismo cartel de siempre,
+     que ya pregunta si guardarla. */
+  if (semilla) {
+    if (hayAlgoCargado()) preguntandoNueva = true;
+    else plantarSemilla(estado);
+  }
 
   // Las referencias de la pantalla anterior ya no sirven: se vuelven a tomar abajo.
   vivos.nombre = null;
@@ -463,14 +499,6 @@ function dibujarBotones(estado, agente) {
 function barraDeCartas(estado) {
   const historial = leerHistorial();
 
-  /* Lo que viene puesto de fabrica no cuenta como "hay algo cargado". Se mira AL TOCAR y
-     no al dibujar: si se mirara al dibujar, lo que se escribio despues no contaria y el
-     boton borraria el trabajo sin preguntar. Paso en la prueba. */
-  const DE_FABRICA = ["dias_reserva", "dias_validez", "fecha_oferta"];
-  const hayAlgoCargado = () =>
-    Object.keys(carta.valores).some((k) => !DE_FABRICA.includes(k) && carta.valores[k])
-    || Object.keys(carta.firmas).length > 0;
-
   const marca = nodo(html`
     <section class="tarjeta tarjeta-apretada">
       <div class="cabeza-carta">
@@ -484,6 +512,8 @@ function barraDeCartas(estado) {
 
       ${preguntandoNueva ? html`
         <div class="aviso-nueva">
+          ${semilla ? html`<p class="frase" style="margin-bottom:8px">Ya tenés una carta
+            empezada y venís con el padrón <strong>${escapar(semilla.padron || "")}</strong>.</p>` : ""}
           <label class="etiqueta" for="nombre-guardado">¿Con qué nombre la guardo?</label>
           <input class="campo" id="nombre-guardado" type="text"
                  value="${escapar(carta.nombre || carta.valores.calle || "")}"
@@ -491,7 +521,8 @@ function barraDeCartas(estado) {
           <div class="botonera">
             <button class="boton boton-chico boton-primario" id="guardar-y-nueva">Guardar y empezar</button>
             <button class="boton boton-chico" id="solo-nueva">Empezar sin guardar</button>
-            <button class="boton boton-chico" id="cancelar-nueva">Cancelar</button>
+            <button class="boton boton-chico" id="cancelar-nueva">${
+              semilla ? "Agregarlo a esta carta" : "Cancelar"}</button>
           </div>
         </div>` : ""}
 
@@ -522,8 +553,11 @@ function barraDeCartas(estado) {
     empezarDeCero(estado);
   });
   conectar("solo-nueva", () => empezarDeCero(estado));
+  /* Sin padrón esperando es "Cancelar"; con padrón esperando es "Agregarlo a esta carta",
+     porque tocó el botón para algo y dejarlo en la nada sería peor que no hacer nada. */
   conectar("cancelar-nueva", () => {
     preguntandoNueva = false;
+    if (semilla) plantarSemilla(estado);
     estado.redibujar();
   });
   conectar("ver-historial", () => {
@@ -568,6 +602,7 @@ function empezarDeCero(estado) {
   borrarBorrador();
   carta = null;
   arrancar(estado);
+  if (semilla) plantarSemilla(estado);
   guardar(estado);
   estado.redibujar();
 }

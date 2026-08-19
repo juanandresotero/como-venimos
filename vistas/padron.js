@@ -12,7 +12,8 @@ import {
   buscar, sugerir, normalizar, papelesDeCatastro, VISOR_CATASTRO, DEPARTAMENTO_CUBIERTO,
 } from "../lib/padrones.js";
 import { DEPARTAMENTOS } from "../lib/carta-oferta.js";
-import { leerBorrador, guardarBorrador } from "../lib/carta-guardado.js";
+import { empezarConPadron } from "./carta-oferta.js";
+import { mandarTexto } from "../lib/compartir.js";
 import { escapar } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -30,7 +31,14 @@ const CAMPOS = [
   { clave: "bloque", etiqueta: "Bloque", pista: "B — opcional, para complejos", tipo: "text" },
 ];
 
-const entradas = { calle: "", puerta: "", apartamento: "", bloque: "", departamento: DEPARTAMENTO_CUBIERTO };
+/* `unidad` no se busca ni se adivina: es el número que Catastro le pone a cada unidad de
+   un edificio, y NO es el número de apartamento (probado: en el padrón 82447 la unidad 1
+   trae la cédula y la 202 no trae nada). Se pregunta acá abajo, después de encontrar el
+   padrón, y sale del PDF "Datos completos de la parcela". */
+const entradas = {
+  calle: "", puerta: "", apartamento: "", bloque: "", unidad: "",
+  departamento: DEPARTAMENTO_CUBIERTO,
+};
 let resultado = null;
 let buscando = false;
 let calles = null;
@@ -142,14 +150,16 @@ function comoSeNombra(padron) {
   return partes.join(", ");
 }
 
+/* El padrón es el ARRANQUE de una carta, no un dato suelto: Juan busca la dirección acá y
+   recién después empieza a llenar. Se le pasa a la pantalla de la carta, que decide si la
+   planta directo o pregunta antes de tapar una carta a medio hacer. */
 function usarEnLaCarta(estado, padron) {
-  const borrador = leerBorrador() || { valores: {}, quitadas: [], firmas: {} };
-  borrador.valores.padron = comoSeNombra(padron).replace(/^Padrón /, "");
+  const valores = { padron: comoSeNombra(padron).replace(/^Padrón /, "") };
   if (entradas.calle.trim()) {
-    borrador.valores.calle = `${entradas.calle.trim()} ${entradas.puerta.trim()}`.trim();
+    valores.calle = `${entradas.calle.trim()} ${entradas.puerta.trim()}`.trim();
   }
-  borrador.valores.departamento = entradas.departamento;
-  guardarBorrador(borrador, estado.hoy);
+  valores.departamento = entradas.departamento;
+  empezarConPadron(valores);
   estado.irA("carta_oferta");
 }
 
@@ -256,6 +266,9 @@ function dibujarResultado(estado) {
   }
 
   const telefono = ((estado.datos.ajustes || {}).agente || {}).telefono || "";
+  /* Un apartamento es "propiedad horizontal" para Catastro, y ahí los papeles se piden
+     distinto. Lo dice el propio Juan al escribir el apartamento o el bloque. */
+  const esApartamento = Boolean(entradas.apartamento.trim() || entradas.bloque.trim());
   const marca = nodo(html`
     <section class="tarjeta">
       <p class="etiqueta">${escapar(r.calle)} ${r.numero}</p>
@@ -265,39 +278,56 @@ function dibujarResultado(estado) {
         <button class="boton boton-primario" id="a-la-carta">Usar en la carta oferta</button>
       </div>
       <p class="etiqueta" style="margin-top:16px">Papeles de Catastro</p>
+      ${esApartamento ? html`
+        <div class="fila-carta">
+          <label for="p-unidad">Unidad catastral</label>
+          <input class="campo" id="p-unidad" type="text" inputmode="numeric"
+                 value="${escapar(entradas.unidad)}" placeholder="1">
+        </div>
+        <p class="apunte" style="margin-bottom:10px">Catastro numera las unidades a su
+          manera y <strong>casi nunca coincide con el número de apartamento</strong>. Abrí
+          “Datos completos de la parcela”: ahí están listadas todas.</p>` : ""}
       <div class="papeles"></div>
       <div class="botonera">
         <button class="boton boton-chico" id="mandar">Mandarlos por WhatsApp</button>
       </div>
       <p class="apunte" style="margin-top:10px">Es el padrón del edificio. Si es un
-        apartamento, en la carta va “padrón ${escapar(r.padron)}, unidad ${escapar(entradas.apartamento || "…")}”.</p>
+        apartamento, en la carta va “padrón ${escapar(r.padron)}, unidad ${escapar(entradas.apartamento || "…")}”.
+        ${esApartamento ? "" : "Si la cédula te sale en blanco es porque el padrón es un edificio: poné el número de apartamento arriba."}</p>
     </section>
   `);
 
-  /* Los cuatro papeles oficiales. Los tres primeros bajan un PDF de verdad; el ultimo
-     abre el visor, porque el croquis de manzana y el listado de planos no tienen
-     direccion directa. */
-  const papeles = papelesDeCatastro(r.padron, {
-    apartamento: entradas.apartamento, bloque: entradas.bloque,
-  });
   const caja = marca.querySelector(".papeles");
-  for (const papel of papeles) {
-    const a = document.createElement("a");
-    a.className = "papel";
-    a.href = papel.url;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.innerHTML = html`<span class="papel-nombre">${escapar(papel.nombre)}</span>`
-      + (papel.pdf ? '<span class="papel-tipo">PDF</span>' : '<span class="papel-tipo">web</span>');
-    caja.append(a);
+  const pintarPapeles = () => {
+    caja.textContent = "";
+    for (const papel of papelesDeCatastro(r.padron, entradas)) {
+      const a = document.createElement("a");
+      a.className = "papel";
+      a.href = papel.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.innerHTML = html`<span class="papel-nombre">${escapar(papel.nombre)}</span>`
+        + (papel.pdf ? '<span class="papel-tipo">PDF</span>' : '<span class="papel-tipo">web</span>');
+      caja.append(a);
+    }
+  };
+  pintarPapeles();
+
+  /* Se repintan SOLO los papeles: redibujar la pantalla entera devolvía el scroll arriba. */
+  const cajaUnidad = marca.getElementById("p-unidad");
+  if (cajaUnidad) {
+    cajaUnidad.addEventListener("input", () => {
+      entradas.unidad = cajaUnidad.value;
+      pintarPapeles();
+    });
   }
 
   marca.getElementById("a-la-carta").addEventListener("click", () => usarEnLaCarta(estado, r.padron));
   marca.getElementById("mandar").addEventListener("click", () => {
     const texto = [`${comoSeNombra(r.padron)} — ${entradas.calle} ${r.numero}`, ""]
-      .concat(papeles.map((p) => `${p.nombre}:\n${p.url}`))
+      .concat(papelesDeCatastro(r.padron, entradas).map((p) => `${p.nombre}:\n${p.url}`))
       .join("\n");
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
+    mandarTexto(texto);
   });
   return marca;
 }
