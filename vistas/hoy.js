@@ -16,7 +16,7 @@ import { capas, ritmo, comparativaCategorias } from "../lib/salud.js";
 import { marcarAtendido } from "../lib/guardado.js";
 import { medir, vale_la_pena_ajustar } from "../lib/seguridad.js";
 import { nivelDe, nivelDelObjetivo } from "../lib/niveles.js";
-import { plata, plataUSD, pct, fechaCorta, escapar } from "../lib/formato.js";
+import { plata, pct, fechaCorta, escapar } from "../lib/formato.js";
 
 const html = (cadenas, ...valores) =>
   cadenas.reduce((t, c, i) => t + c + (valores[i] ?? ""), "");
@@ -82,7 +82,6 @@ function cuantoFalta(estado) {
   const encaminado = c.avanzado.facturacion;
   const descubierto = Math.max(0, objetivo - c.cobrado.facturacion - encaminado);
   const parte = (x) => `${Math.max(0, Math.min(100, (x / objetivo) * 100))}%`;
-  const mesesQuedan = Math.max(1, 12 - Number(estado.hoy.slice(5, 7)));
 
   return nodo(html`
     <section class="tarjeta">
@@ -93,10 +92,16 @@ function cuantoFalta(estado) {
         </span>
       </div>
 
-      <div class="camino">
-        <div class="camino-tramo cobrado" style="width:${parte(c.cobrado.facturacion)}"></div>
-        <div class="camino-tramo encaminado" style="width:${parte(encaminado)}"></div>
-        <div class="camino-marca" style="left:${parte(objetivo * r.calendario)}"></div>
+      <div class="camino-caja">
+        <div class="camino">
+          <div class="camino-tramo cobrado" style="width:${parte(c.cobrado.facturacion)}"></div>
+          <div class="camino-tramo encaminado" style="width:${parte(encaminado)}"></div>
+          <div class="camino-marca" style="left:${parte(objetivo * r.calendario)}"></div>
+        </div>
+        <!-- La marca decia con un parrafo lo que ahora dice ella misma. Se corre para
+             adentro en los bordes para que la etiqueta no se salga de la tarjeta. -->
+        <span class="camino-hoy" style="left:${Math.min(93, Math.max(7, (r.calendario * 100)))}%">
+          hoy</span>
       </div>
 
       <div class="camino-pies">
@@ -114,18 +119,8 @@ function cuantoFalta(estado) {
         </span>
       </div>
 
-      <p class="frase">
-        ${descubierto > 0
-          ? html`Si cerrás todo lo que ya está en marcha te faltan
-             <strong>${plataUSD(descubierto)}</strong> de negocio nuevo, en los
-             ${mesesQuedan} ${mesesQuedan === 1 ? "mes" : "meses"} que quedan.`
-          : html`Con lo que ya está en marcha <strong>llegás al objetivo</strong>.
-             Falta cerrarlo.`}
-      </p>
-      <p class="apunte" style="margin-top:8px">
-        La marca del medio es dónde deberías estar hoy: ${pct(r.calendario)} del año.
-        Al bolsillo llevás <strong>${plata(c.cobrado.ganancia)}</strong>.
-      </p>
+      <p class="apunte" style="margin-top:10px">Ganancia
+        <strong>${plata(c.cobrado.ganancia)}</strong></p>
     </section>
   `);
 }

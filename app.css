@@ -971,6 +971,16 @@ body {
   background: var(--tinta);
   border-radius: 2px;
 }
+/* La marca de "donde deberias estar hoy" se explica sola con una etiqueta abajo, en vez
+   del parrafo que habia antes. La caja necesita lugar para esa etiqueta. */
+.camino-caja { position: relative; padding-top: 15px; }
+.camino-hoy {
+  position: absolute; bottom: 100%; margin-bottom: 1px;
+  transform: translateX(-50%);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+  color: var(--tinta-2); white-space: nowrap;
+}
+
 .camino-pies { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; }
 .camino-pie { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--tinta-2); }
 .camino-pie strong { color: var(--tinta); font-variant-numeric: tabular-nums; }
