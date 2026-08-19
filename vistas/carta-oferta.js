@@ -83,8 +83,7 @@ export function dibujarCartaOferta(estado) {
 
   trozo.append(nodo(html`
     <section style="margin-bottom:16px">
-      <button class="boton boton-chico" id="volver">‹ Herramientas</button>
-      <h1 class="titulo" style="font-size:26px;margin-top:12px">Carta oferta</h1>
+      <h1 class="titulo" style="font-size:26px">Carta oferta</h1>
       <p class="apunte" style="margin-top:4px">Llená lo que sepas. Lo que dejes vacío sale
         con la rayita para completar; lo que saques desaparece de la frase.</p>
     </section>
@@ -97,7 +96,6 @@ export function dibujarCartaOferta(estado) {
   trozo.append(dibujarPrevia(estado, agente));
   trozo.append(dibujarBotones(estado, agente));
 
-  trozo.getElementById("volver").addEventListener("click", () => estado.irA("herramientas"));
   return trozo;
 }
 
@@ -366,13 +364,14 @@ function dibujarBotones(estado, agente) {
   const marca = nodo(html`
     <section class="tarjeta">
       <h2 class="titulo" style="font-size:16px">Mandarla</h2>
-      <p class="apunte" style="margin:2px 0 10px">El enlace abre la carta en el celular
-        del otro para que la complete y la firme. El PDF es para imprimir o archivar.</p>
+      <p class="apunte" style="margin:2px 0 10px">Se manda el PDF, que en WhatsApp se ve
+        como un archivo prolijo. Adentro trae un botón <strong>“Firmar en el celular”</strong>:
+        el que lo recibe elige si firma en la pantalla o si lo imprime y firma a mano.</p>
       <div class="botonera">
         <button class="boton boton-chico boton-primario" data-mandar="comprador">
-          Enviar al comprador</button>
+          Mandar al comprador</button>
         <button class="boton boton-chico boton-primario" data-mandar="propietario">
-          Enviar al propietario</button>
+          Mandar al propietario</button>
         <button class="boton boton-chico" id="bajar-pdf">Bajar el PDF</button>
       </div>
       ${telefono ? "" : '<p class="apunte" style="margin-top:8px">⚠ Cargá tu teléfono en '
@@ -399,9 +398,30 @@ function dibujarBotones(estado, agente) {
         agente,
         firmas,
       });
+
+      /* Se manda el PDF y no el enlace pelado: en WhatsApp un archivo se ve prolijo y un
+         enlace de doscientos caracteres se ve como un manotazo. El enlace va ADENTRO del
+         PDF, en el boton "Firmar en el celular". */
+      const bloques = armar(carta.valores, carta.quitadas, {
+        agente, firmadas: Object.keys(carta.firmas),
+      });
+      const pdf = armarPDF(bloques, carta.firmas, await cargarMembrete(), enlace).aBlob();
+      const archivo = new File([pdf], nombreDelArchivo(carta.valores), { type: "application/pdf" });
+
+      if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+        try {
+          await navigator.share({ files: [archivo] });
+          return;
+        } catch {
+          return;   // lo cancelo a proposito
+        }
+      }
+
+      /* Sin compartir archivos —una computadora, por ejemplo— se baja el PDF y se abre
+         WhatsApp con el enlace, para que igual pueda mandar algo. */
+      bajarArchivo(pdf, nombreDelArchivo(carta.valores));
       window.open(comoWhatsApp(enlace, {
-        texto: "Te paso la oferta de compra. Se lee y se firma en el celular; si preferís, "
-          + "también la podés bajar en PDF e imprimirla.",
+        texto: "Te paso la oferta de compra. El PDF va aparte.",
       }), "_blank", "noopener");
     });
   });
@@ -410,13 +430,8 @@ function dibujarBotones(estado, agente) {
     const bloques = armar(carta.valores, carta.quitadas, {
       agente, firmadas: Object.keys(carta.firmas),
     });
-    const blob = armarPDF(bloques, carta.firmas, await cargarMembrete()).aBlob();
-    const url = URL.createObjectURL(blob);
-    const enlace = document.createElement("a");
-    enlace.href = url;
-    enlace.download = nombreDelArchivo(carta.valores);
-    enlace.click();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    bajarArchivo(armarPDF(bloques, carta.firmas, await cargarMembrete()).aBlob(),
+      nombreDelArchivo(carta.valores));
   });
 
   return marca;
@@ -538,4 +553,13 @@ function empezarDeCero(estado) {
   arrancar(estado);
   guardar(estado);
   estado.redibujar();
+}
+
+function bajarArchivo(blob, nombre) {
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = nombre;
+  enlace.click();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
 }

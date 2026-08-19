@@ -9,11 +9,10 @@
    unidad 202": el padrón lo pone esto y la unidad la ponés vos. */
 
 import {
-  buscar, sugerir, normalizar, infoCatastral, VISOR_CATASTRO, DEPARTAMENTO_CUBIERTO,
+  buscar, sugerir, normalizar, papelesDeCatastro, VISOR_CATASTRO, DEPARTAMENTO_CUBIERTO,
 } from "../lib/padrones.js";
 import { DEPARTAMENTOS } from "../lib/carta-oferta.js";
 import { leerBorrador, guardarBorrador } from "../lib/carta-guardado.js";
-import { comoWhatsApp } from "../lib/carta-enlace.js";
 import { escapar } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -56,8 +55,7 @@ export function dibujarPadron(estado) {
 
   trozo.append(nodo(html`
     <section style="margin-bottom:16px">
-      <button class="boton boton-chico" id="volver">‹ Herramientas</button>
-      <h1 class="titulo" style="font-size:26px;margin-top:12px">¿Qué padrón es?</h1>
+      <h1 class="titulo" style="font-size:26px">¿Qué padrón es?</h1>
       <p class="apunte" style="margin-top:4px">Sale de la tabla oficial de la Intendencia
         de Montevideo. Es el padrón del edificio: si es un apartamento, la carta se escribe
         “padrón tanto, unidad tanto”.</p>
@@ -67,7 +65,6 @@ export function dibujarPadron(estado) {
   trozo.append(formulario(estado));
   if (resultado) trozo.append(dibujarResultado(estado));
 
-  trozo.getElementById("volver").addEventListener("click", () => estado.irA("herramientas"));
   return trozo;
 }
 
@@ -266,20 +263,41 @@ function dibujarResultado(estado) {
       <p class="apunte">${escapar(comoSeNombra(r.padron))}</p>
       <div class="botonera">
         <button class="boton boton-primario" id="a-la-carta">Usar en la carta oferta</button>
-        <button class="boton" id="mandar">Mandarme la info catastral</button>
+      </div>
+      <p class="etiqueta" style="margin-top:16px">Papeles de Catastro</p>
+      <div class="papeles"></div>
+      <div class="botonera">
+        <button class="boton boton-chico" id="mandar">Mandarlos por WhatsApp</button>
       </div>
       <p class="apunte" style="margin-top:10px">Es el padrón del edificio. Si es un
         apartamento, en la carta va “padrón ${escapar(r.padron)}, unidad ${escapar(entradas.apartamento || "…")}”.</p>
     </section>
   `);
 
+  /* Los cuatro papeles oficiales. Los tres primeros bajan un PDF de verdad; el ultimo
+     abre el visor, porque el croquis de manzana y el listado de planos no tienen
+     direccion directa. */
+  const papeles = papelesDeCatastro(r.padron, {
+    apartamento: entradas.apartamento, bloque: entradas.bloque,
+  });
+  const caja = marca.querySelector(".papeles");
+  for (const papel of papeles) {
+    const a = document.createElement("a");
+    a.className = "papel";
+    a.href = papel.url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.innerHTML = html`<span class="papel-nombre">${escapar(papel.nombre)}</span>`
+      + (papel.pdf ? '<span class="papel-tipo">PDF</span>' : '<span class="papel-tipo">web</span>');
+    caja.append(a);
+  }
+
   marca.getElementById("a-la-carta").addEventListener("click", () => usarEnLaCarta(estado, r.padron));
   marca.getElementById("mandar").addEventListener("click", () => {
-    window.open(comoWhatsApp(infoCatastral(r.padron), {
-      texto: `${comoSeNombra(r.padron)} — ${entradas.calle} ${r.numero}. `
-        + "Datos territoriales oficiales de la Intendencia:",
-      telefono,
-    }), "_blank", "noopener");
+    const texto = [`${comoSeNombra(r.padron)} — ${entradas.calle} ${r.numero}`, ""]
+      .concat(papeles.map((p) => `${p.nombre}:\n${p.url}`))
+      .join("\n");
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
   });
   return marca;
 }

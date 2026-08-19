@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  normalizar, grupoDe, buscar, sugerir, infoCatastral, DEPARTAMENTO_CUBIERTO,
+  normalizar, grupoDe, buscar, sugerir, papelesDeCatastro, DEPARTAMENTO_CUBIERTO,
 } from "../lib/padrones.js";
 
 const RAIZ = fileURLToPath(new URL("..", import.meta.url));
@@ -60,8 +60,24 @@ test("sugerir encuentra por el principio y tambien por el medio", () => {
   assert.deepEqual(sugerir(calles, "x"), [], "con una sola letra no sugiere nada");
 });
 
-test("el enlace a la info catastral lleva el padron", () => {
-  assert.match(infoCatastral("62295"), /padrones\.php\?padron=62295&/);
+/* Estas direcciones no estan documentadas: salieron de leer el javascript del propio
+   visor de Catastro, y estan probadas contra el servidor — devuelven un PDF de verdad.
+   Si alguien las toca sin volver a probarlas, el usuario manda enlaces rotos. */
+test("los papeles de Catastro apuntan a donde tienen que apuntar", () => {
+  const papeles = papelesDeCatastro("62295");
+  assert.deepEqual(papeles.map((p) => p.clave), ["cedula", "parcela", "territorial", "visor"]);
+  assert.match(papeles[0].url, /apwebimpresioncedulasgeocatastro\?C,V,AA,62295,,,$/);
+  assert.match(papeles[1].url, /arwebmvdeocomunpublico\?62295,N$/);
+  assert.equal(papeles.filter((p) => p.pdf).length, 2, "dos bajan PDF directo");
+});
+
+/* Una casa es propiedad comun (C); un apartamento es propiedad horizontal (H) y necesita
+   la unidad. Con la direccion equivocada Catastro devuelve la cedula de otra cosa. */
+test("un apartamento pide la cedula de propiedad horizontal, con su unidad", () => {
+  const conApto = papelesDeCatastro("422399", { apartamento: "202", bloque: "B" });
+  assert.match(conApto[0].url, /\?H,V,AA,422399,B,,202$/);
+  const sinBloque = papelesDeCatastro("422399", { apartamento: "202" });
+  assert.match(sinBloque[0].url, /\?H,V,AA,422399,,,202$/);
 });
 
 test("el departamento cubierto es Montevideo, y esta dicho en un solo lugar", () => {
