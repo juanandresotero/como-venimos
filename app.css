@@ -1499,8 +1499,19 @@ body {
 }
 .transito-listo { color: var(--azul); border-color: currentColor; }
 .transito-espera { color: var(--tinta-2); }
-/* El unico boton que cierra el circuito de una carta: se distingue del resto. */
-.boton-mini-primario { background: var(--azul); box-shadow: 0 0 0 2px var(--azul-suave); }
+/* El unico boton que cierra el circuito de una carta. Va con borde ROJO porque en esta app
+   el rojo es lo que reclama atencion: volvieron las dos partes y falta que las mande. */
+.boton-mini-urgente { background: var(--azul); box-shadow: 0 0 0 2px var(--rojo); }
+
+/* Las cartas que ya se mandaron a las partes: quedan al final del historial y con borde
+   azul, para distinguirlas de las que todavia se pueden retomar.
+
+   El grosor se dobla con un `inset` y no subiendo el `border`: un borde mas grueso corre la
+   caja y los renglones dejarian de alinearse con los de arriba. */
+.historial-cerrada {
+  border-color: var(--azul);
+  box-shadow: inset 0 0 0 1px var(--azul);
+}
 
 /* Los papeles oficiales de Catastro, uno debajo del otro. */
 .papeles { display: grid; gap: 7px; margin: 8px 0 12px; }

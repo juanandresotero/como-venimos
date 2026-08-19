@@ -13,7 +13,7 @@ import { aEnlace } from "../lib/carta-enlace.js";
 import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
 import {
   nuevoId, anotarMandada, anotarEntregada, estadoDeCarta, comoVaLaCarta, estaPronta,
-  mandadas, vueltas,
+  mandadas, vueltas, ordenarParaElHistorial,
 } from "../lib/carta-transito.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { cargarMembrete } from "../lib/membrete.js";
@@ -530,7 +530,7 @@ function barraDeCartas(estado) {
      qué momento están. Tener dos listas paralelas era pedir que se desincronizaran. */
   const todas = leerHistorial();
   const enTransito = todas.filter((c) => estadoDeCarta(c) === "transito");
-  const guardadas = todas.filter((c) => estadoDeCarta(c) !== "transito");
+  const guardadas = ordenarParaElHistorial(todas.filter((c) => estadoDeCarta(c) !== "transito"));
 
   const marca = nodo(html`
     <section class="tarjeta tarjeta-apretada">
@@ -634,8 +634,10 @@ function barraDeCartas(estado) {
       const li = document.createElement("li");
       li.className = "historial-fila";
       const cuantasFirmas = Object.keys(guardada.firmas).length;
+      /* Las que ya se mandaron van marcadas: no se tocan mas, son el registro. */
+      const cerrada = estadoDeCarta(guardada) === "completa";
       li.innerHTML = html`
-        <button class="historial-abrir" data-abrir="1">
+        <button class="historial-abrir ${cerrada ? "historial-cerrada" : ""}" data-abrir="1">
           <span class="historial-nombre">${escapar(comoSeLlamaLaCarta(guardada))}</span>
           <span class="historial-cuando">${escapar(guardada.cuando || "")}${
             cuantasFirmas ? ` · ${cuantasFirmas} firma${cuantasFirmas > 1 ? "s" : ""}` : ""}${
@@ -676,7 +678,7 @@ function filaDeTransito(guardada, estado, abrir) {
         escapar(comoVaLaCarta(guardada))}</span>
       <span class="transito-partes">${partes}</span>
     </button>
-    ${pronta ? html`<button class="boton-mini boton-mini-primario" data-cerrar="1">Ya la envié</button>` : ""}
+    ${pronta ? html`<button class="boton-mini boton-mini-urgente" data-cerrar="1">Ya la envié</button>` : ""}
   `;
   li.querySelector("[data-abrir]").addEventListener("click", () => abrir(guardada));
 

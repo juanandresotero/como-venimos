@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   nuevoId, anotarMandada, anotarVuelta, anotarEntregada,
   estadoDeCarta, comoVaLaCarta, estaPronta, faltanVolver, mandadas, vueltas,
+  ordenarParaElHistorial,
 } from "../lib/carta-transito.js";
 
 const vacia = () => ({ valores: {}, quitadas: [], firmas: {} });
@@ -92,4 +93,26 @@ test("una vuelta anotada sin fecha igual cuenta como contestada", () => {
   assert.deepEqual(faltanVolver(c), []);
   assert.equal(estaPronta(c), true);
   assert.equal(comoVaLaCarta(c), "Pronta para enviar a las partes");
+});
+
+/* Juan: "quedan al final porque en teoría no las usaré más y es solo a modo de registro". */
+test("las cartas ya enviadas quedan al final del historial", () => {
+  const enviada = (n) => anotarEntregada(
+    anotarMandada({ nombre: n, valores: {}, firmas: {} }, "comprador", "2026-08-19"), "2026-08-20");
+  const borrador = (n) => ({ nombre: n, valores: {}, firmas: {} });
+
+  const orden = ordenarParaElHistorial([
+    enviada("vieja 1"), borrador("a medias 1"), enviada("vieja 2"), borrador("a medias 2"),
+  ]).map((c) => c.nombre);
+
+  assert.deepEqual(orden, ["a medias 1", "a medias 2", "vieja 1", "vieja 2"]);
+});
+
+test("ordenar no cambia el orden entre las del mismo tipo ni toca la lista original", () => {
+  const lista = [
+    { nombre: "primera", valores: {}, firmas: {} },
+    { nombre: "segunda", valores: {}, firmas: {} },
+  ];
+  assert.deepEqual(ordenarParaElHistorial(lista).map((c) => c.nombre), ["primera", "segunda"]);
+  assert.notEqual(ordenarParaElHistorial(lista), lista, "tiene que devolver una lista nueva");
 });
