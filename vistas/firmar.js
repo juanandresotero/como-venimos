@@ -9,6 +9,7 @@
 import { CAMPOS, armar } from "../lib/carta-oferta.js";
 import { deEnlace, aEnlace, comoWhatsApp } from "../lib/carta-enlace.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
+import { cargarMembrete } from "../lib/membrete.js";
 import { deBytes } from "../lib/firma.js";
 import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
 import { pedirFirma } from "./firma-panel.js";
@@ -216,10 +217,10 @@ function dibujar() {
     }), "_blank", "noopener");
   });
 
-  cierre.getElementById("pdf").addEventListener("click", () => {
+  cierre.getElementById("pdf").addEventListener("click", async () => {
     const blob = armarPDF(armar(estado.valores, estado.quitadas, {
       agente: estado.agente, firmadas: Object.keys(estado.firmas),
-    }), estado.firmas).aBlob();
+    }), estado.firmas, await cargarMembrete()).aBlob();
     const url = URL.createObjectURL(blob);
     const enlace = document.createElement("a");
     enlace.href = url;

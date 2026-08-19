@@ -42,31 +42,15 @@ const ESCALONES = `<path d="M3.5 20.5v-4h5v-4h5v-4h5v-4"/><path d="M3.5 20.5h16"
 const HOJA_FIRMADA = `<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>`
   + `<path d="M8.8 16.6c1.6-3.4 2.6-3.4 3.2-1.4.5 1.7 1.6 1.9 3.2-1"/>`;
 
+/* Cada parada dice QUE HACER y nada mas. Antes cada una llevaba encima el momento en que
+   se usa ("Antes de comprarla", "Al cerrar el negocio"): servia para explicar el concepto
+   la primera vez, pero despues es texto que hay que saltear cada vez que se abre el menu
+   apurado. El orden de la linea ya cuenta lo mismo sin decirlo. */
 export const HERRAMIENTAS = [
-  {
-    vista: "renta",
-    momento: "Antes de comprarla",
-    nombre: "¿Cuánto renta una propiedad?",
-    dibujo: CASA,
-  },
-  {
-    vista: "carta_oferta",
-    momento: "Al hacer la oferta",
-    nombre: "Carta oferta",
-    dibujo: HOJA_FIRMADA,
-  },
-  {
-    vista: "comisiones",
-    momento: "Al cerrar el negocio",
-    nombre: "¿Cuánto es tu comisión?",
-    dibujo: PORCIENTO,
-  },
-  {
-    vista: "reajuste",
-    momento: "Cada año del contrato",
-    nombre: "¿Cuánto sube el alquiler?",
-    dibujo: ESCALONES,
-  },
+  { vista: "renta", nombre: "Calcular renta", dibujo: CASA },
+  { vista: "carta_oferta", nombre: "Enviar carta oferta", dibujo: HOJA_FIRMADA },
+  { vista: "comisiones", nombre: "Calcular comisión", dibujo: PORCIENTO },
+  { vista: "reajuste", nombre: "Calcular reajuste de alquiler", dibujo: ESCALONES },
 ];
 
 export function dibujarHerramientas(estado) {
@@ -75,8 +59,7 @@ export function dibujarHerramientas(estado) {
   trozo.append(nodo(html`
     <section style="margin-bottom:20px">
       <h1 class="titulo" style="font-size:29px">¿Qué vamos a hacer?</h1>
-      <p class="apunte" style="margin-top:6px">Los cuatro momentos de una propiedad,
-        en el orden en que pasan.</p>
+      <p class="apunte" style="margin-top:6px">En el orden en que pasan las cosas.</p>
     </section>
   `));
 
@@ -90,7 +73,6 @@ export function dibujarHerramientas(estado) {
           <svg viewBox="0 0 24 24">${h.dibujo}</svg>
         </span>
         <span class="parada-cuerpo">
-          <span class="parada-momento">${escapar(h.momento)}</span>
           <span class="parada-nombre">${escapar(h.nombre)}</span>
         </span>
         <span class="parada-flecha" aria-hidden="true">›</span>

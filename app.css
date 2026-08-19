@@ -1386,3 +1386,10 @@ body {
   border: none; border-radius: 8px;
   background: var(--azul); color: #fff;
 }
+
+/* El membrete de la oficina en la pagina que abre el cliente. Va a lo ancho, pegado a
+   los bordes, como en la hoja membretada de verdad. */
+.membrete-arriba, .membrete-abajo { display: block; width: 100%; height: auto; }
+.membrete-abajo { margin-top: 18px; }
+/* Esta pagina no tiene barra de abajo, asi que no necesita el hueco que deja el body. */
+[data-tema="claro"] body:has(.membrete-abajo) { padding-bottom: 0; }

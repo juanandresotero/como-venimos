@@ -13,7 +13,7 @@
    abrir y al volver a la app, y recarga sola cuando el service worker nuevo toma el
    mando. Entre las dos, abrir y cerrar la app alcanza para actualizarse. */
 
-const CACHE = "como-venimos-v67";
+const CACHE = "como-venimos-v68";
 
 const ARMAZON = [
   "./",
@@ -68,6 +68,9 @@ const ARMAZON = [
   "./lib/carta-enlace.js",
   "./lib/carta-guardado.js",
   "./lib/carta-pdf.js",
+  "./lib/membrete.js",
+  "./imagenes/membrete-arriba.jpg",
+  "./imagenes/membrete-abajo.jpg",
   "./lib/numero-a-letras.js",
   "./lib/firma.js",
   "./lib/firma-foto.js",

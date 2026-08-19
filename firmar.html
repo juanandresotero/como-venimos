@@ -1,12 +1,13 @@
 <!doctype html>
-<html lang="es">
+<!-- Siempre en claro: esto es un documento que se manda a un cliente, no la app.
+     Si siguiera el modo oscuro del que lo abre, la carta le llegaria en negro. -->
+<html lang="es" data-tema="claro">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Oferta de compra</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="app.css">
 <!--
   La pagina que abre el cliente desde el enlace de WhatsApp.
@@ -19,9 +20,11 @@
 -->
 </head>
 <body>
-  <main id="vista" class="vista" style="padding:18px 16px 60px">
+  <img class="membrete-arriba" src="imagenes/membrete-arriba.jpg" alt="RE/MAX Único">
+  <main id="vista" class="vista" style="padding:14px 16px 24px">
     <p class="apunte">Abriendo la carta…</p>
   </main>
+  <img class="membrete-abajo" src="imagenes/membrete-abajo.jpg" alt="Av. Brasil 2986 esq. Pedro Berro — www.remax.com.uy — Tel. 2 705 7552">
   <script type="module" src="vistas/firmar.js"></script>
 </body>
 </html>

@@ -11,6 +11,7 @@
 import { CAMPOS, POR_CLAVE, armar } from "../lib/carta-oferta.js";
 import { aEnlace, comoWhatsApp } from "../lib/carta-enlace.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
+import { cargarMembrete } from "../lib/membrete.js";
 import { deBytes } from "../lib/firma.js";
 import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
 import { pedirFirma } from "./firma-panel.js";
@@ -397,11 +398,11 @@ function dibujarBotones(estado, agente) {
     });
   });
 
-  marca.getElementById("bajar-pdf").addEventListener("click", () => {
+  marca.getElementById("bajar-pdf").addEventListener("click", async () => {
     const bloques = armar(carta.valores, carta.quitadas, {
       agente, firmadas: Object.keys(carta.firmas),
     });
-    const blob = armarPDF(bloques, carta.firmas).aBlob();
+    const blob = armarPDF(bloques, carta.firmas, await cargarMembrete()).aBlob();
     const url = URL.createObjectURL(blob);
     const enlace = document.createElement("a");
     enlace.href = url;
