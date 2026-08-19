@@ -1444,12 +1444,18 @@ body {
    deja ademas con cara de apagado. Se usa antes de firmar. */
 .boton-apagado { opacity: .45; pointer-events: none; }
 
-/* La salida que no puede fallar: copiar el enlace y pegarlo a mano. Va discreta, porque la
-   mayoria no la va a necesitar, pero SIEMPRE visible una vez que la carta esta firmada. */
-.salida-a-mano {
-  margin-top: 12px; padding-top: 12px;
-  border-top: 1px dashed var(--linea);
+/* El boton de devolver ocupa todo el ancho: es LA accion de esta pantalla y no tiene que
+   competir con nada. */
+.boton-ancho { display: flex; width: 100%; }
+
+/* Lo que aparece despues de tocar. Copiar es lo unico que el navegador de WhatsApp deja
+   hacer, asi que el mensaje SIEMPRE queda copiado; esto dice que hacer con el. */
+.paso-a-mano {
+  margin-top: 12px; padding: 12px;
+  background: var(--azul-suave);
+  border: 1px solid var(--azul-claro); border-radius: 12px;
 }
+.paso-a-mano-hecho { margin: 0 0 4px; font-size: 13px; font-weight: 700; color: var(--azul); }
 /* El enlace a la vista, para marcarlo con el dedo si todo lo demas fallo. */
 .enlace-a-mano {
   display: block; width: 100%; margin-top: 8px; box-sizing: border-box;

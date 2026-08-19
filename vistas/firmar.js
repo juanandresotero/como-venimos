@@ -8,12 +8,13 @@
 
 import { CAMPOS, armar, fundir } from "../lib/carta-oferta.js";
 import { deEnlace, aEnlace } from "../lib/carta-enlace.js";
-import { paraMandar, copiarTexto } from "../lib/compartir.js";
+import { paraMandar, copiarAlToque, copiarTexto } from "../lib/compartir.js";
+import { esNavegadorDeOtraApp } from "../lib/navegador.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { cargarMembrete } from "../lib/membrete.js";
 import { deBytes } from "../lib/firma.js";
 import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
-import { pedirFirma } from "./firma-panel.js";
+import { pedirFirma, pedirFirmaDeFoto } from "./firma-panel.js";
 import {
   leerFirmaPropia, leerBorrador, guardarBorrador, leerDelHistorial, guardarEnHistorial,
   comoSeLlamaLaCarta,
@@ -78,7 +79,7 @@ async function arrancar() {
 
 /* Deja listos, ANTES de que el usuario toque nada, el enlace para devolver la carta y el
    archivo para bajarla. Los dos son enlaces de verdad: ver la nota de arriba. */
-async function prepararSalidas({ devolver, bajar, copiar, copiado }) {
+async function prepararSalidas({ devolver, bajar }) {
   const base = new URL("firmar.html", window.location.href).href;
   // La firma del agente tampoco vuelve: la repone su propio teléfono. Mantiene el enlace corto.
   const firmas = { ...estado.firmas };
@@ -95,18 +96,42 @@ async function prepararSalidas({ devolver, bajar, copiar, copiado }) {
   });
   const texto = `Te paso la carta oferta firmada.\n\n${enlace}`;
 
-  /* Con el teléfono del agente adentro, WhatsApp abre DERECHO la conversación con él. */
-  devolver.href = paraMandar(texto, estado.telefono);
-
   const crudo = document.getElementById("enlace-crudo");
   if (crudo) crudo.value = enlace;
 
-  copiar.addEventListener("click", async () => {
-    const listo = await copiarTexto(texto);
-    copiado.hidden = false;
-    copiado.textContent = listo
-      ? "✓ Copiado. Abrí el chat y pegalo."
-      : "No pude copiarlo solo. Marcá el texto de abajo con el dedo y copialo.";
+  /* UN SOLO TOQUE QUE SIEMPRE AVANZA.
+
+     El botón es un enlace de verdad a `whatsapp://`, y además copia el mensaje al tocarlo.
+     Los dos caminos se intentan juntos porque no hay forma de saber desde acá cuál va a
+     funcionar: en un navegador normal se abre WhatsApp y listo; adentro del navegador que
+     WhatsApp trae incorporado la navegación no ocurre —el sistema la bloquea sin avisar—
+     pero el JavaScript sí corre, así que el mensaje queda copiado igual.
+
+     Pase lo que pase, el cliente termina con el mensaje en el portapapeles y con un cartel
+     que le dice qué hacer con él. Copiar es lo único que ese navegador deja hacer, y por eso
+     es sobre lo que se apoya todo. */
+  devolver.href = paraMandar(texto, estado.telefono);
+  devolver.addEventListener("click", () => {
+    /* Se copia y se contesta EN EL MOMENTO, sin esperar ninguna promesa: el pedido de
+       portapapeles del navegador puede quedarse colgado sin contestar nunca, y ahí el botón
+       se toca y no pasa nada — que es justo el problema que se está resolviendo. */
+    const listo = copiarAlToque(texto);
+    const paso = document.getElementById("paso-a-mano");
+    if (!paso) return;
+    paso.hidden = false;
+    const titulo = paso.querySelector(".paso-a-mano-hecho");
+    titulo.textContent = listo ? "✓ Ya copié el mensaje." : "Copiá el enlace de abajo.";
+    /* Si el camino viejo no pudo, se intenta igual el nuevo por atrás y se corrige el
+       cartel si llega a andar. Sin bloquear nada. */
+    if (!listo) {
+      /* Y se abre el plegado donde está el enlace: decirle "copialo de abajo" sin que se
+         vea el enlace sería mandarlo a buscar. */
+      const plegado = document.querySelector(".paso-a-mano ~ * details, details.plegable");
+      if (plegado) plegado.open = true;
+      copiarTexto(texto).then((pudo) => {
+        if (pudo) titulo.textContent = "✓ Ya copié el mensaje.";
+      });
+    }
   });
 
   const pdf = armarPDF(armar(estado.valores, estado.quitadas, {
@@ -206,8 +231,11 @@ function dibujar() {
       </div>
       <div class="botonera">
         <button class="boton boton-chico boton-primario" id="firmar">
-          ${yaFirmo ? "Firmar de nuevo" : "Firmar acá"}</button>
+          ${yaFirmo ? "Firmar de nuevo" : "Firmar con el dedo"}</button>
+        <button class="boton boton-chico" id="firmar-foto">Subir foto de mi firma</button>
       </div>
+      <p class="apunte" style="margin-top:8px">Si preferís, firmá en un papel blanco con
+        lapicera <strong>azul</strong>, sacale una foto y subila: le saco el fondo sola.</p>
     </section>
   `);
 
@@ -226,65 +254,84 @@ function dibujar() {
     ctx.stroke();
   }
 
+  /* Dos caminos para lo mismo, porque a mucha gente le sale mal firmar con el dedo en un
+     vidrio: o se dibuja acá, o se saca una foto de la firma hecha en papel y el recorte la
+     deja limpia y en negro parejo. El resto del sistema no distingue una de otra. */
+  const quedarse = (bytes) => {
+    estado.firmas[claveFirma] = bytes;
+    dibujar();
+  };
   cajaFirma.getElementById("firmar").addEventListener("click", () => {
-    pedirFirma({
-      titulo: "Firmá con el dedo",
-      alFirmar: (bytes) => {
-        estado.firmas[claveFirma] = bytes;
-        dibujar();
-      },
+    pedirFirma({ titulo: "Firmá con el dedo", alFirmar: quedarse });
+  });
+  cajaFirma.getElementById("firmar-foto").addEventListener("click", () => {
+    pedirFirmaDeFoto({
+      titulo: "Subí una foto de tu firma",
+      botonListo: "Usar esta firma",
+      alFirmar: quedarse,
     });
   });
   trozo.append(cajaFirma);
 
   // -------- devolverla
   const comoSeLlamaLaParte = estado.turno === "comprador" ? "comprador" : "propietario";
+  const aQuien = escapar(estado.agente || "quien te la mandó");
   const cierre = nodo(html`
     <section class="tarjeta no-imprimir">
       <h2 class="titulo" style="font-size:16px">Mandarla</h2>
       <p class="apunte" style="margin:2px 0 10px">${yaFirmo
-        ? (estado.telefono
-          ? `Ya está firmada. Se la devolvés a ${escapar(estado.agente || "quien te la mandó")} por WhatsApp.`
-          : "Ya está firmada. Se abre WhatsApp y elegís a quién mandársela.")
+        ? `Ya está firmada. Tocá el botón y se la devolvés a ${aQuien}.`
         : "Firmá arriba antes de mandarla."}</p>
-      <div class="botonera">
-        <a class="boton boton-chico boton-primario ${yaFirmo ? "" : "boton-apagado"}" id="devolver">
-          Devolver la carta firmada</a>
-        <a class="boton boton-chico ${yaFirmo ? "" : "boton-apagado"}" id="bajar">Guardar el PDF</a>
-        <button class="boton boton-chico" id="imprimir">Imprimir</button>
+
+      <a class="boton boton-primario boton-ancho ${yaFirmo ? "" : "boton-apagado"}" id="devolver">
+        Devolver la carta firmada</a>
+
+      <div class="paso-a-mano" id="paso-a-mano" hidden>
+        <p class="paso-a-mano-hecho">✓ Ya copié el mensaje.</p>
+        <p class="apunte">Si WhatsApp no se abrió solo, volvé al chat de ${aQuien},
+          mantené el dedo apretado donde se escribe y elegí <strong>Pegar</strong>.</p>
       </div>
 
-      <div class="salida-a-mano" ${yaFirmo ? "" : "hidden"}>
-        <p class="apunte">¿No se abrió WhatsApp? Copiá el enlace y pegalo vos en el chat.</p>
-        <div class="botonera">
-          <button class="boton boton-chico" id="copiar">Copiar el enlace</button>
+      <p class="apunte" style="margin-top:12px">Cuando la firmen todas las partes te llega
+        el documento final. No hace falta que guardes nada ahora.</p>
+
+      <details class="plegable" style="margin-top:12px">
+        <summary class="plegable-cabeza">
+          <span>¿Lo querés en papel?</span>
+          <span class="plegable-flecha" aria-hidden="true">›</span>
+        </summary>
+        <div class="plegable-cuerpo">
+          <div class="botonera">
+            <a class="boton boton-chico ${yaFirmo ? "" : "boton-apagado"}" id="bajar">Guardar el PDF</a>
+            <button class="boton boton-chico" id="imprimir">Imprimir</button>
+          </div>
+          <p class="apunte" id="aviso-papel" hidden style="margin-top:8px"></p>
+          <p class="apunte" style="margin-top:8px">El enlace, por si lo necesitás suelto:</p>
+          <textarea class="enlace-a-mano" id="enlace-crudo" readonly rows="2"></textarea>
         </div>
-        <p class="apunte" id="copiado" hidden></p>
-        <!-- El enlace a la vista y seleccionable. Es el último recurso: si ni el botón de
-             copiar funciona, siempre se puede marcar con el dedo y copiar a mano. -->
-        <textarea class="enlace-a-mano" id="enlace-crudo" readonly rows="2"></textarea>
-      </div>
-
-      <p class="apunte" style="margin-top:10px">Cuando la firmen todas las partes te llega
-        el documento final por WhatsApp. No hace falta que guardes nada ahora.</p>
+      </details>
     </section>
   `);
 
   const devolver = cierre.getElementById("devolver");
   const bajar = cierre.getElementById("bajar");
-  const copiar = cierre.getElementById("copiar");
-  const copiado = cierre.getElementById("copiado");
 
-  cierre.getElementById("imprimir").addEventListener("click", () => window.print());
+  /* Guardar e imprimir no funcionan adentro del navegador de WhatsApp: no es que fallen,
+     el sistema no los deja. Se dice de frente y se apunta a algo que SÍ va a pasar, en vez
+     de dejar un botón que no reacciona. */
+  const avisoPapel = cierre.getElementById("aviso-papel");
+  const noSePuedeAca = () => {
+    avisoPapel.hidden = false;
+    avisoPapel.textContent = `Desde acá WhatsApp no deja guardar archivos. Pedile el PDF a `
+      + `${estado.agente || "quien te la mandó"} por el chat, o abrí este enlace en Chrome.`;
+  };
+  cierre.getElementById("imprimir").addEventListener("click", () => {
+    if (esNavegadorDeOtraApp()) { noSePuedeAca(); return; }
+    window.print();
+  });
+  if (esNavegadorDeOtraApp()) bajar.addEventListener("click", noSePuedeAca);
 
-  /* Todo lo que tiene que SALIR de esta página va en el `href` de un enlace de verdad y no
-     en un `onclick`. Adentro del navegador que WhatsApp trae incorporado, el sistema bloquea
-     sin avisar todo lo que la página intenta hacer sola —compartir, abrir una ventana, o un
-     click disparado por código— y el botón queda muerto. Un enlace que toca una persona no
-     se bloquea nunca. Por eso los `href` se preparan acá, apenas se dibuja la pantalla. */
-  if (yaFirmo) {
-    prepararSalidas({ devolver, bajar, copiar, copiado });
-  }
+  if (yaFirmo) prepararSalidas({ devolver, bajar, avisoPapel });
   trozo.append(cierre);
 
   /* SOLO en el telefono del agente. Es lo que permite mandarles la carta a las dos partes

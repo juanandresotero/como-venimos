@@ -111,10 +111,14 @@ export function pedirFirma({ titulo = "Firmá acá", pie = "", alFirmar }) {
 
 /* Cargar la firma propia desde una foto. Muestra el recorte ANTES de guardarlo: es la
    red de seguridad de todo el metodo — si salio mal, se ve. */
-export function pedirFirmaDeFoto({ alFirmar }) {
+/* El mismo panel lo usan dos pantallas: Ajustes, donde el usuario carga SU firma para que
+   quede guardada, y la carta que abre el cliente, donde firma una sola vez. Cambia lo que
+   dice el botón; lo que hace es idéntico. */
+export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto",
+  botonListo = "Guardar mi firma" }) {
   const marca = nodo(html`
     <div class="panel-firma">
-      <p class="etiqueta">Tu firma, desde una foto</p>
+      <p class="etiqueta">${titulo}</p>
       <p class="apunte" style="margin:2px 0 10px">Firmá en un papel blanco con lapicera
         <strong>azul</strong>, sacale una foto derecha y buscala acá. El truco es el color:
         con lapicera negra el recorte sale peor.</p>
@@ -126,7 +130,7 @@ export function pedirFirmaDeFoto({ alFirmar }) {
       </div>
       <div class="botonera" style="justify-content:space-between">
         <button class="boton boton-chico" data-hacer="cancelar">Cancelar</button>
-        <button class="boton boton-chico boton-primario" data-hacer="listo" disabled>Guardar mi firma</button>
+        <button class="boton boton-chico boton-primario" data-hacer="listo" disabled>${botonListo}</button>
       </div>
     </div>
   `);
