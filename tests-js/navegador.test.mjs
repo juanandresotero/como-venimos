@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { esNavegadorDeOtraApp, esCelular, comoSalirDeAca } from "../lib/navegador.js";
+import { esNavegadorDeOtraApp, esCelular } from "../lib/navegador.js";
 
 /* Los de verdad. El de WhatsApp en Android es el que dejó a Juan trabado: no dice
    "WhatsApp" en ningún lado, la única marca es el `; wv)` de WebView. */
@@ -58,11 +58,4 @@ test("distingue celular de computadora", () => {
   assert.equal(esCelular(NAVEGADORES[0][1]), true);
   assert.equal(esCelular(NAVEGADORES[1][1]), true);
   assert.equal(esCelular(NAVEGADORES[3][1]), false);
-});
-
-/* Los pasos tienen que ser los del teléfono que el usuario tiene en la mano: en iPhone no
-   hay tres puntitos arriba, hay botón de compartir abajo. */
-test("los pasos para salir son los de cada teléfono", () => {
-  assert.match(comoSalirDeAca(ADENTRO_DE_OTRA_APP[1][1]), /Safari/);
-  assert.match(comoSalirDeAca(ADENTRO_DE_OTRA_APP[0][1]), /puntitos/);
 });

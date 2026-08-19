@@ -9,7 +9,6 @@
 import { CAMPOS, armar, fundir } from "../lib/carta-oferta.js";
 import { deEnlace, aEnlace } from "../lib/carta-enlace.js";
 import { mandarTexto, bajarArchivo } from "../lib/compartir.js";
-import { esNavegadorDeOtraApp, comoSalirDeAca } from "../lib/navegador.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { cargarMembrete } from "../lib/membrete.js";
 import { deBytes } from "../lib/firma.js";
@@ -83,25 +82,11 @@ function dibujar() {
 
   const trozo = document.createDocumentFragment();
 
-  /* Adentro del navegador que WhatsApp trae incorporado no anda ni compartir ni bajar
-     archivos. Se avisa ARRIBA DE TODO y con los pasos exactos, porque el que lo recibe es
-     un cliente que no tiene por que saber que existe esa diferencia. */
-  if (esNavegadorDeOtraApp()) {
-    trozo.append(nodo(html`
-      <section class="tarjeta aviso-fuera" style="margin-bottom:16px">
-        <p class="frase"><strong>Abrila en tu navegador.</strong> Estás viéndola adentro de
-          WhatsApp, y desde acá no se puede bajar el PDF.</p>
-        <p class="apunte" style="margin-top:6px">${escapar(comoSalirDeAca())}</p>
-        <p class="apunte" style="margin-top:6px">Firmar y devolverla sí funciona igual desde acá.</p>
-      </section>
-    `));
-  }
-
   trozo.append(nodo(html`
-    <section style="margin-bottom:16px">
+    <section class="no-imprimir" style="margin-bottom:16px">
       <h1 class="titulo" style="font-size:24px">${como.titulo}</h1>
       <p class="apunte" style="margin-top:4px">Leela entera, completá tus datos y firmá
-        abajo con el dedo. Si preferís hacerlo en papel, bajá el PDF e imprimilo.</p>
+        abajo con el dedo. Si preferís hacerlo en papel, tocá “Guardar o imprimir”.</p>
     </section>
   `));
 
@@ -133,7 +118,7 @@ function dibujar() {
   // -------- lo que tiene que completar esta parte
   if (mios.length) {
     const caja = nodo(html`
-      <section class="tarjeta">
+      <section class="tarjeta no-imprimir">
         <h2 class="titulo" style="font-size:16px">Tus datos</h2>
         <p class="apunte" style="margin:2px 0 10px">Lo que dejes vacío queda con la rayita
           para completar a mano.</p>
@@ -208,7 +193,7 @@ function dibujar() {
 
   // -------- devolverla
   const cierre = nodo(html`
-    <section class="tarjeta">
+    <section class="tarjeta no-imprimir">
       <h2 class="titulo" style="font-size:16px">Mandarla</h2>
       <p class="apunte" style="margin:2px 0 10px">${yaFirmo
         ? (estado.telefono
@@ -218,9 +203,10 @@ function dibujar() {
       <div class="botonera">
         <button class="boton boton-chico boton-primario" id="devolver" ${yaFirmo ? "" : "disabled"}>
           ${estado.telefono ? "Devolver la carta firmada" : "Enviar carta oferta"}</button>
-        <button class="boton boton-chico" id="pdf">Bajar el PDF</button>
+        <button class="boton boton-chico" id="pdf">Guardar o imprimir</button>
       </div>
-      <p class="apunte" id="aviso-mandar" hidden style="margin-top:10px"></p>
+      <p class="apunte" style="margin-top:10px">Cuando la firmen todas las partes te llega
+        el documento final por WhatsApp. No hace falta que guardes nada ahora.</p>
     </section>
   `);
 
@@ -247,15 +233,16 @@ function dibujar() {
 ${enlace}`, { telefono: estado.telefono });
   });
 
-  const avisoMandar = cierre.getElementById("aviso-mandar");
   cierre.getElementById("pdf").addEventListener("click", async () => {
     const como = await bajarArchivo(armarPDF(armar(estado.valores, estado.quitadas, {
       agente: estado.agente, firmadas: Object.keys(estado.firmas),
     }), estado.firmas, await cargarMembrete()).aBlob(), nombreDelArchivo(estado.valores));
-    if (como === "bloqueado") {
-      avisoMandar.hidden = false;
-      avisoMandar.textContent = `Para bajar el PDF hay que salir de WhatsApp. ${comoSalirDeAca()}`;
-    }
+
+    /* Adentro del navegador de WhatsApp no se puede bajar un archivo, y no tiene sentido
+       enseñarle al cliente a salir de ahí: se IMPRIME la página, que ya tiene el membrete
+       arriba y abajo y la carta armada. El cuadro de impresión del teléfono trae
+       "Guardar como PDF", así que el mismo botón sirve para las dos cosas. */
+    if (como === "bloqueado") window.print();
   });
   trozo.append(cierre);
 
@@ -267,7 +254,7 @@ ${enlace}`, { telefono: estado.telefono });
      En el telefono del cliente no aparece: no tiene firma guardada. */
   if (leerFirmaPropia()) {
     const traer = nodo(html`
-      <section class="tarjeta">
+      <section class="tarjeta no-imprimir">
         <h2 class="titulo" style="font-size:16px">Es tuya esta carta</h2>
         <p class="apunte" style="margin:2px 0 10px">Traela a la app y se junta con lo que ya
           tenés cargado. Si se la mandaste a las dos partes a la vez, traé las dos: cada una
@@ -307,7 +294,7 @@ ${enlace}`, { telefono: estado.telefono });
   }
 
   trozo.append(nodo(html`
-    <p class="apunte" style="margin-top:18px;text-align:center">Esta carta viaja dentro
+    <p class="apunte no-imprimir" style="margin-top:18px;text-align:center">Esta carta viaja dentro
       del enlace, de un teléfono al otro. No se guarda en ningún servidor.</p>
   `));
 

@@ -1438,6 +1438,56 @@ body {
 .historial-nombre { font-size: 13.5px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .historial-cuando { font-size: 11.5px; color: var(--tinta-2); }
 
+/* ---------- Imprimir la carta desde la pantalla del cliente ----------
+
+   Existe para no depender de bajar un archivo. Adentro del navegador que WhatsApp trae
+   incorporado las descargas están bloqueadas, y explicarle al cliente cómo salir de ahí no
+   es una solución: es pedirle que aprenda algo. Imprimir sí funciona, y el cuadro de
+   impresión del teléfono trae "Guardar como PDF", así que un solo botón cubre las dos cosas
+   — firmar en papel y quedarse con una copia.
+
+   El membrete va en el FLUJO NORMAL, no fijo. Se probó fijándolo para que se repitiera en
+   las dos hojas y Chrome lo ubica distinto según los márgenes de @page: o quedaba metido
+   para adentro o se iba del papel, y en el medio se comía el último renglón. Un documento
+   con un renglón cortado no sirve. El PDF que manda el agente sí lleva membrete en las dos
+   hojas; esto es la salida de emergencia y tiene que ser confiable antes que linda. */
+@media print {
+  @page { margin: 10mm 14mm; }
+
+  .no-imprimir, .botonera, .boton, .fila-carta, .plegable { display: none !important; }
+
+  /* Negro y no el gris azulado de la pantalla: esto se firma. */
+  body { background: #fff; padding: 0; color: #000; }
+  /* Todo en negro, incluidos los valores cargados y las rayitas para completar a mano: en
+     pantalla van en el azul de la app y en papel eso se lee lavado. */
+  .previa-carta, .previa-carta *, .titulo { color: #000 !important; }
+
+  .membrete-arriba, .membrete-abajo {
+    position: static; display: block; width: 100%; height: auto;
+  }
+  .membrete-abajo { margin-top: 14px; }
+  .vista { padding: 10px 0 0 !important; }
+
+  .tarjeta { border: 0; box-shadow: none; background: #fff; margin: 0; padding: 0; }
+
+  /* En pantalla la carta va en una caja con scroll para no comerse el teléfono. En papel
+     eso la CORTABA por la mitad: hay que soltarla entera. */
+  .previa-carta {
+    max-height: none !important; overflow: visible !important;
+    font-size: 10.5pt; line-height: 1.5;
+  }
+  .previa-parrafo, .previa-titulo { break-inside: avoid; }
+  .previa-salto { display: none; }
+
+  /* En papel la firma es una raya, no un recuadro: el recuadro es de la pantalla, para que
+     se vea dónde tocar. El borde está en el canvas, no en la caja. */
+  .caja-firma { break-inside: avoid; }
+  .caja-firma-lienzo {
+    border: 0 !important; background: none !important; border-radius: 0 !important;
+  }
+  .titulo { font-size: 12pt; }
+}
+
 /* El tablero de las cartas mandadas: quién la tiene y quién ya contestó. */
 .transito { display: grid; gap: 7px; list-style: none; margin: 0; padding: 0; }
 .transito-fila .historial-abrir { gap: 3px; }
@@ -1451,12 +1501,6 @@ body {
 .transito-espera { color: var(--tinta-2); }
 /* El unico boton que cierra el circuito de una carta: se distingue del resto. */
 .boton-mini-primario { background: var(--azul); box-shadow: 0 0 0 2px var(--azul-suave); }
-
-/* El aviso de "estás adentro de WhatsApp" en la página del cliente: tiene que verse. */
-.aviso-fuera {
-  border-left: 4px solid var(--azul);
-  background: var(--lienzo-2);
-}
 
 /* Los papeles oficiales de Catastro, uno debajo del otro. */
 .papeles { display: grid; gap: 7px; margin: 8px 0 12px; }

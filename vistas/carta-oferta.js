@@ -11,7 +11,6 @@
 import { CAMPOS, POR_CLAVE, armar } from "../lib/carta-oferta.js";
 import { aEnlace } from "../lib/carta-enlace.js";
 import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
-import { comoSalirDeAca } from "../lib/navegador.js";
 import {
   nuevoId, anotarMandada, anotarEntregada, estadoDeCarta, comoVaLaCarta, estaPronta,
   mandadas, vueltas,
@@ -492,7 +491,8 @@ function dibujarBotones(estado, agente) {
       const como = await mandarArchivo(pdf, nombreDelArchivo(carta.valores),
         "Te paso la oferta de compra. El PDF va aparte.");
       if (como === "bloqueado") {
-        avisar(`Para mandar el PDF hay que salir de WhatsApp. ${comoSalirDeAca()}`);
+        avisar("No pude compartir el PDF desde acá. Abrí la app desde su ícono en la "
+          + "pantalla de inicio y probá de nuevo.");
         return;
       }
       /* Queda anotada en "En tránsito": a quién se le mandó y qué día. */
