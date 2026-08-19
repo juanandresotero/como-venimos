@@ -169,7 +169,7 @@ function fila(p, estado) {
   const cuenta = p.usar_en_proyeccion !== false;
 
   const trozo = nodo(html`
-    <button class="fila fila-propiedad" data-id="${escapar(p.entity_id)}">
+    <button class="fila" data-id="${escapar(p.entity_id)}">
       <span class="fila-cuerpo">
         <span class="fila-titulo">${escapar(p.direccion || p.titulo || "Sin dirección")}</span>
         <span class="fila-marca">

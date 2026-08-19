@@ -1032,15 +1032,21 @@ body {
   border-radius: 8px;
   overflow: hidden;
   background: var(--lienzo-2);
-  border: 1px solid var(--linea);
+  /* Recuadro por dentro y NO borde: un borde encoge la caja donde se posiciona la marca
+     —2px menos de ancho y 1px corrida— mientras que el globito se posiciona contra la
+     caja de afuera. El mismo porcentaje caia en dos lugares distintos y el tallo no
+     calzaba con la raya. Con el recuadro por dentro, las dos miden lo mismo. */
+  box-shadow: inset 0 0 0 1px var(--linea);
 }
 .camino-tramo { height: 100%; transition: width .7s cubic-bezier(.2, .7, .3, 1); }
 .camino-tramo.cobrado { background: var(--azul); }
 .camino-tramo.encaminado { background: var(--azul-claro); }
 .camino-marca {
-  position: absolute; top: -3px; bottom: -3px; width: 2px;
+  position: absolute; top: 0; bottom: 0; width: 2px;
+  /* Centrada en su posicion: sin esto el `left` apoya el BORDE izquierdo de la raya donde
+     el globito apoya su centro, y quedan corridas un pelo. */
+  transform: translateX(-1px);
   background: var(--tinta);
-  border-radius: 2px;
 }
 /* La marca de "donde deberias estar hoy" se explica sola con una etiqueta abajo, en vez
    del parrafo que habia antes. La caja necesita lugar para esa etiqueta. */
@@ -1066,8 +1072,35 @@ body {
    sola pieza que arranca en la raya y termina en el globo. */
 .camino-hoy::after {
   content: ""; position: absolute; top: 100%; left: 50%;
-  width: 2px; height: 15px; margin-left: -1px;
+  /* Un pelo mas largo que el hueco (36px de caja menos 19 del globo): asi el tallo entra
+     en la barra en vez de quedar a dos pixeles, que a simple vista es un corte. */
+  width: 2px; height: 18px; margin-left: -1px;
   background: var(--tinta);
+}
+
+/* La barra del nivel de RE/MAX: los montos van adentro de su tramo, y el que no entra
+   sale en un globo de historieta que apunta al suyo. */
+.nivel-caja { position: relative; padding-top: 30px; margin-top: 6px; }
+.nivel-numero {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%; padding: 0 6px;
+  font-size: 12.5px; font-weight: 700; color: #fff;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.nivel-numero.apagado { color: var(--tinta-2); }
+.nivel-globo {
+  position: absolute; top: 0;
+  transform: translateX(-50%);
+  padding: 3px 9px; border-radius: 9px;
+  background: var(--tinta); color: var(--lienzo);
+  font-size: 12px; font-weight: 700;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+/* El pico que lo cuelga del tramo, como en las historietas. */
+.nivel-globo::after {
+  content: ""; position: absolute; top: 100%; left: 50%;
+  margin-left: -5px; border: 5px solid transparent;
+  border-top-color: var(--tinta); border-bottom: 0;
 }
 
 .camino-pies { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; }
