@@ -8,7 +8,7 @@
    tocar nada. Si hay que corregir algo, el botón de abajo abre la carta de verdad. */
 
 import { CAMPOS, armar } from "../lib/carta-oferta.js";
-import { comoVaLaCarta, mandadas, vueltas } from "../lib/carta-transito.js";
+import { comoVaLaCarta, mandadas, vueltas, estadoDeCarta } from "../lib/carta-transito.js";
 import { comoSeLlamaLaCarta } from "../lib/carta-guardado.js";
 import { telon } from "./ventana.js";
 import { escapar, fechaCorta } from "../lib/formato.js";
@@ -67,7 +67,8 @@ function renglonDeParte(carta, parte) {
 }
 
 /* Abre la ventanita. `alAbrir` es lo que pasa si decide trabajar sobre esta carta. */
-export function mirarCarta(carta, { agente = "", alAbrir } = {}) {
+export function mirarCarta(carta, { agente = "", alAbrir, alDesarchivar } = {}) {
+  const archivada = estadoDeCarta(carta) === "completa";
   const marca = nodo(html`
     <div class="panel-firma">
       <p class="etiqueta">${escapar(comoSeLlamaLaCarta(carta))}</p>
@@ -82,7 +83,12 @@ export function mirarCarta(carta, { agente = "", alAbrir } = {}) {
 
       <div class="botonera" style="justify-content:space-between;margin-top:14px">
         <button class="boton boton-chico" data-hacer="cerrar">Cerrar</button>
-        <button class="boton boton-chico boton-primario" data-hacer="abrir">Abrir esta carta</button>
+        <span style="display:flex;gap:8px;flex-wrap:wrap">
+          ${archivada && alDesarchivar
+            ? '<button class="boton boton-chico" data-hacer="desarchivar">Volver al tablero</button>'
+            : ""}
+          <button class="boton boton-chico boton-primario" data-hacer="abrir">Abrir esta carta</button>
+        </span>
       </div>
     </div>
   `);
@@ -115,5 +121,12 @@ export function mirarCarta(carta, { agente = "", alAbrir } = {}) {
     ventana.cerrar();
     if (alAbrir) alAbrir();
   });
+  const volver = ventana.caja.querySelector('[data-hacer="desarchivar"]');
+  if (volver) {
+    volver.addEventListener("click", () => {
+      ventana.cerrar();
+      alDesarchivar();
+    });
+  }
   return ventana;
 }

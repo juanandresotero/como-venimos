@@ -13,7 +13,7 @@ import { aEnlace } from "../lib/carta-enlace.js";
 import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
 import {
   nuevoId, anotarMandada, anotarEntregada, estadoDeCarta, comoVaLaCarta, estaPronta,
-  mandadas, vueltas, ordenarParaElHistorial,
+  mandadas, vueltas, ordenarParaElHistorial, devolverAlTablero,
 } from "../lib/carta-transito.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { cargarMembrete } from "../lib/membrete.js";
@@ -659,10 +659,26 @@ function barraDeCartas(estado) {
     estado.redibujar();
   };
 
+  /* Mirar una carta funciona igual en el tablero y en el historial: se toca y se ve, sin
+     que se mueva nada. Antes el historial la abría de una y no había cómo espiarla. */
+  const mirar = (guardada) => {
+    mirarCarta(guardada, {
+      agente: nombrePropio(estado.datos.ajustes),
+      alAbrir: () => abrir(guardada),
+      alDesarchivar: () => {
+        const devuelta = devolverAlTablero(guardada);
+        guardarEnHistorial(devuelta, devuelta.cuando || estado.hoy);
+        mostrandoHistorial = false;
+        mostrandoTransito = true;
+        estado.redibujar();
+      },
+    });
+  };
+
   const cajaTransito = marca.querySelector(".transito");
   if (cajaTransito) {
     for (const guardada of enTransito) {
-      cajaTransito.append(filaDeTransito(guardada, estado, abrir));
+      cajaTransito.append(filaDeTransito(guardada, estado, mirar));
     }
   }
 
@@ -683,7 +699,7 @@ function barraDeCartas(estado) {
         </button>
         <button class="boton-mini" data-borrar="1">Borrar</button>
       `;
-      li.querySelector("[data-abrir]").addEventListener("click", () => abrir(guardada));
+      li.querySelector("[data-abrir]").addEventListener("click", () => mirar(guardada));
       li.querySelector("[data-borrar]").addEventListener("click", () => {
         borrarDelHistorial(guardada.id);
         estado.redibujar();
@@ -696,7 +712,7 @@ function barraDeCartas(estado) {
 }
 
 /* Un renglón del tablero: quién la tiene, quién ya contestó y qué falta hacer. */
-function filaDeTransito(guardada, estado, abrir) {
+function filaDeTransito(guardada, estado, mirar) {
   const li = document.createElement("li");
   li.className = "historial-fila transito-fila";
 
@@ -740,7 +756,7 @@ function filaDeTransito(guardada, estado, abrir) {
         escapar(comoVaLaCarta(guardada))}</span>
       <span class="transito-partes">${partes}</span>
     </button>
-    ${pronta ? html`<button class="boton-mini boton-mini-urgente" data-cerrar="1">Ya la envié</button>` : ""}
+    ${pronta ? html`<button class="boton-mini boton-mini-urgente" data-cerrar="1">Archivar</button>` : ""}
     <button class="boton-papelera" data-borrar="1" aria-label="Borrar esta carta" title="Borrar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -757,16 +773,14 @@ function filaDeTransito(guardada, estado, abrir) {
 
   /* Tocarla NO la abre: muestra una ventanita para controlar lo que llenó el cliente sin
      perder lo que se esté haciendo. Adentro está el botón para abrirla de verdad. */
-  li.querySelector("[data-abrir]").addEventListener("click", () => {
-    mirarCarta(guardada, {
-      agente: nombrePropio(estado.datos.ajustes),
-      alAbrir: () => abrir(guardada),
-    });
-  });
+  li.querySelector("[data-abrir]").addEventListener("click", () => mirar(guardada));
 
-  /* "Ya la envié" es el final del camino: la carta deja el tablero y pasa al historial como
-     completa. Se abre además, porque lo que sigue es mandarles el PDF final con el botón
-     de abajo, que ya sabe armarlo con las dos firmas. */
+  /* Archivar es el final del camino: la carta deja el tablero y pasa al historial. Se abre
+     además, porque lo que sigue es mandarles el PDF final con el botón de abajo, que ya sabe
+     armarlo con las dos firmas.
+
+     Antes decía "Ya la envié" y se leía como una orden de mandarla: Juan lo tocó esperando
+     que la mandara, la carta desapareció del tablero y no supo dónde buscarla. */
   const cerrar = li.querySelector("[data-cerrar]");
   if (cerrar) {
     cerrar.addEventListener("click", () => {

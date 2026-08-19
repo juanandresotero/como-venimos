@@ -122,7 +122,18 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
       <p class="apunte" style="margin:2px 0 10px">Firmá en un papel blanco con lapicera
         <strong>azul</strong>, sacale una foto derecha y buscala acá. El truco es el color:
         con lapicera negra el recorte sale peor.</p>
+      <div class="botonera" style="margin-bottom:10px">
+        <button class="boton boton-chico boton-primario" data-hacer="camara">Sacar la foto ahora</button>
+      </div>
       <input type="file" accept="image/*" class="campo" id="foto-firma">
+      <div class="camara-firma" hidden>
+        <video class="camara-video" playsinline muted></video>
+        <div class="botonera">
+          <button class="boton boton-chico boton-primario" data-hacer="capturar">Capturar</button>
+          <button class="boton boton-chico" data-hacer="cortar-camara">Cerrar la cámara</button>
+        </div>
+      </div>
+      <p class="apunte camara-error" hidden></p>
       <div class="vista-firma" hidden>
         <canvas class="lienzo-recorte" width="600" height="240"></canvas>
         <p class="apunte aviso-brillo" hidden>⚠ No encontré tinta azul, así que la recorté
@@ -141,48 +152,132 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
   const lienzo = panel.caja.querySelector(".lienzo-recorte");
   const aviso = panel.caja.querySelector(".aviso-brillo");
   const listo = panel.caja.querySelector('[data-hacer="listo"]');
+  const cajaCamara = panel.caja.querySelector(".camara-firma");
+  const video = panel.caja.querySelector(".camara-video");
+  const errorCamara = panel.caja.querySelector(".camara-error");
   let mascara = null;
+  let corriente = null;
+
+  /* Lo que hace con la imagen es lo mismo venga de un archivo o de la camara: se achica,
+     se recorta y se muestra. Por eso esta una sola vez. */
+  const procesar = (imagen) => {
+    /* Se achica antes de mirar los pixeles: una foto de celular son 12 millones y
+       recorrerlos todos en un telefono se nota. A 1200 de ancho sobra. */
+    const escala = Math.min(1, 1200 / imagen.width);
+    const auxiliar = document.createElement("canvas");
+    auxiliar.width = Math.round(imagen.width * escala);
+    auxiliar.height = Math.round(imagen.height * escala);
+    const aux = auxiliar.getContext("2d", { willReadFrequently: true });
+    aux.drawImage(imagen, 0, 0, auxiliar.width, auxiliar.height);
+
+    mascara = recortar(aux.getImageData(0, 0, auxiliar.width, auxiliar.height));
+
+    if (!mascara) {
+      listo.disabled = true;
+      aviso.hidden = false;
+      aviso.textContent = "No encontré ninguna firma en esa foto. Probá con más luz "
+        + "o con lapicera azul sobre papel blanco.";
+      vista.hidden = false;
+      return;
+    }
+    const ctx = lienzo.getContext("2d");
+    ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+    dibujarEn(ctx, mascara, { x: 10, y: 10, ancho: lienzo.width - 20, alto: lienzo.height - 20 });
+    vista.hidden = false;
+    aviso.hidden = !mascara.porBrillo;
+    listo.disabled = false;
+  };
+
+  const apagarCamara = () => {
+    if (corriente) corriente.getTracks().forEach((pista) => pista.stop());
+    corriente = null;
+    cajaCamara.hidden = true;
+  };
+
+  /* La camara por JavaScript y no por el campo de archivo.
+
+     No es un lujo: adentro del navegador que WhatsApp trae incorporado el selector de
+     archivos NO ABRE —la aplicacion que lo hospeda tiene que implementarlo y WhatsApp no
+     lo hace—, asi que el boton de subir una foto no reacciona. Pedir la camara es otro
+     camino distinto, y donde este permitido funciona sin selector de archivos.
+
+     Si tampoco se puede, se dice por que y queda el campo de archivo, que en un navegador
+     normal anda perfecto. */
+  const prenderCamara = async () => {
+    /* Se avisa ANTES de pedir nada: pedir la cámara puede tardar, o quedarse esperando una
+       respuesta que no llega nunca, y un botón que no reacciona es exactamente el problema
+       que se está tratando de resolver. */
+    errorCamara.hidden = false;
+    errorCamara.textContent = "Pidiendo permiso para usar la cámara…";
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      errorCamara.textContent = "Este navegador no me deja usar la cámara. "
+        + "Sacá la foto con la cámara del teléfono y buscala con el botón de abajo.";
+      return;
+    }
+
+    try {
+      /* Con reloj: el pedido de cámara puede no contestar NUNCA —pasa adentro de los
+         navegadores que vienen dentro de otra app— y sin esto la pantalla se queda esperando
+         para siempre. Diez segundos y se ofrece el otro camino. */
+      corriente = await Promise.race([
+        navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } }, audio: false,
+        }),
+        new Promise((_, rechazar) => {
+          setTimeout(() => rechazar(new Error("sin respuesta")), 10000);
+        }),
+      ]);
+      video.srcObject = corriente;
+      await video.play();
+      cajaCamara.hidden = false;
+      errorCamara.hidden = true;
+    } catch (error) {
+      apagarCamara();
+      errorCamara.hidden = false;
+      errorCamara.textContent = error && error.name === "NotAllowedError"
+        ? "No me diste permiso para usar la cámara. Sacá la foto con la cámara del teléfono "
+          + "y buscala con el botón de abajo."
+        : "No pude abrir la cámara desde acá. Sacá la foto con la cámara del teléfono y "
+          + "buscala con el botón de abajo.";
+    }
+  };
+
+  const capturar = () => {
+    if (!corriente) return;
+    const foto = document.createElement("canvas");
+    foto.width = video.videoWidth;
+    foto.height = video.videoHeight;
+    foto.getContext("2d").drawImage(video, 0, 0);
+    apagarCamara();
+    const imagen = new Image();
+    imagen.onload = () => procesar(imagen);
+    imagen.src = foto.toDataURL("image/png");
+  };
 
   entrada.addEventListener("change", () => {
     const archivo = entrada.files && entrada.files[0];
     if (!archivo) return;
     const imagen = new Image();
     imagen.onload = () => {
-      /* Se achica antes de mirar los pixeles: una foto de celular son 12 millones y
-         recorrerlos todos en un telefono se nota. A 1200 de ancho sobra. */
-      const escala = Math.min(1, 1200 / imagen.width);
-      const auxiliar = document.createElement("canvas");
-      auxiliar.width = Math.round(imagen.width * escala);
-      auxiliar.height = Math.round(imagen.height * escala);
-      const aux = auxiliar.getContext("2d", { willReadFrequently: true });
-      aux.drawImage(imagen, 0, 0, auxiliar.width, auxiliar.height);
-
-      mascara = recortar(aux.getImageData(0, 0, auxiliar.width, auxiliar.height));
+      procesar(imagen);
       URL.revokeObjectURL(imagen.src);
-
-      if (!mascara) {
-        vista.hidden = true;
-        listo.disabled = true;
-        aviso.hidden = false;
-        aviso.textContent = "No encontré ninguna firma en esa foto. Probá con más luz "
-          + "o con lapicera azul sobre papel blanco.";
-        vista.hidden = false;
-        return;
-      }
-      const ctx = lienzo.getContext("2d");
-      ctx.clearRect(0, 0, lienzo.width, lienzo.height);
-      dibujarEn(ctx, mascara, { x: 10, y: 10, ancho: lienzo.width - 20, alto: lienzo.height - 20 });
-      vista.hidden = false;
-      aviso.hidden = !mascara.porBrillo;
-      listo.disabled = false;
     };
     imagen.src = URL.createObjectURL(archivo);
   });
 
   panel.caja.addEventListener("click", (e) => {
-    const que = e.target.dataset ? e.target.dataset.hacer : null;
-    if (que === "cancelar") panel.cerrar();
+    const boton = e.target.closest ? e.target.closest("[data-hacer]") : null;
+    const que = boton ? boton.dataset.hacer : null;
+    if (que === "camara") prenderCamara();
+    if (que === "capturar") capturar();
+    if (que === "cortar-camara") apagarCamara();
+    if (que === "cancelar") {
+      apagarCamara();
+      panel.cerrar();
+    }
     if (que === "listo" && mascara) {
+      apagarCamara();
       panel.cerrar();
       alFirmar(aBytes(mascara));
     }
