@@ -576,7 +576,11 @@ body {
 /* El resumen de la cartera: tres numeros con peso, en el alto de un renglon y medio.
    Antes era una linea de texto gris que se leia como una nota al pie. */
 .resumen-cartera {
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid;
+  /* La primera se lleva casi el doble: adentro va un monto con la moneda adelante
+     ("USD 2.106.900") y en tres columnas iguales se partia en dos renglones, lo que
+     estiraba las otras dos al pedo. Las cuentas son un digito o dos y no necesitan nada. */
+  grid-template-columns: 1.75fr 1fr 1fr;
   gap: 1px; margin-top: 10px;
   background: var(--linea); border: 1px solid var(--linea);
   border-radius: 12px; overflow: hidden;
