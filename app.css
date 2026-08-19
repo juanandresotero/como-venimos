@@ -1355,3 +1355,29 @@ body {
 }
 .fila-carta-quitar:active,
 .fila-carta.quitada .boton-mini:active { transform: translateY(1px); }
+
+/* En el teléfono el navegador se pelea con el dedo: si algún ancestro puede hacer scroll,
+   se lleva el gesto y el trazo nunca llega al lienzo. Con `touch-action: none` en TODO el
+   telón —no solo en el lienzo— el panel entero deja de competir por el dedo. */
+.telon-firma, .panel-firma { touch-action: none; }
+/* El lienzo sí necesita seguir aceptando el dedo para dibujar. */
+.lienzo-firma { touch-action: none; }
+
+/* Un `<input type="file">` con los estilos de `.campo` queda mudo en el celular: se ve
+   una caja vacía y no se entiende que hay que tocarla. Se convierte en un botón. */
+.panel-firma input[type="file"] {
+  width: 100%;
+  padding: 14px;
+  border: 1px dashed var(--azul-claro);
+  background: var(--azul-suave);
+  color: var(--tinta);
+  border-radius: 12px;
+  font: inherit;
+  font-size: 13px;
+}
+.panel-firma input[type="file"]::file-selector-button {
+  font: inherit; font-weight: 700; font-size: 12.5px;
+  margin-right: 10px; padding: 7px 13px;
+  border: none; border-radius: 8px;
+  background: var(--azul); color: #fff;
+}

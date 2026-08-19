@@ -12,6 +12,7 @@ import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { deBytes } from "../lib/firma.js";
 import { dibujarEn } from "../lib/firma-dibujo.js";
 import { pedirFirma } from "./firma-panel.js";
+import { leerFirmaPropia } from "../lib/carta-guardado.js";
 import { escapar, plata } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -49,6 +50,16 @@ async function arrancar() {
 
   estado = leido;
   if (!FIRMA_DEL_TURNO[estado.turno]) estado.turno = "comprador";
+
+  /* La firma del agente NO viaja en el enlace: es lo que lo mantiene corto. Pero esta
+     pagina vive en el mismo dominio que la app, asi que en SU teléfono —y solo en el
+     suyo— se puede recuperar de donde la dejo guardada. Cuando le devuelven la carta y
+     baja el PDF, sale completa. En el teléfono del cliente esto no encuentra nada. */
+  if (!estado.firmas.depositario) {
+    const mia = leerFirmaPropia();
+    if (mia) estado.firmas.depositario = mia.bytes;
+  }
+
   dibujar();
 }
 
@@ -187,13 +198,16 @@ function dibujar() {
 
   cierre.getElementById("devolver").addEventListener("click", async () => {
     const base = new URL("firmar.html", window.location.href).href;
+    // La del agente tampoco vuelve: la repone su propio teléfono. Mantiene el enlace corto.
+    const firmas = { ...estado.firmas };
+    delete firmas.depositario;
     const enlace = await aEnlace(base, {
       valores: estado.valores,
       quitadas: estado.quitadas,
       turno: estado.turno,
       telefono_agente: estado.telefono_agente,
       agente: estado.agente,
-      firmas: estado.firmas,
+      firmas,
     });
     window.open(comoWhatsApp(enlace, {
       texto: "Te devuelvo la carta firmada.",

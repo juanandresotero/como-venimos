@@ -70,3 +70,57 @@ test("con lapicera negra avisa que cayo al metodo de respaldo", () => {
   assert.ok(r, "igual tiene que poder recortarla");
   assert.equal(r.porBrillo, true, "para poder avisarle que revise el recorte");
 });
+
+/* Un PNG ya recortado con fondo transparente: la tinta es lo que no es transparente.
+   Sin esto, la separacion por azul falla (tinta negra) y la de brillo lee el fondo
+   transparente como si fuera negro y devuelve un manchon. */
+function pngTransparente(ancho, alto, hayTinta) {
+  const data = new Uint8ClampedArray(ancho * alto * 4);
+  for (let y = 0; y < alto; y++) {
+    for (let x = 0; x < ancho; x++) {
+      const i = (y * ancho + x) * 4;
+      const tinta = hayTinta(x, y);
+      data[i] = 20; data[i + 1] = 20; data[i + 2] = 20;
+      data[i + 3] = tinta ? 255 : 0;
+    }
+  }
+  return { data, width: ancho, height: alto };
+}
+
+test("un PNG con fondo transparente se recorta por la transparencia", () => {
+  const trazo = (x, y) => x >= 40 && x < 160 && y >= 30 && y < 70;
+  const r = recortar(pngTransparente(200, 100, trazo));
+  assert.ok(r, "tiene que encontrar la firma");
+  assert.equal(r.porBrillo, false, "no cayo al metodo de respaldo");
+  assert.equal(r.alto, Math.round((ANCHO_GUARDADO * 40) / 120), "recorto al trazo, no a la hoja");
+});
+
+test("un PNG transparente con tinta NEGRA tambien sale bien", () => {
+  const trazo = (x, y) => Math.abs(y - 50) < 3 && x > 20 && x < 180;
+  const r = recortar(pngTransparente(200, 100, trazo));
+  assert.ok(r);
+  assert.equal(r.porBrillo, false, "la transparencia manda sobre el color de la tinta");
+});
+
+/* Una FOTO no tiene transparencia: no puede caer por error en el camino nuevo. */
+test("una foto opaca sigue yendo por el camino del color", () => {
+  const ancho = 200, alto = 100;
+  const data = new Uint8ClampedArray(ancho * alto * 4);
+  for (let y = 0; y < alto; y++) {
+    for (let x = 0; x < ancho; x++) {
+      const i = (y * ancho + x) * 4;
+      const tinta = x >= 40 && x < 160 && y >= 30 && y < 70;
+      data[i] = tinta ? 70 : 150;
+      data[i + 1] = tinta ? 90 : 152;
+      data[i + 2] = tinta ? 164 : 158;
+      data[i + 3] = 255;
+    }
+  }
+  const r = recortar({ data, width: ancho, height: alto });
+  assert.ok(r);
+  assert.equal(r.porBrillo, false);
+});
+
+test("un PNG transparente y VACIO devuelve null, no un manchon", () => {
+  assert.equal(recortar(pngTransparente(80, 80, () => false)), null);
+});

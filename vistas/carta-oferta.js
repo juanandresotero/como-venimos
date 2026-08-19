@@ -376,20 +376,27 @@ function dibujarBotones(estado, agente) {
   marca.querySelectorAll("[data-mandar]").forEach((boton) => {
     boton.addEventListener("click", async () => {
       const base = new URL("firmar.html", window.location.href).href;
+
+      /* TU firma NO viaja en el enlace, y es lo que lo mantiene corto: sola pesa el 80%
+         —1.761 caracteres contra 419 sin ella— y un enlace gigante en WhatsApp queda
+         feo y da desconfianza. Tu teléfono la tiene guardada, y como firmar.html vive en
+         el mismo dominio que la app, cuando te devuelven la carta tu propio celular la
+         vuelve a poner. En el celular del cliente no hay nada guardado. */
+      const firmas = { ...carta.firmas };
+      delete firmas.depositario;
+
       const enlace = await aEnlace(base, {
         valores: carta.valores,
         quitadas: carta.quitadas,
         turno: boton.dataset.mandar,
         telefono_agente: telefono,
         agente,
-        firmas: carta.firmas,
+        firmas,
       });
-      const quien = boton.dataset.mandar === "comprador" ? "comprador" : "propietario";
       window.open(comoWhatsApp(enlace, {
-        texto: `Te paso la oferta de compra para que la leas y la firmes desde el celular. `
-          + `Si preferís, también la podés imprimir y firmarla a mano.`,
+        texto: "Te paso la oferta de compra. Se lee y se firma en el celular; si preferís, "
+          + "también la podés bajar en PDF e imprimirla.",
       }), "_blank", "noopener");
-      if (!quien) return;
     });
   });
 
