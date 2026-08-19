@@ -162,18 +162,8 @@ function tuNivel(estado) {
             <strong>${escapar(n.siguiente.nombre)}</strong>${coincide
               ? ", que es justo tu objetivo del año"
               : ""}.</p>
-          <div class="camino" style="margin-top:12px">
-            <div class="camino-tramo cobrado" style="width:${Math.round(n.avance * 100)}%"></div>
-          </div>
+          ${barraDelNivel(n)}
           <div class="datos" style="margin-top:10px">
-            <div class="dato">
-              <span class="dato-nombre">${n.actual ? escapar(n.actual.nombre) : "Arranque"}</span>
-              <span class="dato-valor">${plata(n.actual ? n.actual.desde : 0)}</span>
-            </div>
-            <div class="dato">
-              <span class="dato-nombre"><strong>Vas por</strong></span>
-              <span class="dato-valor"><strong>${plata(n.facturacion)}</strong></span>
-            </div>
             <div class="dato">
               <span class="dato-nombre">${escapar(n.siguiente.nombre)}</span>
               <span class="dato-valor">${plata(n.siguiente.desde)}</span>
@@ -181,6 +171,35 @@ function tuNivel(estado) {
           </div>`}
     </section>
   `);
+}
+
+/* La barra del nivel, con los numeros ADENTRO de cada tramo.
+
+   Cuando un tramo queda muy angosto el numero no entra, asi que sale afuera en un globo
+   de historieta que apunta a su tramo. Los dos tramos suman 100%, asi que nunca puede
+   pasar que los dos sean angostos a la vez: hay a lo sumo un globo y no se pueden pisar. */
+const ENTRA_EL_NUMERO = 22;   // % del ancho de la barra que necesita un monto para caber
+
+function barraDelNivel(n) {
+  const hecho = Math.round(n.avance * 100);
+  const falta = 100 - hecho;
+  const globo = (centro, texto) => html`
+    <span class="nivel-globo" style="left:${Math.min(88, Math.max(12, centro))}%">
+      ${plata(texto)}</span>`;
+
+  return html`
+    <div class="nivel-caja">
+      ${hecho < ENTRA_EL_NUMERO ? globo(hecho / 2, n.facturacion) : ""}
+      ${falta < ENTRA_EL_NUMERO ? globo(hecho + falta / 2, n.falta) : ""}
+      <div class="camino">
+        <div class="camino-tramo cobrado" style="width:${hecho}%">
+          ${hecho >= ENTRA_EL_NUMERO ? html`<span class="nivel-numero">${plata(n.facturacion)}</span>` : ""}
+        </div>
+        <div class="camino-tramo" style="width:${falta}%">
+          ${falta >= ENTRA_EL_NUMERO ? html`<span class="nivel-numero apagado">${plata(n.falta)}</span>` : ""}
+        </div>
+      </div>
+    </div>`;
 }
 
 function tuCategoria(estado) {
@@ -318,9 +337,7 @@ function queTanSeguro(estado) {
       <div class="datos">
         ${filas.map((f) => html`
           <div class="dato">
-            <span class="dato-nombre">${escapar(f.nombre)}
-              <br><span class="apunte">${escapar(f.sub)}</span>
-            </span>
+            <span class="dato-nombre">${escapar(f.nombre)}</span>
             <span class="dato-valor">${pct(f.usar, 0)}
               ${f.casos
                 ? html`<br><span class="apunte">${f.cerraron} de ${f.casos}${f.alcanza ? "" : " · pocas todavía"}</span>`

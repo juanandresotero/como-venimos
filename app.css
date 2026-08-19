@@ -981,6 +981,32 @@ body {
   color: var(--tinta-2); white-space: nowrap;
 }
 
+/* La barra del nivel de RE/MAX: los montos van adentro de su tramo, y el que no entra
+   sale en un globo de historieta que apunta al suyo. */
+.nivel-caja { position: relative; padding-top: 30px; margin-top: 6px; }
+.nivel-numero {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%; padding: 0 6px;
+  font-size: 12.5px; font-weight: 700; color: #fff;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.nivel-numero.apagado { color: var(--tinta-2); }
+.nivel-globo {
+  /* Adentro del hueco que reserva .nivel-caja, no encima del texto de arriba. */
+  position: absolute; top: 0;
+  transform: translateX(-50%);
+  padding: 3px 9px; border-radius: 9px;
+  background: var(--tinta); color: var(--lienzo);
+  font-size: 12px; font-weight: 700;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+/* El pico que lo cuelga del tramo, como en las historietas. */
+.nivel-globo::after {
+  content: ""; position: absolute; top: 100%; left: 50%;
+  margin-left: -5px; border: 5px solid transparent;
+  border-top-color: var(--tinta); border-bottom: 0;
+}
+
 .camino-pies { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; }
 .camino-pie { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--tinta-2); }
 .camino-pie strong { color: var(--tinta); font-variant-numeric: tabular-nums; }
