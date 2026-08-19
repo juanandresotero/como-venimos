@@ -1,0 +1,53 @@
+{
+ "actualizado": "2026-08-18",
+ "meses": {
+  "2026-01": {
+   "avisos": [],
+   "coeficiente": 1.0365,
+   "ipc": 1.0365,
+   "verificado": true
+  },
+  "2026-02": {
+   "avisos": [],
+   "coeficiente": 1.0346,
+   "ipc": 1.0346,
+   "verificado": true
+  },
+  "2026-03": {
+   "avisos": [],
+   "coeficiente": 1.0311,
+   "ipc": 1.0311,
+   "verificado": true
+  },
+  "2026-04": {
+   "avisos": [],
+   "coeficiente": 1.0294,
+   "ipc": 1.0294,
+   "verificado": true
+  },
+  "2026-05": {
+   "avisos": [],
+   "coeficiente": 1.0316,
+   "ipc": 1.0316,
+   "verificado": true
+  },
+  "2026-06": {
+   "avisos": [],
+   "coeficiente": 1.0377,
+   "ipc": 1.037739,
+   "verificado": true
+  },
+  "2026-07": {
+   "avisos": [],
+   "coeficiente": 1.0425,
+   "ipc": 1.0425,
+   "verificado": true
+  },
+  "2026-08": {
+   "avisos": [],
+   "coeficiente": 1.0427,
+   "ipc": 1.0427,
+   "verificado": true
+  }
+ }
+}

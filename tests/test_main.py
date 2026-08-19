@@ -50,7 +50,11 @@ class TestMain(unittest.TestCase):
     def correr(self, listings, fecha="2026-08-18", entorno=None):
         base = {"FECHA_HOY": fecha}
         base.update(entorno or {})
+        # Los indices se piden por internet. Un test no puede depender de que el INE este
+        # levantado, y bajar los informes en cada corrida haria eterna la suite.
+        falsos = {"actualizado": fecha, "meses": {"2026-08": {"coeficiente": 1.0427}}}
         with mock.patch.object(main.api, "traer_listings", return_value=listings), \
+             mock.patch.object(main.indices, "traer", return_value=falsos), \
              mock.patch.dict("os.environ", base, clear=False):
             return main.main()
 
@@ -73,6 +77,18 @@ class TestMain(unittest.TestCase):
     def test_dry_run_no_escribe_nada(self):
         self.assertEqual(self.correr([LISTING], entorno={"DRY_RUN": "1"}), 0)
         self.assertFalse((self.carpeta / "cartera.json").exists())
+
+    def test_los_indices_se_guardan_en_su_propio_archivo(self):
+        self.correr([LISTING])
+        self.assertEqual(self.leer("indices.json")["meses"]["2026-08"]["coeficiente"], 1.0427)
+
+    def test_si_los_indices_fallan_la_cartera_se_guarda_igual(self):
+        """El INE caido no puede costarnos la corrida del dia."""
+        with mock.patch.object(main.api, "traer_listings", return_value=[LISTING]), \
+             mock.patch.object(main.indices, "traer", side_effect=RuntimeError("INE caido")), \
+             mock.patch.dict("os.environ", {"FECHA_HOY": "2026-08-18"}, clear=False):
+            self.assertEqual(main.main(), 0)
+        self.assertEqual(len(self.leer("cartera.json")), 1)
 
     def test_si_la_api_falla_devuelve_error_y_lo_deja_anotado(self):
         with mock.patch.object(main.api, "traer_listings", side_effect=RuntimeError("se cayo")), \

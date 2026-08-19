@@ -14,7 +14,7 @@ import datetime
 import os
 import sys
 
-from robot import almacen, api, modelo, procesar
+from robot import almacen, api, indices, modelo, procesar
 
 
 def main() -> int:
@@ -48,6 +48,15 @@ def main() -> int:
     if seco:
         print("DRY_RUN: no se escribio nada")
         return 0
+
+    # Los indices para reajustar alquileres. Van aparte a proposito: si el INE o el MEF
+    # estan caidos, la cartera del dia se guarda igual. Lo peor que pasa es que la
+    # calculadora de reajuste quede con los numeros de ayer, y ella misma lo avisa.
+    try:
+        previos = almacen.leer_json("indices.json", {})
+        almacen.escribir_json("indices.json", indices.traer(hoy, previos))
+    except Exception as error:   # noqa: BLE001 - ninguna falla de afuera puede tumbar la corrida
+        print(f"AVISO: no se pudieron actualizar los indices: {error}", file=sys.stderr)
 
     almacen.escribir_json("cartera.json", cartera)
     almacen.escribir_json("eventos.json", eventos_previos + eventos)
