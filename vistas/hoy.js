@@ -11,7 +11,7 @@
    queda descubierto. Los mismos números contando otra cosa: allá se mira hacia atrás,
    acá hacia adelante. Ver dos veces la misma tarjeta no le sirve a nadie. */
 
-import { derivar, accionesDe } from "../lib/pendientes.js";
+import { bandeja, cuantosPendientes, accionesDe } from "../lib/pendientes.js";
 import { capas, ritmo, comparativaCategorias } from "../lib/salud.js";
 import { marcarAtendido } from "../lib/guardado.js";
 import { medir, vale_la_pena_ajustar } from "../lib/seguridad.js";
@@ -34,8 +34,8 @@ export function dibujarHoy(estado) {
   // Los eventos que el usuario ya despacho no se vuelven a mostrar.
   const atendidos = new Set((estado.datos.mis_datos || {}).eventos_atendidos || []);
   const eventos = (estado.datos.eventos || []).filter((e) => !atendidos.has(e.id));
-  const grupos = derivar(estado.datos.negocios, eventos, estado.hoy, estado.datos.cartera);
-  const total = grupos.reduce((t, g) => t + g.items.length, 0);
+  const grupos = bandeja(estado.datos.negocios, eventos, estado.hoy, estado.datos.cartera);
+  const total = cuantosPendientes(grupos);
 
   const trozo = document.createDocumentFragment();
   trozo.append(encabezado(estado, total));
@@ -282,7 +282,10 @@ function dibujarGrupo(grupo, estado) {
       <p class="grupo-item-titulo">${escapar(item.titulo)}${
         item.fecha ? ` <span class="capa-sub">· ${fechaCorta(item.fecha, anio)}</span>` : ""
       }</p>
-      <p class="grupo-item-detalle">${escapar(item.detalle)}</p>
+      ${item.mas
+        ? html`<ul class="grupo-item-mas">${item.mas
+            .map((d) => `<li>${escapar(d)}</li>`).join("")}</ul>`
+        : html`<p class="grupo-item-detalle">${escapar(item.detalle)}</p>`}
       <div class="botonera"></div>
     `;
 
@@ -295,7 +298,8 @@ function dibujarGrupo(grupo, estado) {
       boton.textContent = accion.texto;
       boton.addEventListener("click", () => {
         if (accion.tipo === "atendido") {
-          marcarAtendido(estado, accion.destino);
+          // Puede traer varios: un pendiente juntado despacha todos sus avisos de una.
+          for (const id of accion.destino) marcarAtendido(estado, id);
           estado.redibujar();
         } else {
           estado.irA(accion.tipo, accion.destino);

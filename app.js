@@ -1,6 +1,6 @@
 /* Arranque: baja los datos, arma la navegacion y dibuja la vista activa. */
 
-import { derivar } from "./lib/pendientes.js";
+import { bandeja, cuantosPendientes } from "./lib/pendientes.js";
 import * as github from "./lib/github.js";
 import * as tema from "./lib/tema.js";
 import { fusionar, completarConNegocios } from "./lib/cartera.js";
@@ -154,9 +154,8 @@ function eventosSinAtender() {
 
 function dibujarGlobo() {
   const globo = document.getElementById("globo-pendientes");
-  const grupos = derivar(estado.datos.negocios, eventosSinAtender(), estado.hoy,
-    estado.datos.cartera);
-  const total = grupos.reduce((t, g) => t + g.items.length, 0);
+  const total = cuantosPendientes(bandeja(estado.datos.negocios, eventosSinAtender(),
+    estado.hoy, estado.datos.cartera));
   globo.hidden = total === 0;
   globo.textContent = total > 99 ? "99+" : String(total);
 }

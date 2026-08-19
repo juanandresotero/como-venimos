@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { derivar, GRUPOS, accionesDe } from "../lib/pendientes.js";
+import { derivar, GRUPOS, accionesDe, juntarRepetidos, bandeja, cuantosPendientes }
+  from "../lib/pendientes.js";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 function negocio(avisos, x = {}) {
   return {
@@ -169,21 +173,22 @@ test("sin cartera no explota", () => {
    `evento_id` antes que por `entity_id`. Como un aviso del robot trae los dos, esos
    avisos ofrecian solo "Ya lo resolvi" y no habia forma de abrir la propiedad. */
 test("un aviso del robot deja arreglar la propiedad Y darlo por visto", () => {
-  const acciones = accionesDe({ evento_id: "2026-08-19|abc|cambio_estado", entity_id: "abc" });
+  const acciones = accionesDe({ eventos: ["2026-08-19|abc|cambio_estado"], entity_id: "abc" });
   assert.deepEqual(acciones.map((a) => a.tipo), ["propiedad", "atendido"]);
   assert.equal(acciones[0].destino, "abc");
-  assert.equal(acciones[1].destino, "2026-08-19|abc|cambio_estado");
+  assert.deepEqual(acciones[1].destino, ["2026-08-19|abc|cambio_estado"]);
 });
 
 test("lo que resuelve va primero; descartar el aviso no arregla nada", () => {
-  const acciones = accionesDe({ evento_id: "e1", entity_id: "abc" });
+  const acciones = accionesDe({ eventos: ["e1"], entity_id: "abc" });
   assert.equal(acciones[0].tipo, "propiedad");
 });
 
 test("cada clase de pendiente ofrece lo suyo", () => {
   assert.deepEqual(accionesDe({ negocio_id: "manual-2" }).map((a) => a.tipo), ["ficha"]);
   assert.deepEqual(accionesDe({ entity_id: "abc" }).map((a) => a.tipo), ["propiedad"]);
-  assert.deepEqual(accionesDe({ evento_id: "e1" }).map((a) => a.tipo), ["atendido"]);
+  assert.deepEqual(accionesDe({ eventos: ["e1"] }).map((a) => a.tipo), ["atendido"]);
+  assert.deepEqual(accionesDe({ eventos: [] }), []);
   assert.deepEqual(accionesDe({}), []);
 });
 
@@ -195,4 +200,85 @@ test("derivar le pone las dos llaves a los avisos del robot", () => {
   const grupo = derivar([], eventos, "2026-08-19", {}).find((g) => g.clave === "cambio_estado");
   assert.equal(grupo.items[0].entity_id, "abc");
   assert.equal(accionesDe(grupo.items[0]).length, 2);
+});
+
+/* Juntar los pendientes repetidos de una misma propiedad. Nace de un caso real: una
+   propiedad caia en "Sin fecha de firma" y en "Sin fecha de boleto", se veia dos veces,
+   y nada decia que las dos llevaban a la MISMA pantalla. */
+function grupo(clave, items) {
+  const c = GRUPOS[clave];
+  return { clave, nombre: c.nombre, orden: c.orden, urgente: c.urgente, items };
+}
+
+test("una propiedad repetida en dos grupos queda en uno solo", () => {
+  const juntos = juntarRepetidos([
+    grupo("sin_fecha_fin", [{ negocio_id: "m2", titulo: "Calle 6", detalle: "falta la firma" }]),
+    grupo("falta_fecha_boleto", [{ negocio_id: "m2", titulo: "Calle 6", detalle: "falta el boleto" }]),
+  ]);
+  assert.equal(juntos.length, 1, "el segundo grupo queda vacio y se va");
+  assert.equal(juntos[0].clave, "sin_fecha_fin", "sobrevive en el grupo mas urgente");
+  assert.deepEqual(juntos[0].items[0].mas, ["falta la firma", "falta el boleto"]);
+});
+
+test("el que sobrevive es el del grupo MAS urgente, sin importar el orden de entrada", () => {
+  const juntos = juntarRepetidos([
+    grupo("falta_precio_negociacion", [{ entity_id: "p1", titulo: "Minas 1600", detalle: "a" }]),
+    grupo("cambio_estado", [{ entity_id: "p1", titulo: "Minas 1600", detalle: "b", eventos: ["e9"] }]),
+  ]);
+  assert.equal(juntos[0].clave, "falta_precio_negociacion");
+});
+
+test("al juntar, 'Ya lo resolvi' despacha TODOS los avisos que quedaron adentro", () => {
+  const juntos = juntarRepetidos([
+    grupo("cambio_precio", [{ entity_id: "p1", titulo: "X", detalle: "a", eventos: ["e1"] }]),
+    grupo("cambio_estado", [{ entity_id: "p1", titulo: "X", detalle: "b", eventos: ["e2"] }]),
+  ]);
+  const atender = accionesDe(juntos[0].items[0]).find((a) => a.tipo === "atendido");
+  assert.deepEqual(atender.destino, ["e1", "e2"], "si se pierde uno, el aviso vuelve manana");
+});
+
+test("propiedades distintas NO se juntan", () => {
+  const juntos = juntarRepetidos([
+    grupo("falta_precio_negociacion", [
+      { entity_id: "p1", titulo: "A", detalle: "a" },
+      { entity_id: "p2", titulo: "B", detalle: "b" },
+    ]),
+  ]);
+  assert.equal(juntos[0].items.length, 2);
+  assert.equal(juntos[0].items[0].mas, undefined, "sin repetir no se arma la lista");
+});
+
+test("un pendiente sin sujeto no rompe ni se junta con nada", () => {
+  const juntos = juntarRepetidos([grupo("alta", [{ titulo: "suelto", detalle: "x" }])]);
+  assert.equal(juntos[0].items.length, 1);
+});
+
+test("sin grupos devuelve vacio", () => {
+  assert.deepEqual(juntarRepetidos([]), []);
+});
+
+/* El globito rojo del menu y el "Atencion N" del titulo contaban lo mismo por caminos
+   separados. Al juntar los repetidos, uno dijo 3 y el otro siguio diciendo 4. */
+test("la bandeja junta los repetidos, y la cuenta sale de ella", () => {
+  const negocios = [{
+    id: "m2", direccion: "Calle 6", fecha_fin: null, tipo_negocio: "venta",
+    avisos: [{ tipo: "sin_fecha_fin", detalle: "falta firma" },
+             { tipo: "falta_fecha_boleto", detalle: "falta boleto" }],
+  }];
+  assert.equal(cuantosPendientes(derivar(negocios, [], "2026-08-19", {})), 2, "dos problemas");
+  assert.equal(cuantosPendientes(bandeja(negocios, [], "2026-08-19", {})), 1, "una sola visita");
+});
+
+/* Que nadie vuelva a contar por su cuenta: si una pantalla llama a `derivar` directo,
+   se saltea la junta y su numero se separa del de las demas. */
+test("ninguna pantalla llama a derivar por su cuenta", () => {
+  const raiz = fileURLToPath(new URL("..", import.meta.url));
+  const archivos = [join(raiz, "app.js"), ...readdirSync(join(raiz, "vistas"))
+    .filter((f) => f.endsWith(".js")).map((f) => join(raiz, "vistas", f))];
+  /* Mira el IMPORT y no la llamada: `derivar` es tambien el nombre de un parametro
+     local en vistas/ficha.js, que no tiene nada que ver con esto. */
+  const trae = /import\s*\{[^}]*\bderivar\b[^}]*\}\s*from\s*["'][^"']*pendientes\.js["']/;
+  const culpables = archivos.filter((a) => trae.test(readFileSync(a, "utf-8")));
+  assert.deepEqual(culpables.map((a) => a.split(/[\\/]/).pop()), [],
+    "usar bandeja(), que ademas junta los repetidos");
 });
