@@ -119,9 +119,9 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
   const marca = nodo(html`
     <div class="panel-firma">
       <p class="etiqueta">${titulo}</p>
-      <p class="apunte" style="margin:2px 0 10px">Firmá en un papel blanco con lapicera
-        <strong>azul</strong>, sacale una foto derecha y buscala acá. El truco es el color:
-        con lapicera negra el recorte sale peor.</p>
+      <p class="apunte" style="margin:2px 0 10px">Firmá en un papel blanco, sacale una foto
+        y subila. Sirve con lapicera de cualquier color. Si la foto quedó torcida, la
+        enderezás con los botones de girar.</p>
       <div class="botonera" style="margin-bottom:10px">
         <button class="boton boton-chico boton-primario" data-hacer="camara">Sacar la foto ahora</button>
       </div>
@@ -130,14 +130,19 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
         <video class="camara-video" playsinline muted></video>
         <div class="botonera">
           <button class="boton boton-chico boton-primario" data-hacer="capturar">Capturar</button>
+          <button class="boton boton-chico" data-hacer="luz" hidden>Luz</button>
           <button class="boton boton-chico" data-hacer="cortar-camara">Cerrar la cámara</button>
         </div>
       </div>
       <p class="apunte camara-error" hidden></p>
       <div class="vista-firma" hidden>
         <canvas class="lienzo-recorte" width="600" height="240"></canvas>
-        <p class="apunte aviso-brillo" hidden>⚠ No encontré tinta azul, así que la recorté
-          por lo oscuro. Mirá bien si quedó limpia; si no, repetila en azul.</p>
+        <div class="botonera">
+          <button class="boton boton-chico" data-hacer="girar-izq" aria-label="Girar a la izquierda">↺ Girar</button>
+          <button class="boton boton-chico" data-hacer="girar-der" aria-label="Girar a la derecha">Girar ↻</button>
+        </div>
+        <p class="apunte aviso-brillo" hidden>⚠ El recorte salió con mucho fondo. Miralo bien
+          antes de guardarlo; con más luz y sobre papel blanco sale mejor.</p>
       </div>
       <div class="botonera" style="justify-content:space-between">
         <button class="boton boton-chico" data-hacer="cancelar">Cancelar</button>
@@ -153,30 +158,73 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
   const aviso = panel.caja.querySelector(".aviso-brillo");
   const listo = panel.caja.querySelector('[data-hacer="listo"]');
   const cajaCamara = panel.caja.querySelector(".camara-firma");
+  const botonLuz = panel.caja.querySelector('[data-hacer="luz"]');
   const video = panel.caja.querySelector(".camara-video");
   const errorCamara = panel.caja.querySelector(".camara-error");
   let mascara = null;
   let corriente = null;
+  /* La foto tal como llego, para poder volver a recortarla despues de cada giro sin perder
+     calidad: se gira SIEMPRE desde el original y no encima de lo ya girado. */
+  let original = null;
+  let vueltas = 0;
 
   /* Lo que hace con la imagen es lo mismo venga de un archivo o de la camara: se achica,
      se recorta y se muestra. Por eso esta una sola vez. */
+  /* Gira la foto original los grados que haya acumulado y devuelve los pixeles ya girados.
+
+     El lienzo se agranda para que la foto entre entera al girarla, y se pinta de blanco
+     primero: las esquinas que quedan vacias tienen que parecer papel, no un agujero negro
+     que el recorte tomaria por tinta. */
+  const girada = (imagen, grados) => {
+    if (!grados) {
+      const plano = document.createElement("canvas");
+      plano.width = imagen.width;
+      plano.height = imagen.height;
+      const c = plano.getContext("2d", { willReadFrequently: true });
+      c.drawImage(imagen, 0, 0);
+      return c.getImageData(0, 0, plano.width, plano.height);
+    }
+    const rad = (grados * Math.PI) / 180;
+    const cos = Math.abs(Math.cos(rad));
+    const sen = Math.abs(Math.sin(rad));
+    const ancho = Math.round(imagen.width * cos + imagen.height * sen);
+    const alto = Math.round(imagen.width * sen + imagen.height * cos);
+    const lona = document.createElement("canvas");
+    lona.width = ancho;
+    lona.height = alto;
+    const c = lona.getContext("2d", { willReadFrequently: true });
+    c.fillStyle = "#fff";
+    c.fillRect(0, 0, ancho, alto);
+    c.translate(ancho / 2, alto / 2);
+    c.rotate(rad);
+    c.drawImage(imagen, -imagen.width / 2, -imagen.height / 2);
+    return c.getImageData(0, 0, ancho, alto);
+  };
+
   const procesar = (imagen) => {
+    original = imagen;
+    vueltas = 0;
+    recortarDeNuevo();
+  };
+
+  function recortarDeNuevo() {
+    if (!original) return;
     /* Se achica antes de mirar los pixeles: una foto de celular son 12 millones y
        recorrerlos todos en un telefono se nota. A 1200 de ancho sobra. */
-    const escala = Math.min(1, 1200 / imagen.width);
+    const escala = Math.min(1, 1200 / original.width);
     const auxiliar = document.createElement("canvas");
-    auxiliar.width = Math.round(imagen.width * escala);
-    auxiliar.height = Math.round(imagen.height * escala);
+    auxiliar.width = Math.round(original.width * escala);
+    auxiliar.height = Math.round(original.height * escala);
     const aux = auxiliar.getContext("2d", { willReadFrequently: true });
-    aux.drawImage(imagen, 0, 0, auxiliar.width, auxiliar.height);
+    aux.drawImage(original, 0, 0, auxiliar.width, auxiliar.height);
 
-    mascara = recortar(aux.getImageData(0, 0, auxiliar.width, auxiliar.height));
+    mascara = recortar(girada(auxiliar, vueltas));
 
     if (!mascara) {
       listo.disabled = true;
       aviso.hidden = false;
-      aviso.textContent = "No encontré ninguna firma en esa foto. Probá con más luz "
-        + "o con lapicera azul sobre papel blanco.";
+      aviso.textContent = "No encontré ninguna firma en esa foto. Probá con más luz, "
+        + "sobre papel blanco y con la firma bien centrada.";
       vista.hidden = false;
       return;
     }
@@ -186,13 +234,32 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
     vista.hidden = false;
     aviso.hidden = !mascara.porBrillo;
     listo.disabled = false;
-  };
+  }
 
   const apagarCamara = () => {
     if (corriente) corriente.getTracks().forEach((pista) => pista.stop());
     corriente = null;
     cajaCamara.hidden = true;
+    botonLuz.hidden = true;
   };
+
+  /* La linterna del telefono. Una firma en papel sale mucho mejor con luz pareja que con la
+     sombra de la propia mano encima, asi que se prende SOLA y queda el boton para apagarla.
+
+     No todas las camaras la tienen —las frontales nunca, y iPhone no la expone al navegador—,
+     asi que el boton solo aparece donde de verdad se puede. */
+  let luzPrendida = false;
+  async function prenderLuz(encender) {
+    const pista = corriente && corriente.getVideoTracks()[0];
+    if (!pista || typeof pista.getCapabilities !== "function") return;
+    if (!pista.getCapabilities().torch) return;
+    try {
+      await pista.applyConstraints({ advanced: [{ torch: encender }] });
+      luzPrendida = encender;
+      botonLuz.hidden = false;
+      botonLuz.textContent = encender ? "Apagar la luz" : "Prender la luz";
+    } catch { /* si no deja, queda sin boton y se saca la foto igual */ }
+  }
 
   /* La camara por JavaScript y no por el campo de archivo.
 
@@ -232,6 +299,7 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
       await video.play();
       cajaCamara.hidden = false;
       errorCamara.hidden = true;
+      prenderLuz(true);
     } catch (error) {
       apagarCamara();
       errorCamara.hidden = false;
@@ -271,7 +339,12 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
     const que = boton ? boton.dataset.hacer : null;
     if (que === "camara") prenderCamara();
     if (que === "capturar") capturar();
+    if (que === "luz") prenderLuz(!luzPrendida);
     if (que === "cortar-camara") apagarCamara();
+    /* De a 20 grados: alcanza para enderezar una foto sacada a mano y no obliga a tocar
+       quince veces para dar la vuelta entera. */
+    if (que === "girar-izq") { vueltas -= 20; recortarDeNuevo(); }
+    if (que === "girar-der") { vueltas += 20; recortarDeNuevo(); }
     if (que === "cancelar") {
       apagarCamara();
       panel.cerrar();

@@ -63,12 +63,48 @@ test("un trazo de un pixel de ancho sobrevive al achique", () => {
   assert.ok(encendidos >= r.ancho - 2, `quedaron ${encendidos} de ${r.ancho} pixeles`);
 });
 
-/* La red de seguridad: si la separacion por azul es debil, avisar. */
-test("con lapicera negra avisa que cayo al metodo de respaldo", () => {
+/* Este test PEDIA EL COMPORTAMIENTO ROTO y se cambio a proposito.
+
+   Antes se buscaba especificamente tinta AZUL, y con cualquier otro color se caia a un
+   metodo peor y se le avisaba al usuario que revisara. Juan pidio que anduviera con
+   cualquier color. Ahora el umbral es local —cada pixel contra su vecindario— y la lapicera
+   negra sale igual de bien que la azul: ya no hay nada que avisar. */
+test("con lapicera negra sale bien, sin avisos", () => {
   const NEGRO = [40, 40, 44];
   const r = recortar(foto(200, 100, (x, y) => (trazoGordo(x, y) ? NEGRO : GRIS)));
-  assert.ok(r, "igual tiene que poder recortarla");
-  assert.equal(r.porBrillo, true, "para poder avisarle que revise el recorte");
+  assert.ok(r, "tiene que poder recortarla");
+  assert.equal(r.porBrillo, false, "ya no es un caso de segunda");
+});
+
+test("con lapicera roja tambien, que antes ni figuraba", () => {
+  const ROJO = [168, 44, 40];
+  const r = recortar(foto(200, 100, (x, y) => (trazoGordo(x, y) ? ROJO : GRIS)));
+  assert.ok(r, "tiene que poder recortarla");
+  assert.equal(r.porBrillo, false);
+});
+
+/* El caso que de verdad importa: papel fotografiado con el celular. Un lado bien iluminado
+   y el otro en sombra, con tinta NEGRA. Con un umbral unico para toda la imagen, el lado
+   claro pierde el trazo y el oscuro trae fondo. */
+test("tinta negra con media hoja en sombra: no se pierde el trazo ni entra el fondo", () => {
+  const NEGRO = [40, 40, 44];
+  const r = recortar(foto(240, 120, (x, y) =>
+    conSombra(trazoGordo(x, y) ? NEGRO : GRIS, x, 240)));
+  assert.ok(r, "tiene que encontrar la firma");
+  assert.equal(r.porBrillo, false);
+
+  /* El trazo va de x=40 a 160 sobre 240 de ancho: el recorte tiene que dar esa proporcion.
+     Si se hubiera colado el fondo del lado oscuro, el recorte seria mucho mas ancho. */
+  assert.equal(r.alto, Math.round((r.ancho * 40) / 120), "recorto justo el trazo");
+});
+
+/* La red de seguridad. Una superficie con textura pareja —una mesa de madera, una pared—
+   no tiene firma, pero medio pixel de cada dos es mas oscuro que su vecino. Ahi el recorte
+   sale un enchastre y hay que decirle que lo mire antes de guardarlo. */
+test("si media foto queda marcada como tinta, avisa que es dudosa", () => {
+  const r = recortar(foto(200, 100, (x) => (Math.floor(x / 8) % 2 ? [90, 88, 92] : [150, 148, 152])));
+  assert.ok(r, "igual devuelve algo");
+  assert.equal(r.porBrillo, true, "pero marcado como dudoso");
 });
 
 /* Un PNG ya recortado con fondo transparente: la tinta es lo que no es transparente.

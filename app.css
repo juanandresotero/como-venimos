@@ -1380,6 +1380,9 @@ body {
   background: #000; object-fit: contain;
 }
 .camara-error { color: var(--rojo-tinta); margin: 0 0 10px; }
+/* El recorte y los botones de enderezarlo, juntos: se mira el resultado y se corrige ahi
+   mismo, sin volver a sacar la foto. */
+.vista-firma { display: grid; gap: 8px; margin-bottom: 10px; }
 
 .panel-firma input[type="file"] {
   width: 100%;
