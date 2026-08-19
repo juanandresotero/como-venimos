@@ -7,7 +7,8 @@
    Todo pasa en el telefono del cliente. Nada se sube a ningun lado. */
 
 import { CAMPOS, armar, fundir } from "../lib/carta-oferta.js";
-import { deEnlace, aEnlace, comoWhatsApp } from "../lib/carta-enlace.js";
+import { deEnlace, aEnlace } from "../lib/carta-enlace.js";
+import { mandarTexto, bajarArchivo } from "../lib/compartir.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { cargarMembrete } from "../lib/membrete.js";
 import { deBytes } from "../lib/firma.js";
@@ -210,22 +211,19 @@ function dibujar() {
       agente: estado.agente,
       firmas,
     });
-    /* SIN telefono: WhatsApp pregunta a quien mandarsela. Elegirlo por el otro estaba
-       mal — puede querer mandarsela a su escribano, a su pareja o al agente. */
-    window.open(comoWhatsApp(enlace, { texto: "Te paso la carta oferta firmada." }),
-      "_blank", "noopener");
+    /* Por el menu de compartir del sistema, no por wa.me: en el celular wa.me abre
+       api.whatsapp.com, una pagina de la que no se sale, y el cliente queda trabado sin
+       poder devolver la carta. Elige el destinatario el, que puede querer mandarsela a su
+       escribano y no al agente. */
+    await mandarTexto(`Te paso la carta oferta firmada.
+
+${enlace}`);
   });
 
   cierre.getElementById("pdf").addEventListener("click", async () => {
-    const blob = armarPDF(armar(estado.valores, estado.quitadas, {
+    await bajarArchivo(armarPDF(armar(estado.valores, estado.quitadas, {
       agente: estado.agente, firmadas: Object.keys(estado.firmas),
-    }), estado.firmas, await cargarMembrete()).aBlob();
-    const url = URL.createObjectURL(blob);
-    const enlace = document.createElement("a");
-    enlace.href = url;
-    enlace.download = nombreDelArchivo(estado.valores);
-    enlace.click();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }), estado.firmas, await cargarMembrete()).aBlob(), nombreDelArchivo(estado.valores));
   });
   trozo.append(cierre);
 

@@ -9,7 +9,8 @@
    las cuentas bancarias. */
 
 import { CAMPOS, POR_CLAVE, armar } from "../lib/carta-oferta.js";
-import { aEnlace, comoWhatsApp } from "../lib/carta-enlace.js";
+import { aEnlace } from "../lib/carta-enlace.js";
+import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { cargarMembrete } from "../lib/membrete.js";
 import { deBytes } from "../lib/firma.js";
@@ -62,6 +63,20 @@ let mostrandoPrevia = false;
 let mostrandoHistorial = false;
 let preguntandoNueva = false;
 
+/* Los pedazos que cambian mientras se escribe. Se guardan las referencias para poder
+   refrescarlos SOLOS.
+
+   Antes cada dato cargado redibujaba la pantalla entera, y con la vista previa abierta eso
+   pasaba en cada tecla: la pagina cambiaba de alto, el scroll quedaba en cualquier lado y
+   habia que buscar de nuevo donde uno estaba. Rehacer toda la pantalla para cambiar un
+   renglon es siempre demasiado. */
+const vivos = { nombre: null, previa: null };
+
+function refrescarLoQueCambia(agente) {
+  if (vivos.nombre) vivos.nombre.textContent = comoSeLlamaLaCarta(carta);
+  if (vivos.previa) pintarPrevia(vivos.previa, agente);
+}
+
 function arrancar(estado) {
   const guardado = leerBorrador();
   carta = guardado || { valores: {}, quitadas: [], firmas: {} };
@@ -77,6 +92,10 @@ const guardar = (estado) => guardarBorrador(carta, estado.hoy);
 
 export function dibujarCartaOferta(estado) {
   if (!carta) arrancar(estado);
+
+  // Las referencias de la pantalla anterior ya no sirven: se vuelven a tomar abajo.
+  vivos.nombre = null;
+  vivos.previa = null;
 
   const agente = nombrePropio(estado.datos.ajustes);
   const trozo = document.createDocumentFragment();
@@ -212,9 +231,9 @@ function dibujarCampo(campo, estado) {
       guardarPadron(carta.propiedad, carta.valores.padron);
     }
     guardar(estado);
-    /* La direccion es el nombre de la carta y sale en la barra de arriba: si no se
-       redibuja, la barra sigue diciendo "Carta sin dirección" con la carta ya llena. */
-    if (mostrandoPrevia || campo.clave === "calle") estado.redibujar();
+    /* Solo se refrescan el nombre de arriba y la vista previa. NO se redibuja la pantalla:
+       eso mandaba el scroll a cualquier lado en cada dato que se cargaba. */
+    refrescarLoQueCambia(nombrePropio(estado.datos.ajustes));
   });
 
   const quitar = fila.querySelector("[data-quitar]");
@@ -317,11 +336,6 @@ function dibujarFirmas(estado, agente) {
 }
 
 function dibujarPrevia(estado, agente) {
-  const bloques = armar(carta.valores, carta.quitadas, {
-    agente,
-    firmadas: Object.keys(carta.firmas),
-  });
-
   const marca = nodo(html`
     <section class="tarjeta">
       <div class="tarjeta-titulo">
@@ -339,24 +353,36 @@ function dibujarPrevia(estado, agente) {
 
   const donde = marca.querySelector(".previa-carta");
   if (donde) {
-    for (const bloque of bloques) {
-      if (bloque.tipo === "salto-de-hoja") {
-        donde.append(nodo('<hr class="previa-salto">'));
-        continue;
-      }
-      if (bloque.tipo === "firmas") continue;
-      const p = document.createElement("p");
-      p.className = bloque.tipo === "titulo" ? "previa-titulo" : "previa-parrafo";
-      for (const parte of bloque.partes) {
-        const trozo = document.createElement("span");
-        trozo.className = `previa-${parte.clase}`;
-        trozo.textContent = parte.texto;
-        p.append(trozo);
-      }
-      donde.append(p);
-    }
+    vivos.previa = donde;   // para poder refrescarla sola, sin rehacer la pantalla
+    pintarPrevia(donde, agente);
   }
   return marca;
+}
+
+/* Vuelca la carta adentro de un contenedor. Se llama al dibujar y otra vez cada vez que
+   se carga un dato — pintar de nuevo un solo `<div>` no mueve el scroll de la pagina. */
+function pintarPrevia(donde, agente) {
+  const bloques = armar(carta.valores, carta.quitadas, {
+    agente,
+    firmadas: Object.keys(carta.firmas),
+  });
+  donde.replaceChildren();
+  for (const bloque of bloques) {
+    if (bloque.tipo === "salto-de-hoja") {
+      donde.append(nodo('<hr class="previa-salto">'));
+      continue;
+    }
+    if (bloque.tipo === "firmas") continue;
+    const p = document.createElement("p");
+    p.className = bloque.tipo === "titulo" ? "previa-titulo" : "previa-parrafo";
+    for (const parte of bloque.partes) {
+      const trozo = document.createElement("span");
+      trozo.className = `previa-${parte.clase}`;
+      trozo.textContent = parte.texto;
+      p.append(trozo);
+    }
+    donde.append(p);
+  }
 }
 
 function dibujarBotones(estado, agente) {
@@ -405,24 +431,10 @@ function dibujarBotones(estado, agente) {
       const bloques = armar(carta.valores, carta.quitadas, {
         agente, firmadas: Object.keys(carta.firmas),
       });
-      const pdf = armarPDF(bloques, carta.firmas, await cargarMembrete(), enlace).aBlob();
-      const archivo = new File([pdf], nombreDelArchivo(carta.valores), { type: "application/pdf" });
-
-      if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-        try {
-          await navigator.share({ files: [archivo] });
-          return;
-        } catch {
-          return;   // lo cancelo a proposito
-        }
-      }
-
-      /* Sin compartir archivos —una computadora, por ejemplo— se baja el PDF y se abre
-         WhatsApp con el enlace, para que igual pueda mandar algo. */
-      bajarArchivo(pdf, nombreDelArchivo(carta.valores));
-      window.open(comoWhatsApp(enlace, {
-        texto: "Te paso la oferta de compra. El PDF va aparte.",
-      }), "_blank", "noopener");
+      const pdf = armarPDF(bloques, carta.firmas, await cargarMembrete(), enlace,
+        boton.dataset.mandar).aBlob();
+      await mandarArchivo(pdf, nombreDelArchivo(carta.valores),
+        "Te paso la oferta de compra. El PDF va aparte.");
     });
   });
 
@@ -430,7 +442,9 @@ function dibujarBotones(estado, agente) {
     const bloques = armar(carta.valores, carta.quitadas, {
       agente, firmadas: Object.keys(carta.firmas),
     });
-    bajarArchivo(armarPDF(bloques, carta.firmas, await cargarMembrete()).aBlob(),
+    /* Sin enlace adentro: este PDF es para imprimir o archivar, y un boton "Firmar en el
+       celular" impreso en un papel no sirve para nada. */
+    await bajarArchivo(armarPDF(bloques, carta.firmas, await cargarMembrete()).aBlob(),
       nombreDelArchivo(carta.valores));
   });
 
@@ -484,6 +498,8 @@ function barraDeCartas(estado) {
       ${mostrandoHistorial ? html`<ul class="historial"></ul>` : ""}
     </section>
   `);
+
+  vivos.nombre = marca.querySelector(".cabeza-carta-nombre");
 
   marca.getElementById("nueva").addEventListener("click", () => {
     if (!hayAlgoCargado()) {
@@ -554,13 +570,4 @@ function empezarDeCero(estado) {
   arrancar(estado);
   guardar(estado);
   estado.redibujar();
-}
-
-function bajarArchivo(blob, nombre) {
-  const url = URL.createObjectURL(blob);
-  const enlace = document.createElement("a");
-  enlace.href = url;
-  enlace.download = nombre;
-  enlace.click();
-  setTimeout(() => URL.revokeObjectURL(url), 4000);
 }

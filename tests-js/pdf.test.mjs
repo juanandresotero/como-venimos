@@ -81,8 +81,11 @@ test("anchoDe mide con la tabla de Adobe, no a ojo", () => {
 test("ningun renglon se pasa del ancho", () => {
   const largo = "PRIMERO: OBJETO. La parte OFERENTE ofrece comprar para sí o para el "
     + "tercero que indique, libre de ocupantes, hipotecas, embargos y demás gravámenes.";
-  for (const palabras of cortarEnRenglones(largo, 400)) {
-    assert.ok(anchoDe(palabras.join(" "), { tamano: 10.5 }) <= 400,
+  /* El tamaño tiene que ser el MISMO con el que se cortó: cortarEnRenglones usa el del
+     cuerpo de la carta por defecto, y medir con otro da un resultado que no significa nada. */
+  const TAMANO = 10;
+  for (const palabras of cortarEnRenglones(largo, 400, TAMANO)) {
+    assert.ok(anchoDe(palabras.join(" "), { tamano: TAMANO }) <= 400,
       `se paso: ${palabras.join(" ")}`);
   }
 });
@@ -149,4 +152,83 @@ test("el archivo se llama por la direccion, para no tener veinte 'oferta.pdf'", 
   const { nombreDelArchivo } = await import("../lib/carta-pdf.js");
   assert.match(nombreDelArchivo(VALORES), /^Oferta de compra — Pantaleón Pérez 4782\.pdf$/);
   assert.match(nombreDelArchivo({}), /sin dirección/);
+});
+
+/* LA CARTA TIENE QUE ENTRAR EN DOS HOJAS, SIEMPRE.
+
+   Al agregar la seña el SEGUNDO creció dos renglones, las firmas del oferente y del
+   depositario no entraron abajo de la primera hoja y salió una tercera hoja suelta con dos
+   rayas. El usuario lo vio enseguida. Este test cuenta las hojas con la carta MÁS LLENA
+   posible: si un día alguien agrega un párrafo, falla acá y no en el teléfono. */
+const TODO_LLENO = {
+  nombre: "Diego Acosta Fernández", cedula: "3.456.789-0", telefono: "099 123 456",
+  correo: "diego.acosta@mail.com", padron: "62295", calle: "Dr. Pantaleón Pérez 4782",
+  barrio: "Maroñas", departamento: "Montevideo", precio: 134000, sena: 500,
+  dias_reserva: 15, dias_validez: 5, fecha_oferta: "2026-08-19",
+  propietario_nombre: "Ana María Gómez Rodríguez", propietario_cedula: "2.345.678-9",
+  propietario_domicilio: "Avenida Italia 1234 apto 502", fecha_aceptacion: "2026-08-25",
+};
+
+function cuantasHojas(bytes) {
+  return Number(/\/Count (\d+)/.exec(texto(bytes))[1]);
+}
+
+test("la carta llena entra en DOS hojas, con o sin botón", () => {
+  const bloques = armar(TODO_LLENO, [], { agente: "Juan Andrés Otero" });
+  assert.equal(cuantasHojas(armarPDF(bloques).bytes()), 2, "sin botón");
+  assert.equal(cuantasHojas(armarPDF(bloques, {}, null, "https://x.y/#abc", "comprador").bytes()),
+    2, "con el botón de firmar");
+});
+
+/* Se mira HOJA POR HOJA y no el archivo entero: "ACEPTACIÓN" aparece también en la
+   cláusula QUINTA de la primera hoja, así que cortar por esa palabra da cualquier cosa. */
+function hojas(bytes) {
+  const t = texto(bytes);
+  const partes = [];
+  let desde = 0;
+  while (true) {
+    const arranque = t.indexOf("stream\n", desde);
+    if (arranque < 0) break;
+    const fin = t.indexOf("endstream", arranque);
+    if (fin < 0) break;
+    partes.push(t.slice(arranque, fin));
+    desde = fin + 9;
+  }
+  return partes;
+}
+
+test("las dos firmas de la primera hoja NO se van a una hoja suelta", () => {
+  const [primera, segunda] = hojas(
+    armarPDF(armar(TODO_LLENO, [], { agente: "Juan Andrés Otero" })).bytes());
+  assert.ok(primera.includes("OFERENTE"), "el oferente firma en la primera hoja");
+  assert.ok(primera.includes("DEPOSITARIO"), "y el depositario también");
+  assert.ok(segunda.includes("PROPIETARIO/S"), "el propietario firma en la segunda");
+});
+
+/* Un botón azul impreso en un papel no sirve para nada. */
+test("el PDF para imprimir va SIN el botón de firmar", () => {
+  const t = texto(armarPDF(armar(TODO_LLENO, [])).bytes());
+  assert.ok(!t.includes("Firmar en el celular"));
+  assert.ok(!t.includes("/Subtype /Link"), "ni el enlace invisible");
+});
+
+test("el botón va al lado de la firma que le toca a cada parte", () => {
+  const bloques = armar(TODO_LLENO, [], { agente: "Juan Andrés Otero" });
+  for (const turno of ["comprador", "propietario"]) {
+    const t = texto(armarPDF(bloques, {}, null, "https://x.y/#abc", turno).bytes());
+    assert.ok(t.includes("Firmar en el celular"), turno);
+    assert.equal((t.match(/Firmar en el celular/g) || []).length, 1,
+      `${turno}: un solo botón, no uno por firma`);
+  }
+});
+
+/* Si esa parte YA firmó, el botón no tiene sentido. */
+test("si esa parte ya firmó, el botón no aparece", async () => {
+  const { deTrazos, aBytes: firmaABytes } = await import("../lib/firma.js");
+  const firma = firmaABytes(deTrazos([[{ x: 10, y: 20 }, { x: 90, y: 60 }]]));
+  const bloques = armar(TODO_LLENO, [], {
+    agente: "Juan Andrés Otero", firmadas: ["oferente"],
+  });
+  const t = texto(armarPDF(bloques, { oferente: firma }, null, "https://x.y/#abc", "comprador").bytes());
+  assert.ok(!t.includes("Firmar en el celular"));
 });
