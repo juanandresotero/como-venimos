@@ -77,9 +77,22 @@ let mostrandoTransito = false;
    renglon es siempre demasiado. */
 const vivos = { nombre: null, previa: null };
 
+/* Junta las repintadas seguidas en una sola, un cuarto de segundo despues de la ultima
+   tecla. Escribiendo normal eso es UNA repintada por casilla en vez de una por letra. */
+let reloj = null;
+function conCalma(hacer) {
+  clearTimeout(reloj);
+  reloj = setTimeout(hacer, 250);
+}
+
 function refrescarLoQueCambia(agente) {
+  /* Se anota donde estaba la pagina y se devuelve ahi. Cambiar el nombre de arriba o la
+     vista previa mueve el alto de lo que hay alrededor, y sin esto el renglon que se estaba
+     llenando se corre solo. */
+  const altura = window.scrollY;
   if (vivos.nombre) vivos.nombre.textContent = comoSeLlamaLaCarta(carta);
   if (vivos.previa) pintarPrevia(vivos.previa, agente);
+  if (window.scrollY !== altura) window.scrollTo(0, altura);
 }
 
 /* Lo que deja la herramienta del padrón para que esta pantalla lo levante.
@@ -262,7 +275,17 @@ function dibujarCampo(campo, estado) {
   `;
 
   const entrada = fila.querySelector(".campo");
-  entrada.addEventListener("change", () => {
+
+  /* Se anota MIENTRAS SE ESCRIBE, no al salir de la casilla.
+
+     Juan se quejó dos veces de que al confirmar un dato la pantalla se le iba al principio.
+     En la computadora no pasa; en el teléfono sí, y no es la app: es el teclado. Al cerrarse
+     el teclado el navegador rehace el alto de la página y devuelve el scroll donde puede.
+
+     La salida no es pelearle al navegador: es que no haga falta confirmar nada. Si el dato
+     ya quedó guardado tecla por tecla, tocar afuera no tiene que hacer nada, y da igual
+     dónde termine el scroll porque no se perdió ningún trabajo. */
+  const anotar = () => {
     const crudo = entrada.value;
     if (campo.tipo === "monto") carta.valores[campo.clave] = numeroDesde(crudo);
     else if (campo.tipo === "entero") carta.valores[campo.clave] = crudo === "" ? null : Number(crudo);
@@ -272,8 +295,19 @@ function dibujarCampo(campo, estado) {
       guardarPadron(carta.propiedad, carta.valores.padron);
     }
     guardar(estado);
-    /* Solo se refrescan el nombre de arriba y la vista previa. NO se redibuja la pantalla:
-       eso mandaba el scroll a cualquier lado en cada dato que se cargaba. */
+  };
+
+  entrada.addEventListener("input", () => {
+    anotar();
+    /* La vista previa se repinta con calma: rehacerla en cada tecla cambia el alto de la
+       página mientras se escribe, y eso es justamente lo que corre el scroll. */
+    conCalma(() => refrescarLoQueCambia(nombrePropio(estado.datos.ajustes)));
+  });
+
+  /* `change` queda para los desplegables y las fechas, que no disparan `input` en todos
+     los navegadores. Anota lo mismo, asi que repetirlo no cuesta nada. */
+  entrada.addEventListener("change", () => {
+    anotar();
     refrescarLoQueCambia(nombrePropio(estado.datos.ajustes));
   });
 
