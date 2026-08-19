@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 negocios.xlsx
 *.lnk
+
+# El templete lo dio el usuario; trae el nombre de una tercera persona
+# en sus metadatos y este repositorio es publico.
+Carta oferta templete.docx
