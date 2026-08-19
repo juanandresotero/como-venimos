@@ -335,3 +335,42 @@ test("la pantalla ofrece el campo en los mismos estados en que la bandeja lo pid
   assert.match(pantalla, /PRECIO_NEGOCIADO_VISIBLE\.has\(p\.estado\)/,
     "propiedad.js tiene que usar la misma constante, no su propia lista");
 });
+
+/* Una busqueda es un negocio del lado del comprador, sobre una propiedad que NO es tuya.
+   La app no puede saber sola si se cerro, y le pedia "Sin fecha de firma" — sobre algo que
+   nadie firmo todavia. */
+test("una busqueda abierta aparece como busqueda, no como fecha faltante", () => {
+  const negocios = [{
+    id: "manual-2", direccion: "Calle 6 esquina 5", tipo_negocio: "venta", estado: "en_curso",
+    entity_id_cartera: null, fecha_fin: null, fecha_boleto: null,
+    avisos: [{ tipo: "busqueda_en_curso", detalle: "Estás del lado del comprador y está abierta." }],
+  }];
+  const grupos = derivar(negocios, [], "2026-08-19", {});
+  assert.ok(grupos.find((g) => g.clave === "busqueda_en_curso"), "tiene que aparecer");
+  assert.equal(grupos.find((g) => g.clave === "sin_fecha_fin"), undefined,
+    "nadie firmo todavia: pedir la fecha de firma es pedir un dato que no existe");
+  assert.equal(GRUPOS.busqueda_en_curso.urgente, false, "no es un error, es un recordatorio");
+});
+
+/* Jose Batlle y Ordoñes 2500 seguia pidiendo el origen con "Ref. Martin" ya cargado. */
+test("un aviso que pide el origen se calla cuando el origen ya esta", () => {
+  const evento = { id: "e1", entity_id: "p1", tipo: "alta", fecha: "2026-08-19",
+    direccion: "José Batlle y Ordóñez 2500", detalle: {} };
+
+  const sinOrigen = { p1: { entity_id: "p1", activa: true, estado: "publicada" } };
+  assert.ok(derivar([], [evento], "2026-08-19", sinOrigen).find((g) => g.clave === "alta"),
+    "sin origen SI tiene que pedirlo");
+
+  const conOrigen = { p1: { entity_id: "p1", activa: true, estado: "publicada",
+    origen_captacion: "Ref. Martin" } };
+  assert.equal(derivar([], [evento], "2026-08-19", conOrigen).find((g) => g.clave === "alta"),
+    undefined, "con el origen cargado no puede seguir pidiendolo");
+});
+
+/* Los otros avisos del robot NO se resuelven solos: son noticias. */
+test("un cambio de precio sigue pidiendo que lo des por visto", () => {
+  const evento = { id: "e1", entity_id: "p1", tipo: "cambio_precio", fecha: "2026-08-19",
+    detalle: { antes: 100000, ahora: 90000, moneda: "USD" } };
+  const cartera = { p1: { entity_id: "p1", activa: true, origen_captacion: "Ref. Martin" } };
+  assert.ok(derivar([], [evento], "2026-08-19", cartera).find((g) => g.clave === "cambio_precio"));
+});

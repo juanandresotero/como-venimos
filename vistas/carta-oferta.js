@@ -437,19 +437,21 @@ function dibujarBotones(estado, agente) {
   return marca;
 }
 
-/* Qué carta está abierta, y el cajón con las anteriores.
+/* Los dos botones de arriba, y al lado el nombre de la carta que está abierta.
 
-   Al principio no habia historial a proposito: el estado viaja en el enlace y WhatsApp
-   hace de seguimiento. El usuario lo pidio despues de usarlo — que es cuando se sabe — y
-   tenia razon: la carta que uno mando ayer se quiere volver a mirar.
+   Antes decía "Estás en" con la dirección debajo. El usuario lo sacó: lo que quiere ver
+   es CÓMO SE LLAMA la carta y nada más. Manda el nombre que le puso al guardarla; si no
+   le puso ninguno, la dirección — dos cartas sobre la misma propiedad, una por cada
+   comprador, se distinguen solo por el nombre.
 
-   Empezar una nueva PREGUNTA si guardar la de ahora. Sin preguntar, tocar el boton sin
-   querer se lleva media hora de trabajo. */
+   Empezar una nueva PREGUNTA si guardar la de ahora, y con qué nombre. Sin preguntar,
+   tocar el botón sin querer se lleva media hora de trabajo. */
 function barraDeCartas(estado) {
   const historial = leerHistorial();
-  const titulo = comoSeLlamaLaCarta(carta);
 
-  /* Lo que viene puesto de fabrica no cuenta como "hay algo cargado". */
+  /* Lo que viene puesto de fabrica no cuenta como "hay algo cargado". Se mira AL TOCAR y
+     no al dibujar: si se mirara al dibujar, lo que se escribio despues no contaria y el
+     boton borraria el trabajo sin preguntar. Paso en la prueba. */
   const DE_FABRICA = ["dias_reserva", "dias_validez", "fecha_oferta"];
   const hayAlgoCargado = () =>
     Object.keys(carta.valores).some((k) => !DE_FABRICA.includes(k) && carta.valores[k])
@@ -457,17 +459,21 @@ function barraDeCartas(estado) {
 
   const marca = nodo(html`
     <section class="tarjeta tarjeta-apretada">
-      <div class="tarjeta-titulo" style="margin-bottom:0">
-        <div style="min-width:0">
-          <p class="etiqueta">Estás en</p>
-          <p class="frase" style="font-weight:650">${escapar(titulo)}</p>
-        </div>
-        <button class="boton-mini" id="nueva">+ Nueva</button>
+      <div class="cabeza-carta">
+        <button class="boton boton-chico boton-primario" id="nueva">Nueva</button>
+        ${historial.length
+          ? html`<button class="boton boton-chico" id="ver-historial">
+              Historial (${historial.length}) ${mostrandoHistorial ? "▴" : "▾"}</button>`
+          : ""}
+        <span class="cabeza-carta-nombre">${escapar(comoSeLlamaLaCarta(carta))}</span>
       </div>
 
       ${preguntandoNueva ? html`
         <div class="aviso-nueva">
-          <p class="apunte">¿Guardo esta carta en el historial antes de empezar otra?</p>
+          <label class="etiqueta" for="nombre-guardado">¿Con qué nombre la guardo?</label>
+          <input class="campo" id="nombre-guardado" type="text"
+                 value="${escapar(carta.nombre || carta.valores.calle || "")}"
+                 placeholder="Rivera 3393 — Acosta">
           <div class="botonera">
             <button class="boton boton-chico boton-primario" id="guardar-y-nueva">Guardar y empezar</button>
             <button class="boton boton-chico" id="solo-nueva">Empezar sin guardar</button>
@@ -475,18 +481,11 @@ function barraDeCartas(estado) {
           </div>
         </div>` : ""}
 
-      ${historial.length ? html`
-        <button class="boton-mini" id="ver-historial" style="margin-top:10px">
-          ${mostrandoHistorial ? "Ocultar" : `Historial (${historial.length})`}</button>` : ""}
-
       ${mostrandoHistorial ? html`<ul class="historial"></ul>` : ""}
     </section>
   `);
 
   marca.getElementById("nueva").addEventListener("click", () => {
-    /* Se mira AHORA y no cuando se dibujo la pantalla: si se mirara al dibujar, lo que
-       el usuario escribio despues no contaria y el boton le borraria el trabajo sin
-       preguntar. Paso en la prueba. */
     if (!hayAlgoCargado()) {
       empezarDeCero(estado);
       return;
@@ -499,8 +498,11 @@ function barraDeCartas(estado) {
     const boton = marca.getElementById(id);
     if (boton) boton.addEventListener("click", hacer);
   };
+  /* Se agarra AHORA y no adentro del handler: `marca` es un fragmento, y al insertarlo
+     en la pantalla queda vacío — buscar ahí adentro después devuelve null. */
+  const campoNombre = marca.getElementById("nombre-guardado");
   conectar("guardar-y-nueva", () => {
-    guardarEnHistorial(carta, estado.hoy);
+    guardarEnHistorial({ ...carta, nombre: campoNombre.value.trim() }, estado.hoy);
     empezarDeCero(estado);
   });
   conectar("solo-nueva", () => empezarDeCero(estado));
@@ -518,15 +520,14 @@ function barraDeCartas(estado) {
     for (const guardada of historial) {
       const li = document.createElement("li");
       li.className = "historial-fila";
+      const cuantasFirmas = Object.keys(guardada.firmas).length;
       li.innerHTML = html`
-        <button class="historial-abrir" data-abrir="${escapar(guardada.id)}">
+        <button class="historial-abrir" data-abrir="1">
           <span class="historial-nombre">${escapar(comoSeLlamaLaCarta(guardada))}</span>
           <span class="historial-cuando">${escapar(guardada.cuando || "")}${
-            Object.keys(guardada.firmas).length
-              ? ` · ${Object.keys(guardada.firmas).length} firma${Object.keys(guardada.firmas).length > 1 ? "s" : ""}`
-              : ""}</span>
+            cuantasFirmas ? ` · ${cuantasFirmas} firma${cuantasFirmas > 1 ? "s" : ""}` : ""}</span>
         </button>
-        <button class="boton-mini" data-borrar="${escapar(guardada.id)}">Borrar</button>
+        <button class="boton-mini" data-borrar="1">Borrar</button>
       `;
       li.querySelector("[data-abrir]").addEventListener("click", () => {
         carta = { ...guardada };

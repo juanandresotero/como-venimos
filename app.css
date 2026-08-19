@@ -1453,3 +1453,13 @@ body {
   padding: 3px 8px; border-radius: 999px;
   background: var(--azul-suave); color: var(--azul);
 }
+
+/* Los dos botones de la carta oferta, con el nombre de la carta al lado. */
+.cabeza-carta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cabeza-carta-nombre {
+  flex: 1; min-width: 0;
+  font-size: 13.5px; font-weight: 650; text-align: right;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--tinta-2);
+}
+.aviso-nueva .campo { margin-top: 6px; }

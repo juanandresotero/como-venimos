@@ -4,11 +4,11 @@ import { CAMPOS, PLANTILLA, DEPARTAMENTOS, armar, comoTexto } from "../lib/carta
 
 const porClave = Object.fromEntries(CAMPOS.map((c) => [c.clave, c]));
 
-test("estan las dieciseis casillas del documento", () => {
+test("estan las diecisiete casillas del documento", () => {
   assert.deepEqual(CAMPOS.map((c) => c.clave), [
     "nombre", "cedula", "telefono", "correo",
     "padron", "calle", "barrio", "departamento",
-    "precio", "dias_reserva", "dias_validez", "fecha_oferta",
+    "precio", "sena", "dias_reserva", "dias_validez", "fecha_oferta",
     "propietario_nombre", "propietario_cedula", "propietario_domicilio", "fecha_aceptacion",
   ]);
 });
@@ -16,7 +16,7 @@ test("estan las dieciseis casillas del documento", () => {
 /* Quitar el precio o un plazo deja una carta que no obliga a nada. */
 test("solo se puede quitar lo que la frase sobrevive sin ello", () => {
   assert.deepEqual(CAMPOS.filter((c) => c.quitable).map((c) => c.clave),
-    ["telefono", "correo", "padron", "barrio", "departamento", "propietario_domicilio"]);
+    ["telefono", "correo", "padron", "barrio", "departamento", "sena", "propietario_domicilio"]);
 });
 
 test("cada casilla dice quien la llena", () => {
@@ -98,7 +98,7 @@ test("quitar barrio y departamento deja la calle pegada al pais, sin basura", ()
 });
 
 test("quitar no deja espacios dobles, comas huerfanas ni puntos sueltos", () => {
-  const combinaciones = [[], ["barrio"], ["departamento"], ["padron"], ["telefono"], ["correo"],
+  const combinaciones = [[], ["barrio"], ["departamento"], ["padron"], ["telefono"], ["correo"], ["sena"],
     ["padron", "barrio"], ["barrio", "departamento"], ["telefono", "correo"],
     ["propietario_domicilio"],
     ["telefono", "correo", "padron", "barrio", "departamento", "propietario_domicilio"]];
@@ -225,4 +225,21 @@ test("las casillas de cada parte no se superponen — por eso se puede en parale
   const cruce = [...delComprador].filter((c) => delPropietario.has(c));
   assert.deepEqual(cruce, [], "si se cruzaran, mandar a los dos a la vez perderia datos");
   assert.ok(delComprador.size >= 4 && delPropietario.size >= 4);
+});
+
+/* La seña se lleva la frase ENTERA, no solo lo de adelante. Sin el `despues`, quitarla
+   dejaba colgado "dólares estadounidenses, que se imputará al precio": media frase
+   hablando de una plata que ya no existe. */
+test("quitar la seña se lleva toda su frase", () => {
+  const conSena = frase(armar({ ...BASE, sena: 500 }, []), "SEGUNDO");
+  assert.match(conSena, /seña simbólica la suma de quinientos \(U\$S 500\) dólares estadounidenses, que se imputará/);
+
+  const sinSena = frase(armar({ ...BASE, sena: 500 }, ["sena"]), "SEGUNDO");
+  assert.match(sinSena, /y entrega del Inmueble\.$/, "el SEGUNDO termina donde terminaba antes");
+  assert.doesNotMatch(sinSena, /seña|imputará|En este acto/);
+});
+
+test("la seña siempre se dice en dolares, y en letras y numeros", () => {
+  assert.match(frase(armar({ ...BASE, sena: 1500 }, []), "SEGUNDO"),
+    /la suma de mil quinientos \(U\$S 1\.500\) dólares estadounidenses/);
 });
