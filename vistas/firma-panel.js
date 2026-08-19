@@ -8,7 +8,7 @@
 
 import { deTrazos, aBytes, GRILLA } from "../lib/firma.js";
 import { recortar } from "../lib/firma-foto.js";
-import { dibujarEn } from "../lib/firma-dibujo.js";
+import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -61,7 +61,9 @@ export function pedirFirma({ titulo = "Firmá acá", pie = "", alFirmar }) {
 
   const limpiar = () => {
     ctx.clearRect(0, 0, lienzo.width, lienzo.height);
-    ctx.strokeStyle = "#0b0f1a";
+    /* Del tema y no fijo: en modo oscuro el negro era el mismo color que el fondo y
+       el usuario firmaba sin ver nada. */
+    ctx.strokeStyle = tintaDePantalla(lienzo);
     ctx.lineWidth = 5;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";

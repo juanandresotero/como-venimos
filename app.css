@@ -1302,6 +1302,9 @@ body {
   color: var(--tinta-2); font-weight: 700;
 }
 .caja-firma-lienzo {
+  /* De aca sale la tinta con la que se pinta la firma (tintaDePantalla). Explicito y no
+     heredado: si un dia cambia el color del body, la firma no se vuelve invisible. */
+  color: var(--tinta);
   width: 100%; height: auto; aspect-ratio: 420 / 150;
   background: var(--tarjeta);
   border: 1px solid var(--linea); border-radius: 10px;
@@ -1325,6 +1328,7 @@ body {
   box-shadow: 0 20px 60px rgba(11, 15, 26, .35);
 }
 .lienzo-firma {
+  color: var(--tinta);
   width: 100%; height: auto; aspect-ratio: 2 / 1;
   background: var(--lienzo);
   border: 1px solid var(--linea); border-radius: 12px;
@@ -1335,6 +1339,7 @@ body {
 .firma-ayuda { margin: 8px 0 4px; text-align: center; }
 .vista-firma { margin-top: 12px; }
 .lienzo-recorte {
+  color: var(--tinta);
   width: 100%; height: auto; aspect-ratio: 5 / 2;
   background: var(--lienzo);
   border: 1px solid var(--linea); border-radius: 12px;

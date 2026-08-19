@@ -10,7 +10,7 @@ import { CAMPOS, armar } from "../lib/carta-oferta.js";
 import { deEnlace, aEnlace, comoWhatsApp } from "../lib/carta-enlace.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { deBytes } from "../lib/firma.js";
-import { dibujarEn } from "../lib/firma-dibujo.js";
+import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
 import { pedirFirma } from "./firma-panel.js";
 import { leerFirmaPropia } from "../lib/carta-guardado.js";
 import { escapar, plata } from "../lib/formato.js";
@@ -160,9 +160,10 @@ function dibujar() {
   const ctx = lienzo.getContext("2d");
   if (firma) {
     dibujarEn(ctx, firma, { x: 8, y: 8, ancho: lienzo.width - 16, alto: lienzo.height - 16 },
-      { color: "#0b0f1a", grosor: 4 });
+      { grosor: 4 });
   } else {
-    ctx.strokeStyle = "#c9d2e4";
+    ctx.strokeStyle = tintaDePantalla(lienzo);
+      ctx.globalAlpha = .3;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(20, lienzo.height - 28);

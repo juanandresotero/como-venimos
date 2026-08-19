@@ -10,6 +10,11 @@ import {
 } from "../lib/formato.js";
 import * as cuentas from "../lib/cuentas.js";
 import { negociosACsv, carteraACsv, nombrePlanilla } from "../lib/planilla.js";
+import { leerFirmaPropia, guardarFirmaPropia, olvidarFirmaPropia }
+  from "../lib/carta-guardado.js";
+import { deBytes } from "../lib/firma.js";
+import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
+import { pedirFirma, pedirFirmaDeFoto } from "./firma-panel.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -189,6 +194,7 @@ export function dibujarAjustes(estado) {
   `));
   trozo.append(bajarPlanilla(estado));
   trozo.append(tuNegocio(estado));
+  trozo.append(tuFirma(estado));
   trozo.append(cuentasParaCobrar(estado));
 
   const campo = trozo.getElementById("campo-token");
@@ -473,5 +479,83 @@ function cuentasParaCobrar(estado) {
     }
     contenedor.append(bloque);
   }
+  return seccion;
+}
+
+/* Tu firma, cargada UNA vez y usada en todas las cartas oferta.
+
+   Vive en Ajustes y no adentro de la herramienta porque es un dato tuyo, no de una carta
+   en particular. Antes solo se podia cargar la primera vez desde la carta oferta, y
+   despues no habia forma de cambiarla: quedaba pegada la vieja para siempre.
+
+   NUNCA sale del telefono. Es tu firma de puno y letra: no va al repositorio, que es
+   publico, ni viaja en el enlace que se manda por WhatsApp. */
+function tuFirma(estado) {
+  const guardada = leerFirmaPropia();
+  const firma = guardada ? deBytes(guardada.bytes) : null;
+
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <h2 class="titulo" style="font-size:17px">Tu firma</h2>
+      <p class="apunte" style="margin:4px 0 12px">Se usa en la carta oferta, en el renglón
+        del DEPOSITARIO. La cargás una vez y queda.</p>
+
+      <div class="caja-firma">
+        <canvas class="caja-firma-lienzo" width="420" height="150"></canvas>
+      </div>
+
+      ${guardada && guardada.cuando
+        ? `<p class="apunte" style="margin-top:6px">Cargada el ${escapar(guardada.cuando)}.</p>`
+        : '<p class="apunte" style="margin-top:6px">Todavía no cargaste ninguna.</p>'}
+
+      <div class="botonera">
+        <button class="boton boton-chico boton-primario" id="firma-foto">
+          ${firma ? "Cambiarla por una foto" : "Cargar desde una foto"}</button>
+        <button class="boton boton-chico" id="firma-dedo">
+          ${firma ? "Dibujarla de nuevo" : "Dibujarla con el dedo"}</button>
+        ${firma ? '<button class="boton boton-chico boton-borrar" id="firma-borrar">Borrarla</button>' : ""}
+      </div>
+
+      <p class="apunte" style="margin-top:10px">Sirve una foto de tu firma en papel blanco
+        —mejor con lapicera azul— o un PNG con el fondo transparente. Nunca sale de este
+        teléfono: no se sube al repositorio ni viaja en el enlace que mandás.</p>
+    </section>
+  `);
+
+  const lienzo = seccion.querySelector("canvas");
+  const ctx = lienzo.getContext("2d");
+  if (firma) {
+    dibujarEn(ctx, firma, { x: 8, y: 8, ancho: lienzo.width - 16, alto: lienzo.height - 16 },
+      { grosor: 4 });
+  } else {
+    ctx.strokeStyle = tintaDePantalla(lienzo);
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(20, lienzo.height - 28);
+    ctx.lineTo(lienzo.width - 20, lienzo.height - 28);
+    ctx.stroke();
+  }
+
+  const quedarse = (bytes) => {
+    guardarFirmaPropia(bytes, estado.hoy);
+    estado.redibujar();
+  };
+
+  seccion.getElementById("firma-foto").addEventListener("click",
+    () => pedirFirmaDeFoto({ alFirmar: quedarse }));
+
+  seccion.getElementById("firma-dedo").addEventListener("click",
+    () => pedirFirma({ titulo: "Tu firma", pie: "La que va en el renglón del DEPOSITARIO", alFirmar: quedarse }));
+
+  const borrar = seccion.getElementById("firma-borrar");
+  if (borrar) {
+    borrar.addEventListener("click", () => {
+      if (!window.confirm("¿Borrar tu firma guardada?")) return;
+      olvidarFirmaPropia();
+      estado.redibujar();
+    });
+  }
+
   return seccion;
 }

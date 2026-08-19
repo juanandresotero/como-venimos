@@ -12,11 +12,11 @@ import { CAMPOS, POR_CLAVE, armar } from "../lib/carta-oferta.js";
 import { aEnlace, comoWhatsApp } from "../lib/carta-enlace.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { deBytes } from "../lib/firma.js";
-import { dibujarEn } from "../lib/firma-dibujo.js";
-import { pedirFirma, pedirFirmaDeFoto } from "./firma-panel.js";
+import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
+import { pedirFirma } from "./firma-panel.js";
 import {
   leerBorrador, guardarBorrador, borrarBorrador,
-  leerFirmaPropia, guardarFirmaPropia, leerPadron, guardarPadron,
+  leerFirmaPropia, leerPadron, guardarPadron,
 } from "../lib/carta-guardado.js";
 import { nombrePropio } from "../lib/motor.js";
 import { escapar, numeroDesde, plata } from "../lib/formato.js";
@@ -251,9 +251,10 @@ function dibujarFirmas(estado, agente) {
     const ctx = lienzo.getContext("2d");
     if (firma) {
       dibujarEn(ctx, firma, { x: 8, y: 8, ancho: lienzo.width - 16, alto: lienzo.height - 16 },
-        { color: "#0b0f1a", grosor: 4 });
+        { grosor: 4 });
     } else {
-      ctx.strokeStyle = "#c9d2e4";
+      ctx.strokeStyle = tintaDePantalla(lienzo);
+      ctx.globalAlpha = .3;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(20, lienzo.height - 28);
@@ -280,6 +281,9 @@ function dibujarFirmas(estado, agente) {
       });
     }
 
+    /* Usa SIEMPRE la que esta guardada en Ajustes. Antes se cargaba la primera vez desde
+       aca y despues no habia forma de cambiarla: quedaba pegada la vieja para siempre.
+       Es un dato tuyo, no de esta carta, asi que se administra en un solo lugar. */
     if (boton.dataset.mifirma) {
       const mia = leerFirmaPropia();
       if (mia) {
@@ -288,14 +292,7 @@ function dibujarFirmas(estado, agente) {
         estado.redibujar();
         return;
       }
-      pedirFirmaDeFoto({
-        alFirmar: (bytes) => {
-          guardarFirmaPropia(bytes, estado.hoy);
-          carta.firmas.depositario = bytes;
-          guardar(estado);
-          estado.redibujar();
-        },
-      });
+      estado.irA("ajustes");
     }
 
     if (boton.dataset.borrar) {
