@@ -16,6 +16,7 @@ import { dibujarRenta } from "./vistas/renta.js";
 import { dibujarHerramientas } from "./vistas/herramientas.js";
 import { dibujarComisiones } from "./vistas/comisiones.js";
 import { dibujarReajuste } from "./vistas/reajuste.js";
+import { dibujarCartaOferta } from "./vistas/carta-oferta.js";
 import { dibujarIndicador } from "./vistas/indicador.js";
 import { dibujarAjustes } from "./vistas/ajustes.js";
 
@@ -171,6 +172,7 @@ const VISTAS = {
   renta: dibujarRenta,
   comisiones: dibujarComisiones,
   reajuste: dibujarReajuste,
+  carta_oferta: dibujarCartaOferta,
   ajustes: dibujarAjustes,
   indicador: dibujarIndicador,
 };
@@ -180,7 +182,8 @@ const VISTAS = {
 /* La barra de abajo queda marcada en la pestaña de la que se salio. Las calculadoras
    viven adentro de Herramientas, asi que su pestaña es esa. */
 const PADRE = { ficha: "negocios", propiedad: "cartera", indicador: "salud",
-  renta: "herramientas", comisiones: "herramientas", reajuste: "herramientas" };
+  renta: "herramientas", comisiones: "herramientas", reajuste: "herramientas",
+  carta_oferta: "herramientas" };
 
 /* Cambiar de pantalla sube arriba de todo. Corregir un dato NO: hay que quedarse donde
    estaba y con el cursor en el mismo campo.

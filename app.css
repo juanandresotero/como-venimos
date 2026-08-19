@@ -1251,3 +1251,107 @@ body {
   to { transform: scale(1); }
 }
 @media (prefers-reduced-motion: reduce) { .boton.copiado { animation: none; } }
+
+/* ============================================================================
+   CARTA OFERTA
+   ========================================================================= */
+
+/* Cada casilla con su boton de quitar al costado. El de quitar va chiquito y apagado:
+   sacar una parte del documento no es lo que uno hace todos los dias. */
+.campos-carta { display: flex; flex-direction: column; gap: 12px; }
+
+.fila-carta { display: grid; gap: 4px; }
+.fila-carta label { font-size: 12.5px; color: var(--tinta-2); }
+.fila-carta-pista { font-size: 11.5px; margin: 0; }
+.fila-carta-quitar { justify-self: start; margin-top: 2px; }
+
+/* Una casilla quitada no desaparece de la pantalla: se ve apagada, para poder volver a
+   ponerla. En la CARTA si desaparece, que es lo que importa. */
+.fila-carta.quitada {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  opacity: .6;
+  padding: 8px 10px;
+  border: 1px dashed var(--linea);
+  border-radius: 10px;
+}
+.fila-carta-nombre { font-size: 13px; font-weight: 600; }
+.fila-carta-fuera { font-size: 11.5px; color: var(--tinta-2); grid-column: 1; }
+
+/* La vista previa: es el unico lugar donde se ve el efecto de haber sacado una casilla. */
+.previa-carta {
+  max-height: 62vh; overflow-y: auto;
+  padding: 4px 2px;
+  font-size: 12.5px; line-height: 1.55;
+}
+.previa-titulo {
+  text-align: center; font-weight: 800; letter-spacing: .04em;
+  margin: 14px 0 10px; font-size: 13.5px;
+}
+.previa-parrafo { margin: 0 0 9px; text-align: justify; }
+.previa-salto { border: 0; border-top: 1px dashed var(--linea); margin: 18px 0; }
+.previa-texto { color: var(--tinta-2); }
+.previa-valor { color: var(--tinta); font-weight: 650; }
+.previa-rayita { color: var(--azul); letter-spacing: -.5px; }
+
+/* Las tres firmas. */
+.cajas-firma { display: flex; flex-direction: column; gap: 14px; }
+.caja-firma { display: grid; gap: 6px; }
+.caja-firma-nombre {
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--tinta-2); font-weight: 700;
+}
+.caja-firma-lienzo {
+  width: 100%; height: auto; aspect-ratio: 420 / 150;
+  background: var(--tarjeta);
+  border: 1px solid var(--linea); border-radius: 10px;
+  touch-action: none;
+}
+
+/* El panel donde se firma. Ocupa la pantalla entera: firmar con el dedo en un recuadro
+   chico sale mal, y esto se hace una vez por carta. */
+.telon-firma {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center;
+  padding: 16px;
+  background: rgba(11, 15, 26, .55);
+  backdrop-filter: blur(2px);
+}
+.panel-firma {
+  width: min(560px, 100%);
+  max-height: 92vh; overflow-y: auto;
+  background: var(--tarjeta);
+  border-radius: 16px; padding: 16px;
+  box-shadow: 0 20px 60px rgba(11, 15, 26, .35);
+}
+.lienzo-firma {
+  width: 100%; height: auto; aspect-ratio: 2 / 1;
+  background: var(--lienzo);
+  border: 1px solid var(--linea); border-radius: 12px;
+  /* Sin esto el navegador se lleva el gesto para hacer scroll y no se puede firmar. */
+  touch-action: none;
+  cursor: crosshair;
+}
+.firma-ayuda { margin: 8px 0 4px; text-align: center; }
+.vista-firma { margin-top: 12px; }
+.lienzo-recorte {
+  width: 100%; height: auto; aspect-ratio: 5 / 2;
+  background: var(--lienzo);
+  border: 1px solid var(--linea); border-radius: 12px;
+}
+.aviso-brillo { color: var(--rojo-tinta); margin-top: 8px; }
+
+/* Sacar una cláusula del documento NO es la acción principal de la pantalla: el botón
+   tiene que estar disponible y callado. Sin esto hereda el azul de .boton-mini y grita
+   más que el campo que está al lado. */
+.fila-carta-quitar,
+.fila-carta.quitada .boton-mini {
+  background: transparent;
+  color: var(--tinta-2);
+  border: 1px solid var(--linea);
+  font-weight: 600;
+  font-size: 11.5px;
+  padding: 4px 10px;
+}
+.fila-carta-quitar:active,
+.fila-carta.quitada .boton-mini:active { transform: translateY(1px); }

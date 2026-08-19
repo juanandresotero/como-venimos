@@ -39,6 +39,8 @@ const CASA = `<path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M6 10.2V20h12v-9.8"/>`;
 const PORCIENTO = `<circle cx="7.6" cy="7.6" r="2.6"/><circle cx="16.4" cy="16.4" r="2.6"/>`
   + `<path d="M18 6 6 18"/>`;
 const ESCALONES = `<path d="M3.5 20.5v-4h5v-4h5v-4h5v-4"/><path d="M3.5 20.5h16"/>`;
+const HOJA_FIRMADA = `<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>`
+  + `<path d="M8.8 16.6c1.6-3.4 2.6-3.4 3.2-1.4.5 1.7 1.6 1.9 3.2-1"/>`;
 
 export const HERRAMIENTAS = [
   {
@@ -46,6 +48,12 @@ export const HERRAMIENTAS = [
     momento: "Antes de comprarla",
     nombre: "¿Cuánto renta una propiedad?",
     dibujo: CASA,
+  },
+  {
+    vista: "carta_oferta",
+    momento: "Al hacer la oferta",
+    nombre: "Carta oferta",
+    dibujo: HOJA_FIRMADA,
   },
   {
     vista: "comisiones",
@@ -66,9 +74,9 @@ export function dibujarHerramientas(estado) {
 
   trozo.append(nodo(html`
     <section style="margin-bottom:20px">
-      <h1 class="titulo" style="font-size:29px">¿Qué vamos a calcular?</h1>
-      <p class="apunte" style="margin-top:6px">Las tres preguntas de una propiedad,
-        en el orden en que aparecen.</p>
+      <h1 class="titulo" style="font-size:29px">¿Qué vamos a hacer?</h1>
+      <p class="apunte" style="margin-top:6px">Los cuatro momentos de una propiedad,
+        en el orden en que pasan.</p>
     </section>
   `));
 

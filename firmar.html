@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Oferta de compra</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)">
+<link rel="stylesheet" href="app.css">
+<!--
+  La pagina que abre el cliente desde el enlace de WhatsApp.
+
+  Es una ISLA a proposito: no registra el service worker, no carga la app, no toca la
+  cartera ni el token de GitHub. Lee lo que viene despues del `#` —que nunca llega a
+  ningun servidor—, muestra la carta, deja completar y firmar, y devuelve.
+
+  El cliente no tiene por que recibir ni un byte del negocio del agente.
+-->
+</head>
+<body>
+  <main id="vista" class="vista" style="padding:18px 16px 60px">
+    <p class="apunte">Abriendo la carta…</p>
+  </main>
+  <script type="module" src="vistas/firmar.js"></script>
+</body>
+</html>

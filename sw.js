@@ -13,7 +13,7 @@
    abrir y al volver a la app, y recarga sola cuando el service worker nuevo toma el
    mando. Entre las dos, abrir y cerrar la app alcanza para actualizarse. */
 
-const CACHE = "como-venimos-v63";
+const CACHE = "como-venimos-v64";
 
 const ARMAZON = [
   "./",
@@ -63,6 +63,19 @@ const ARMAZON = [
   "./vistas/indicador.js",
   "./vistas/indicadores.js",
   "./vistas/ajustes.js",
+  "./firmar.html",
+  "./lib/carta-oferta.js",
+  "./lib/carta-enlace.js",
+  "./lib/carta-guardado.js",
+  "./lib/carta-pdf.js",
+  "./lib/numero-a-letras.js",
+  "./lib/firma.js",
+  "./lib/firma-foto.js",
+  "./lib/firma-dibujo.js",
+  "./lib/pdf.js",
+  "./vistas/carta-oferta.js",
+  "./vistas/firma-panel.js",
+  "./vistas/firmar.js",
 ];
 
 /* La instalacion NO puede fallar por un archivo.
