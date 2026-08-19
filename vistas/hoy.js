@@ -11,7 +11,7 @@
    queda descubierto. Los mismos números contando otra cosa: allá se mira hacia atrás,
    acá hacia adelante. Ver dos veces la misma tarjeta no le sirve a nadie. */
 
-import { derivar } from "../lib/pendientes.js";
+import { derivar, accionesDe } from "../lib/pendientes.js";
 import { capas, ritmo, comparativaCategorias } from "../lib/salud.js";
 import { marcarAtendido } from "../lib/guardado.js";
 import { medir, vale_la_pena_ajustar } from "../lib/seguridad.js";
@@ -283,27 +283,26 @@ function dibujarGrupo(grupo, estado) {
         item.fecha ? ` <span class="capa-sub">· ${fechaCorta(item.fecha, anio)}</span>` : ""
       }</p>
       <p class="grupo-item-detalle">${escapar(item.detalle)}</p>
-      <div class="botonera">
-        ${item.negocio_id
-          ? `<button class="boton" data-ir="${item.negocio_id}" style="padding:8px 13px;font-size:13px">Abrir y completar</button>`
-          : item.evento_id
-            ? `<button class="boton" data-listo="${item.evento_id}" style="padding:8px 13px;font-size:13px">Ya lo resolví</button>`
-            : `<button class="boton" data-propiedad="${item.entity_id}" style="padding:8px 13px;font-size:13px">Abrir la propiedad</button>`}
-      </div>
+      <div class="botonera"></div>
     `;
-    const abrir = li.querySelector("[data-ir]");
-    if (abrir) abrir.addEventListener("click", () => estado.irA("ficha", abrir.dataset.ir));
-    const propiedad = li.querySelector("[data-propiedad]");
-    if (propiedad) {
-      propiedad.addEventListener("click", () => estado.irA("propiedad", propiedad.dataset.propiedad));
-    }
-    const listo = li.querySelector("[data-listo]");
-    if (listo) {
-      listo.addEventListener("click", () => {
-        marcarAtendido(estado, listo.dataset.listo);
-        estado.redibujar();
+
+    /* El primero es el que resuelve, y va pintado. "Ya lo resolví" viene despues y
+       apagado: descartar el aviso no arregla lo que el aviso decia. */
+    const botonera = li.querySelector(".botonera");
+    accionesDe(item).forEach((accion, i) => {
+      const boton = document.createElement("button");
+      boton.className = `boton boton-chico${i === 0 ? " boton-primario" : ""}`;
+      boton.textContent = accion.texto;
+      boton.addEventListener("click", () => {
+        if (accion.tipo === "atendido") {
+          marcarAtendido(estado, accion.destino);
+          estado.redibujar();
+        } else {
+          estado.irA(accion.tipo, accion.destino);
+        }
       });
-    }
+      botonera.append(boton);
+    });
     lista.append(li);
   }
   return marca;

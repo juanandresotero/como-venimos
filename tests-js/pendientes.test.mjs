@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { derivar, GRUPOS } from "../lib/pendientes.js";
+import { derivar, GRUPOS, accionesDe } from "../lib/pendientes.js";
 
 function negocio(avisos, x = {}) {
   return {
@@ -163,4 +163,36 @@ test("solo se pide para las que estan EN negociacion y siguen activas", () => {
 test("sin cartera no explota", () => {
   assert.doesNotThrow(() => derivar([], [], "2026-08-18"));
   assert.doesNotThrow(() => derivar([], [], "2026-08-18", null));
+});
+
+/* El bug: la pantalla elegia el boton con un if/else de tres ramas y preguntaba por
+   `evento_id` antes que por `entity_id`. Como un aviso del robot trae los dos, esos
+   avisos ofrecian solo "Ya lo resolvi" y no habia forma de abrir la propiedad. */
+test("un aviso del robot deja arreglar la propiedad Y darlo por visto", () => {
+  const acciones = accionesDe({ evento_id: "2026-08-19|abc|cambio_estado", entity_id: "abc" });
+  assert.deepEqual(acciones.map((a) => a.tipo), ["propiedad", "atendido"]);
+  assert.equal(acciones[0].destino, "abc");
+  assert.equal(acciones[1].destino, "2026-08-19|abc|cambio_estado");
+});
+
+test("lo que resuelve va primero; descartar el aviso no arregla nada", () => {
+  const acciones = accionesDe({ evento_id: "e1", entity_id: "abc" });
+  assert.equal(acciones[0].tipo, "propiedad");
+});
+
+test("cada clase de pendiente ofrece lo suyo", () => {
+  assert.deepEqual(accionesDe({ negocio_id: "manual-2" }).map((a) => a.tipo), ["ficha"]);
+  assert.deepEqual(accionesDe({ entity_id: "abc" }).map((a) => a.tipo), ["propiedad"]);
+  assert.deepEqual(accionesDe({ evento_id: "e1" }).map((a) => a.tipo), ["atendido"]);
+  assert.deepEqual(accionesDe({}), []);
+});
+
+/* Que los avisos del robot SIGAN trayendo las dos llaves: si un dia alguien saca
+   `entity_id` de `derivar`, el boton de arreglar desaparece sin que nada falle. */
+test("derivar le pone las dos llaves a los avisos del robot", () => {
+  const eventos = [{ id: "e1", entity_id: "abc", tipo: "cambio_estado", fecha: "2026-08-19",
+    direccion: "San Jose 1200", detalle: { antes: "en_negociacion", ahora: "reservada" } }];
+  const grupo = derivar([], eventos, "2026-08-19", {}).find((g) => g.clave === "cambio_estado");
+  assert.equal(grupo.items[0].entity_id, "abc");
+  assert.equal(accionesDe(grupo.items[0]).length, 2);
 });
