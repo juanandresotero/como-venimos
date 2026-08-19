@@ -160,3 +160,47 @@ test("una foto opaca sigue yendo por el camino del color", () => {
 test("un PNG transparente y VACIO devuelve null, no un manchon", () => {
   assert.equal(recortar(pngTransparente(80, 80, () => false)), null);
 });
+
+/* EL MARCO NEGRO. Al girar la foto quedan esquinas fuera del rectangulo. Pintarlas de
+   blanco hacia un escalon de brillo contra la foto, y el umbral local lee todo escalon como
+   trazo: salia un marco negro rodeando la firma. Juan lo vio y mando la captura.
+
+   Dejandolas transparentes, `alfaEsRecorte` le dice al recorte cuales pixeles no son foto. */
+function fotoGirada(ancho, alto, margen, pintar) {
+  const data = new Uint8ClampedArray(ancho * alto * 4);
+  for (let y = 0; y < alto; y++) {
+    for (let x = 0; x < ancho; x++) {
+      const i = (y * ancho + x) * 4;
+      const afuera = x < margen || y < margen || x >= ancho - margen || y >= alto - margen;
+      const [r, g, b] = pintar(x, y);
+      data[i] = r; data[i + 1] = g; data[i + 2] = b;
+      data[i + 3] = afuera ? 0 : 255;      // afuera = no es foto
+    }
+  }
+  return { data, width: ancho, height: alto };
+}
+
+test("lo que quedo afuera al girar no se toma por tinta", () => {
+  const NEGRO = [40, 40, 44];
+  const PAPEL = [210, 208, 212];
+  const trazo = (x, y) => x >= 90 && x < 210 && y >= 80 && y < 120;
+  const r = recortar(
+    fotoGirada(300, 200, 30, (x, y) => (trazo(x, y) ? NEGRO : PAPEL)),
+    { alfaEsRecorte: true },
+  );
+  assert.ok(r, "tiene que encontrar la firma");
+  /* El trazo mide 120x40. Si se hubiera colado el borde, el recorte seria de 240x140. */
+  assert.equal(r.alto, Math.round((r.ancho * 40) / 120), "recorto el trazo y no el marco");
+});
+
+test("sin avisar, ese mismo borde SI ensucia — por eso hace falta el aviso", () => {
+  const NEGRO = [40, 40, 44];
+  const PAPEL = [210, 208, 212];
+  const trazo = (x, y) => x >= 90 && x < 210 && y >= 80 && y < 120;
+  const sinAvisar = recortar(fotoGirada(300, 200, 30, (x, y) => (trazo(x, y) ? NEGRO : PAPEL)));
+  /* Sin la bandera, la transparencia se lee como "el fondo de un PNG" y la tinta pasa a ser
+     TODO el rectangulo opaco: el marco entero. Queda documentado para que nadie la saque. */
+  assert.ok(sinAvisar, "devuelve algo");
+  assert.notEqual(sinAvisar.alto, Math.round((sinAvisar.ancho * 40) / 120),
+    "sin la bandera el recorte NO es el trazo");
+});

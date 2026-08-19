@@ -172,18 +172,14 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
      se recorta y se muestra. Por eso esta una sola vez. */
   /* Gira la foto original los grados que haya acumulado y devuelve los pixeles ya girados.
 
-     El lienzo se agranda para que la foto entre entera al girarla, y se pinta de blanco
-     primero: las esquinas que quedan vacias tienen que parecer papel, no un agujero negro
-     que el recorte tomaria por tinta. */
+     El lienzo se agranda para que la foto entre entera. Las esquinas que quedan vacias se
+     dejan TRANSPARENTES a proposito y NO se pintan de blanco.
+
+     Se probo pintarlas de blanco y salia mal: el borde entre ese blanco y la foto es un
+     escalon de brillo, y el recorte —que busca lo que es mas oscuro que su vecindario— leia
+     todo el contorno como si fuera un trazo. Quedaba un marco negro alrededor de la firma.
+     Dejandolas transparentes, el recorte sabe cuales pixeles no son foto y los ignora. */
   const girada = (imagen, grados) => {
-    if (!grados) {
-      const plano = document.createElement("canvas");
-      plano.width = imagen.width;
-      plano.height = imagen.height;
-      const c = plano.getContext("2d", { willReadFrequently: true });
-      c.drawImage(imagen, 0, 0);
-      return c.getImageData(0, 0, plano.width, plano.height);
-    }
     const rad = (grados * Math.PI) / 180;
     const cos = Math.abs(Math.cos(rad));
     const sen = Math.abs(Math.sin(rad));
@@ -193,8 +189,6 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
     lona.width = ancho;
     lona.height = alto;
     const c = lona.getContext("2d", { willReadFrequently: true });
-    c.fillStyle = "#fff";
-    c.fillRect(0, 0, ancho, alto);
     c.translate(ancho / 2, alto / 2);
     c.rotate(rad);
     c.drawImage(imagen, -imagen.width / 2, -imagen.height / 2);
@@ -218,7 +212,12 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
     const aux = auxiliar.getContext("2d", { willReadFrequently: true });
     aux.drawImage(original, 0, 0, auxiliar.width, auxiliar.height);
 
-    mascara = recortar(girada(auxiliar, vueltas));
+    /* Sin girar se recorta la foto tal cual, y ahi la transparencia sí puede ser el fondo de
+       un PNG de firma. Girada, en cambio, la transparencia son las esquinas que quedaron
+       afuera: hay que decirselo para que no las confunda con un dibujo. */
+    mascara = vueltas
+      ? recortar(girada(auxiliar, vueltas), { alfaEsRecorte: true })
+      : recortar(aux.getImageData(0, 0, auxiliar.width, auxiliar.height));
 
     if (!mascara) {
       listo.disabled = true;
