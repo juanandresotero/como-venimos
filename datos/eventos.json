@@ -193,5 +193,34 @@
   "internal_id": "940041154-197",
   "tipo": "posible_duplicado",
   "titulo": "Venta gran casa en colon 5 dorm. con gran terreno"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 125726.0
+  },
+  "direccion": "Jose Batlle y Ordoñes 2500",
+  "entity_id": "ef3b2daf-c46d-4f0b-901b-2686f89b915e",
+  "fecha": "2026-08-19",
+  "id": "2026-08-19|ef3b2daf-c46d-4f0b-901b-2686f89b915e|alta",
+  "internal_id": "940041154-218",
+  "tipo": "alta",
+  "titulo": "VENTA APARTAMENTO UN DORMITORIO LA BLANQUEADA"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "ahora": "reservada",
+   "antes": "en_negociacion"
+  },
+  "direccion": "San José 1200",
+  "entity_id": "a4b43687-a487-485c-82ae-62118b687ec1",
+  "fecha": "2026-08-19",
+  "id": "2026-08-19|a4b43687-a487-485c-82ae-62118b687ec1|cambio_estado",
+  "internal_id": "940041154-207",
+  "tipo": "cambio_estado",
+  "titulo": "Venta Casa 3 dormitorios playa pascual parrillero"
  }
 ]

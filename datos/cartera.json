@@ -45,7 +45,7 @@
   "titulo": "Venta 2 casas mismo padron flor de Maroñas cochera",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
  },
  "2c76d23c-2d94-4cd4-8120-d052679e1608": {
   "activa": true,
@@ -93,7 +93,7 @@
   "titulo": "Venta gran casa en colon 5 dorm. con gran terreno",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
  },
  "45e27b03-b19a-4654-a163-4d0bf3307fac": {
   "activa": true,
@@ -141,7 +141,7 @@
   "titulo": "Venta Apartamento en Malvin Norte de 2 dormitorios",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
  },
  "5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6": {
   "activa": true,
@@ -189,7 +189,7 @@
   "titulo": "Venta apartamento 2 dormitiros Reducto con cochera",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
  },
  "a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f": {
   "activa": true,
@@ -237,7 +237,7 @@
   "titulo": "Venta 2 casas en Maroñas con cochera y gran salón",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
  },
  "a4b43687-a487-485c-82ae-62118b687ec1": {
   "activa": true,
@@ -249,13 +249,13 @@
   "direccion": "San José 1200",
   "dormitorios": 2,
   "entity_id": "a4b43687-a487-485c-82ae-62118b687ec1",
-  "estado": "en_negociacion",
+  "estado": "reservada",
   "estado_al_desaparecer": null,
   "fecha_captacion_estimada": false,
   "fecha_captacion_real": "2026-06-08",
   "fecha_desaparicion": null,
   "fecha_negociacion": "2026-08-17",
-  "fecha_reservada": null,
+  "fecha_reservada": "2026-08-19",
   "foto_portada": "listings/a4b43687-a487-485c-82ae-62118b687ec1/1760ac50-d93d-4ac7-981a-1e4b190557ed",
   "gastos_comunes": 0.0,
   "historial_precio": [
@@ -285,7 +285,7 @@
   "titulo": "Venta Casa 3 dormitorios playa pascual parrillero",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
  },
  "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea": {
   "activa": true,
@@ -333,7 +333,7 @@
   "titulo": "Venta terreno y gran Casa 4 dorm. Barros Blancos",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
  },
  "c9e235a6-5bb0-47a6-b9aa-62b2283bb94a": {
   "activa": true,
@@ -381,7 +381,7 @@
   "titulo": "Venta Apartamento 2 dormitorios Cordon con jacuzzi",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
  },
  "c9f554b2-5290-4e2f-9b88-fdac4cbd67d7": {
   "activa": true,
@@ -429,7 +429,7 @@
   "titulo": "Venta gran casa en colon 5 dorm. con gran terreno",
   "usar_en_proyeccion": false,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
  },
  "cab1949c-02eb-445f-989a-68c5f31523df": {
   "activa": true,
@@ -477,7 +477,7 @@
   "titulo": "Venta salón 3 dormitorios cochera paso de la arena",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
  },
  "d8d7855f-b0bb-4122-bc7e-74c987f50396": {
   "activa": true,
@@ -525,7 +525,55 @@
   "titulo": "Casa 1 Dormitorio cochera Cerrito ideal negocio",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
+ },
+ "ef3b2daf-c46d-4f0b-901b-2686f89b915e": {
+  "activa": true,
+  "ambientes": 2,
+  "banos": 1,
+  "barrio": "La Blanqueada",
+  "desenlace_confirmado": null,
+  "desenlace_propuesto": null,
+  "direccion": "Jose Batlle y Ordoñes 2500",
+  "dormitorios": 1,
+  "entity_id": "ef3b2daf-c46d-4f0b-901b-2686f89b915e",
+  "estado": "publicada",
+  "estado_al_desaparecer": null,
+  "fecha_captacion_estimada": true,
+  "fecha_captacion_real": "2026-08-19",
+  "fecha_desaparicion": null,
+  "fecha_negociacion": null,
+  "fecha_reservada": null,
+  "foto_portada": "listings/ef3b2daf-c46d-4f0b-901b-2686f89b915e/6a0aa4a3-6672-49de-9502-6db3b7de478b",
+  "gastos_comunes": 6500.0,
+  "historial_precio": [
+   {
+    "fecha": "2026-08-19",
+    "moneda": "USD",
+    "precio": 125726.0
+   }
+  ],
+  "internal_id": "940041154-218",
+  "lat": -34.883129768651,
+  "link": "https://www.remax.com.uy/listings/venta-apartamento-un-dormitorio-la-blanqueada-1",
+  "listing_id": 31692,
+  "lon": -56.142990589142,
+  "m2_cubierto": 45.0,
+  "m2_terreno": 0.0,
+  "m2_total": 51.0,
+  "moneda": "USD",
+  "moneda_gastos": "UYU",
+  "notas": "",
+  "operacion": "venta",
+  "origen_captacion": null,
+  "posible_duplicado_de": null,
+  "precio": 125726.0,
+  "slug": "venta-apartamento-un-dormitorio-la-blanqueada-1",
+  "tipo": "departamento_estandar",
+  "titulo": "VENTA APARTAMENTO UN DORMITORIO LA BLANQUEADA",
+  "usar_en_proyeccion": true,
+  "visto_primera_vez": "2026-08-19",
+  "visto_ultima_vez": "2026-08-19"
  },
  "f123f605-dc13-4aaa-ad8a-94ad44a11db6": {
   "activa": true,
@@ -573,6 +621,6 @@
   "titulo": "Venta gran padrón punta de rieles casa y terreno",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-08-18"
+  "visto_ultima_vez": "2026-08-19"
  }
 }
