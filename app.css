@@ -1552,6 +1552,32 @@ body {
 }
 .transito-listo { color: var(--azul); border-color: currentColor; }
 .transito-espera { color: var(--tinta-2); }
+/* La papelera del tablero: solo el dibujo, sin palabra. Los iconos universales antes que
+   el texto, y ademas el renglon ya esta cargado de informacion. */
+.boton-papelera {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; padding: 0;
+  border: 1px solid var(--linea); border-radius: 10px;
+  background: var(--lienzo); color: var(--tinta-2);
+  cursor: pointer;
+}
+.boton-papelera svg { width: 19px; height: 19px; }
+.boton-papelera:active { transform: translateY(1px); color: var(--rojo-tinta); }
+
+/* Cuando pregunta si borrar, el renglon entero se pone en rojo: no se puede confundir con
+   los otros del tablero. */
+.transito-borrando {
+  padding: 10px 12px;
+  background: var(--rojo-suave);
+  border: 1px solid var(--rojo); border-radius: 12px;
+  flex-wrap: wrap;
+}
+.transito-pregunta { flex: 1; min-width: 100%; font-size: 12.5px; color: var(--rojo-tinta); }
+/* El que borra tiene que verse distinto del que no: `.boton-mini` los pinta a los dos de
+   azul y quedaban identicos, que es la peor forma de preguntar algo que no se deshace. */
+.boton-mini.boton-borrar { background: var(--rojo); color: #fff; border-color: var(--rojo); }
+
 /* El unico boton que cierra el circuito de una carta. Va con borde ROJO porque en esta app
    el rojo es lo que reclama atencion: volvieron las dos partes y falta que las mande. */
 .boton-mini-urgente { background: var(--azul); box-shadow: 0 0 0 2px var(--rojo); }

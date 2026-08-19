@@ -68,6 +68,8 @@ let mostrandoPrevia = false;
 let mostrandoHistorial = false;
 let preguntandoNueva = false;
 let mostrandoTransito = false;
+/* El numero de la carta del tablero que esta preguntando si se borra. */
+let borrandoEnTransito = null;
 
 /* Los pedazos que cambian mientras se escribe. Se guardan las referencias para poder
    refrescarlos SOLOS.
@@ -640,6 +642,7 @@ function barraDeCartas(estado) {
   conectar("ver-transito", () => {
     mostrandoTransito = !mostrandoTransito;
     mostrandoHistorial = false;
+    borrandoEnTransito = null;
     estado.redibujar();
   });
   conectar("ver-historial", () => {
@@ -696,6 +699,30 @@ function barraDeCartas(estado) {
 function filaDeTransito(guardada, estado, abrir) {
   const li = document.createElement("li");
   li.className = "historial-fila transito-fila";
+
+  /* Borrar una carta EN TRÁNSITO no es lo mismo que borrar una del historial: ésta ya salió
+     hacia una parte, y si vuelve firmada no va a tener dónde caer. Por eso pregunta, y en el
+     mismo renglón, sin sacar una ventana por encima. */
+  if (borrandoEnTransito === guardada.id) {
+    li.className = "historial-fila transito-fila transito-borrando";
+    li.innerHTML = html`
+      <span class="transito-pregunta">¿Borrar “${escapar(comoSeLlamaLaCarta(guardada))}”?
+        Ya se la mandaste a alguien.</span>
+      <button class="boton-mini boton-borrar" data-si="1">Borrar</button>
+      <button class="boton-mini" data-no="1">No</button>
+    `;
+    li.querySelector("[data-si]").addEventListener("click", () => {
+      borrarDelHistorial(guardada.id);
+      borrandoEnTransito = null;
+      estado.redibujar();
+    });
+    li.querySelector("[data-no]").addEventListener("click", () => {
+      borrandoEnTransito = null;
+      estado.redibujar();
+    });
+    return li;
+  }
+
   const pronta = estaPronta(guardada);
   const partes = ["comprador", "propietario"]
     .filter((t) => mandadas(guardada)[t])
@@ -714,7 +741,20 @@ function filaDeTransito(guardada, estado, abrir) {
       <span class="transito-partes">${partes}</span>
     </button>
     ${pronta ? html`<button class="boton-mini boton-mini-urgente" data-cerrar="1">Ya la envié</button>` : ""}
+    <button class="boton-papelera" data-borrar="1" aria-label="Borrar esta carta" title="Borrar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 6.4h16"/><path d="M9.4 6.4V4.2h5.2v2.2"/>
+        <path d="M6.2 6.4l.9 13.2a1 1 0 0 0 1 .9h7.8a1 1 0 0 0 1-.9l.9-13.2"/>
+        <path d="M10.2 10.2v6.6M13.8 10.2v6.6"/>
+      </svg>
+    </button>
   `;
+  li.querySelector("[data-borrar]").addEventListener("click", () => {
+    borrandoEnTransito = guardada.id;
+    estado.redibujar();
+  });
+
   /* Tocarla NO la abre: muestra una ventanita para controlar lo que llenó el cliente sin
      perder lo que se esté haciendo. Adentro está el botón para abrirla de verdad. */
   li.querySelector("[data-abrir]").addEventListener("click", () => {
@@ -745,6 +785,7 @@ function empezarDeCero(estado) {
   preguntandoNueva = false;
   mostrandoHistorial = false;
   mostrandoTransito = false;
+  borrandoEnTransito = null;
   borrarBorrador();
   carta = null;
   arrancar(estado);
