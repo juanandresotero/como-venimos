@@ -18,6 +18,7 @@ import { pedirFirma } from "./firma-panel.js";
 import {
   leerBorrador, guardarBorrador, borrarBorrador,
   leerFirmaPropia, leerPadron, guardarPadron,
+  leerHistorial, guardarEnHistorial, borrarDelHistorial, comoSeLlamaLaCarta,
 } from "../lib/carta-guardado.js";
 import { nombrePropio } from "../lib/motor.js";
 import { escapar, numeroDesde, plata } from "../lib/formato.js";
@@ -54,9 +55,12 @@ const FIRMAS = [
   { clave: "propietario", nombre: "Propietario" },
 ];
 
-/* Lo que se está llenando ahora. Se lee del teléfono al abrir la pantalla. */
+/* Lo que se está llenando ahora. Se lee del teléfono al abrir la pantalla: al usuario le
+   importa encontrar la última carta como la dejó, no una hoja en blanco. */
 let carta = null;
 let mostrandoPrevia = false;
+let mostrandoHistorial = false;
+let preguntandoNueva = false;
 
 function arrancar(estado) {
   const guardado = leerBorrador();
@@ -86,6 +90,7 @@ export function dibujarCartaOferta(estado) {
     </section>
   `));
 
+  trozo.append(barraDeCartas(estado));
   trozo.append(elegirPropiedad(estado));
   for (const grupo of GRUPOS) trozo.append(dibujarGrupo(grupo, estado));
   trozo.append(dibujarFirmas(estado, agente));
@@ -104,17 +109,22 @@ function elegirPropiedad(estado) {
     .filter((p) => p.activa)
     .sort((a, b) => String(a.direccion || "").localeCompare(String(b.direccion || "")));
 
+  /* Plegado: la mayoria de las cartas oferta son de propiedades AJENAS, asi que esto es
+     un atajo que se usa poco y no tiene por que ocupar lugar arriba de todo. */
   const marca = nodo(html`
-    <section class="tarjeta">
-      <label class="etiqueta" for="de-cartera">Traer de tu cartera</label>
-      <select class="campo" id="de-cartera">
-        <option value="">Otra propiedad (la escribo yo)</option>
-        ${propiedades.map((p) => `<option value="${escapar(p.entity_id)}">`
-          + `${escapar(p.direccion || "sin dirección")}</option>`).join("")}
-      </select>
-      <p class="apunte" style="margin-top:6px">La mayoría de las cartas oferta son de
-        propiedades ajenas, así que esto es un atajo, no el camino.</p>
-    </section>
+    <details class="plegable">
+      <summary class="plegable-cabeza">
+        <span>Traer una propiedad de tu cartera</span>
+        <span class="plegable-flecha" aria-hidden="true">›</span>
+      </summary>
+      <div class="plegable-cuerpo">
+        <select class="campo" id="de-cartera">
+          <option value="">Elegí una…</option>
+          ${propiedades.map((p) => `<option value="${escapar(p.entity_id)}">`
+            + `${escapar(p.direccion || "sin dirección")}</option>`).join("")}
+        </select>
+      </div>
+    </details>
   `);
 
   marca.getElementById("de-cartera").addEventListener("change", (e) => {
@@ -204,7 +214,9 @@ function dibujarCampo(campo, estado) {
       guardarPadron(carta.propiedad, carta.valores.padron);
     }
     guardar(estado);
-    if (mostrandoPrevia) estado.redibujar();
+    /* La direccion es el nombre de la carta y sale en la barra de arriba: si no se
+       redibuja, la barra sigue diciendo "Carta sin dirección" con la carta ya llena. */
+    if (mostrandoPrevia || campo.clave === "calle") estado.redibujar();
   });
 
   const quitar = fila.querySelector("[data-quitar]");
@@ -365,9 +377,6 @@ function dibujarBotones(estado, agente) {
       </div>
       ${telefono ? "" : '<p class="apunte" style="margin-top:8px">⚠ Cargá tu teléfono en '
         + "Ajustes: sin eso, el que reciba la carta no te la puede devolver de un toque.</p>"}
-      <div class="botonera" style="margin-top:14px">
-        <button class="boton boton-chico boton-borrar" id="vaciar">Empezar de nuevo</button>
-      </div>
     </section>
   `);
 
@@ -387,7 +396,6 @@ function dibujarBotones(estado, agente) {
         valores: carta.valores,
         quitadas: carta.quitadas,
         turno: boton.dataset.mandar,
-        telefono_agente: telefono,
         agente,
         firmas,
       });
@@ -411,13 +419,123 @@ function dibujarBotones(estado, agente) {
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   });
 
-  marca.getElementById("vaciar").addEventListener("click", () => {
-    if (!window.confirm("¿Vaciar la carta y empezar de nuevo?")) return;
-    borrarBorrador();
-    carta = null;
-    arrancar(estado);
+  return marca;
+}
+
+/* Qué carta está abierta, y el cajón con las anteriores.
+
+   Al principio no habia historial a proposito: el estado viaja en el enlace y WhatsApp
+   hace de seguimiento. El usuario lo pidio despues de usarlo — que es cuando se sabe — y
+   tenia razon: la carta que uno mando ayer se quiere volver a mirar.
+
+   Empezar una nueva PREGUNTA si guardar la de ahora. Sin preguntar, tocar el boton sin
+   querer se lleva media hora de trabajo. */
+function barraDeCartas(estado) {
+  const historial = leerHistorial();
+  const titulo = comoSeLlamaLaCarta(carta);
+
+  /* Lo que viene puesto de fabrica no cuenta como "hay algo cargado". */
+  const DE_FABRICA = ["dias_reserva", "dias_validez", "fecha_oferta"];
+  const hayAlgoCargado = () =>
+    Object.keys(carta.valores).some((k) => !DE_FABRICA.includes(k) && carta.valores[k])
+    || Object.keys(carta.firmas).length > 0;
+
+  const marca = nodo(html`
+    <section class="tarjeta tarjeta-apretada">
+      <div class="tarjeta-titulo" style="margin-bottom:0">
+        <div style="min-width:0">
+          <p class="etiqueta">Estás en</p>
+          <p class="frase" style="font-weight:650">${escapar(titulo)}</p>
+        </div>
+        <button class="boton-mini" id="nueva">+ Nueva</button>
+      </div>
+
+      ${preguntandoNueva ? html`
+        <div class="aviso-nueva">
+          <p class="apunte">¿Guardo esta carta en el historial antes de empezar otra?</p>
+          <div class="botonera">
+            <button class="boton boton-chico boton-primario" id="guardar-y-nueva">Guardar y empezar</button>
+            <button class="boton boton-chico" id="solo-nueva">Empezar sin guardar</button>
+            <button class="boton boton-chico" id="cancelar-nueva">Cancelar</button>
+          </div>
+        </div>` : ""}
+
+      ${historial.length ? html`
+        <button class="boton-mini" id="ver-historial" style="margin-top:10px">
+          ${mostrandoHistorial ? "Ocultar" : `Historial (${historial.length})`}</button>` : ""}
+
+      ${mostrandoHistorial ? html`<ul class="historial"></ul>` : ""}
+    </section>
+  `);
+
+  marca.getElementById("nueva").addEventListener("click", () => {
+    /* Se mira AHORA y no cuando se dibujo la pantalla: si se mirara al dibujar, lo que
+       el usuario escribio despues no contaria y el boton le borraria el trabajo sin
+       preguntar. Paso en la prueba. */
+    if (!hayAlgoCargado()) {
+      empezarDeCero(estado);
+      return;
+    }
+    preguntandoNueva = true;
     estado.redibujar();
   });
 
+  const conectar = (id, hacer) => {
+    const boton = marca.getElementById(id);
+    if (boton) boton.addEventListener("click", hacer);
+  };
+  conectar("guardar-y-nueva", () => {
+    guardarEnHistorial(carta, estado.hoy);
+    empezarDeCero(estado);
+  });
+  conectar("solo-nueva", () => empezarDeCero(estado));
+  conectar("cancelar-nueva", () => {
+    preguntandoNueva = false;
+    estado.redibujar();
+  });
+  conectar("ver-historial", () => {
+    mostrandoHistorial = !mostrandoHistorial;
+    estado.redibujar();
+  });
+
+  const lista = marca.querySelector(".historial");
+  if (lista) {
+    for (const guardada of historial) {
+      const li = document.createElement("li");
+      li.className = "historial-fila";
+      li.innerHTML = html`
+        <button class="historial-abrir" data-abrir="${escapar(guardada.id)}">
+          <span class="historial-nombre">${escapar(comoSeLlamaLaCarta(guardada))}</span>
+          <span class="historial-cuando">${escapar(guardada.cuando || "")}${
+            Object.keys(guardada.firmas).length
+              ? ` · ${Object.keys(guardada.firmas).length} firma${Object.keys(guardada.firmas).length > 1 ? "s" : ""}`
+              : ""}</span>
+        </button>
+        <button class="boton-mini" data-borrar="${escapar(guardada.id)}">Borrar</button>
+      `;
+      li.querySelector("[data-abrir]").addEventListener("click", () => {
+        carta = { ...guardada };
+        mostrandoHistorial = false;
+        guardar(estado);
+        estado.redibujar();
+      });
+      li.querySelector("[data-borrar]").addEventListener("click", () => {
+        borrarDelHistorial(guardada.id);
+        estado.redibujar();
+      });
+      lista.append(li);
+    }
+  }
+
   return marca;
+}
+
+function empezarDeCero(estado) {
+  preguntandoNueva = false;
+  mostrandoHistorial = false;
+  borrarBorrador();
+  carta = null;
+  arrancar(estado);
+  guardar(estado);
+  estado.redibujar();
 }

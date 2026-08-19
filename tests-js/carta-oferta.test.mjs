@@ -175,3 +175,54 @@ test("comoTexto devuelve la carta entera para leerla de un tiron", () => {
   assert.match(texto, /ACEPTACIÓN/);
   assert.ok(texto.split("\n\n").length >= 9);
 });
+
+/* ---------- Juntar lo que devuelve cada parte ---------- */
+
+test("de lo que vuelve se toma solo lo que le tocaba a esa parte", async () => {
+  const { fundir } = await import("../lib/carta-oferta.js");
+  const base = { valores: { calle: "Rivera 3393", precio: 100000 }, quitadas: [], firmas: {} };
+  const delComprador = {
+    valores: { nombre: "Juan Pérez", cedula: "1.234.567-8", precio: 1 },
+    firmas: { oferente: Uint8Array.from([1, 1, 2, 0, 5, 0, 6]) },
+  };
+  const junta = fundir(base, delComprador, "comprador");
+  assert.equal(junta.valores.nombre, "Juan Pérez");
+  assert.equal(junta.valores.precio, 100000, "el precio lo pone el agente, no el comprador");
+  assert.equal(junta.valores.calle, "Rivera 3393", "lo que ya estaba se conserva");
+  assert.ok(junta.firmas.oferente);
+});
+
+/* La razon por la que se pueden mandar las dos a la vez: las casillas no se pisan. */
+test("las dos partes vuelven y se juntan sin pisarse", async () => {
+  const { fundir } = await import("../lib/carta-oferta.js");
+  let carta = { valores: { calle: "Rivera 3393", precio: 100000 }, quitadas: [], firmas: {} };
+  carta = fundir(carta, {
+    valores: { nombre: "Juan Pérez", cedula: "1.111" },
+    firmas: { oferente: Uint8Array.from([1, 1, 2, 0, 5, 0, 6]) },
+  }, "comprador");
+  carta = fundir(carta, {
+    valores: { propietario_nombre: "Ana Gómez", propietario_cedula: "2.222" },
+    firmas: { propietario: Uint8Array.from([1, 1, 2, 0, 7, 0, 8]) },
+  }, "propietario");
+
+  assert.equal(carta.valores.nombre, "Juan Pérez");
+  assert.equal(carta.valores.propietario_nombre, "Ana Gómez");
+  assert.ok(carta.firmas.oferente && carta.firmas.propietario, "las dos firmas");
+  assert.equal(carta.valores.precio, 100000);
+});
+
+test("una casilla que vuelve vacia no borra la que ya estaba", async () => {
+  const { fundir } = await import("../lib/carta-oferta.js");
+  const base = { valores: { nombre: "Juan Pérez" }, firmas: {} };
+  assert.equal(fundir(base, { valores: { nombre: "" } }, "comprador").valores.nombre, "Juan Pérez");
+  assert.equal(fundir(base, { valores: {} }, "comprador").valores.nombre, "Juan Pérez");
+});
+
+test("las casillas de cada parte no se superponen — por eso se puede en paralelo", async () => {
+  const { CAMPOS_DE } = await import("../lib/carta-oferta.js");
+  const delComprador = new Set(CAMPOS_DE("comprador").map((c) => c.clave));
+  const delPropietario = new Set(CAMPOS_DE("propietario").map((c) => c.clave));
+  const cruce = [...delComprador].filter((c) => delPropietario.has(c));
+  assert.deepEqual(cruce, [], "si se cruzaran, mandar a los dos a la vez perderia datos");
+  assert.ok(delComprador.size >= 4 && delPropietario.size >= 4);
+});

@@ -49,11 +49,11 @@ const HOJA_FIRMADA = `<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>`
    la primera vez, pero despues es texto que hay que saltear cada vez que se abre el menu
    apurado. El orden de la linea ya cuenta lo mismo sin decirlo. */
 export const HERRAMIENTAS = [
-  { vista: "padron", nombre: "Averiguar el padrón", dibujo: CHAPA },
   { vista: "renta", nombre: "Calcular renta", dibujo: CASA },
-  { vista: "carta_oferta", nombre: "Enviar carta oferta", dibujo: HOJA_FIRMADA },
   { vista: "comisiones", nombre: "Calcular comisión", dibujo: PORCIENTO },
   { vista: "reajuste", nombre: "Calcular reajuste de alquiler", dibujo: ESCALONES },
+  { vista: "carta_oferta", nombre: "Enviar carta oferta", dibujo: HOJA_FIRMADA },
+  { vista: "padron", nombre: "Averiguar el padrón", dibujo: CHAPA },
 ];
 
 export function dibujarHerramientas(estado) {

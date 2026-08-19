@@ -6,14 +6,14 @@
 
    Todo pasa en el telefono del cliente. Nada se sube a ningun lado. */
 
-import { CAMPOS, armar } from "../lib/carta-oferta.js";
+import { CAMPOS, armar, fundir } from "../lib/carta-oferta.js";
 import { deEnlace, aEnlace, comoWhatsApp } from "../lib/carta-enlace.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { cargarMembrete } from "../lib/membrete.js";
 import { deBytes } from "../lib/firma.js";
 import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
 import { pedirFirma } from "./firma-panel.js";
-import { leerFirmaPropia } from "../lib/carta-guardado.js";
+import { leerFirmaPropia, leerBorrador, guardarBorrador } from "../lib/carta-guardado.js";
 import { escapar, plata } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -186,13 +186,13 @@ function dibujar() {
   // -------- devolverla
   const cierre = nodo(html`
     <section class="tarjeta">
-      <h2 class="titulo" style="font-size:16px">Devolvérsela</h2>
+      <h2 class="titulo" style="font-size:16px">Mandarla</h2>
       <p class="apunte" style="margin:2px 0 10px">${yaFirmo
-        ? "Ya está firmada. Tocá el botón y se abre WhatsApp con la carta lista para mandar."
-        : "Firmá arriba antes de devolverla."}</p>
+        ? "Ya está firmada. Se abre WhatsApp y elegís vos a quién mandársela."
+        : "Firmá arriba antes de mandarla."}</p>
       <div class="botonera">
         <button class="boton boton-chico boton-primario" id="devolver" ${yaFirmo ? "" : "disabled"}>
-          Devolver por WhatsApp</button>
+          Enviar carta oferta</button>
         <button class="boton boton-chico" id="pdf">Bajar el PDF</button>
       </div>
     </section>
@@ -207,14 +207,13 @@ function dibujar() {
       valores: estado.valores,
       quitadas: estado.quitadas,
       turno: estado.turno,
-      telefono_agente: estado.telefono_agente,
       agente: estado.agente,
       firmas,
     });
-    window.open(comoWhatsApp(enlace, {
-      texto: "Te devuelvo la carta firmada.",
-      telefono: estado.telefono_agente,
-    }), "_blank", "noopener");
+    /* SIN telefono: WhatsApp pregunta a quien mandarsela. Elegirlo por el otro estaba
+       mal — puede querer mandarsela a su escribano, a su pareja o al agente. */
+    window.open(comoWhatsApp(enlace, { texto: "Te paso la carta oferta firmada." }),
+      "_blank", "noopener");
   });
 
   cierre.getElementById("pdf").addEventListener("click", async () => {
@@ -229,6 +228,37 @@ function dibujar() {
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   });
   trozo.append(cierre);
+
+  /* SOLO en el telefono del agente. Es lo que permite mandarles la carta a las dos partes
+     AL MISMO TIEMPO: cada una vuelve con lo suyo y esto las junta en una sola. Se puede
+     porque las casillas de cada parte son distintas y no se pisan nunca — el comprador
+     llena las suyas, el propietario las de la segunda hoja.
+
+     En el telefono del cliente no aparece: no tiene firma guardada. */
+  if (leerFirmaPropia()) {
+    const traer = nodo(html`
+      <section class="tarjeta">
+        <h2 class="titulo" style="font-size:16px">Es tuya esta carta</h2>
+        <p class="apunte" style="margin:2px 0 10px">Traela a la app y se junta con lo que ya
+          tenés cargado. Si se la mandaste a las dos partes a la vez, traé las dos: cada una
+          aporta lo suyo y no se pisan.</p>
+        <div class="botonera">
+          <button class="boton boton-chico boton-primario" id="traer">Traer a mi carta</button>
+        </div>
+        <p class="apunte" id="traido" hidden style="margin-top:10px"></p>
+      </section>
+    `);
+    traer.getElementById("traer").addEventListener("click", () => {
+      const base = leerBorrador() || { valores: {}, quitadas: [], firmas: {} };
+      const junta = fundir(base, estado, estado.turno);
+      junta.quitadas = estado.quitadas.length ? estado.quitadas : junta.quitadas;
+      guardarBorrador(junta, null);
+      const aviso = document.getElementById("traido");
+      aviso.hidden = false;
+      aviso.textContent = "✓ Guardada. Abrí la app en Herramientas → Enviar carta oferta.";
+    });
+    trozo.append(traer);
+  }
 
   trozo.append(nodo(html`
     <p class="apunte" style="margin-top:18px;text-align:center">Esta carta viaja dentro

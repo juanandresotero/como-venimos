@@ -13,7 +13,6 @@ const ESTADO = {
   },
   quitadas: ["correo"],
   turno: "propietario",
-  telefono_agente: "59899123456",
   agente: "Juan Andrés Otero",
   firmas: {},
 };
@@ -25,7 +24,6 @@ test("el estado va al enlace y vuelve entero", async () => {
   assert.deepEqual(vuelta.valores, ESTADO.valores);
   assert.deepEqual(vuelta.quitadas, ESTADO.quitadas);
   assert.equal(vuelta.turno, "propietario");
-  assert.equal(vuelta.telefono_agente, "59899123456");
   assert.equal(vuelta.agente, "Juan Andrés Otero");
 });
 
