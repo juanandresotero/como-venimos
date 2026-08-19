@@ -14,7 +14,8 @@
 import { derivar } from "../lib/pendientes.js";
 import { capas, ritmo, comparativaCategorias } from "../lib/salud.js";
 import { marcarAtendido } from "../lib/guardado.js";
-import { medir, vale_la_pena_ajustar, MINIMO_PARA_MEDIR } from "../lib/seguridad.js";
+import { medir, vale_la_pena_ajustar } from "../lib/seguridad.js";
+import { nivelDe, nivelDelObjetivo } from "../lib/niveles.js";
 import { plata, plataUSD, pct, fechaCorta, escapar } from "../lib/formato.js";
 
 const html = (cadenas, ...valores) =>
@@ -39,6 +40,7 @@ export function dibujarHoy(estado) {
   const trozo = document.createDocumentFragment();
   trozo.append(encabezado(estado, total));
   trozo.append(cuantoFalta(estado));
+  trozo.append(tuNivel(estado));
   trozo.append(tuCategoria(estado));
   trozo.append(queTanSeguro(estado));
   trozo.append(pendientes(total));
@@ -133,6 +135,59 @@ function cuantoFalta(estado) {
    Antes era una tabla de tres filas con el neto y la diferencia de cada una, y había que
    compararlas de a pares para sacar la conclusión. La conclusión es lo único que importa
    y ahora va primero, escrita. */
+/* El nivel de RE/MAX.
+
+   Es el OTRO objetivo, y no se parece al personal: ese lo pone uno y este no lo negocia
+   nadie. Van los dos en Hoy porque son dos preguntas distintas — "¿llego a lo que me
+   propuse?" y "¿qué nivel me corresponde este año?".
+
+   La barra va del escalon anterior al siguiente y no desde cero: lo que se quiere saber
+   es cuanto falta de ESTE tramo. */
+function tuNivel(estado) {
+  const { negocios, cartera, ajustes } = estado.datos;
+  const anio = estado.hoy.slice(0, 4);
+  const facturado = capas(negocios, cartera, ajustes, anio).cobrado.facturacion;
+  const n = nivelDe(facturado);
+  const objetivo = (ajustes.objetivo_personal || {})[anio] || 0;
+  const coincide = n.siguiente && nivelDelObjetivo(objetivo) === n.siguiente;
+
+  return nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo" style="margin-bottom:10px">
+        <h2 class="titulo" style="font-size:17px">Tu nivel RE/MAX</h2>
+        <span class="apunte">facturado en ${escapar(anio)}</span>
+      </div>
+      <p class="cifra cifra-grande" style="margin:0 0 2px">
+        ${n.actual ? escapar(n.actual.nombre) : "Todavía sin nivel"}
+      </p>
+      ${n.esElUltimo
+        ? html`<p class="frase">✓ Es el nivel más alto. ${plata(n.facturacion)} facturados.</p>`
+        : html`
+          <p class="apunte">Te faltan <strong>${plata(n.falta)}</strong> para
+            <strong>${escapar(n.siguiente.nombre)}</strong>${coincide
+              ? ", que es justo tu objetivo del año"
+              : ""}.</p>
+          <div class="camino" style="margin-top:12px">
+            <div class="camino-tramo cobrado" style="width:${Math.round(n.avance * 100)}%"></div>
+          </div>
+          <div class="datos" style="margin-top:10px">
+            <div class="dato">
+              <span class="dato-nombre">${n.actual ? escapar(n.actual.nombre) : "Arranque"}</span>
+              <span class="dato-valor">${plata(n.actual ? n.actual.desde : 0)}</span>
+            </div>
+            <div class="dato">
+              <span class="dato-nombre"><strong>Vas por</strong></span>
+              <span class="dato-valor"><strong>${plata(n.facturacion)}</strong></span>
+            </div>
+            <div class="dato">
+              <span class="dato-nombre">${escapar(n.siguiente.nombre)}</span>
+              <span class="dato-valor">${plata(n.siguiente.desde)}</span>
+            </div>
+          </div>`}
+    </section>
+  `);
+}
+
 function tuCategoria(estado) {
   const { negocios, ajustes } = estado.datos;
   const anio = estado.hoy.slice(0, 4);
@@ -150,35 +205,26 @@ function tuCategoria(estado) {
     <section class="tarjeta">
       <p class="etiqueta">Tu categoría</p>
       <p class="cifra cifra-grande" style="margin:4px 0 2px">${escapar(actual.categoria)}</p>
-      <p class="apunte">
-        Te quedás con el <strong>${Math.round(actual.split * 100)}%</strong> de cada
-        comisión y pagás <strong>${plata(actual.fee / Math.max(1, Number(estado.hoy.slice(5, 7))))}</strong>
-        por mes de fee.
-      </p>
+      <p class="apunte">${Math.round(actual.split * 100)}% de cada comisión ·
+        ${plata(actual.fee / Math.max(1, Number(estado.hoy.slice(5, 7))))} de fee por mes</p>
 
       <p class="frase ${conviene ? "" : "alerta"}">
         ${conviene
-          ? html`✓ Es la que más te deja con los números de este año.`
+          ? html`✓ Es la que más te deja este año.`
           : html`Con <strong>${escapar(mejor.categoria)}</strong> habrías ganado
-             <strong>${plata(mejor.neto - actual.neto)} más</strong> en lo que va del año.`}
+             <strong>${plata(mejor.neto - actual.neto)} más</strong>.`}
       </p>
 
       <div class="datos">
         ${otras.map((f) => html`
           <div class="dato">
-            <span class="dato-nombre">Si estuvieras en <strong>${escapar(f.categoria)}</strong>
-              <br><span class="apunte">te quedarías con el ${Math.round(f.split * 100)}%,
-                pagando ${plata(f.fee)} de fee</span></span>
+            <span class="dato-nombre">${escapar(f.categoria)}
+              <span class="apunte">${Math.round(f.split * 100)}%</span></span>
             <span class="dato-valor" style="color:${f.diferencia > 0 ? "var(--azul)" : "var(--tinta-2)"}">
               ${f.diferencia > 0 ? "+" : ""}${plata(f.diferencia)}
-              <br><span class="apunte">${f.diferencia > 0 ? "ganarías más" : "ganarías menos"}</span>
             </span>
           </div>`).join("")}
       </div>
-      <p class="apunte" style="margin-top:10px">
-        Comparado sobre tus ${filas.length ? "" : ""}negocios cerrados de ${anio}, con el
-        fee ya descontado. Los referidos de Martín no cambian: ese arreglo es fijo.
-      </p>
     </section>
   `);
 }
@@ -272,7 +318,7 @@ function queTanSeguro(estado) {
     <section class="tarjeta">
       <div class="tarjeta-titulo">
         <h2 class="titulo" style="font-size:17px">Qué tan seguro es cada paso</h2>
-        <span class="apunte">${medidas.length ? "medido con lo que pasó" : "tus números"}</span>
+        <span class="apunte">${medidas.length ? "medido" : "tus números"}</span>
       </div>
       <div class="datos">
         ${filas.map((f) => html`
@@ -288,15 +334,10 @@ function queTanSeguro(estado) {
           </div>`).join("")}
       </div>
       ${paraAjustar.length
-        ? html`<p class="frase alerta">
-             Lo que viste hasta ahora no coincide con lo que tenés cargado:
-             ${paraAjustar.map((f) => `${f.nombre.toLowerCase()} da ${pct(f.medido, 0)} y no ${pct(f.configurado, 0)}`).join("; ")}.
-             Cambialo en Ajustes y la proyección se acomoda.</p>`
-        : html`<p class="apunte" style="margin-top:10px">
-             ${medidas.length
-               ? "Salen de las propiedades que ya se fueron de tu cartera."
-               : `Son los que cargaste. Cuando ${MINIMO_PARA_MEDIR} propiedades se hayan ido de un estado, la app lo mide sola.`}
-           </p>`}
+        ? html`<p class="frase alerta">No coincide con lo que tenés cargado:
+             ${paraAjustar.map((f) => `${f.nombre.toLowerCase()} da ${pct(f.medido, 0)}`).join("; ")}.
+             Cambialo en Ajustes.</p>`
+        : ""}
     </section>
   `);
 }
