@@ -390,8 +390,7 @@ test("el descuento se dice en el texto, con el total que hubiera pagado", () => 
     { precio: 100000 }
   );
   assert.match(t, /Total a pagar: USD 2\.818/);
-  assert.match(t, /Descuento aplicado: 23%/);
-  assert.match(t, /sin descuento, el 3% \+ IVA sería USD 3\.660/);
+  assert.match(t, /Descuento aplicado: 23%$/m);
 });
 
 test("sin descuento no aparece el renglón", () => {
@@ -406,7 +405,7 @@ test("el texto con reparto también lo lleva", () => {
     facturaDe(["yo"], { descuentoTipo: "monto", descuentoValor: 300 }),
     { precio: 100000 }
   );
-  assert.match(t, /Descuento aplicado: 18,9%/);
+  assert.match(t, /Descuento aplicado: casi 19%$/m);
 });
 
 /* La referencia es SIEMPRE la cuenta completa: comisión entera + IVA entero. Por eso no
@@ -419,8 +418,7 @@ test("descontarle solo el IVA ya es un descuento, y se dice", () => {
   assert.ok(Math.abs(f.pct_descuento - 0.1803) < 0.0001);
 
   const t = textoParaElCliente(f, { precio: 100000 });
-  assert.match(t, /Descuento aplicado: 18%/);
-  assert.match(t, /sin descuento, el 3% \+ IVA sería USD 3\.660/);
+  assert.match(t, /Descuento aplicado: 18%$/m);
 });
 
 test("con el IVA de una sola parte el descuento ronda el 10%", () => {
@@ -433,7 +431,7 @@ test("el descuento de la comisión y el del IVA se suman en un solo número", ()
   const f = facturaDe([], { descuentoTipo: "pct", descuentoValor: 0.23 });
   assert.equal(f.total, 2310);
   assert.ok(Math.abs(f.pct_descuento - (1 - 2310 / 3660)) < 1e-12);
-  assert.match(textoParaElCliente(f, {}), /Descuento aplicado: 36,9%/);
+  assert.match(textoParaElCliente(f, {}), /Descuento aplicado: casi 37%$/m);
 });
 
 test("cobrando todo como corresponde no hay descuento que anunciar", () => {
@@ -447,4 +445,28 @@ test("el porcentaje que se muestra se verifica dividiendo los dos totales", () =
   const f = facturaDe(["yo"], { descuentoTipo: "monto", descuentoValor: 450 });
   assert.ok(Math.abs(1 - f.total / f.total_lista - f.pct_descuento) < 1e-12);
   assert.ok(Math.abs(f.total_lista - f.total - f.ahorro) < 1e-9);
+});
+
+/* El "casi" es lo que evita prometerle mas de lo que se le esta haciendo.
+
+   Con el IVA cobrado entero, el descuento del total es el mismo que el de la comision, asi
+   que los numeros se leen directo: 528 sobre 3.000 es 17,6%. */
+const CON_IVA = ["yo", "colega", "oficina"];
+
+test("el porcentaje va entero, y con 'casi' cuando el redondeo empuja para arriba", () => {
+  const dice = (descuentoValor) => {
+    const f = facturaDe(CON_IVA, { descuentoTipo: "monto", descuentoValor });
+    return textoParaElCliente(f, {}).split(String.fromCharCode(10)).pop();
+  };
+  assert.equal(dice(528), "Descuento aplicado: casi 18%");   // 17,6%
+  assert.equal(dice(540), "Descuento aplicado: 18%");        // 18,0% clavado
+  assert.equal(dice(552), "Descuento aplicado: 18%");        // 18,4% se dice de menos, sin "casi"
+  assert.equal(dice(561), "Descuento aplicado: casi 19%");   // 18,7% ya empuja para arriba
+  assert.equal(dice(690), "Descuento aplicado: 23%");
+});
+
+test("un descuento de menos de medio punto no se anuncia", () => {
+  const f = facturaDe(CON_IVA, { descuentoTipo: "monto", descuentoValor: 10 });
+  assert.ok(f.pct_descuento > 0);
+  assert.ok(!textoParaElCliente(f, {}).includes("Descuento aplicado"));
 });
