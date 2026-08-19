@@ -120,3 +120,24 @@ test("un numero que no existe ofrece los de al lado", { skip: !hayIndice }, asyn
   assert.ok(r.cercanos.length > 0, "tiene que ofrecer alternativas");
   assert.ok(r.cercanos.every((c) => c.padron), "cada uno con su padron");
 });
+
+/* Catastro separa la dirección CON COMAS. Una coma escrita en el apartamento la partía en
+   ocho pedazos en vez de siete, y Catastro devolvía otro documento o un error. */
+test("lo que se escribe en apartamento y bloque no puede romper la dirección", () => {
+  for (const [apartamento, bloque] of [
+    ["202,X", ""], ["", "B,999"], ["202 ", " B"], ["2/3", ""], ["ñ&=?", ""], ["a?b=c", "x&y"],
+  ]) {
+    const url = papelesDeCatastro("422399", { apartamento, bloque })[0].url;
+    const cola = url.split("?")[1];
+    assert.equal(cola.split(",").length, 7,
+      `"${apartamento}" / "${bloque}" dejó la dirección en ${cola}`);
+    assert.doesNotMatch(cola, /[\s&=?/]/, `quedaron caracteres de URL en ${cola}`);
+  }
+});
+
+test("un apartamento normal sigue pasando entero", () => {
+  assert.match(papelesDeCatastro("422399", { apartamento: "202", bloque: "B" })[0].url,
+    /\?H,V,AA,422399,B,,202$/);
+  assert.match(papelesDeCatastro("422399", { apartamento: "1A" })[0].url,
+    /\?H,V,AA,422399,,,1A$/);
+});

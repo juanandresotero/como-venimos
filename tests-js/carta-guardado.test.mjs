@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   leerFirmaPropia, guardarFirmaPropia, olvidarFirmaPropia,
   leerBorrador, guardarBorrador, borrarBorrador,
-  leerPadron, guardarPadron,
+  leerPadron, guardarPadron, leerHistorial,
 } from "../lib/carta-guardado.js";
 
 /* Un localStorage de mentira, como el que usan los otros tests del proyecto. */
@@ -101,4 +101,61 @@ test("sin lugar donde guardar, la app sigue andando", () => {
   assert.doesNotThrow(() => guardarFirmaPropia(Uint8Array.from([1]), null, lleno));
   assert.doesNotThrow(() => guardarBorrador({ valores: {} }, null, lleno));
   assert.doesNotThrow(() => guardarPadron("abc", "1", lleno));
+});
+
+/* Lo guardado en el teléfono NUNCA puede tumbar la app. Pasó: un `null` suelto en el
+   historial y la pantalla de la carta oferta no dibujaba nada — "Cannot read properties
+   of null". Una escritura a medias o una versión vieja alcanzan para dejar eso. */
+const BASURA = [
+  '[{"id":1},{"nope":true},null]',
+  '[null,null]',
+  '"ni siquiera es una lista"',
+  '{"no":"es una lista"}',
+  '[[1,2,3]]',
+];
+
+test("un historial con basura no rompe: devuelve lo que se pueda", () => {
+  for (const crudo of BASURA) {
+    const a = almacen({ "como-venimos:carta-historial": crudo });
+    assert.doesNotThrow(() => leerHistorial(a), crudo);
+    for (const c of leerHistorial(a)) {
+      assert.equal(typeof c.id, "string", crudo);
+      assert.ok(Array.isArray(c.quitadas), crudo);
+      assert.equal(typeof c.valores, "object", crudo);
+    }
+  }
+});
+
+test("un borrador con la forma equivocada no rompe", () => {
+  for (const crudo of [
+    '{"valores":null,"quitadas":"no es lista","firmas":123}',
+    '{"valores":[1,2],"quitadas":[1,null,"telefono"],"firmas":"x"}',
+    '"un texto suelto"', '[1,2,3]', 'null',
+  ]) {
+    const a = almacen({ "como-venimos:carta-borrador": crudo });
+    let b;
+    assert.doesNotThrow(() => { b = leerBorrador(a); }, crudo);
+    if (b) {
+      assert.ok(Array.isArray(b.quitadas), `quitadas tiene que ser lista: ${crudo}`);
+      assert.ok(b.quitadas.every((q) => typeof q === "string"), `basura adentro: ${crudo}`);
+      assert.equal(typeof b.valores, "object", crudo);
+      assert.equal(typeof b.firmas, "object", crudo);
+    }
+  }
+});
+
+test("una firma guardada con la forma equivocada no rompe", () => {
+  for (const crudo of ['{"bytes":"no es lista"}', '[1,2]', '"texto"', '{"bytes":null}']) {
+    const a = almacen({ "como-venimos:carta-firma": crudo });
+    assert.doesNotThrow(() => leerFirmaPropia(a), crudo);
+    assert.equal(leerFirmaPropia(a), null, crudo);
+  }
+});
+
+test("los padrones guardados con basura no rompen", () => {
+  for (const crudo of ['[1,2]', '"texto"', '{"abc":{"no":"es texto"}}']) {
+    const a = almacen({ "como-venimos:carta-padrones": crudo });
+    assert.doesNotThrow(() => leerPadron("abc", a), crudo);
+    assert.equal(leerPadron("abc", a), null, crudo);
+  }
 });
