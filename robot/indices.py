@@ -261,7 +261,11 @@ def armar(publicados: dict, ipcs: dict, series: dict, hoy: str) -> dict:
         avisos = revisar(coeficiente, ipc, recalculado)
         meses[llave] = {
             "coeficiente": coeficiente,
-            "ipc": ipc,
+            # Con los mismos cuatro decimales con que se publica el coeficiente. El IPC
+            # que se saca de la planilla sale con mas, y esa cola hacia que los dos
+            # caminos dieran dos pesos distintos sobre el mismo alquiler sin ningun
+            # motivo — parece un error de la app y no lo es.
+            "ipc": None if ipc is None else round(ipc, 4),
             "verificado": not avisos,
             "avisos": avisos,
         }

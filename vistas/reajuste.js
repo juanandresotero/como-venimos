@@ -8,7 +8,7 @@
    agosto y estás mandando el de julio, tenés que verlo antes de tocar el botón. */
 
 import {
-  TIPOS, mesDe, nombreDelMes, mesesConDato, buscar, calcular, textoParaElCliente,
+  TIPOS, mesDe, nombreDelMes, mesesConDato, buscar, calcular, atraso, textoParaElCliente,
 } from "../lib/reajuste.js";
 import {
   escapar, numeroDesde, formatearMientrasEscribe, plata, plataUSD, pctFino,
@@ -41,6 +41,8 @@ export function dibujarReajuste(estado) {
   const mesPedido = entradas.mes || mesDe(estado.hoy);
   const indice = buscar(indices, mesPedido, entradas.tipo);
   const cuenta = calcular(entradas.monto, indice.valor);
+  // Solo hay atraso si el usuario dijo en que mes tendria que haber ajustado.
+  const deuda = entradas.mes ? atraso(cuenta, entradas.mes, mesDe(estado.hoy)) : null;
 
   seccion.append(nodo(html`
     <section style="margin-bottom:16px">
@@ -52,9 +54,9 @@ export function dibujarReajuste(estado) {
   `));
 
   seccion.append(datos(estado));
-  seccion.append(resultado(cuenta, indice, mesPedido, indices));
+  seccion.append(resultado(cuenta, indice, mesPedido, indices, deuda));
   seccion.append(elMes(estado, indices));
-  seccion.append(mandar(estado, cuenta, indice));
+  seccion.append(mandar(estado, cuenta, indice, deuda));
   return seccion;
 }
 
@@ -73,9 +75,10 @@ function datos(estado) {
         <button class="filtro ${entradas.moneda === "USD" ? "prendido" : ""}" data-moneda="USD">Dólares</button>
       </div>
 
-      <div class="campo-fila" style="margin-top:14px;border:0;padding-bottom:0">
-        <label>Cómo ajusta</label>
-        <button class="filtro" id="rj-info" aria-label="Cuándo se usa cada uno">¿Cuál va?</button>
+      <div style="padding:14px 14px 0;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <span style="font-size:12.5px;color:var(--tinta-2)">Cómo ajusta</span>
+        <button class="filtro" id="rj-info" style="padding:5px 10px;font-size:12px"
+                aria-label="Cuándo se usa cada uno">¿Cuál va?</button>
       </div>
       <div class="filtros">
         ${TIPOS.map((t) => html`<button class="filtro ${entradas.tipo === t.clave ? "prendido" : ""}"
@@ -109,7 +112,7 @@ function datos(estado) {
 
 /* ---------- El número ---------- */
 
-function resultado(cuenta, indice, mesPedido, indices) {
+function resultado(cuenta, indice, mesPedido, indices, deuda) {
   if (!indice.valor) {
     return nodo(html`
       <section class="tarjeta">
@@ -142,7 +145,41 @@ function resultado(cuenta, indice, mesPedido, indices) {
       </div>
       ${cartelDelIndice(indice, indices)}
     </section>
+    ${bloqueDelAtraso(deuda, cuenta, entradas.moneda)}
   `);
+}
+
+/* Lo que quedo sin cobrar. Va mes por mes y no como un total suelto: el numero grande
+   suelto obliga a confiar, y con los meses a la vista se puede sumar y verificar. */
+function bloqueDelAtraso(deuda, cuenta, moneda) {
+  if (!deuda) return "";
+  return html`
+    <section class="tarjeta">
+      <p class="etiqueta">Lo que quedó atrasado</p>
+      <p class="apunte" style="margin-bottom:10px">El ajuste correspondía desde
+        ${escapar(nombreDelMes(deuda.meses[0].mes))} y cada mes quedó
+        ${escapar(conMoneda(cuenta.aumento, moneda))} corto.</p>
+      <div class="datos">
+        ${deuda.meses.map((m) => html`<div class="dato">
+          <span class="dato-nombre">${escapar(nombreDelMes(m.mes))}</span>
+          <span class="dato-valor">${escapar(conMoneda(m.diferencia, moneda))}</span>
+        </div>`).join("")}
+        <div class="dato">
+          <span class="dato-nombre"><strong>Atrasado, ${deuda.cantidad} meses</strong></span>
+          <span class="dato-valor"><strong>${escapar(conMoneda(deuda.total, moneda))}</strong></span>
+        </div>
+      </div>
+      <p class="apunte" style="margin-top:12px">
+        Si <strong>${escapar(nombreDelMes(deuda.meses[deuda.meses.length - 1].mes))}</strong>
+        ya lo cobraste al precio viejo, te debe
+        <strong>${escapar(conMoneda(deuda.total, moneda))}</strong>.<br>
+        Si todavía no lo cobraste, cobralo a
+        <strong>${escapar(conMoneda(cuenta.nuevo, moneda))}</strong> y sumale
+        <strong>${escapar(conMoneda(deuda.total - cuenta.aumento, moneda))}</strong>
+        de los meses anteriores.
+      </p>
+    </section>
+  `;
 }
 
 /* De qué mes es el número y si pasó el control.
@@ -173,7 +210,7 @@ function cartelDelIndice(indice, indices) {
 function elMes(estado, indices) {
   const disponibles = mesesConDato(indices, entradas.tipo).slice(0, 12);
   const trozo = nodo(html`
-    <section class="tarjeta-fija">
+    <section class="tarjeta" style="padding:0;overflow:hidden">
       <button class="fila" id="rj-abrir-mes">
         <span class="fila-cuerpo">
           <span class="fila-titulo">¿En qué mes debería haber ajustado?</span>
@@ -183,8 +220,8 @@ function elMes(estado, indices) {
         </span>
         <span class="fila-derecha"><span class="apunte">${entradas.eligiendoMes ? "⌃" : "›"}</span></span>
       </button>
-      <div id="rj-meses" ${entradas.eligiendoMes ? "" : "hidden"} style="margin-top:10px">
-        <div class="filtros">
+      <div id="rj-meses" ${entradas.eligiendoMes ? "" : "hidden"} style="padding:0 14px 14px">
+        <div class="filtros" style="padding:0">
           <button class="filtro ${entradas.mes ? "" : "prendido"}" data-mes="">Este mes</button>
           ${disponibles.map((m) => html`<button
             class="filtro ${entradas.mes === m ? "prendido" : ""}"
@@ -208,17 +245,17 @@ function elMes(estado, indices) {
 
 /* El botón NUNCA se apaga por falta del dato del mes: el usuario prefiere mandar el
    estimado con la salvedad adentro que quedarse sin poder contestarle al inquilino. */
-function mandar(estado, cuenta, indice) {
+function mandar(estado, cuenta, indice, deuda) {
   if (!cuenta || !indice.valor) return document.createDocumentFragment();
 
   const trozo = nodo(html`
     <section class="tarjeta">
       <div class="campo-fila">
-        <label for="rj-titulo">Para qué propiedad <span class="apunte">opcional</span></label>
+        <label for="rj-titulo">Para qué propiedad <span class="apunte">(opcional)</span></label>
         <input class="campo" id="rj-titulo" type="text" placeholder="Av. Italia 1234"
                value="${escapar(entradas.titulo)}">
       </div>
-      <button class="boton-primario" id="rj-copiar" style="margin-top:12px;width:100%">
+      <button class="boton boton-primario" id="rj-copiar" style="margin-top:12px;width:100%">
         Copiar para el cliente
       </button>
     </section>
@@ -230,7 +267,7 @@ function mandar(estado, cuenta, indice) {
   const copiar = trozo.getElementById("rj-copiar");
   copiar.addEventListener("click", async () => {
     const texto = textoParaElCliente({
-      cuenta, moneda: entradas.moneda, tipo: entradas.tipo, indice, titulo: entradas.titulo,
+      cuenta, moneda: entradas.moneda, tipo: entradas.tipo, indice, titulo: entradas.titulo, deuda,
     });
     const dice = copiar.textContent;
     try {

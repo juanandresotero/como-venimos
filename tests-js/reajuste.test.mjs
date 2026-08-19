@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  TIPOS, mesDe, nombreDelMes, mesesConDato, buscar, calcular, textoParaElCliente,
+  TIPOS, mesDe, nombreDelMes, mesesConDato, buscar, calcular, mesesEntre, atraso,
+  textoParaElCliente,
 } from "../lib/reajuste.js";
 
 /* Los indices reales de agosto de 2026, ya cruzados por el robot. */
@@ -130,4 +131,54 @@ test("los dolares se muestran como dolares", () => {
 test("sin cuenta no sale un texto roto", () => {
   assert.equal(textoParaElCliente({ cuenta: null, indice: { valor: 1.04 } }), "");
   assert.equal(textoParaElCliente({ cuenta: { actual: 1 }, indice: { valor: null } }), "");
+});
+
+/* ---------- El atraso ---------- */
+
+test("los meses de un tramo, con los dos extremos adentro", () => {
+  assert.deepEqual(mesesEntre("2026-06", "2026-08"), ["2026-06", "2026-07", "2026-08"]);
+  assert.deepEqual(mesesEntre("2025-11", "2026-02"), ["2025-11", "2025-12", "2026-01", "2026-02"]);
+  assert.deepEqual(mesesEntre("2026-08", "2026-08"), ["2026-08"]);
+  assert.deepEqual(mesesEntre("2026-08", "2026-06"), []);
+});
+
+/* La trampa: el coeficiente NO se recalcula mes a mes. Si correspondia en junio, el
+   alquiler de junio en adelante es el mismo por doce meses — julio no lleva el de julio. */
+test("la diferencia es la MISMA todos los meses: el ajuste es anual, no mensual", () => {
+  const c = calcular(40000, 1.0377);
+  const d = atraso(c, "2026-06", "2026-08");
+  assert.equal(d.cantidad, 3);
+  assert.deepEqual(d.meses.map((m) => m.mes), ["2026-06", "2026-07", "2026-08"]);
+  const diferencias = d.meses.map((m) => Math.round(m.diferencia));
+  assert.deepEqual(diferencias, [1508, 1508, 1508]);
+  assert.equal(Math.round(d.total), 4524);
+});
+
+test("ajustando a tiempo no hay nada atrasado", () => {
+  const c = calcular(40000, 1.0427);
+  assert.equal(atraso(c, "2026-08", "2026-08"), null);
+  assert.equal(atraso(null, "2026-06", "2026-08"), null);
+});
+
+test("el texto al cliente desglosa mes por mes, no tira un total suelto", () => {
+  const indice = buscar(INDICES, "2026-06", "coeficiente");
+  const cuenta = calcular(40000, indice.valor);
+  const t = textoParaElCliente({
+    cuenta, moneda: "UYU", tipo: "coeficiente", indice,
+    deuda: atraso(cuenta, "2026-06", "2026-08"),
+  });
+  assert.match(t, /\*Nuevo alquiler: \$ 41\.508\*/);
+  assert.match(t, /quedaron 3 meses con diferencia/);
+  assert.match(t, /· junio 2026: \$ 1\.508/);
+  assert.match(t, /· agosto 2026: \$ 1\.508/);
+  assert.match(t, /\*Diferencia atrasada: \$ 4\.524\*/);
+});
+
+test("sin atraso el texto no habla de meses ni de diferencias", () => {
+  const indice = buscar(INDICES, "2026-08", "coeficiente");
+  const t = textoParaElCliente({
+    cuenta: calcular(40000, indice.valor), moneda: "UYU", tipo: "coeficiente", indice, deuda: null,
+  });
+  assert.ok(!t.includes("atrasada"));
+  assert.ok(!t.includes("meses con diferencia"));
 });
