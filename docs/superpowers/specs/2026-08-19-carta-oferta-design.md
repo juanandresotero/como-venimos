@@ -50,19 +50,20 @@ conectan a la casilla con el resto viajan pegadas a ella:
 
 ```js
 { texto: "...del inmueble empadronado" },
-{ campo: "padron",  antes: " con el número " },
-{ campo: "calle",   antes: " ubicado en la calle " },
-{ campo: "ciudad",  antes: " de la ciudad de " },
-{ texto: ", República Oriental del Uruguay." },
+{ campo: "padron",       antes: " con el número " },
+{ campo: "calle",        antes: " ubicado en la calle " },
+{ campo: "barrio",       antes: ", " },
+{ campo: "departamento", antes: ", " },
+{ texto: ", en la República Oriental del Uruguay." },
 ```
 
 - **Completa** → escribe `antes` + el valor.
 - **Vacía** → escribe `antes` + la rayita.
 - **Quitada** → no escribe nada, ni el `antes`.
 
-Quitando `ciudad` queda *"…ubicado en la calle Rivera 3393, República Oriental del
-Uruguay."*, que es prosa correcta. Ese es todo el truco, y es lo que hay que testear con
-saña.
+Quitando `barrio` queda *"…ubicado en la calle Rivera 3393, Montevideo, en la República
+Oriental del Uruguay."*, que es prosa correcta. Ese es todo el truco, y es lo que hay que
+testear con saña.
 
 Después de armar cada párrafo corre una **limpieza**: espacios dobles a espacio simple,
 `" ,"` a `","`, `" ."` a `"."`, y se recortan los extremos. Sin eso, quitar una casilla del
@@ -79,7 +80,8 @@ la frase sobrevive sin ello:
 | `telefono`, `correo` | Sí | Son datos de contacto, no de fondo |
 | `padron` | Sí | El inmueble ya queda identificado por la calle |
 | `calle` | No | Es lo único que identifica al inmueble sin padrón |
-| `ciudad` | Sí | Queda "República Oriental del Uruguay" |
+| `barrio` | Sí | La calle y el departamento ya ubican el inmueble |
+| `departamento` | Sí | Queda "en la República Oriental del Uruguay" |
 | `precio` | No | Es el objeto del contrato |
 | `dias_reserva`, `dias_validez` | No | Son plazos que obligan |
 | `fecha_oferta` | No | Sin fecha no corre el plazo del QUINTO |
@@ -92,15 +94,22 @@ mano.
 
 ---
 
-## 3. Las quince casillas y las tres firmas
+## 3. Las dieciséis casillas y las tres firmas
 
-Salen del `.docx` entregado, respetando su redacción palabra por palabra.
+Salen del `.docx` entregado, respetando su redacción palabra por palabra salvo donde el
+usuario pidió cambiarla.
 
 **Encabezado (OFERENTE)** — las llena el comprador
 `nombre` · `cedula` · `telefono` · `correo`
 
 **PRIMERO — objeto** — las llena el usuario
-`padron` · `calle` · `ciudad`
+`padron` · `calle` · `barrio` · `departamento`
+
+La dirección va como se dice en Uruguay: **calle, barrio o balneario, departamento**, y
+recién ahí *"en la República Oriental del Uruguay"*. El modelo decía "de la ciudad de
+\_\_\_", que no sirve para Canelones — el usuario escribió a mano *"calle 6 intersección
+5, Pinar Sur"* en una carta real, porque el balneario es lo que ubica. El barrio la app
+ya lo tiene en la cartera.
 
 **SEGUNDO — precio** — la llena el usuario
 `precio`
@@ -120,6 +129,23 @@ reales; el modelo de la oficina trae 5)
 
 **Firmas:** `firma_oferente` (comprador) · `firma_depositario` (el usuario) ·
 `firma_propietario` (dueño)
+
+### Quién firma como DEPOSITARIO
+
+La plata la recibe **RE/MAX**, no el usuario. Pero RE/MAX es una empresa y no firma
+nunca: firma una persona por ella. Si el usuario firma a secas queda como si la plata
+fuera suya, y si se deja el renglón para RE/MAX no lo firma nadie.
+
+Se resuelve como se resuelve siempre: **firma él, aclarando en representación de quién.**
+El bloque queda así, y el nombre sale de `nombrePropio(ajustes)` (Ajustes, §motor), no
+escrito a mano en el código:
+
+```
+        ________________________
+        DEPOSITARIO
+        Juan Andrés Otero
+        En representación de RE/MAX
+```
 
 ### Dos arreglos al texto original
 
@@ -250,7 +276,7 @@ El tramo más pesado es el último, cuando la carta va del usuario al propietari
 ```
 firma del comprador (dibujada)      ~550
 firma del usuario (la foto)       ~1.220
-las quince casillas                 ~350
+las dieciséis casillas              ~370
                                   ───────
                                    ~2.120  de 3.000 (§4)
 ```
