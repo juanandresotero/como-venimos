@@ -554,43 +554,59 @@ body {
 
 /* ---------- Herramientas ---------- */
 
-/* Tres tarjetas grandes, no tres renglones. Se tocan mil veces y con el pulgar, asi que
-   el blanco alrededor no es desperdicio: es lo que hace que no haya que apuntar. */
-.herramientas { display: grid; gap: 12px; }
+/* Una sola linea que atraviesa las tres paradas.
 
-.herramienta {
-  display: flex; align-items: center; gap: 16px;
-  width: 100%; padding: 18px 18px 18px 16px;
+   El dibujo es UNO y no tres: lo que une a estas calculadoras es el momento en que se
+   usan —antes de comprar, al cerrar, cada año del contrato— y eso es una linea de tiempo,
+   no tres iconos sueltos.
+
+   La linea se dibuja sobre el contenedor y NO sobre cada parada, porque tiene que pasar
+   POR ATRAS de los circulos y seguir de largo en el espacio entre tarjeta y tarjeta. Si
+   fuera un borde de cada boton, se cortaria en cada hueco. */
+.camino-herramientas { position: relative; display: grid; gap: 10px; }
+.camino-herramientas::before {
+  content: "";
+  position: absolute; left: 35px; top: 30px; bottom: 30px;
+  width: 2px; background: var(--linea);
+}
+
+.parada {
+  position: relative;
+  display: flex; align-items: center; gap: 14px;
+  width: 100%; padding: 16px 16px 16px 14px;
   background: var(--lienzo);
-  border: 1px solid var(--linea); border-radius: 18px;
+  border: 1px solid var(--linea); border-radius: 16px;
   font: inherit; color: inherit; text-align: left; cursor: pointer;
   box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
-  transition: transform .12s, box-shadow .12s, border-color .12s;
+  transition: transform .12s, border-color .12s, box-shadow .12s;
   -webkit-tap-highlight-color: transparent;
 }
-.herramienta:active {
-  transform: scale(.985);
-  border-color: var(--azul-claro);
-  box-shadow: none;
-}
+.parada:active { transform: scale(.985); border-color: var(--azul-claro); box-shadow: none; }
 
-/* El dibujo tiene su propia caja de color: separa la figura del texto y le da a cada
-   herramienta una silueta que se reconoce antes de leer el nombre. */
-.herramienta-dibujo {
+/* El numero de la parada, apoyado sobre la linea. El aro del color del papel es lo que
+   hace que la linea pase por atras sin tocarlo. */
+.parada-hito {
   flex-shrink: 0;
-  width: 56px; height: 56px;
+  width: 40px; height: 40px;
   display: grid; place-items: center;
-  border-radius: 15px;
-  background: var(--azul-suave); color: var(--azul);
+  border-radius: 50%;
+  background: var(--azul); color: #fff;
+  box-shadow: 0 0 0 5px var(--lienzo);
+  font-size: 15px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
-.herramienta-dibujo svg { width: 34px; height: 34px; }
 
-.herramienta-nombre {
-  flex: 1; min-width: 0;
-  font-size: 15.5px; font-weight: 700; line-height: 1.28;
-  letter-spacing: -.01em;
+.parada-cuerpo { flex: 1; min-width: 0; }
+.parada-momento {
+  display: block;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--tinta-2);
 }
-.herramienta-flecha { flex-shrink: 0; color: var(--tinta-2); font-size: 20px; }
+.parada-nombre {
+  display: block; margin-top: 2px;
+  font-size: 15.5px; font-weight: 700; line-height: 1.25; letter-spacing: -.01em;
+}
+.parada-flecha { flex-shrink: 0; color: var(--tinta-2); font-size: 20px; }
 
 /* ---------- Cartera ---------- */
 
