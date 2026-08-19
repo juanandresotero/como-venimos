@@ -8,7 +8,8 @@
    agosto y estás mandando el de julio, tenés que verlo antes de tocar el botón. */
 
 import {
-  TIPOS, mesDe, nombreDelMes, mesesConDato, buscar, calcular, atraso, textoParaElCliente,
+  TIPOS, mesDe, nombreDelMes, mesesConDato, buscar, calcular, atraso, porQueCoinciden,
+  textoParaElCliente,
 } from "../lib/reajuste.js";
 import {
   escapar, numeroDesde, formatearMientrasEscribe, plata, plataUSD, pctFino,
@@ -201,7 +202,25 @@ function cartelDelIndice(indice, indices) {
       ${escapar(cuando)}. Lo podés mandar igual: el texto lo aclara.</p>`;
   }
   return html`<p class="apunte" style="margin-top:12px">✅ Índice de ${escapar(cuando)},
-    verificado contra el IPC y la URA${revisado ? ` · dato del ${escapar(revisado)}` : ""}.</p>`;
+    verificado contra el IPC y la URA${revisado ? ` · dato del ${escapar(revisado)}` : ""}.</p>
+    ${notaDeLaCoincidencia(indices, indice.mes)}`;
+}
+
+/* Cuando los dos caminos dan el mismo número, decir por qué.
+
+   El coeficiente es el MENOR entre el IPC y la URA. Cuando el IPC viene más abajo, elegir
+   uno u otro da igual — y eso es lo correcto, no una falla. Pero desde afuera se ve igual
+   que una app rota, y sin este renglón hay que salir a preguntar. */
+function notaDeLaCoincidencia(indices, mes) {
+  const igual = porQueCoinciden(indices, mes);
+  if (!igual) return "";
+  const cuanto = igual.puntos
+    ? ` — viene ${escapar(pctFino(igual.puntos / 100, 1))} más abajo`
+    : "";
+  return html`<p class="apunte" style="margin-top:6px">Este mes el IPC y el coeficiente dan
+    lo mismo: el coeficiente es el <em>menor</em> entre el IPC y la URA, y hoy manda el
+    IPC${cuanto}. No siempre es así — entre 2020 y 2022 mandó la URA y llegaron a
+    separarse 3 puntos.</p>`;
 }
 
 /* ---------- El atraso ---------- */

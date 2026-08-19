@@ -259,6 +259,10 @@ def armar(publicados: dict, ipcs: dict, series: dict, hoy: str) -> dict:
         ipc = ipcs.get(llave)
         recalculado = recalcular(series, anio, mes) if series else None
         avisos = revisar(coeficiente, ipc, recalculado)
+        # La URA se guarda para poder EXPLICAR, no para calcular. Cuando el coeficiente y
+        # el IPC dan igual, el usuario no tiene como saber si la app anda mal: con la URA
+        # a mano se le puede decir "coinciden porque el IPC viene mas abajo".
+        ura = variacion(series, anio, mes, "ura") if series else None
         meses[llave] = {
             "coeficiente": coeficiente,
             # Con los mismos cuatro decimales con que se publica el coeficiente. El IPC
@@ -266,6 +270,7 @@ def armar(publicados: dict, ipcs: dict, series: dict, hoy: str) -> dict:
             # caminos dieran dos pesos distintos sobre el mismo alquiler sin ningun
             # motivo — parece un error de la app y no lo es.
             "ipc": None if ipc is None else round(ipc, 4),
+            "ura": None if ura is None else round(ura, 4),
             "verificado": not avisos,
             "avisos": avisos,
         }

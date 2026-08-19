@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   TIPOS, mesDe, nombreDelMes, mesesConDato, buscar, calcular, mesesEntre, atraso,
+  porQueCoinciden,
   textoParaElCliente,
 } from "../lib/reajuste.js";
 
@@ -181,4 +182,32 @@ test("sin atraso el texto no habla de meses ni de diferencias", () => {
   });
   assert.ok(!t.includes("atrasada"));
   assert.ok(!t.includes("meses con diferencia"));
+});
+
+/* ---------- Por que los dos caminos coinciden ---------- */
+
+test("cuando el coeficiente y el IPC dan igual, se puede explicar por que", () => {
+  const con = { meses: { "2026-06": { coeficiente: 1.0377, ipc: 1.0377, ura: 1.0523 } } };
+  const igual = porQueCoinciden(con, "2026-06");
+  assert.ok(igual);
+  assert.ok(Math.abs(igual.puntos - 1.46) < 0.01, "la URA viene 1,46 puntos arriba");
+});
+
+test("sin la URA igual se sabe que coinciden, solo que no cuanto", () => {
+  const sin = { meses: { "2026-08": { coeficiente: 1.0427, ipc: 1.0427, ura: null } } };
+  const igual = porQueCoinciden(sin, "2026-08");
+  assert.ok(igual);
+  assert.equal(igual.puntos, null);
+});
+
+/* Entre 2020 y 2022 mando la URA: ahi el coeficiente NO era el IPC y no hay nada que
+   explicar, porque los dos numeros se ven distintos solos. */
+test("cuando dan distinto no se dice nada", () => {
+  const distinto = { meses: { "2020-06": { coeficiente: 1.0803, ipc: 1.1105, ura: 1.0803 } } };
+  assert.equal(porQueCoinciden(distinto, "2020-06"), null);
+});
+
+test("sin datos del mes no inventa una explicacion", () => {
+  assert.equal(porQueCoinciden({}, "2026-08"), null);
+  assert.equal(porQueCoinciden(null, "2026-08"), null);
 });
