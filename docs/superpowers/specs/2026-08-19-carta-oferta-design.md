@@ -2,7 +2,8 @@
 
 - **Fecha:** 2026-08-19
 - **Usuario:** Juan Andrés Otero — Agente inmobiliario, RE/MAX Único (Montevideo)
-- **Estado:** Diseño presentado y aprobado en la charla. Pendiente de revisión del escrito.
+- **Estado:** CONSTRUIDO el 2026-08-19. Falta una sola cosa: probar el enlace en un
+  celular de verdad, por WhatsApp (ver §4).
 - **Fuente del texto:** `Carta oferta templete.docx` (entregado por el usuario el
   2026-08-19). **No se versiona**: el `.docx` trae el nombre de una tercera persona en sus
   metadatos y el repositorio es público. El texto vive en `lib/carta-oferta.js`.
@@ -211,8 +212,16 @@ para el botón de devolución.
 ### Lo que hay que probar antes que nada
 
 El enlace va a ser largo. **Presupuesto: 3.000 caracteres** para una carta llena con tres
-firmas. Hay un test que lo mide y falla si se pasa. Si en el celular real WhatsApp lo
-maltrata, se cambia de plan **antes** de construir el PDF, que es la parte cara.
+firmas. Hay un test que lo mide y falla si se pasa.
+
+**Medido el 2026-08-19: entra con margen.** Una carta llena con la firma dibujada del
+comprador MÁS la firma de foto del usuario da un fragmento de **1.908 caracteres** de los
+3.000 (enlace completo: 1.967). El caso real probado en el navegador, con la firma de foto
+sola, dio 1.708.
+
+**Lo único que queda pendiente de todo el proyecto:** mandarse a sí mismo uno de estos
+enlaces por WhatsApp y confirmar que llega entero, que WhatsApp lo reconoce como enlace y
+que al tocarlo abre la página. Eso no se puede probar sin un teléfono.
 
 ---
 

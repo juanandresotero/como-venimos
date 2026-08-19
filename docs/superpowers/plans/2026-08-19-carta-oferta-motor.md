@@ -1,5 +1,11 @@
 # Carta oferta — Etapa 1: el motor
 
+> **EJECUTADO el 2026-08-19, y siguió de largo.** El usuario pidió terminar todo el
+> proyecto, así que después de esta etapa se construyeron también las pantallas y el
+> PDF, sin plan escrito aparte. El freno de la Tarea 8 se pasó por arriba SOLO en la
+> parte automática: el presupuesto del enlace se midió y entra (1.908 de 3.000). La
+> prueba en un celular de verdad sigue pendiente.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Construir el motor de la carta oferta —el documento, las firmas y el enlace— y
