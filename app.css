@@ -596,8 +596,14 @@ body {
   border-radius: 50%;
   background: var(--azul); color: #fff;
   box-shadow: 0 0 0 5px var(--lienzo);
-  font-size: 15px; font-weight: 800;
-  font-variant-numeric: tabular-nums;
+}
+
+/* El dibujo de cada parada. A 22px el trazo fino desaparece y el grueso se empasta:
+   1.9 es el que se sostiene. `currentColor` lo hereda del circulo. */
+.parada-hito svg {
+  width: 22px; height: 22px;
+  fill: none; stroke: currentColor; stroke-width: 1.9;
+  stroke-linecap: round; stroke-linejoin: round;
 }
 
 .parada-cuerpo { flex: 1; min-width: 0; }

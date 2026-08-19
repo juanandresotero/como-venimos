@@ -27,21 +27,37 @@ function nodo(marca) {
   return molde.content;
 }
 
+/* Cada parada lleva su dibujo en vez de un número. El número decía en qué orden pasan
+   las cosas, que es algo que la línea ya cuenta sola; el dibujo dice DE QUÉ se trata,
+   que es lo que uno busca cuando abre el menú apurado.
+
+   Van a 22px adentro de un círculo de 40. A ese tamaño no entra cualquier cosa: se
+   probaron una casa con flecha y una casa con moneda, y las dos se empastan (la flecha
+   queda un borrón en la esquina, la moneda se come el techo). Gana siempre el dibujo
+   con menos piezas. `currentColor` para que sirva en claro y en oscuro. */
+const CASA = `<path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M6 10.2V20h12v-9.8"/>`;
+const PORCIENTO = `<circle cx="7.6" cy="7.6" r="2.6"/><circle cx="16.4" cy="16.4" r="2.6"/>`
+  + `<path d="M18 6 6 18"/>`;
+const ESCALONES = `<path d="M3.5 20.5v-4h5v-4h5v-4h5v-4"/><path d="M3.5 20.5h16"/>`;
+
 export const HERRAMIENTAS = [
   {
     vista: "renta",
     momento: "Antes de comprarla",
     nombre: "¿Cuánto renta una propiedad?",
+    dibujo: CASA,
   },
   {
     vista: "comisiones",
     momento: "Al cerrar el negocio",
     nombre: "¿Cuánto es tu comisión?",
+    dibujo: PORCIENTO,
   },
   {
     vista: "reajuste",
     momento: "Cada año del contrato",
     nombre: "¿Cuánto sube el alquiler?",
+    dibujo: ESCALONES,
   },
 ];
 
@@ -59,10 +75,12 @@ export function dibujarHerramientas(estado) {
   const camino = document.createElement("div");
   camino.className = "camino-herramientas";
 
-  HERRAMIENTAS.forEach((h, i) => {
+  HERRAMIENTAS.forEach((h) => {
     const parada = nodo(html`
       <button class="parada" data-ir="${escapar(h.vista)}">
-        <span class="parada-hito" aria-hidden="true">${i + 1}</span>
+        <span class="parada-hito" aria-hidden="true">
+          <svg viewBox="0 0 24 24">${h.dibujo}</svg>
+        </span>
         <span class="parada-cuerpo">
           <span class="parada-momento">${escapar(h.momento)}</span>
           <span class="parada-nombre">${escapar(h.nombre)}</span>
