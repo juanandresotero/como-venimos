@@ -552,6 +552,46 @@ body {
   padding-top: 14px;
 }
 
+/* ---------- Herramientas ---------- */
+
+/* Tres tarjetas grandes, no tres renglones. Se tocan mil veces y con el pulgar, asi que
+   el blanco alrededor no es desperdicio: es lo que hace que no haya que apuntar. */
+.herramientas { display: grid; gap: 12px; }
+
+.herramienta {
+  display: flex; align-items: center; gap: 16px;
+  width: 100%; padding: 18px 18px 18px 16px;
+  background: var(--lienzo);
+  border: 1px solid var(--linea); border-radius: 18px;
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+  transition: transform .12s, box-shadow .12s, border-color .12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.herramienta:active {
+  transform: scale(.985);
+  border-color: var(--azul-claro);
+  box-shadow: none;
+}
+
+/* El dibujo tiene su propia caja de color: separa la figura del texto y le da a cada
+   herramienta una silueta que se reconoce antes de leer el nombre. */
+.herramienta-dibujo {
+  flex-shrink: 0;
+  width: 56px; height: 56px;
+  display: grid; place-items: center;
+  border-radius: 15px;
+  background: var(--azul-suave); color: var(--azul);
+}
+.herramienta-dibujo svg { width: 34px; height: 34px; }
+
+.herramienta-nombre {
+  flex: 1; min-width: 0;
+  font-size: 15.5px; font-weight: 700; line-height: 1.28;
+  letter-spacing: -.01em;
+}
+.herramienta-flecha { flex-shrink: 0; color: var(--tinta-2); font-size: 20px; }
+
 /* ---------- Cartera ---------- */
 
 /* El estado de una propiedad se lee por color: cuanto mas saturado el azul, mas cerca
