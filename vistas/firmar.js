@@ -9,12 +9,17 @@
 import { CAMPOS, armar, fundir } from "../lib/carta-oferta.js";
 import { deEnlace, aEnlace } from "../lib/carta-enlace.js";
 import { mandarTexto, bajarArchivo } from "../lib/compartir.js";
+import { esNavegadorDeOtraApp, comoSalirDeAca } from "../lib/navegador.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { cargarMembrete } from "../lib/membrete.js";
 import { deBytes } from "../lib/firma.js";
 import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
 import { pedirFirma } from "./firma-panel.js";
-import { leerFirmaPropia, leerBorrador, guardarBorrador } from "../lib/carta-guardado.js";
+import {
+  leerFirmaPropia, leerBorrador, guardarBorrador, leerDelHistorial, guardarEnHistorial,
+  comoSeLlamaLaCarta,
+} from "../lib/carta-guardado.js";
+import { anotarVuelta } from "../lib/carta-transito.js";
 import { escapar, plata } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -34,6 +39,9 @@ const COMO_SE_LLAMA = {
 };
 
 let estado = null;
+
+/* La fecha del teléfono del cliente. Sirve para que Juan vea cuándo le contestó cada uno. */
+const hoy = () => new Date().toISOString().slice(0, 10);
 
 async function arrancar() {
   const leido = await deEnlace(window.location.href);
@@ -74,6 +82,20 @@ function dibujar() {
   const yaFirmo = Boolean(estado.firmas[claveFirma]);
 
   const trozo = document.createDocumentFragment();
+
+  /* Adentro del navegador que WhatsApp trae incorporado no anda ni compartir ni bajar
+     archivos. Se avisa ARRIBA DE TODO y con los pasos exactos, porque el que lo recibe es
+     un cliente que no tiene por que saber que existe esa diferencia. */
+  if (esNavegadorDeOtraApp()) {
+    trozo.append(nodo(html`
+      <section class="tarjeta aviso-fuera" style="margin-bottom:16px">
+        <p class="frase"><strong>Abrila en tu navegador.</strong> Estás viéndola adentro de
+          WhatsApp, y desde acá no se puede bajar el PDF.</p>
+        <p class="apunte" style="margin-top:6px">${escapar(comoSalirDeAca())}</p>
+        <p class="apunte" style="margin-top:6px">Firmar y devolverla sí funciona igual desde acá.</p>
+      </section>
+    `));
+  }
 
   trozo.append(nodo(html`
     <section style="margin-bottom:16px">
@@ -189,13 +211,16 @@ function dibujar() {
     <section class="tarjeta">
       <h2 class="titulo" style="font-size:16px">Mandarla</h2>
       <p class="apunte" style="margin:2px 0 10px">${yaFirmo
-        ? "Ya está firmada. Se abre WhatsApp y elegís vos a quién mandársela."
+        ? (estado.telefono
+          ? `Ya está firmada. Se la devolvés a ${escapar(estado.agente || "quien te la mandó")} por WhatsApp.`
+          : "Ya está firmada. Se abre WhatsApp y elegís vos a quién mandársela.")
         : "Firmá arriba antes de mandarla."}</p>
       <div class="botonera">
         <button class="boton boton-chico boton-primario" id="devolver" ${yaFirmo ? "" : "disabled"}>
-          Enviar carta oferta</button>
+          ${estado.telefono ? "Devolver la carta firmada" : "Enviar carta oferta"}</button>
         <button class="boton boton-chico" id="pdf">Bajar el PDF</button>
       </div>
+      <p class="apunte" id="aviso-mandar" hidden style="margin-top:10px"></p>
     </section>
   `);
 
@@ -210,20 +235,27 @@ function dibujar() {
       turno: estado.turno,
       agente: estado.agente,
       firmas,
+      id: estado.id,
+      telefono: estado.telefono,
     });
-    /* Por el menu de compartir del sistema, no por wa.me: en el celular wa.me abre
-       api.whatsapp.com, una pagina de la que no se sale, y el cliente queda trabado sin
-       poder devolver la carta. Elige el destinatario el, que puede querer mandarsela a su
-       escribano y no al agente. */
+    /* Con el telefono del agente adentro del enlace, WhatsApp abre DERECHO la conversacion
+       con el: el cliente no tiene que buscarlo en su agenda. Y si esto se abrio adentro de
+       WhatsApp, `mandarTexto` sabe que ahi la bandeja del sistema no anda y navega a wa.me,
+       que es lo unico que funciona en esa ventanita. */
     await mandarTexto(`Te paso la carta oferta firmada.
 
-${enlace}`);
+${enlace}`, { telefono: estado.telefono });
   });
 
+  const avisoMandar = cierre.getElementById("aviso-mandar");
   cierre.getElementById("pdf").addEventListener("click", async () => {
-    await bajarArchivo(armarPDF(armar(estado.valores, estado.quitadas, {
+    const como = await bajarArchivo(armarPDF(armar(estado.valores, estado.quitadas, {
       agente: estado.agente, firmadas: Object.keys(estado.firmas),
     }), estado.firmas, await cargarMembrete()).aBlob(), nombreDelArchivo(estado.valores));
+    if (como === "bloqueado") {
+      avisoMandar.hidden = false;
+      avisoMandar.textContent = `Para bajar el PDF hay que salir de WhatsApp. ${comoSalirDeAca()}`;
+    }
   });
   trozo.append(cierre);
 
@@ -247,13 +279,29 @@ ${enlace}`);
       </section>
     `);
     traer.getElementById("traer").addEventListener("click", () => {
-      const base = leerBorrador() || { valores: {}, quitadas: [], firmas: {} };
+      /* La vuelta cae en SU carta, no en la que este abierta. Antes se juntaba siempre con
+         el borrador, y con dos cartas oferta a la vez eso mezclaba a un cliente con otro.
+         El numero de carta viaja en el enlace justamente para esto. */
+      const abierta = leerBorrador() || { valores: {}, quitadas: [], firmas: {} };
+      const suya = estado.id ? leerDelHistorial(estado.id) : null;
+      const base = suya || abierta;
+
       const junta = fundir(base, estado, estado.turno);
+      junta.id = base.id || estado.id || "";
+      junta.nombre = base.nombre || "";
+      junta.mandadas = base.mandadas || {};
       junta.quitadas = estado.quitadas.length ? estado.quitadas : junta.quitadas;
-      guardarBorrador(junta, null);
+      const anotada = anotarVuelta(junta, estado.turno, hoy());
+
+      guardarEnHistorial(anotada, base.cuando || null);
+      /* Si la carta que volvio es justo la que tiene abierta, tambien se le refresca ahi. */
+      if (!suya || abierta.id === anotada.id) guardarBorrador(anotada, null);
+
       const aviso = document.getElementById("traido");
       aviso.hidden = false;
-      aviso.textContent = "✓ Guardada. Abrí la app en Herramientas → Enviar carta oferta.";
+      aviso.textContent = suya
+        ? `✓ Guardada en “${comoSeLlamaLaCarta(anotada)}”. Miralas en Herramientas → Enviar carta oferta → En tránsito.`
+        : "✓ Guardada. Abrí la app en Herramientas → Enviar carta oferta.";
     });
     trozo.append(traer);
   }

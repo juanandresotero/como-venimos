@@ -11,6 +11,11 @@
 import { CAMPOS, POR_CLAVE, armar } from "../lib/carta-oferta.js";
 import { aEnlace } from "../lib/carta-enlace.js";
 import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
+import { comoSalirDeAca } from "../lib/navegador.js";
+import {
+  nuevoId, anotarMandada, anotarEntregada, estadoDeCarta, comoVaLaCarta, estaPronta,
+  mandadas, vueltas,
+} from "../lib/carta-transito.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { cargarMembrete } from "../lib/membrete.js";
 import { deBytes } from "../lib/firma.js";
@@ -62,6 +67,7 @@ let carta = null;
 let mostrandoPrevia = false;
 let mostrandoHistorial = false;
 let preguntandoNueva = false;
+let mostrandoTransito = false;
 
 /* Los pedazos que cambian mientras se escribe. Se guardan las referencias para poder
    refrescarlos SOLOS.
@@ -438,8 +444,16 @@ function dibujarBotones(estado, agente) {
       </div>
       ${telefono ? "" : '<p class="apunte" style="margin-top:8px">⚠ Cargá tu teléfono en '
         + "Ajustes: sin eso, el que reciba la carta no te la puede devolver de un toque.</p>"}
+      <p class="apunte" id="aviso-mandar" hidden style="margin-top:10px"></p>
     </section>
   `);
+
+  /* Se agarra AHORA: `marca` es un fragmento y al insertarlo queda vacío. */
+  const avisoMandar = marca.getElementById("aviso-mandar");
+  const avisar = (texto) => {
+    avisoMandar.hidden = false;
+    avisoMandar.textContent = texto;
+  };
 
   marca.querySelectorAll("[data-mandar]").forEach((boton) => {
     boton.addEventListener("click", async () => {
@@ -453,12 +467,18 @@ function dibujarBotones(estado, agente) {
       const firmas = { ...carta.firmas };
       delete firmas.depositario;
 
+      /* Desde que sale del teléfono, la carta tiene número propio: es lo que hace que la
+         vuelta de cada parte caiga en SU carta y no en la que esté abierta. */
+      if (!carta.id) carta.id = nuevoId();
+
       const enlace = await aEnlace(base, {
         valores: carta.valores,
         quitadas: carta.quitadas,
         turno: boton.dataset.mandar,
         agente,
         firmas,
+        id: carta.id,
+        telefono,
       });
 
       /* Se manda el PDF y no el enlace pelado: en WhatsApp un archivo se ve prolijo y un
@@ -469,8 +489,17 @@ function dibujarBotones(estado, agente) {
       });
       const pdf = armarPDF(bloques, carta.firmas, await cargarMembrete(), enlace,
         boton.dataset.mandar).aBlob();
-      await mandarArchivo(pdf, nombreDelArchivo(carta.valores),
+      const como = await mandarArchivo(pdf, nombreDelArchivo(carta.valores),
         "Te paso la oferta de compra. El PDF va aparte.");
+      if (como === "bloqueado") {
+        avisar(`Para mandar el PDF hay que salir de WhatsApp. ${comoSalirDeAca()}`);
+        return;
+      }
+      /* Queda anotada en "En tránsito": a quién se le mandó y qué día. */
+      carta = anotarMandada(carta, boton.dataset.mandar, estado.hoy);
+      guardarEnHistorial(carta, carta.cuando || estado.hoy);
+      guardar(estado);
+      estado.redibujar();
     });
   });
 
@@ -497,15 +526,23 @@ function dibujarBotones(estado, agente) {
    Empezar una nueva PREGUNTA si guardar la de ahora, y con qué nombre. Sin preguntar,
    tocar el botón sin querer se lleva media hora de trabajo. */
 function barraDeCartas(estado) {
-  const historial = leerHistorial();
+  /* Las cartas mandadas y las guardadas viven en la MISMA lista: lo que las separa es en
+     qué momento están. Tener dos listas paralelas era pedir que se desincronizaran. */
+  const todas = leerHistorial();
+  const enTransito = todas.filter((c) => estadoDeCarta(c) === "transito");
+  const guardadas = todas.filter((c) => estadoDeCarta(c) !== "transito");
 
   const marca = nodo(html`
     <section class="tarjeta tarjeta-apretada">
       <div class="cabeza-carta">
         <button class="boton boton-chico boton-primario" id="nueva">Nueva</button>
-        ${historial.length
+        ${enTransito.length
+          ? html`<button class="boton boton-chico" id="ver-transito">
+              En tránsito (${enTransito.length}) ${mostrandoTransito ? "▴" : "▾"}</button>`
+          : ""}
+        ${guardadas.length
           ? html`<button class="boton boton-chico" id="ver-historial">
-              Historial (${historial.length}) ${mostrandoHistorial ? "▴" : "▾"}</button>`
+              Historial (${guardadas.length}) ${mostrandoHistorial ? "▴" : "▾"}</button>`
           : ""}
         <span class="cabeza-carta-nombre">${escapar(comoSeLlamaLaCarta(carta))}</span>
       </div>
@@ -525,6 +562,11 @@ function barraDeCartas(estado) {
               semilla ? "Agregarlo a esta carta" : "Cancelar"}</button>
           </div>
         </div>` : ""}
+
+      ${mostrandoTransito ? html`
+        <p class="apunte" style="margin:10px 0 6px">Las que ya mandaste. Cuando una parte te
+          devuelve la suya y la traés, se marca sola acá.</p>
+        <ul class="transito"></ul>` : ""}
 
       ${mostrandoHistorial ? html`<ul class="historial"></ul>` : ""}
     </section>
@@ -560,14 +602,35 @@ function barraDeCartas(estado) {
     if (semilla) plantarSemilla(estado);
     estado.redibujar();
   });
+  conectar("ver-transito", () => {
+    mostrandoTransito = !mostrandoTransito;
+    mostrandoHistorial = false;
+    estado.redibujar();
+  });
   conectar("ver-historial", () => {
     mostrandoHistorial = !mostrandoHistorial;
+    mostrandoTransito = false;
     estado.redibujar();
   });
 
+  const abrir = (guardada) => {
+    carta = { ...guardada };
+    mostrandoHistorial = false;
+    mostrandoTransito = false;
+    guardar(estado);
+    estado.redibujar();
+  };
+
+  const cajaTransito = marca.querySelector(".transito");
+  if (cajaTransito) {
+    for (const guardada of enTransito) {
+      cajaTransito.append(filaDeTransito(guardada, estado, abrir));
+    }
+  }
+
   const lista = marca.querySelector(".historial");
   if (lista) {
-    for (const guardada of historial) {
+    for (const guardada of guardadas) {
       const li = document.createElement("li");
       li.className = "historial-fila";
       const cuantasFirmas = Object.keys(guardada.firmas).length;
@@ -575,16 +638,12 @@ function barraDeCartas(estado) {
         <button class="historial-abrir" data-abrir="1">
           <span class="historial-nombre">${escapar(comoSeLlamaLaCarta(guardada))}</span>
           <span class="historial-cuando">${escapar(guardada.cuando || "")}${
-            cuantasFirmas ? ` · ${cuantasFirmas} firma${cuantasFirmas > 1 ? "s" : ""}` : ""}</span>
+            cuantasFirmas ? ` · ${cuantasFirmas} firma${cuantasFirmas > 1 ? "s" : ""}` : ""}${
+            guardada.entregada ? " · enviada a las partes" : ""}</span>
         </button>
         <button class="boton-mini" data-borrar="1">Borrar</button>
       `;
-      li.querySelector("[data-abrir]").addEventListener("click", () => {
-        carta = { ...guardada };
-        mostrandoHistorial = false;
-        guardar(estado);
-        estado.redibujar();
-      });
+      li.querySelector("[data-abrir]").addEventListener("click", () => abrir(guardada));
       li.querySelector("[data-borrar]").addEventListener("click", () => {
         borrarDelHistorial(guardada.id);
         estado.redibujar();
@@ -596,9 +655,52 @@ function barraDeCartas(estado) {
   return marca;
 }
 
+/* Un renglón del tablero: quién la tiene, quién ya contestó y qué falta hacer. */
+function filaDeTransito(guardada, estado, abrir) {
+  const li = document.createElement("li");
+  li.className = "historial-fila transito-fila";
+  const pronta = estaPronta(guardada);
+  const partes = ["comprador", "propietario"]
+    .filter((t) => mandadas(guardada)[t])
+    .map((t) => {
+      const nombre = t === "comprador" ? "Comprador" : "Propietario";
+      return vueltas(guardada)[t]
+        ? `<span class="transito-parte transito-listo">✓ ${nombre}</span>`
+        : `<span class="transito-parte transito-espera">⋯ ${nombre}</span>`;
+    }).join("");
+
+  li.innerHTML = html`
+    <button class="historial-abrir" data-abrir="1">
+      <span class="historial-nombre">${escapar(comoSeLlamaLaCarta(guardada))}</span>
+      <span class="historial-cuando ${pronta ? "transito-pronta" : ""}">${
+        escapar(comoVaLaCarta(guardada))}</span>
+      <span class="transito-partes">${partes}</span>
+    </button>
+    ${pronta ? html`<button class="boton-mini boton-mini-primario" data-cerrar="1">Ya la envié</button>` : ""}
+  `;
+  li.querySelector("[data-abrir]").addEventListener("click", () => abrir(guardada));
+
+  /* "Ya la envié" es el final del camino: la carta deja el tablero y pasa al historial como
+     completa. Se abre además, porque lo que sigue es mandarles el PDF final con el botón
+     de abajo, que ya sabe armarlo con las dos firmas. */
+  const cerrar = li.querySelector("[data-cerrar]");
+  if (cerrar) {
+    cerrar.addEventListener("click", () => {
+      const cerrada = anotarEntregada(guardada, estado.hoy);
+      guardarEnHistorial(cerrada, cerrada.cuando || estado.hoy);
+      carta = { ...cerrada };
+      mostrandoTransito = false;
+      guardar(estado);
+      estado.redibujar();
+    });
+  }
+  return li;
+}
+
 function empezarDeCero(estado) {
   preguntandoNueva = false;
   mostrandoHistorial = false;
+  mostrandoTransito = false;
   borrarBorrador();
   carta = null;
   arrancar(estado);
