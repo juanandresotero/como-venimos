@@ -25,19 +25,33 @@ export function dibujarCartera(estado) {
   const volumen = activas.reduce((t, p) => t + (p.precio || 0), 0);
   const cuenta = (clave) => activas.filter((p) => p.estado === clave).length;
 
+  /* Una busqueda abierta ESTA en negociacion: hay un comprador y una operacion por
+     cerrar. Que no sea una propiedad tuya no la saca de la cuenta — el usuario las cuenta
+     y le daban una menos que las que tiene de verdad. */
+  const busquedas = abiertas(estado);
+  const negociando = cuenta("en_negociacion") + busquedas.length;
+
   const trozo = document.createDocumentFragment();
 
   trozo.append(nodo(html`
     <section style="margin-bottom:14px">
-      <p class="etiqueta">Tu cartera</p>
-      <h1 class="titulo" style="font-size:27px;margin-top:4px">
+      <h1 class="titulo" style="font-size:27px">
         ${activas.length} ${activas.length === 1 ? "propiedad" : "propiedades"}
       </h1>
-      <p class="apunte">
-        ${plataUSD(volumen)} publicados ·
-        ${cuenta("reservada")} ${cuenta("reservada") === 1 ? "reservada" : "reservadas"} ·
-        ${cuenta("en_negociacion")} en negociación
-      </p>
+      <div class="resumen-cartera">
+        <div class="resumen-dato">
+          <span class="resumen-cifra">${plata(volumen)}</span>
+          <span class="resumen-nombre">publicado</span>
+        </div>
+        <div class="resumen-dato">
+          <span class="resumen-cifra">${negociando}</span>
+          <span class="resumen-nombre">negociando</span>
+        </div>
+        <div class="resumen-dato">
+          <span class="resumen-cifra">${cuenta("reservada")}</span>
+          <span class="resumen-nombre">${cuenta("reservada") === 1 ? "reservada" : "reservadas"}</span>
+        </div>
+      </div>
     </section>
 
     <section class="filtros">
@@ -65,7 +79,7 @@ export function dibujarCartera(estado) {
      — el aviso es de otro agente — asi que si no aparecen aca, la cartera muestra menos de
      lo que de verdad tenés en marcha. Van al final y aparte, porque no son publicaciones
      tuyas y no se pueden proyectar como las otras. */
-  if (!filtro.archivo) trozo.append(busquedasAbiertas(estado));
+  if (!filtro.archivo && busquedas.length) trozo.append(busquedasAbiertas(estado, busquedas));
 
   for (const boton of trozo.querySelectorAll("[data-filtro]")) {
     boton.addEventListener("click", () => {
@@ -77,12 +91,14 @@ export function dibujarCartera(estado) {
   return trozo;
 }
 
-function busquedasAbiertas(estado) {
-  const abiertas = (estado.datos.negocios || []).filter(
+/* Las busquedas que siguen abiertas. Se listan aparte y ademas se cuentan arriba. */
+function abiertas(estado) {
+  return (estado.datos.negocios || []).filter(
     (n) => n.estado !== "cerrado" && esBusqueda(n, estado.datos.ajustes)
   );
-  if (!abiertas.length) return document.createDocumentFragment();
+}
 
+function busquedasAbiertas(estado, lasAbiertas) {
   const anio = Number(estado.hoy.slice(0, 4));
   const trozo = nodo(html`
     <div class="separador-indicadores">
@@ -92,7 +108,7 @@ function busquedasAbiertas(estado) {
   `);
 
   const lista = trozo.getElementById("lista-busquedas");
-  for (const n of abiertas) {
+  for (const n of lasAbiertas) {
     /* Una busqueda NO es una venta: es una compra.
 
        El `tipo_negocio` dice "venta" porque para la plata lo es — se cobra la comision de
@@ -106,17 +122,16 @@ function busquedasAbiertas(estado) {
       <button class="fila" data-negocio="${escapar(n.id)}">
         <span class="fila-cuerpo">
           <span class="fila-titulo">${escapar(n.direccion || "Sin dirección")}</span>
-          <span class="fila-sub">
-            ${escapar(n.barrio || "sin barrio")} · ${operacion} ·
+          <span class="fila-marca">
             <span class="chip-estado chip-negociacion">${nombreEstado("en_negociacion")}</span>
-            ${n.fecha_negociacion ? ` · desde ${fechaCorta(n.fecha_negociacion, anio)}` : ""}
+            <span class="fila-sub">${escapar(n.barrio || "sin barrio")} · ${operacion}</span>
           </span>
         </span>
-        <span class="fila-derecha">
-          <span class="fila-plata">
-            <span class="cifra cifra-media">${plata(n.precio_operacion)}</span>
-            ${n.ganancia ? `<span class="fila-sub">${plata(n.ganancia)} tuyos</span>` : ""}
-          </span>
+        <span class="fila-derecha fila-plata">
+          <span class="cifra cifra-media">${plata(n.precio_operacion)}</span>
+          ${n.fecha_negociacion
+            ? html`<span class="fila-sub">desde ${fechaCorta(n.fecha_negociacion, anio)}</span>`
+            : ""}
         </span>
       </button>
     `);
@@ -139,24 +154,41 @@ const CLASE_ESTADO = {
   desaparecida: "chip-caida",
 };
 
+/* Los tipos vienen del aviso de RE/MAX con el nombre interno. "departamento_estandar" no
+   es una palabra que nadie diga. */
+const TIPOS = { departamento_estandar: "departamento" };
+const nombreTipo = (t) => TIPOS[t] || String(t || "").replace(/_/g, " ");
+
 function fila(p, estado) {
   const clave = estadoVisible(p);
   const dias = diasEnCartera(p, estado.hoy);
   const r = rendimiento(estado.datos.negocios, p.entity_id);
+  /* Fuera de la proyeccion: el precio se apaga en vez de agregar un cartel que dice
+     "fuera". El cartel corria el precio de lugar y rompia la unica columna que en esta
+     lista se lee de un vistazo — la de la plata. */
+  const cuenta = p.usar_en_proyeccion !== false;
+
   const trozo = nodo(html`
-    <button class="fila" data-id="${escapar(p.entity_id)}">
+    <button class="fila fila-propiedad" data-id="${escapar(p.entity_id)}">
       <span class="fila-cuerpo">
         <span class="fila-titulo">${escapar(p.direccion || p.titulo || "Sin dirección")}</span>
-        <span class="fila-sub">
-          ${escapar(p.barrio || "sin barrio")} · ${escapar(p.tipo || "")} ·
+        <span class="fila-marca">
           <span class="chip-estado ${CLASE_ESTADO[clave] || ""}">${nombreEstado(clave)}</span>
-          ${dias !== null ? ` · ${dias} días` : ""}
-          ${r.cerrados ? ` · dio <strong>${plata(r.ganancia)}</strong> de ${plata(r.facturacion)}` : ""}
+          <span class="fila-sub">${escapar(p.barrio || "sin barrio")} ·
+            ${escapar(nombreTipo(p.tipo))}</span>
         </span>
+        ${r.cerrados
+          ? html`<span class="fila-sub">Ya dio <strong>${plata(r.ganancia)}</strong>
+              de ${plata(r.facturacion)}</span>`
+          : ""}
       </span>
-      <span class="fila-derecha">
-        <span class="cifra cifra-media">${plata(p.precio)}</span>
-        ${p.usar_en_proyeccion === false ? '<span class="chip-apagado">fuera</span>' : ""}
+      <!-- Los dias iban al final de la segunda linea y se cortaban con puntos suspensivos
+           en las direcciones largas: quedaba "113 d...". A la derecha entran siempre y
+           ademas quedan en columna, que es como se comparan. -->
+      <span class="fila-derecha fila-plata">
+        <span class="cifra cifra-media ${cuenta ? "" : "cifra-apagada"}"
+              ${cuenta ? "" : 'title="No cuenta para la proyección"'}>${plata(p.precio)}</span>
+        ${dias !== null ? html`<span class="fila-sub">${dias} días</span>` : ""}
       </span>
     </button>
   `);

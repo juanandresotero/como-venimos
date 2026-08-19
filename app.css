@@ -533,7 +533,7 @@ body {
 .fila-sub { display: block; font-size: 12px; color: var(--tinta-2); margin-top: 2px; }
 .fila-derecha { display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
 /* Siempre las dos caras de la plata: arriba lo que te queda, abajo lo que factura RE/MAX. */
-.fila-plata { text-align: right; }
+.fila-plata { text-align: right; display: block; }
 .fila-plata .fila-sub { margin-top: 1px; }
 .chip-avisos {
   min-width: 21px; height: 21px; padding: 0 6px;
@@ -572,6 +572,36 @@ body {
   background: var(--lienzo-2); color: var(--tinta-2);
   box-shadow: inset 0 0 0 1px var(--linea);
 }
+
+/* El resumen de la cartera: tres numeros con peso, en el alto de un renglon y medio.
+   Antes era una linea de texto gris que se leia como una nota al pie. */
+.resumen-cartera {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; margin-top: 10px;
+  background: var(--linea); border: 1px solid var(--linea);
+  border-radius: 12px; overflow: hidden;
+}
+.resumen-dato { background: var(--lienzo); padding: 9px 10px; }
+.resumen-cifra {
+  display: block; font-size: 17px; font-weight: 800;
+  font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+}
+.resumen-nombre {
+  display: block; margin-top: 1px;
+  font-size: 11px; font-weight: 600; color: var(--tinta-2);
+}
+
+/* El cartel del estado arranca SIEMPRE en el mismo lugar: primero de la segunda linea.
+   Antes iba en medio de un texto corrido y caia donde lo dejara el largo del barrio, asi
+   que en cada fila estaba en otro lado y la lista no se podia barrer con la vista. */
+.fila-marca { display: flex; align-items: center; gap: 7px; margin-top: 4px; min-width: 0; }
+.fila-marca .chip-estado { flex-shrink: 0; }
+.fila-marca .fila-sub {
+  margin-top: 0; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Una propiedad que no cuenta para la proyeccion: el precio se apaga. */
+.cifra-apagada { color: var(--tinta-2); opacity: .55; font-weight: 600; }
 
 /* ---------- Linea de tiempo ---------- */
 
@@ -996,10 +1026,18 @@ body {
    del parrafo que habia antes. La caja necesita lugar para esa etiqueta. */
 .camino-caja { position: relative; padding-top: 19px; }
 .camino-hoy {
-  position: absolute; bottom: 100%; margin-bottom: 1px;
+  position: absolute; bottom: 100%; margin-bottom: 6px;
   transform: translateX(-50%);
   font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
   color: var(--tinta-2); white-space: nowrap;
+}
+/* Una linea que BAJA HASTA la raya: sin esto el texto flota arriba y no se sabe de que
+   habla. El alto tiene que cubrir el margen del cartel mas el hueco que reserva la caja
+   (6 + 19), si no queda un pico corto que no llega y se ve peor que nada. */
+.camino-hoy::after {
+  content: ""; position: absolute; top: 100%; left: 50%;
+  width: 2px; height: 25px; margin-left: -1px;
+  background: var(--tinta); opacity: .45; border-radius: 2px;
 }
 
 /* La barra del nivel de RE/MAX: los montos van adentro de su tramo, y el que no entra
