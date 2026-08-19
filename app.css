@@ -1528,38 +1528,10 @@ body {
   .titulo { font-size: 12pt; }
 }
 
-/* La ventanita para controlar una carta que esta en transito, sin abrirla.
-
-   Lo que importa mirar ahi es lo que FALTA, asi que va en rojo y arriba de lo que ya puso:
-   una rayita en el medio de un parrafo es facil de pasar por alto. */
+/* La ventanita para controlar una carta que esta en transito, sin abrirla. */
 .mirada-estado { margin: 2px 0 12px; font-size: 13px; font-weight: 650; color: var(--azul); }
-.mirada-partes { display: grid; gap: 8px; }
-.mirada-parte {
-  padding: 10px 12px;
-  background: var(--lienzo-2);
-  border: 1px solid var(--linea); border-radius: 12px;
-}
-.mirada-quien {
-  margin: 0 0 4px;
-  font-size: 12.5px; font-weight: 700;
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-}
-.mirada-si { font-size: 11px; font-weight: 650; color: var(--azul); }
-.mirada-no { font-size: 11px; font-weight: 650; color: var(--tinta-2); }
-.mirada-falta { margin: 0; font-size: 12.5px; color: var(--rojo-tinta); }
-.mirada-completo { margin: 0; font-size: 12.5px; color: var(--tinta-2); }
-.mirada-puesto { margin: 3px 0 0; font-size: 11.5px; color: var(--tinta-2); }
-/* La carta entera adentro de la ventanita: con su propio scroll, para que los botones de
-   abajo queden siempre a la vista. */
 .mirada-previa { max-height: 26vh; }
 .mirada-aviso { color: var(--rojo-tinta); margin: 8px 0 0; }
-/* Preguntar si borrar ACA ADENTRO y no en otra ventana encima: dos telones apilados en un
-   telefono es un lio, y esto no se puede deshacer. */
-.mirada-borrar {
-  margin-top: 12px; padding: 12px;
-  background: var(--rojo-suave);
-  border: 1px solid var(--rojo); border-radius: 12px;
-}
 
 /* El tablero de las cartas mandadas: quién la tiene y quién ya contestó. */
 .transito { display: grid; gap: 7px; list-style: none; margin: 0; padding: 0; }

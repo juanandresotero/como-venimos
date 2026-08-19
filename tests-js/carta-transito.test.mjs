@@ -131,3 +131,25 @@ test("volver a mandar una carta archivada la devuelve al tablero", () => {
   assert.equal(comoVaLaCarta(c), "Esperando al propietario");
   assert.deepEqual(vueltas(c), { comprador: "2026-08-20" }, "lo que ya contestaron se conserva");
 });
+
+/* Le pasó a Juan: completó y firmó él la parte del comprador, el documento quedó entero, y
+   el tablero seguía diciendo "Esperando al comprador". Lo que vale es la firma. */
+test("una parte que ya firmó no se sigue esperando, aunque no haya devuelto el enlace", () => {
+  let c = anotarMandada(vacia(), "comprador", "2026-08-19");
+  c = anotarMandada(c, "propietario", "2026-08-19");
+  assert.equal(comoVaLaCarta(c), "Esperando al comprador y al propietario");
+
+  c = { ...c, firmas: { oferente: Uint8Array.from([1, 2, 3]) } };
+  assert.deepEqual(faltanVolver(c), ["propietario"]);
+  assert.equal(comoVaLaCarta(c), "Esperando al propietario");
+
+  c = { ...c, firmas: { ...c.firmas, propietario: Uint8Array.from([4, 5]) } };
+  assert.equal(comoVaLaCarta(c), "Pronta para enviar a las partes");
+  assert.equal(estaPronta(c), true);
+});
+
+test("la firma del depositario no cuenta: es la del propio agente", () => {
+  let c = anotarMandada(vacia(), "comprador", "2026-08-19");
+  c = { ...c, firmas: { depositario: Uint8Array.from([9]) } };
+  assert.deepEqual(faltanVolver(c), ["comprador"]);
+});

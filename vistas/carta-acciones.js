@@ -68,3 +68,20 @@ export async function mandarCartaA(carta, turno, { agente = "", telefono = "" } 
 export async function bajarCarta(carta, { agente = "" } = {}) {
   return bajarArchivo(await pdfDe(carta, agente), nombreDelArchivo(carta.valores));
 }
+
+/* Mandar la carta YA COMPLETA a las partes.
+
+   Es un solo boton y no uno por parte: el documento final es el MISMO para los dos —lleva
+   las dos firmas—, asi que no hay nada que elegir. Se abre la bandeja del sistema y ahi se
+   eligen los destinatarios, incluso los dos de una.
+
+   Va SIN el boton "Firmar en el celular" adentro: ya esta firmada, y un boton para firmar
+   en un documento cerrado solo confunde. */
+export async function mandarCartaCompleta(carta, { agente = "" } = {}) {
+  const como = await mandarArchivo(
+    await pdfDe(carta, agente),
+    nombreDelArchivo(carta.valores),
+    "Te paso la oferta de compra firmada por todas las partes.",
+  );
+  return como !== "bloqueado";
+}

@@ -9,7 +9,7 @@
    las cuentas bancarias. */
 
 import { CAMPOS, POR_CLAVE, armar } from "../lib/carta-oferta.js";
-import { mandarCartaA, bajarCarta } from "./carta-acciones.js";
+import { mandarCartaA, mandarCartaCompleta, bajarCarta } from "./carta-acciones.js";
 import {
   anotarEntregada, estadoDeCarta, comoVaLaCarta, estaPronta,
   mandadas, vueltas, ordenarParaElHistorial, devolverAlTablero,
@@ -633,8 +633,11 @@ function barraDeCartas(estado) {
         mostrandoTransito = true;
         estado.redibujar();
       },
-      alBorrar: () => {
-        borrarDelHistorial(guardada.id);
+      /* Mandada la completa, la carta terminó su camino: deja el tablero y queda de registro. */
+      alEntregar: () => {
+        const cerrada = anotarEntregada(guardada, estado.hoy);
+        guardarEnHistorial(cerrada, cerrada.cuando || estado.hoy);
+        mostrandoTransito = false;
         estado.redibujar();
       },
       alDesarchivar: () => {
@@ -728,7 +731,7 @@ function filaDeTransito(guardada, estado, mirar) {
         escapar(comoVaLaCarta(guardada))}</span>
       <span class="transito-partes">${partes}</span>
     </button>
-    ${pronta ? html`<button class="boton-mini boton-mini-urgente" data-cerrar="1">Archivar</button>` : ""}
+    ${pronta ? html`<button class="boton-mini boton-mini-urgente" data-cerrar="1">Enviar completa</button>` : ""}
     <button class="boton-papelera" data-borrar="1" aria-label="Borrar esta carta" title="Borrar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -747,20 +750,26 @@ function filaDeTransito(guardada, estado, mirar) {
      perder lo que se esté haciendo. Adentro está el botón para abrirla de verdad. */
   li.querySelector("[data-abrir]").addEventListener("click", () => mirar(guardada));
 
-  /* Archivar es el final del camino: la carta deja el tablero y pasa al historial. Se abre
-     además, porque lo que sigue es mandarles el PDF final con el botón de abajo, que ya sabe
-     armarlo con las dos firmas.
+  /* El final del camino: cuando ya firmaron los dos, este botón MANDA el documento final.
+     Es uno solo y no uno por parte, porque el documento es el mismo para las dos.
 
-     Antes decía "Ya la envié" y se leía como una orden de mandarla: Juan lo tocó esperando
-     que la mandara, la carta desapareció del tablero y no supo dónde buscarla. */
+     Antes decía "Ya la envié" y sólo archivaba. Juan lo tocó esperando que lo mandara, la
+     carta desapareció del tablero y no supo dónde buscarla. Ahora hace lo que dice, y recién
+     después la archiva. */
   const cerrar = li.querySelector("[data-cerrar]");
   if (cerrar) {
-    cerrar.addEventListener("click", () => {
+    cerrar.addEventListener("click", async () => {
+      cerrar.disabled = true;
+      const pudo = await mandarCartaCompleta(guardada,
+        { agente: nombrePropio(estado.datos.ajustes) });
+      cerrar.disabled = false;
+      if (!pudo) {
+        cerrar.textContent = "No pude compartirlo";
+        return;
+      }
       const cerrada = anotarEntregada(guardada, estado.hoy);
       guardarEnHistorial(cerrada, cerrada.cuando || estado.hoy);
-      carta = { ...cerrada };
       mostrandoTransito = false;
-      guardar(estado);
       estado.redibujar();
     });
   }

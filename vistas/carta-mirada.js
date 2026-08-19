@@ -1,18 +1,20 @@
 /* Mirar una carta oferta que está en tránsito, sin abrirla.
 
-   Sirve para lo que pidió Juan: controlar lo que llenó el cliente antes de seguir. Ver qué
-   puso, y sobre todo **qué le falta** — que en el papel se ve como una rayita y es fácil que
-   se pase de largo.
+   Sirve para controlar lo que llenó el cliente antes de seguir: se lee el documento tal
+   como quedó, y lo que falta se ve solo, con su rayita en el medio de la frase.
 
-   Es de sólo mirar a propósito: se abre encima de lo que se esté haciendo y se cierra sin
-   tocar nada. Si hay que corregir algo, el botón de abajo abre la carta de verdad. */
+   Hubo antes un resumen parte por parte con lo que cada uno puso y lo que le faltaba. Juan
+   lo hizo sacar: *"es medio al santo botón, puedo ver el documento y ahí entender"*. Tenía
+   razón — repetía en una lista lo que el documento ya muestra.
 
-import { CAMPOS, armar } from "../lib/carta-oferta.js";
-import { comoVaLaCarta, mandadas, vueltas, estadoDeCarta } from "../lib/carta-transito.js";
+   Se abre encima de lo que se esté haciendo y se cierra sin tocar nada. */
+
+import { armar } from "../lib/carta-oferta.js";
+import { comoVaLaCarta, estadoDeCarta, estaPronta } from "../lib/carta-transito.js";
 import { comoSeLlamaLaCarta } from "../lib/carta-guardado.js";
 import { telon } from "./ventana.js";
-import { mandarCartaA, bajarCarta } from "./carta-acciones.js";
-import { escapar, fechaCorta } from "../lib/formato.js";
+import { mandarCartaA, mandarCartaCompleta, bajarCarta } from "./carta-acciones.js";
+import { escapar } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -20,51 +22,6 @@ function nodo(marca) {
   const molde = document.createElement("template");
   molde.innerHTML = marca.trim();
   return molde.content;
-}
-
-const PARTES = [
-  { quien: "usuario", nombre: "Lo que cargás vos" },
-  { quien: "comprador", nombre: "El comprador" },
-  { quien: "propietario", nombre: "El propietario" },
-];
-
-/* Lo que a cada parte le toca llenar, separado en lo que puso y lo que falta.
-
-   Las casillas quitadas no cuentan: no están en la carta, así que no faltan. */
-export function comoVieneLlenando(carta, quien) {
-  const fuera = new Set(carta.quitadas || []);
-  const puestos = [];
-  const faltan = [];
-  for (const campo of CAMPOS) {
-    if (campo.quien !== quien || fuera.has(campo.clave)) continue;
-    const valor = (carta.valores || {})[campo.clave];
-    const escrito = valor !== null && valor !== undefined && String(valor).trim() !== "";
-    (escrito ? puestos : faltan).push(campo.etiqueta);
-  }
-  return { puestos, faltan };
-}
-
-function renglonDeParte(carta, parte) {
-  const { puestos, faltan } = comoVieneLlenando(carta, parte.quien);
-  if (!puestos.length && !faltan.length) return "";
-
-  const contesto = parte.quien !== "usuario" && vueltas(carta)[parte.quien];
-  const mandada = parte.quien !== "usuario" && mandadas(carta)[parte.quien];
-  const estado = parte.quien === "usuario" ? ""
-    : contesto ? `<span class="mirada-si">✓ contestó el ${escapar(fechaCorta(contesto))}</span>`
-      : mandada ? '<span class="mirada-no">⋯ sin contestar</span>'
-        : '<span class="mirada-no">no se le mandó</span>';
-
-  return html`
-    <div class="mirada-parte">
-      <p class="mirada-quien">${escapar(parte.nombre)} ${estado}</p>
-      ${faltan.length
-        ? `<p class="mirada-falta"><strong>Falta:</strong> ${escapar(faltan.join(", "))}</p>`
-        : '<p class="mirada-completo">Está todo puesto.</p>'}
-      ${puestos.length
-        ? `<p class="mirada-puesto">Puso: ${escapar(puestos.join(", "))}</p>`
-        : ""}
-    </div>`;
 }
 
 /* Abre la ventanita.
@@ -75,22 +32,26 @@ function renglonDeParte(carta, parte) {
    le dejaba borrarla. */
 export function mirarCarta(carta, {
   agente = "", telefono = "", hoy = null,
-  alAbrir, alDesarchivar, alMandar, alBorrar,
+  alAbrir, alDesarchivar, alMandar, alEntregar,
 } = {}) {
   const archivada = estadoDeCarta(carta) === "completa";
+  const pronta = estaPronta(carta);
   const marca = nodo(html`
     <div class="panel-firma">
       <p class="etiqueta">${escapar(comoSeLlamaLaCarta(carta))}</p>
       <p class="mirada-estado">${escapar(comoVaLaCarta(carta))}</p>
 
-      <div class="mirada-partes">
-        ${PARTES.map((p) => renglonDeParte(carta, p)).join("")}
-      </div>
-
-      <p class="etiqueta" style="margin-top:14px">Cómo quedó el documento</p>
+      <p class="etiqueta" style="margin-top:12px">Cómo quedó el documento</p>
       <div class="previa-carta mirada-previa"></div>
 
-      ${alMandar ? html`
+      ${alMandar && pronta ? html`
+        <div class="botonera" style="margin-top:14px">
+          <button class="boton boton-primario boton-ancho" data-hacer="completa">
+            Enviar carta oferta completa</button>
+        </div>
+        <p class="apunte mirada-aviso" hidden></p>` : ""}
+
+      ${alMandar && !pronta ? html`
         <p class="etiqueta" style="margin-top:14px">Mandársela de nuevo</p>
         <div class="botonera">
           <button class="boton boton-chico" data-hacer="mandar" data-turno="comprador">Al comprador</button>
@@ -106,20 +67,9 @@ export function mirarCarta(carta, {
           : ""}
       </div>
 
-      <div class="botonera" style="justify-content:space-between;margin-top:12px">
+      <div class="botonera" style="margin-top:12px">
         <button class="boton boton-chico" data-hacer="cerrar">Cerrar</button>
-        ${alBorrar ? '<button class="boton boton-chico boton-borrar" data-hacer="borrar">Borrar</button>' : ""}
       </div>
-
-      ${alBorrar ? html`
-        <div class="mirada-borrar" hidden>
-          <p class="apunte" style="color:var(--rojo-tinta);margin:0 0 8px">
-            ¿Seguro? Se borra la carta y todo lo que las partes completaron.</p>
-          <div class="botonera">
-            <button class="boton boton-chico boton-borrar" data-hacer="borrar-si">Sí, borrar</button>
-            <button class="boton boton-chico" data-hacer="borrar-no">No</button>
-          </div>
-        </div>` : ""}
     </div>
   `);
 
@@ -147,7 +97,6 @@ export function mirarCarta(carta, {
 
   const ventana = telon(marca);
   const aviso = ventana.caja.querySelector(".mirada-aviso");
-  const cajaBorrar = ventana.caja.querySelector(".mirada-borrar");
 
   ventana.caja.addEventListener("click", async (evento) => {
     const boton = evento.target.closest ? evento.target.closest("[data-hacer]") : null;
@@ -168,18 +117,22 @@ export function mirarCarta(carta, {
         ventana.cerrar();
         alDesarchivar();
         break;
-      /* Borrar pregunta acá adentro y no en otra ventana encima: dos telones apilados en un
-         teléfono es un lío, y esto no se puede deshacer. */
-      case "borrar":
-        cajaBorrar.hidden = false;
-        break;
-      case "borrar-no":
-        cajaBorrar.hidden = true;
-        break;
-      case "borrar-si":
+      /* Cuando ya firmaron los dos, el documento final es UNO SOLO y es el mismo para las
+         dos partes. Por eso acá no hay a quién elegir. */
+      case "completa": {
+        boton.disabled = true;
+        const pudo = await mandarCartaCompleta(carta, { agente });
+        boton.disabled = false;
+        if (!pudo) {
+          aviso.hidden = false;
+          aviso.textContent = "No pude compartir el PDF desde acá. Abrí la app desde su "
+            + "ícono en la pantalla de inicio y probá de nuevo.";
+          return;
+        }
         ventana.cerrar();
-        alBorrar();
+        alEntregar();
         break;
+      }
       case "mandar": {
         boton.disabled = true;
         const mandada = await mandarCartaA(carta, boton.dataset.turno,
