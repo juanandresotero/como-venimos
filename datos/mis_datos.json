@@ -28,7 +28,8 @@
    "precio_negociacion": 40000
   },
   "5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6": {
-   "origen_captacion": "Ref. B.d.r."
+   "origen_captacion": "Ref. B.d.r.",
+   "precio_negociacion": 89900
   },
   "a4b43687-a487-485c-82ae-62118b687ec1": {
    "fecha_captacion_real": "2026-06-08",
