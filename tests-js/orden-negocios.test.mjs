@@ -4,18 +4,33 @@ import { ORDENES, ordenar } from "../vistas/negocios.js";
 
 const n = (x) => ({ id: "x", direccion: "", ...x });
 
-test("los cuatro criterios existen y tienen nombre", () => {
-  assert.equal(ORDENES.length, 4);
-  assert.deepEqual(ORDENES.map((o) => o.clave), ["fecha", "ticket", "ganancia", "direccion"]);
+/* La fecha va partida en dos: "por fecha" a secas no decia si era la de cierre o la de
+   publicacion, y son dos preguntas distintas. */
+test("los cinco criterios existen y tienen nombre", () => {
+  assert.equal(ORDENES.length, 5);
+  assert.deepEqual(ORDENES.map((o) => o.clave),
+    ["cierre", "inicio", "ticket", "ganancia", "direccion"]);
+  assert.ok(ORDENES.every((o) => o.nombre.length > 2));
 });
 
-test("por fecha: lo mas reciente arriba", () => {
+test("por fecha de cierre: lo ultimo que cerraste arriba", () => {
   const lista = ordenar([
     n({ id: "viejo", fecha_fin: "2023-01-01" }),
     n({ id: "nuevo", fecha_fin: "2026-08-01" }),
     n({ id: "medio", fecha_fin: "2025-05-01" }),
-  ], "fecha");
+  ], "cierre");
   assert.deepEqual(lista.map((x) => x.id), ["nuevo", "medio", "viejo"]);
+});
+
+/* Son dos preguntas distintas y tienen que dar distinto: el que cerro ultimo puede ser el
+   que se publico primero. */
+test("por fecha de publicacion ordena por otra cosa que por la de cierre", () => {
+  const datos = [
+    n({ id: "viejo-largo", fecha_inicio: "2024-01-01", fecha_fin: "2026-08-01" }),
+    n({ id: "nuevo-rapido", fecha_inicio: "2026-07-01", fecha_fin: "2026-07-15" }),
+  ];
+  assert.deepEqual(ordenar(datos, "cierre").map((x) => x.id), ["viejo-largo", "nuevo-rapido"]);
+  assert.deepEqual(ordenar(datos, "inicio").map((x) => x.id), ["nuevo-rapido", "viejo-largo"]);
 });
 
 test("por ticket y por ganancia: lo mas grande arriba", () => {
@@ -45,21 +60,21 @@ test("los que no tienen el dato caen al final, no se mezclan con los ceros", () 
   assert.deepEqual(lista.map((x) => x.id), ["caro", "barato", "sin"]);
 });
 
-test("sin fecha de firma se usa la de inicio antes de darlo por vacio", () => {
+test("un negocio sin cerrar cae al final del orden por cierre, no arriba", () => {
   const lista = ordenar([
-    n({ id: "sinnada" }),
     n({ id: "encurso", fecha_inicio: "2026-08-01" }),
-  ], "fecha");
-  assert.deepEqual(lista.map((x) => x.id), ["encurso", "sinnada"]);
+    n({ id: "cerrado", fecha_fin: "2024-01-01" }),
+  ], "cierre");
+  assert.deepEqual(lista.map((x) => x.id), ["cerrado", "encurso"]);
 });
 
 test("un criterio inventado cae en fecha y no deja la lista vacia", () => {
   const datos = [n({ id: "a", fecha_fin: "2024-01-01" }), n({ id: "b", fecha_fin: "2026-01-01" })];
-  assert.deepEqual(ordenar(datos, "loquesea").map((x) => x.id), ["b", "a"]);
+  assert.deepEqual(ordenar(datos, "loquesea").map((x) => x.id), ["b", "a"]);   // cae en cierre
 });
 
 test("ordenar no toca la lista que recibe", () => {
   const original = [n({ id: "a", fecha_fin: "2024-01-01" }), n({ id: "b", fecha_fin: "2026-01-01" })];
-  ordenar(original, "fecha");
+  ordenar(original, "cierre");
   assert.deepEqual(original.map((x) => x.id), ["a", "b"]);
 });

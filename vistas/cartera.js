@@ -40,7 +40,7 @@ export function dibujarCartera(estado) {
       </h1>
       <div class="resumen-cartera">
         <div class="resumen-dato">
-          <span class="resumen-cifra">${plata(volumen)}</span>
+          <span class="resumen-cifra">${plataUSD(volumen)}</span>
           <span class="resumen-nombre">publicado</span>
         </div>
         <div class="resumen-dato">

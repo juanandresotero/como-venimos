@@ -17,8 +17,13 @@ function nodo(marca) {
    y la plata van de mayor a menor (lo ultimo y lo mas grande primero), la direccion al
    reves. Los que no tienen el dato caen al final en vez de mezclarse arriba con ceros. */
 export const ORDENES = [
-  { clave: "fecha", nombre: "Fecha", campo: (n) => n.fecha_fin || n.fecha_inicio || "" },
+  { clave: "cierre", nombre: "Fecha de cierre", campo: (n) => n.fecha_fin || "" },
+  { clave: "inicio", nombre: "Fecha de publicación", campo: (n) => n.fecha_inicio || "" },
   { clave: "ticket", nombre: "Ticket", campo: (n) => n.precio_operacion || 0 },
+  /* `ganancia` es lo que ya calculo el motor, y ahi las puntas YA estan adentro: la
+     facturacion sale del precio por el porcentaje que corresponde a una punta o a dos, y
+     la ganancia es tu tajada de esa facturacion. Ordenar por esto ordena por plata real
+     en el bolsillo, no por precio de la propiedad. */
   { clave: "ganancia", nombre: "Ganancia", campo: (n) => n.ganancia || 0 },
   { clave: "direccion", nombre: "Dirección", campo: (n) => (n.direccion || "").toLowerCase() },
 ];
@@ -37,7 +42,10 @@ export function ordenar(negocios, clave) {
   });
 }
 
-const filtro = { anio: "todos", tipo: "todos", conAvisos: false, orden: "fecha" };
+const filtro = { anio: "todos", tipo: "todos", conAvisos: false, orden: "cierre" };
+// Cual de los desplegables del menu esta abierto. Fuera del dibujado: si viviera en el
+// HTML se cerraria solo en cada redibujado.
+let menuAbierto = null;
 let altaAbierta = false;
 // Fuera del dibujado: tocar una propiedad redibuja, y si el estado viviera en el HTML la
 // solapa se cerraria sola en cada toque.
@@ -68,33 +76,25 @@ export function dibujarNegocios(estado) {
   const trozo = document.createDocumentFragment();
 
   trozo.append(nodo(html`
-    <section style="margin-bottom:14px">
-      <p class="etiqueta">Negocios</p>
-      <h1 class="titulo" style="font-size:27px;margin-top:4px">${lista.length} de ${todos.length}</h1>
-      <p class="apunte">
-        <strong>${plataUSD(totalGan)}</strong> a tu bolsillo · ${plataUSD(totalFact)} facturados
-      </p>
-    </section>
-
-    <section class="filtros">
-      <button class="filtro prendido" id="abrir-alta">+ Nuevo</button>
-      <select class="filtro" id="f-anio" aria-label="Año">
-        <option value="todos">Todos los años</option>
-        ${anios.map((a) => `<option value="${a}"${filtro.anio === a ? " selected" : ""}>${a}</option>`).join("")}
-      </select>
-      <select class="filtro" id="f-tipo" aria-label="Tipo">
-        <option value="todos">Venta y alquiler</option>
-        <option value="venta"${filtro.tipo === "venta" ? " selected" : ""}>Solo venta</option>
-        <option value="alquiler"${filtro.tipo === "alquiler" ? " selected" : ""}>Solo alquiler</option>
-      </select>
-      <button class="filtro ${filtro.conAvisos ? "prendido" : ""}" id="f-avisos">
-        ${filtro.conAvisos ? "● " : ""}Con pendientes
-      </button>
-      <select class="filtro" id="f-orden" aria-label="Ordenar por">
-        ${ORDENES.map((o) => `<option value="${o.clave}"${filtro.orden === o.clave ? " selected" : ""}>Por ${o.nombre.toLowerCase()}</option>`).join("")}
-      </select>
+    <section style="margin-bottom:12px">
+      <div class="cabecera-linea">
+        <h1 class="titulo" style="font-size:27px">${lista.length} de ${todos.length}</h1>
+        <button class="boton boton-primario boton-chico" id="abrir-alta">+ Nuevo</button>
+      </div>
+      <div class="resumen-cartera resumen-dos">
+        <div class="resumen-dato">
+          <span class="resumen-cifra">${plataUSD(totalGan)}</span>
+          <span class="resumen-nombre">a tu bolsillo</span>
+        </div>
+        <div class="resumen-dato">
+          <span class="resumen-cifra">${plataUSD(totalFact)}</span>
+          <span class="resumen-nombre">facturado</span>
+        </div>
+      </div>
     </section>
   `));
+
+  trozo.append(barraDeFiltros(estado, todos, anios));
 
   if (altaAbierta) trozo.append(alta(estado));
 
@@ -113,28 +113,117 @@ export function dibujarNegocios(estado) {
   }
   trozo.append(contenedor);
 
-  trozo.getElementById("f-anio").addEventListener("change", (e) => {
-    filtro.anio = e.target.value;
-    estado.redibujar();
-  });
-  trozo.getElementById("f-tipo").addEventListener("change", (e) => {
-    filtro.tipo = e.target.value;
-    estado.redibujar();
-  });
-  trozo.getElementById("f-orden").addEventListener("change", (e) => {
-    filtro.orden = e.target.value;
-    estado.redibujar();
-  });
-  trozo.getElementById("f-avisos").addEventListener("click", () => {
-    filtro.conAvisos = !filtro.conAvisos;
-    estado.redibujar();
-  });
   trozo.getElementById("abrir-alta").addEventListener("click", () => {
     altaAbierta = !altaAbierta;
     estado.redibujar();
   });
 
   return trozo;
+}
+
+/* La barra de filtros, con el mismo molde que el menu de Salud.
+
+   Antes eran cinco cosas sueltas en una fila: el boton de "+ Nuevo" mezclado con los
+   filtros, dos <select> nativos que en el telefono abren la rueda del sistema, y un boton
+   que prendia y apagaba. Nada indicaba que unas cosas filtran y otra crea.
+
+   Ahora "+ Nuevo" esta arriba con el titulo, y abajo hay una barra pareja de cuatro:
+   tres que despliegan y una que prende. Cada boton adelanta lo que tiene adentro. */
+const PANELES = [
+  { clave: "anio", nombre: "Año" },
+  { clave: "tipo", nombre: "Operación" },
+  { clave: "orden", nombre: "Orden" },
+];
+
+function barraDeFiltros(estado, todos, anios) {
+  const porTipo = (t) => todos.filter((n) => n.tipo_negocio === t).length;
+  const nombreOrden = (ORDENES.find((o) => o.clave === filtro.orden) || ORDENES[0]).nombre;
+  const resumen = {
+    anio: filtro.anio === "todos" ? "Todos" : filtro.anio,
+    tipo: filtro.tipo === "todos" ? "Todas" : (filtro.tipo === "venta" ? "Venta" : "Alquiler"),
+    // "Fecha de cierre" no entra en un boton de 95px: adentro del panel esta el nombre
+    // largo, aca alcanza con la palabra que distingue.
+    orden: nombreOrden.replace("Fecha de cierre", "Cierre").replace("Fecha de publicación", "Publicación"),
+  };
+  const indice = PANELES.findIndex((p) => p.clave === menuAbierto);
+
+  const barra = nodo(html`
+    <div class="menu-caja">
+      <div class="barra-menu barra-filtros">
+        ${PANELES.map((p) => html`
+          <button class="menu-boton ${menuAbierto === p.clave ? "abierto" : ""}"
+                  data-panel="${p.clave}" aria-expanded="${menuAbierto === p.clave}">
+            <span class="menu-nombre">${escapar(p.nombre)}</span>
+            <span class="menu-dato">${escapar(resumen[p.clave])}</span>
+          </button>`).join("")}
+        <button class="menu-boton ${filtro.conAvisos ? "abierto" : ""}" id="f-avisos">
+          <span class="menu-nombre">Pendientes</span>
+          <span class="menu-dato">${filtro.conAvisos ? "Solo" : "Todos"}</span>
+        </button>
+      </div>
+      ${menuAbierto
+        ? html`<div class="menu-globo ${indice >= 2 ? "derecha" : ""}"
+                    style="--desde:${indice}" id="menu-panel"></div>`
+        : ""}
+    </div>
+  `);
+
+  const opcion = (activo, valor, texto, extra = "") => html`
+    <button class="menu-opcion ${activo ? "activo" : ""}" data-valor="${escapar(valor)}">
+      ${escapar(texto)}${extra ? html`<span class="menu-dato">${escapar(extra)}</span>` : ""}
+      ${activo ? '<span class="tilde" aria-hidden="true">✓</span>' : ""}
+    </button>`;
+
+  const panel = barra.getElementById("menu-panel");
+  if (panel) {
+    let opciones = "";
+    if (menuAbierto === "anio") {
+      opciones = opcion(filtro.anio === "todos", "todos", "Todos los años")
+        + anios.map((a) => opcion(filtro.anio === a, a, a,
+          String(todos.filter((n) => (n.fecha_fin || "").slice(0, 4) === a).length))).join("");
+    }
+    if (menuAbierto === "tipo") {
+      // Con la cantidad al lado: saber cuantas hay ANTES de tocar evita el filtro vacio.
+      opciones = opcion(filtro.tipo === "todos", "todos", "Todas", String(todos.length))
+        + opcion(filtro.tipo === "venta", "venta", "Venta", String(porTipo("venta")))
+        + opcion(filtro.tipo === "alquiler", "alquiler", "Alquiler", String(porTipo("alquiler")));
+    }
+    if (menuAbierto === "orden") {
+      opciones = ORDENES.map((o) => opcion(filtro.orden === o.clave, o.clave, o.nombre)).join("");
+    }
+    const lista = nodo(html`<div class="menu-lista">${opciones}</div>`);
+    for (const boton of lista.querySelectorAll("[data-valor]")) {
+      boton.addEventListener("click", () => {
+        filtro[menuAbierto === "anio" ? "anio" : menuAbierto] = boton.dataset.valor;
+        menuAbierto = null;
+        estado.redibujar();
+      });
+    }
+    panel.append(lista);
+  }
+
+  for (const boton of barra.querySelectorAll("[data-panel]")) {
+    boton.addEventListener("click", () => {
+      menuAbierto = menuAbierto === boton.dataset.panel ? null : boton.dataset.panel;
+      estado.redibujar();
+    });
+  }
+  barra.getElementById("f-avisos").addEventListener("click", () => {
+    filtro.conAvisos = !filtro.conAvisos;
+    menuAbierto = null;
+    estado.redibujar();
+  });
+
+  /* El telon va DEBAJO del panel en el apilado: si va encima, cada toque cae en el telon
+     —cuyo unico trabajo es cerrar— y parece que la app tintinea sin hacer nada. */
+  if (menuAbierto) {
+    const telon = document.createElement("button");
+    telon.className = "menu-telon";
+    telon.setAttribute("aria-label", "Cerrar");
+    telon.addEventListener("click", () => { menuAbierto = null; estado.redibujar(); });
+    barra.querySelector(".menu-caja").prepend(telon);
+  }
+  return barra;
 }
 
 /* El alta manual (§7.3), agrupada por lo que de verdad se carga desde acá.
@@ -217,27 +306,60 @@ function fila(n, estado) {
 
 /* Las propiedades publicadas que todavia no se movieron, una por una.
 
-   Lo que se factura sale del negocio ya cargado si existe; si no, se estima con las
-   puntas promedio del usuario. Tocar una abre su ficha de propiedad, donde se puede
-   apagar para que deje de contar en la proyeccion. */
+   Sirven para PENSAR, no para administrar: todavia no son un negocio. Por eso tocar una
+   ya no abre su ficha —eso se hace en Cartera— sino que cambia el supuesto de cuantas
+   puntas vas a cerrar en ESA propiedad, y la cuenta se rehace sola.
+
+   El ciclo es: como esta ahora (tus puntas promedio) -> una punta -> dos puntas -> una ->
+   dos... El promedio no vuelve tocando, vuelve solo al cerrar y volver a abrir la app: es
+   un supuesto para probar de a ratos, no una configuracion que haya que acordarse de
+   deshacer. */
+const puntasElegidas = {};
+
+const PROXIMA_PUNTA = { undefined: 1, 1: 2, 2: 1 };
+
+/* La misma propiedad con otro supuesto de puntas.
+
+   El split sale de la proporcion que ya trae la fila (lo tuyo sobre lo que factura RE/MAX),
+   asi que no hay que volver a mirar las categorias ni arriesgar dos cuentas distintas del
+   mismo numero en dos lugares. */
+function conPuntas(p, puntas) {
+  if (!puntas || !p.estimado) return p;
+  const facturacion = p.precio * p.unaPunta * puntas;
+  const tajada = p.facturacion ? p.ganancia / p.facturacion : 0;
+  return { ...p, puntas, pct: p.unaPunta * puntas, facturacion, ganancia: facturacion * tajada };
+}
+
 function loPotencial(publicado, estado) {
-  const filas = publicado.detalle
-    .map((p) => html`
-      <button class="fila" data-propiedad="${escapar(p.entity_id)}">
+  const detalle = publicado.detalle.map((p) => conPuntas(p, puntasElegidas[p.entity_id]));
+  const bolsillo = detalle.reduce((t, p) => t + (p.ganancia || 0), 0);
+  const tocadas = detalle.filter((p) => puntasElegidas[p.entity_id]).length;
+
+  const filas = detalle
+    .map((p) => {
+      const elegida = puntasElegidas[p.entity_id];
+      return html`
+      <button class="fila ${elegida ? "fila-probando" : ""}" data-propiedad="${escapar(p.entity_id)}">
         <span class="fila-cuerpo">
           <span class="fila-titulo">${escapar(p.direccion || "Sin dirección")}</span>
           <span class="fila-sub">
-            ${plata(p.precio)}${p.estimado ? ` × ${pct(p.pct)}` : " · con tu negocio ya cargado"}
+            ${plata(p.precio)}${p.estimado
+              ? html` × ${pct(p.pct)}
+                  <span class="chip-apagado">${elegida
+                    ? `${elegida === 1 ? "1 punta" : "2 puntas"}`
+                    : "tu promedio"}</span>`
+              : " · con tu negocio ya cargado"}
           </span>
         </span>
-        <span class="fila-plata">
+        <span class="fila-derecha fila-plata">
           <span class="cifra cifra-media">${plata(p.ganancia)}</span>
           <span class="fila-sub">${plata(p.facturacion)} fact.</span>
         </span>
-      </button>`)
+      </button>`;
+    })
     .join("");
 
-  const muestra = publicado.detalle.find((p) => p.estimado);
+  const muestra = detalle.find((p) => p.estimado);
   /* Plegado: son propiedades que TODAVIA no son un negocio, y abiertas empujaban la lista
      de los que si lo son. Se abre cuando hay ganas de mirarlas. */
   const seccion = nodo(html`
@@ -249,17 +371,21 @@ function loPotencial(publicado, estado) {
       </summary>
       <div class="tarjeta" style="margin-top:6px">
       <p class="apunte" style="margin-bottom:12px">
-        ${publicado.cantidad} publicadas · <strong>${plataUSD(publicado.ganancia)}</strong>
+        ${publicado.cantidad} publicadas · <strong>${plataUSD(bolsillo)}</strong>
         a tu bolsillo si cerraran todas
       </p>
       <div class="lista">${filas}</div>
       ${muestra
         ? html`<p class="apunte" style="margin-top:12px">
-             El <strong>${pct(muestra.pct)}</strong> sale de tu propia forma de cerrar:
-             ${pct(muestra.unaPunta)} de comisión por punta, y cerrás con
-             <strong>${muestra.puntas.toFixed(2).replace(".", ",")} puntas</strong> en
-             promedio. De ahí se descuenta tu tajada de hoy. Si alguna no debería contar,
-             entrá y apagala.
+             ${tocadas
+               ? html`Estás probando con otras puntas en
+                  <strong>${tocadas}</strong> ${tocadas === 1 ? "propiedad" : "propiedades"}.
+                  Tocá para cambiar entre una punta y dos. Al cerrar la app vuelven a tu promedio.`
+               : html`Tocá cualquiera para probar con una punta o con dos. El
+                  <strong>${pct(muestra.pct)}</strong> de ahora sale de tu forma de cerrar:
+                  ${pct(muestra.unaPunta)} por punta y
+                  <strong>${muestra.puntas.toFixed(2).replace(".", ",")} puntas</strong>
+                  en promedio.`}
            </p>`
         : ""}
       </div>
@@ -269,7 +395,14 @@ function loPotencial(publicado, estado) {
     potencialesAbierto = evento.target.open;
   });
   for (const boton of seccion.querySelectorAll("[data-propiedad]")) {
-    boton.addEventListener("click", () => estado.irA("propiedad", boton.dataset.propiedad));
+    boton.addEventListener("click", () => {
+      const id = boton.dataset.propiedad;
+      const p = publicado.detalle.find((x) => x.entity_id === id);
+      // Con un negocio ya cargado el numero es real: no hay supuesto que cambiar.
+      if (!p || !p.estimado) return;
+      puntasElegidas[id] = PROXIMA_PUNTA[puntasElegidas[id]];
+      estado.redibujar();
+    });
   }
   return seccion;
 }

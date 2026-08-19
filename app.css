@@ -603,6 +603,11 @@ body {
 /* Una propiedad que no cuenta para la proyeccion: el precio se apaga. */
 .cifra-apagada { color: var(--tinta-2); opacity: .55; font-weight: 600; }
 
+/* Una propiedad potencial con un supuesto de puntas puesto a mano: se marca para que se
+   vea de un vistazo cual esta con el promedio y cual se esta probando. */
+.fila-probando { background: var(--azul-suave); }
+.fila-probando:active { background: var(--azul-claro); }
+
 /* ---------- Linea de tiempo ---------- */
 
 .tiempo { list-style: none; margin: 0; padding: 0 0 0 20px; position: relative; }
@@ -783,6 +788,17 @@ body {
   color: var(--tinta);
 }
 .menu-boton.abierto .menu-dato { color: var(--azul); }
+
+/* En Negocios cada boton lleva el nombre del filtro Y lo que tiene elegido, y en 95px de
+   ancho los dos no entran en un renglon: "Operacion Todas" salia "Opera... Todas". Uno
+   arriba del otro entran los dos enteros y ademas se lee mejor — el nombre chico y gris
+   es la etiqueta, el valor grande es la respuesta. */
+.barra-filtros .menu-boton { flex-direction: column; gap: 1px; padding: 7px 5px; }
+.barra-filtros .menu-nombre { font-size: 10.5px; font-weight: 600; }
+.barra-filtros .menu-dato { font-size: 12px; }
+
+/* El resumen de dos numeros, no de tres: sin esto quedaba una celda vacia al costado. */
+.resumen-dos { grid-template-columns: repeat(2, 1fr); }
 
 /* ---------- Los desplegables del menu ---------- */
 
