@@ -126,8 +126,8 @@ async function prepararSalidas({ devolver, bajar }) {
     if (!listo) {
       /* Y se abre el plegado donde está el enlace: decirle "copialo de abajo" sin que se
          vea el enlace sería mandarlo a buscar. */
-      const plegado = document.querySelector(".paso-a-mano ~ * details, details.plegable");
-      if (plegado) plegado.open = true;
+      const crudo = document.getElementById("enlace-crudo");
+      if (crudo) crudo.hidden = false;
       copiarTexto(texto).then((pudo) => {
         if (pudo) titulo.textContent = "✓ Ya copié el mensaje.";
       });
@@ -157,7 +157,7 @@ function dibujar() {
     <section class="no-imprimir" style="margin-bottom:16px">
       <h1 class="titulo" style="font-size:24px">${como.titulo}</h1>
       <p class="apunte" style="margin-top:4px">Leela entera, completá tus datos y firmá
-        abajo con el dedo. Si preferís hacerlo en papel, tocá “Guardar o imprimir”.</p>
+        abajo. Podés firmar con el dedo o subir una foto de tu firma en papel.</p>
     </section>
   `));
 
@@ -295,43 +295,23 @@ function dibujar() {
       <p class="apunte" style="margin-top:12px">Cuando la firmen todas las partes te llega
         el documento final. No hace falta que guardes nada ahora.</p>
 
-      <details class="plegable" style="margin-top:12px">
-        <summary class="plegable-cabeza">
-          <span>¿Lo querés en papel?</span>
-          <span class="plegable-flecha" aria-hidden="true">›</span>
-        </summary>
-        <div class="plegable-cuerpo">
-          <div class="botonera">
-            <a class="boton boton-chico ${yaFirmo ? "" : "boton-apagado"}" id="bajar">Guardar el PDF</a>
-            <button class="boton boton-chico" id="imprimir">Imprimir</button>
-          </div>
-          <p class="apunte" id="aviso-papel" hidden style="margin-top:8px"></p>
-          <p class="apunte" style="margin-top:8px">El enlace, por si lo necesitás suelto:</p>
-          <textarea class="enlace-a-mano" id="enlace-crudo" readonly rows="2"></textarea>
-        </div>
-      </details>
+      <div class="salida-a-mano" ${yaFirmo && !esNavegadorDeOtraApp() ? "" : "hidden"}>
+        <a class="boton boton-chico" id="bajar">Guardar el PDF</a>
+      </div>
+      <textarea class="enlace-a-mano" id="enlace-crudo" readonly rows="2" hidden></textarea>
     </section>
   `);
 
   const devolver = cierre.getElementById("devolver");
   const bajar = cierre.getElementById("bajar");
 
-  /* Guardar e imprimir no funcionan adentro del navegador de WhatsApp: no es que fallen,
-     el sistema no los deja. Se dice de frente y se apunta a algo que SÍ va a pasar, en vez
-     de dejar un botón que no reacciona. */
-  const avisoPapel = cierre.getElementById("aviso-papel");
-  const noSePuedeAca = () => {
-    avisoPapel.hidden = false;
-    avisoPapel.textContent = `Desde acá WhatsApp no deja guardar archivos. Pedile el PDF a `
-      + `${estado.agente || "quien te la mandó"} por el chat, o abrí este enlace en Chrome.`;
-  };
-  cierre.getElementById("imprimir").addEventListener("click", () => {
-    if (esNavegadorDeOtraApp()) { noSePuedeAca(); return; }
-    window.print();
-  });
-  if (esNavegadorDeOtraApp()) bajar.addEventListener("click", noSePuedeAca);
+  /* Guardar el PDF sólo se ofrece donde de verdad se puede. Adentro del navegador que
+     WhatsApp trae incorporado la descarga está bloqueada por el sistema, y un botón que no
+     reacciona es peor que no tener el botón: ahí queda sólo el de devolver la carta.
 
-  if (yaFirmo) prepararSalidas({ devolver, bajar, avisoPapel });
+     En un navegador de verdad —que es donde cae el cliente si abre el enlace desde el PDF—
+     sigue estando, porque ahí funciona. */
+  if (yaFirmo) prepararSalidas({ devolver, bajar });
   trozo.append(cierre);
 
   /* SOLO en el telefono del agente. Es lo que permite mandarles la carta a las dos partes

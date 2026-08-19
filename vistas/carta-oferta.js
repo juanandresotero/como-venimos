@@ -9,14 +9,11 @@
    las cuentas bancarias. */
 
 import { CAMPOS, POR_CLAVE, armar } from "../lib/carta-oferta.js";
-import { aEnlace } from "../lib/carta-enlace.js";
-import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
+import { mandarCartaA, bajarCarta } from "./carta-acciones.js";
 import {
-  nuevoId, anotarMandada, anotarEntregada, estadoDeCarta, comoVaLaCarta, estaPronta,
+  anotarEntregada, estadoDeCarta, comoVaLaCarta, estaPronta,
   mandadas, vueltas, ordenarParaElHistorial, devolverAlTablero,
 } from "../lib/carta-transito.js";
-import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
-import { cargarMembrete } from "../lib/membrete.js";
 import { deBytes } from "../lib/firma.js";
 import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
 import { pedirFirma } from "./firma-panel.js";
@@ -493,62 +490,23 @@ function dibujarBotones(estado, agente) {
 
   marca.querySelectorAll("[data-mandar]").forEach((boton) => {
     boton.addEventListener("click", async () => {
-      const base = new URL("firmar.html", window.location.href).href;
-
-      /* TU firma NO viaja en el enlace, y es lo que lo mantiene corto: sola pesa el 80%
-         —1.761 caracteres contra 419 sin ella— y un enlace gigante en WhatsApp queda
-         feo y da desconfianza. Tu teléfono la tiene guardada, y como firmar.html vive en
-         el mismo dominio que la app, cuando te devuelven la carta tu propio celular la
-         vuelve a poner. En el celular del cliente no hay nada guardado. */
-      const firmas = { ...carta.firmas };
-      delete firmas.depositario;
-
-      /* Desde que sale del teléfono, la carta tiene número propio: es lo que hace que la
-         vuelta de cada parte caiga en SU carta y no en la que esté abierta. */
-      if (!carta.id) carta.id = nuevoId();
-
-      const enlace = await aEnlace(base, {
-        valores: carta.valores,
-        quitadas: carta.quitadas,
-        turno: boton.dataset.mandar,
-        agente,
-        firmas,
-        id: carta.id,
-        telefono,
-      });
-
-      /* Se manda el PDF y no el enlace pelado: en WhatsApp un archivo se ve prolijo y un
-         enlace de doscientos caracteres se ve como un manotazo. El enlace va ADENTRO del
-         PDF, en el boton "Firmar en el celular". */
-      const bloques = armar(carta.valores, carta.quitadas, {
-        agente, firmadas: Object.keys(carta.firmas),
-      });
-      const pdf = armarPDF(bloques, carta.firmas, await cargarMembrete(), enlace,
-        boton.dataset.mandar).aBlob();
-      const como = await mandarArchivo(pdf, nombreDelArchivo(carta.valores),
-        "Te paso la oferta de compra. El PDF va aparte.");
-      if (como === "bloqueado") {
+      const mandada = await mandarCartaA(carta, boton.dataset.mandar,
+        { agente, telefono }, estado.hoy);
+      if (!mandada) {
         avisar("No pude compartir el PDF desde acá. Abrí la app desde su ícono en la "
           + "pantalla de inicio y probá de nuevo.");
         return;
       }
       /* Queda anotada en "En tránsito": a quién se le mandó y qué día. */
-      carta = anotarMandada(carta, boton.dataset.mandar, estado.hoy);
+      carta = mandada;
       guardarEnHistorial(carta, carta.cuando || estado.hoy);
       guardar(estado);
       estado.redibujar();
     });
   });
 
-  marca.getElementById("bajar-pdf").addEventListener("click", async () => {
-    const bloques = armar(carta.valores, carta.quitadas, {
-      agente, firmadas: Object.keys(carta.firmas),
-    });
-    /* Sin enlace adentro: este PDF es para imprimir o archivar, y un boton "Firmar en el
-       celular" impreso en un papel no sirve para nada. */
-    await bajarArchivo(armarPDF(bloques, carta.firmas, await cargarMembrete()).aBlob(),
-      nombreDelArchivo(carta.valores));
-  });
+  marca.getElementById("bajar-pdf").addEventListener("click",
+    () => bajarCarta(carta, { agente }));
 
   return marca;
 }
@@ -664,7 +622,21 @@ function barraDeCartas(estado) {
   const mirar = (guardada) => {
     mirarCarta(guardada, {
       agente: nombrePropio(estado.datos.ajustes),
+      telefono: ((estado.datos.ajustes || {}).agente || {}).telefono || "",
+      hoy: estado.hoy,
       alAbrir: () => abrir(guardada),
+      /* Mandarla otra vez desde acá deja la carta anotada igual que si se mandara desde la
+         pantalla: vuelve al tablero esperando a esa parte. */
+      alMandar: (mandada) => {
+        guardarEnHistorial(mandada, mandada.cuando || estado.hoy);
+        mostrandoHistorial = false;
+        mostrandoTransito = true;
+        estado.redibujar();
+      },
+      alBorrar: () => {
+        borrarDelHistorial(guardada.id);
+        estado.redibujar();
+      },
       alDesarchivar: () => {
         const devuelta = devolverAlTablero(guardada);
         guardarEnHistorial(devuelta, devuelta.cuando || estado.hoy);

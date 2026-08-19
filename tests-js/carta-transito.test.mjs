@@ -116,3 +116,18 @@ test("ordenar no cambia el orden entre las del mismo tipo ni toca la lista origi
   assert.deepEqual(ordenarParaElHistorial(lista).map((c) => c.nombre), ["primera", "segunda"]);
   assert.notEqual(ordenarParaElHistorial(lista), lista, "tiene que devolver una lista nueva");
 });
+
+/* Pasó: se archivó una carta, se la volvió a mandar desde la ventanita, y siguió figurando
+   como archivada — o sea, dando vueltas sin aparecer en ningún tablero. */
+test("volver a mandar una carta archivada la devuelve al tablero", () => {
+  let c = anotarMandada(vacia(), "comprador", "2026-08-19");
+  c = anotarVuelta(c, "comprador", "2026-08-20");
+  c = anotarEntregada(c, "2026-08-21");
+  assert.equal(estadoDeCarta(c), "completa");
+
+  c = anotarMandada(c, "propietario", "2026-08-22");
+  assert.equal(estadoDeCarta(c), "transito", "vuelve al tablero");
+  assert.equal(c.entregada, null);
+  assert.equal(comoVaLaCarta(c), "Esperando al propietario");
+  assert.deepEqual(vueltas(c), { comprador: "2026-08-20" }, "lo que ya contestaron se conserva");
+});

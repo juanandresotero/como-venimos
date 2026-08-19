@@ -11,6 +11,7 @@ import { CAMPOS, armar } from "../lib/carta-oferta.js";
 import { comoVaLaCarta, mandadas, vueltas, estadoDeCarta } from "../lib/carta-transito.js";
 import { comoSeLlamaLaCarta } from "../lib/carta-guardado.js";
 import { telon } from "./ventana.js";
+import { mandarCartaA, bajarCarta } from "./carta-acciones.js";
 import { escapar, fechaCorta } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -66,8 +67,16 @@ function renglonDeParte(carta, parte) {
     </div>`;
 }
 
-/* Abre la ventanita. `alAbrir` es lo que pasa si decide trabajar sobre esta carta. */
-export function mirarCarta(carta, { agente = "", alAbrir, alDesarchivar } = {}) {
+/* Abre la ventanita.
+
+   Desde acá se puede hacer TODO lo que se puede hacer con una carta, esté en el tablero o en
+   el historial: bajarla, abrirla para editarla, volver a mandársela a cualquiera de las dos
+   partes, y borrarla. Juan lo pidió así después de quedarse con una carta archivada que sólo
+   le dejaba borrarla. */
+export function mirarCarta(carta, {
+  agente = "", telefono = "", hoy = null,
+  alAbrir, alDesarchivar, alMandar, alBorrar,
+} = {}) {
   const archivada = estadoDeCarta(carta) === "completa";
   const marca = nodo(html`
     <div class="panel-firma">
@@ -81,15 +90,36 @@ export function mirarCarta(carta, { agente = "", alAbrir, alDesarchivar } = {}) 
       <p class="etiqueta" style="margin-top:14px">Cómo quedó el documento</p>
       <div class="previa-carta mirada-previa"></div>
 
-      <div class="botonera" style="justify-content:space-between;margin-top:14px">
-        <button class="boton boton-chico" data-hacer="cerrar">Cerrar</button>
-        <span style="display:flex;gap:8px;flex-wrap:wrap">
-          ${archivada && alDesarchivar
-            ? '<button class="boton boton-chico" data-hacer="desarchivar">Volver al tablero</button>'
-            : ""}
-          <button class="boton boton-chico boton-primario" data-hacer="abrir">Abrir esta carta</button>
-        </span>
+      ${alMandar ? html`
+        <p class="etiqueta" style="margin-top:14px">Mandársela de nuevo</p>
+        <div class="botonera">
+          <button class="boton boton-chico" data-hacer="mandar" data-turno="comprador">Al comprador</button>
+          <button class="boton boton-chico" data-hacer="mandar" data-turno="propietario">Al propietario</button>
+        </div>
+        <p class="apunte mirada-aviso" hidden></p>` : ""}
+
+      <div class="botonera" style="margin-top:12px">
+        <button class="boton boton-chico boton-primario" data-hacer="abrir">Abrir y editar</button>
+        <button class="boton boton-chico" data-hacer="bajar">Bajar el PDF</button>
+        ${archivada && alDesarchivar
+          ? '<button class="boton boton-chico" data-hacer="desarchivar">Volver al tablero</button>'
+          : ""}
       </div>
+
+      <div class="botonera" style="justify-content:space-between;margin-top:12px">
+        <button class="boton boton-chico" data-hacer="cerrar">Cerrar</button>
+        ${alBorrar ? '<button class="boton boton-chico boton-borrar" data-hacer="borrar">Borrar</button>' : ""}
+      </div>
+
+      ${alBorrar ? html`
+        <div class="mirada-borrar" hidden>
+          <p class="apunte" style="color:var(--rojo-tinta);margin:0 0 8px">
+            ¿Seguro? Se borra la carta y todo lo que las partes completaron.</p>
+          <div class="botonera">
+            <button class="boton boton-chico boton-borrar" data-hacer="borrar-si">Sí, borrar</button>
+            <button class="boton boton-chico" data-hacer="borrar-no">No</button>
+          </div>
+        </div>` : ""}
     </div>
   `);
 
@@ -116,17 +146,59 @@ export function mirarCarta(carta, { agente = "", alAbrir, alDesarchivar } = {}) 
   }
 
   const ventana = telon(marca);
-  ventana.caja.querySelector('[data-hacer="cerrar"]').addEventListener("click", ventana.cerrar);
-  ventana.caja.querySelector('[data-hacer="abrir"]').addEventListener("click", () => {
-    ventana.cerrar();
-    if (alAbrir) alAbrir();
+  const aviso = ventana.caja.querySelector(".mirada-aviso");
+  const cajaBorrar = ventana.caja.querySelector(".mirada-borrar");
+
+  ventana.caja.addEventListener("click", async (evento) => {
+    const boton = evento.target.closest ? evento.target.closest("[data-hacer]") : null;
+    if (!boton) return;
+
+    switch (boton.dataset.hacer) {
+      case "cerrar":
+        ventana.cerrar();
+        break;
+      case "abrir":
+        ventana.cerrar();
+        if (alAbrir) alAbrir();
+        break;
+      case "bajar":
+        await bajarCarta(carta, { agente });
+        break;
+      case "desarchivar":
+        ventana.cerrar();
+        alDesarchivar();
+        break;
+      /* Borrar pregunta acá adentro y no en otra ventana encima: dos telones apilados en un
+         teléfono es un lío, y esto no se puede deshacer. */
+      case "borrar":
+        cajaBorrar.hidden = false;
+        break;
+      case "borrar-no":
+        cajaBorrar.hidden = true;
+        break;
+      case "borrar-si":
+        ventana.cerrar();
+        alBorrar();
+        break;
+      case "mandar": {
+        boton.disabled = true;
+        const mandada = await mandarCartaA(carta, boton.dataset.turno,
+          { agente, telefono }, hoy);
+        boton.disabled = false;
+        if (!mandada) {
+          aviso.hidden = false;
+          aviso.textContent = "No pude compartir el PDF desde acá. Abrí la app desde su "
+            + "ícono en la pantalla de inicio y probá de nuevo.";
+          return;
+        }
+        ventana.cerrar();
+        alMandar(mandada);
+        break;
+      }
+      default:
+        break;
+    }
   });
-  const volver = ventana.caja.querySelector('[data-hacer="desarchivar"]');
-  if (volver) {
-    volver.addEventListener("click", () => {
-      ventana.cerrar();
-      alDesarchivar();
-    });
-  }
+
   return ventana;
 }
