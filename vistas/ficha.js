@@ -514,9 +514,10 @@ function seCayo(n, estado) {
   const seccion = nodo(html`
     <section class="tarjeta">
       <h2 class="titulo" style="font-size:17px;margin-bottom:6px">
-        ${caido ? "Este negocio se cayó" : "¿Se cayó?"}</h2>
+        ${caido ? "¿Seguro que se cayó?" : "¿Se cayó?"}</h2>
       <p class="apunte" style="margin-bottom:12px">${caido
-        ? "No suma en ningún lado y no te pido más datos. Queda guardado."
+        ? "No suma en ningún lado y no te pido más datos. Si sigue en marcha, decímelo y "
+          + "dejo de mirar lo que diga el portal para este negocio."
         : "Dejo de contarlo en la proyección y de pedirte datos. Se puede deshacer."}</p>
       <button class="boton ${caido ? "" : "boton-chico"}" id="cayo">
         ${caido ? "Sigue en marcha" : "Se cayó"}
@@ -524,7 +525,14 @@ function seCayo(n, estado) {
     </section>
   `);
   seccion.getElementById("cayo").addEventListener("click", () => {
-    editarNegocio(estado, n.id, { estado: caido ? "en_curso" : CAIDO });
+    /* Tocar este botón es una corrección explícita, y le gana al portal: puede haber
+       republicado la propiedad para buscar otro comprador mientras el primero define, y eso
+       en RE/MAX no se ve. Desde acá el estado deja de seguir al portal. */
+    editarNegocio(estado, n.id, {
+      estado: caido ? "en_curso" : CAIDO,
+      estado_a_mano: true,
+      se_cayo_solo: false,
+    });
     estado.redibujar();
   });
   return seccion;
@@ -532,11 +540,15 @@ function seCayo(n, estado) {
 
 /* Arriba de todo, para que no haya dudas de por qué esta ficha no pide nada. */
 function cartelDeCaido(n, estado) {
+  /* Distingue quién lo dijo. "Lo di por caído yo porque el portal cambió" y "lo marcaste vos"
+     son dos cosas distintas, y la primera hay que poder discutirla. */
   return nodo(html`
     <section class="tarjeta" style="border-color:var(--rojo)">
       <p class="apunte" style="margin:0;color:var(--rojo-tinta)">
-        <strong>Este negocio se cayó.</strong> No suma en la proyección ni aparece en
-        pendientes.</p>
+        <strong>${n.se_cayo_solo
+          ? "Lo di por caído: la propiedad volvió a estar publicada en RE/MAX."
+          : "Este negocio se cayó."}</strong>
+        No suma en la proyección ni aparece en pendientes.</p>
     </section>
   `);
 }

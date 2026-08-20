@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   base, splitVigente, calcular, pctPorDefecto, revisar, REGIMENES,
-  plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando, estaCaido, CAIDO, hayAlgoEnMarcha } from "../lib/motor.js";
+  plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando, estaCaido, CAIDO, hayAlgoEnMarcha, volvioAlMercado } from "../lib/motor.js";
 
 const AJUSTES = {
   agente: { nombre: "Juan Andrés Otero" },
@@ -674,4 +674,75 @@ test("hayAlgoEnMarcha mira las fechas y el estado de la propiedad", () => {
   assert.equal(hayAlgoEnMarcha({}, { activa: true, estado: "publicada" }), false);
   assert.equal(hayAlgoEnMarcha({}, { activa: false, estado: "en_negociacion" }), false);
   assert.equal(hayAlgoEnMarcha({}, null), false);
+});
+
+/* ---------- El estado sigue al portal ---------- */
+
+/* LA REGLA QUE PUSO JUAN, y que es la primera de todas: la app tiene que ser FIEL A LO QUE
+   PASA EN SU PORTAL DE RE/MAX. Si ahí la propiedad volvió a estar publicada, el negocio que
+   estaba en negociación no existe más — y la app puede verlo sola, sin preguntar.
+
+   El dato ya estaba: el robot guarda `fecha_negociacion` la primera vez que entra y no la
+   limpia al salir, así que "tiene fecha pero hoy figura publicada" es volver para atrás. */
+test("volvioAlMercado: estuvo en negociación y hoy está publicada", () => {
+  assert.equal(volvioAlMercado(
+    { activa: true, estado: "publicada", fecha_negociacion: "2026-08-07" }), true);
+  assert.equal(volvioAlMercado(
+    { activa: true, estado: "publicada", fecha_reservada: "2026-08-07" }), true);
+});
+
+test("volvioAlMercado: una publicada que nunca negoció no volvió de ningún lado", () => {
+  assert.equal(volvioAlMercado({ activa: true, estado: "publicada" }), false);
+});
+
+test("volvioAlMercado: si sigue en negociación no volvió nada", () => {
+  assert.equal(volvioAlMercado(
+    { activa: true, estado: "en_negociacion", fecha_negociacion: "2026-08-07" }), false);
+});
+
+/* Una propiedad que se fue de la cartera es otro caso: ahí se pide el cierre, no se da por
+   caído — irse casi siempre significa que se vendió. */
+test("volvioAlMercado: una que se fue de la cartera no cuenta", () => {
+  assert.equal(volvioAlMercado(
+    { activa: false, estado: "publicada", fecha_negociacion: "2026-08-07" }), false);
+});
+
+test("el negocio se da por caído solo cuando la propiedad vuelve al mercado", () => {
+  const cartera = propiedadEn("publicada", { fecha_negociacion: "2026-08-07" });
+  const n = revisar(negocio({
+    estado: "en_curso", fecha_fin: null, entity_id_cartera: "flam",
+  }), AJUSTES, "2026-08-20", cartera);
+  assert.equal(estaCaido(n), true);
+  assert.equal(n.se_cayo_solo, true);
+  assert.ok(tipos(n).includes("se_cayo_solo"), "y se avisa: los números cambiaron");
+});
+
+/* Simétrico: si vuelve a negociación, revive solo. Fiel al portal en las dos direcciones. */
+test("y revive solo si la propiedad vuelve a negociación", () => {
+  const caido = revisar(negocio({
+    estado: "en_curso", fecha_fin: null, entity_id_cartera: "flam",
+  }), AJUSTES, "2026-08-20", propiedadEn("publicada", { fecha_negociacion: "2026-08-07" }));
+  assert.equal(estaCaido(caido), true);
+
+  const revivido = revisar(caido, AJUSTES, "2026-08-21",
+    propiedadEn("en_negociacion", { fecha_negociacion: "2026-08-07" }));
+  assert.equal(revivido.estado, "en_curso");
+  assert.equal(revivido.se_cayo_solo, false);
+});
+
+/* Una corrección explícita le gana al portal: puede haber republicado la propiedad para
+   buscar otro comprador mientras el primero define, y eso en RE/MAX no se ve. */
+test("si lo marcó a mano, el portal deja de mandar", () => {
+  const cartera = propiedadEn("publicada", { fecha_negociacion: "2026-08-07" });
+  const n = revisar(negocio({
+    estado: "en_curso", fecha_fin: null, entity_id_cartera: "flam", estado_a_mano: true,
+  }), AJUSTES, "2026-08-20", cartera);
+  assert.equal(n.estado, "en_curso", "él dijo que sigue en marcha y eso manda");
+});
+
+/* Un negocio ya cobrado no se toca: la plata entró. */
+test("con fecha de firma no se da por caído nada", () => {
+  const cartera = propiedadEn("publicada", { fecha_negociacion: "2026-08-07" });
+  const n = revisar(negocio({ entity_id_cartera: "flam" }), AJUSTES, "2026-08-20", cartera);
+  assert.equal(n.estado, "cerrado");
 });

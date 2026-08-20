@@ -111,19 +111,32 @@ function primeraVez(estado, datos) {
 /* ---------- Los tres números ---------- */
 
 function loQueTengo(r, monedas) {
-  /* La moneda principal va grande y la otra al lado, chica. Dos cifras héroe una encima de
-     la otra se comen media pantalla antes de decir nada, y la que importa para el día a día
-     es la de pesos. */
-  const [primera, ...resto] = monedas;
+  /* Las dos monedas del MISMO tamaño y una al lado de la otra. Estuvo un rato con los pesos
+     grandes y los dólares en un renglón chico abajo, y Juan lo corrigió: no es la moneda del
+     día a día contra una secundaria — son dos cajas que valen igual, sólo que una se gasta y
+     la otra se guarda. */
+  if (monedas.length === 1) {
+    const m = monedas[0];
+    return nodo(html`
+      <section style="margin-bottom:18px">
+        <p class="renta-nombre" style="margin-bottom:4px">Tengo</p>
+        <p class="cifra cifra-heroe" style="margin:0;line-height:1.05;color:${
+          r.tengo[m] < 0 ? "var(--rojo)" : "var(--azul)"}">${monto(r.tengo[m], m)}</p>
+      </section>
+    `);
+  }
+
   return nodo(html`
     <section style="margin-bottom:18px">
-      <p class="renta-nombre" style="margin-bottom:4px">Tengo</p>
-      <p class="cifra cifra-heroe" style="margin:0;line-height:1.05;color:${
-        r.tengo[primera] < 0 ? "var(--rojo)" : "var(--azul)"}">${monto(r.tengo[primera], primera)}</p>
-      ${resto.length
-        ? html`<p class="apunte" style="margin-top:4px">y ${
-             resto.map((m) => monto(r.tengo[m], m)).join(" · ")}</p>`
-        : ""}
+      <p class="renta-nombre" style="margin-bottom:6px">Tengo</p>
+      <div class="dos-rentas">
+        ${monedas.map((m) => html`
+          <div class="renta-caja ${m === "UYU" ? "principal" : ""}">
+            <p class="renta-nombre">${m === "USD" ? "Dólares" : "Pesos"}</p>
+            <p class="cifra cifra-grande renta-cifra" style="color:${
+              r.tengo[m] < 0 ? "var(--rojo)" : "var(--azul)"}">${monto(r.tengo[m], m)}</p>
+          </div>`).join("")}
+      </div>
     </section>
   `);
 }

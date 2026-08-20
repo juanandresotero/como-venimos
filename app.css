@@ -1482,8 +1482,13 @@ body {
 /* En el teléfono el navegador se pelea con el dedo: si algún ancestro puede hacer scroll,
    se lleva el gesto y el trazo nunca llega al lienzo. Con `touch-action: none` en TODO el
    telón —no solo en el lienzo— el panel entero deja de competir por el dedo. */
-.telon-firma, .panel-firma { touch-action: none; }
-/* El lienzo sí necesita seguir aceptando el dedo para dibujar. */
+/* El TELÓN no acepta gestos: es el fondo apagado, y ahí el dedo no tiene que hacer nada.
+   El PANEL sí acepta scroll vertical (`pan-y`). Estaba en `none` junto con el telón para que
+   al firmar el navegador no se llevara el gesto — pero eso dejaba sin scroll a TODAS las
+   ventanitas: la de "ya pagué algunos" se trababa con la lista a medio ver.
+   El lienzo de firmar mantiene el suyo, que es el único lugar donde el dedo dibuja. */
+.telon-firma { touch-action: none; }
+.panel-firma { touch-action: pan-y; }
 .lienzo-firma { touch-action: none; }
 
 /* Un `<input type="file">` con los estilos de `.campo` queda mudo en el celular: se ve
