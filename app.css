@@ -844,6 +844,9 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .tilde-pago.pagado { background: var(--azul); border-color: var(--azul); }
+/* El que ya estaba pagado antes de empezar a contar: cuenta como pago pero no movio la
+   caja, y se ve apagado para no confundirlo con uno que sí salió de esta plata. */
+.tilde-pago.de-antes { background: var(--tinta-2); border-color: var(--tinta-2); }
 
 /* La fila de un fijo lleva el tilde adelante, asi que el cuerpo tiene que poder achicarse. */
 .fila-fijo { gap: 10px; }

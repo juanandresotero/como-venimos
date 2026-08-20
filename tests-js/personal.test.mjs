@@ -4,7 +4,7 @@ import {
   VACIO, sanear, aTexto, desdeTexto, leer, guardar, proximoId,
   cobrosDeNegocios, faltaPagar, estaPago, saldos, resumen,
   gastadoEnElMes, gastadoHastaElDia, mesAnterior, diasDelMes, mesAMes, proyeccionDelMes,
-  montoEstimado,
+  montoEstimado, cambioQueHaceFalta, conElCambioDeducido, yaEstabaPago,
 } from "../lib/personal.js";
 
 /* Como arranca Juan el 2026-08-20: 750 dólares y 3.800 pesos, y nada de lo anterior cuenta. */
@@ -388,4 +388,91 @@ test("un mes ya pagado guarda su monto real, no la estimación", () => {
     fijos: [ute({ "2026-08": { monto: 5200, moneda: "UYU", fecha: "2026-08-12" } })],
   });
   assert.equal(gastadoEnElMes(d, "2026-08").UYU, 5200);
+});
+
+/* ---------- Lo que ya estaba pagado cuando empezó ---------- */
+
+/* El saldo inicial que se carga el primer día YA tiene descontados los gastos de ese mes.
+   Volver a restarlos sería cobrárselos dos veces. */
+test("un pago marcado como previo no descuenta del saldo", () => {
+  const d = conDatos({
+    fijos: [alquiler({
+      "2026-08": { monto: 25000, moneda: "UYU", fecha: "2026-08-20", previo: true },
+    })],
+  });
+  assert.equal(saldos(d, [], "2026-08-31").UYU, 3800, "el saldo no se toca");
+  assert.equal(estaPago(d.fijos[0], "2026-08"), true, "pero figura pagado");
+  assert.deepEqual(faltaPagar(d, "2026-08"), [], "y no lo pide más este mes");
+});
+
+/* La plata salió igual, sólo que antes de que la app empezara a contar: para las gráficas y
+   para el ritmo del mes, ese gasto existió. */
+test("un pago previo SÍ cuenta como gasto del mes", () => {
+  const d = conDatos({
+    fijos: [alquiler({
+      "2026-08": { monto: 25000, moneda: "UYU", fecha: "2026-08-20", previo: true },
+    })],
+  });
+  assert.equal(gastadoEnElMes(d, "2026-08").UYU, 25000);
+  assert.equal(yaEstabaPago(d.fijos[0].pagos["2026-08"]), true);
+});
+
+/* ---------- El cambio de moneda, deducido ---------- */
+
+/* Nadie paga en pesos con plata que no tiene: si la caja queda en rojo y hay dólares, lo que
+   pasó de verdad es que se cambiaron. */
+test("si los pesos quedan en rojo, se deduce que se vendieron dólares", () => {
+  const c = cambioQueHaceFalta({ UYU: -21200, USD: 750 }, 40);
+  assert.equal(c.de, "USD");
+  assert.equal(c.monto_de, 530);
+  assert.equal(c.monto_a, 21200);
+  assert.equal(c.dolar, 40, "queda guardada la cotización usada, para poder auditarlo");
+});
+
+test("y al revés: si faltan dólares, se deduce que se compraron", () => {
+  const c = cambioQueHaceFalta({ UYU: 50000, USD: -100 }, 40);
+  assert.equal(c.de, "UYU");
+  assert.equal(c.monto_de, 4000);
+  assert.equal(c.monto_a, 100);
+});
+
+/* Si no alcanzan, se cambia lo que hay y el resto queda en rojo: es la verdad, no hay de
+   dónde sacarlo. Inventar el cambio completo taparía que la plata no está. */
+test("si no alcanzan los dólares se cambia lo que hay y el resto queda en rojo", () => {
+  const c = cambioQueHaceFalta({ UYU: -50000, USD: 100 }, 40);
+  assert.equal(c.monto_de, 100);
+  assert.equal(c.monto_a, 4000);
+});
+
+test("con las dos cajas en rojo no hay cambio que lo arregle", () => {
+  assert.equal(cambioQueHaceFalta({ UYU: -100, USD: -5 }, 40), null);
+});
+
+test("con todo en positivo no se inventa ningún movimiento", () => {
+  assert.equal(cambioQueHaceFalta({ UYU: 3800, USD: 750 }, 40), null);
+});
+
+test("sin cotización no se deduce nada: sería inventar el número", () => {
+  assert.equal(cambioQueHaceFalta({ UYU: -100, USD: 750 }, null), null);
+  assert.equal(cambioQueHaceFalta({ UYU: -100, USD: 750 }, 0), null);
+});
+
+/* El movimiento queda anotado y visible, no escondido en la cuenta: es una deducción de la
+   app y el usuario tiene que poder mirarla con desconfianza y borrarla. */
+test("el cambio deducido queda anotado y marcado como automático", () => {
+  const d = conDatos({
+    fijos: [alquiler({ "2026-08": { monto: 25000, moneda: "UYU", fecha: "2026-08-20" } })],
+  });
+  const { datos, cambio } = conElCambioDeducido(d, [], "2026-08-20", 40);
+  assert.equal(cambio.automatico, true);
+  assert.equal(datos.cambios.length, 1);
+  const despues = saldos(datos, [], "2026-08-31");
+  assert.equal(Math.round(despues.UYU), 0, "los pesos quedan en cero, no en rojo");
+  assert.ok(despues.USD < 750, "y salieron de los dólares");
+});
+
+test("si no hace falta ningún cambio, no se agrega nada", () => {
+  const { datos, cambio } = conElCambioDeducido(conDatos(), [], "2026-08-20", 40);
+  assert.equal(cambio, null);
+  assert.deepEqual(datos.cambios, []);
 });

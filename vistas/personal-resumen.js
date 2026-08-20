@@ -7,9 +7,10 @@
    los números hablan solos. */
 
 import {
-  leer, guardar, resumen, mesAMes, proyeccionDelMes,
+  leer, guardar, resumen, mesAMes, proyeccionDelMes, conElCambioDeducido,
   aTexto, desdeTexto, proximoId, MONEDAS,
 } from "../lib/personal.js";
+import { cotizacionVigente } from "../lib/cambio.js";
 import { lineas } from "../lib/graficos.js";
 import { bajarArchivo } from "../lib/compartir.js";
 import { plata, escapar, numeroDesde, formatearMientrasEscribe } from "../lib/formato.js";
@@ -42,10 +43,18 @@ const nombreDelMes = (mes) => {
 /* Las monedas que de verdad se están usando. Mostrar un renglón de dólares en cero cuando
    nunca hubo un dólar es ruido; en cuanto aparece uno, aparece el renglón. */
 function enUso(datos, tengo) {
-  /* Los pesos SIEMPRE primero: es la moneda del día a día, y es la que tiene que estar
-     grande arriba. Los dólares aparecen sólo si hay. */
-  const usadas = ["UYU", "USD"].filter((m) => tengo[m] !== 0);
-  return usadas.length ? usadas : ["UYU"];
+  /* Los pesos SIEMPRE, y primero: es la moneda del día a día, y un saldo en CERO es un dato
+     —quiere decir que no queda nada— no una moneda que no existe. Que el renglón desaparezca
+     justo cuando se acabó la plata es lo contrario de lo que uno necesita ver.
+
+     Los dólares aparecen si hay saldo o si alguna vez se movió alguno. */
+  const hayDolares = tengo.USD !== 0
+    || datos.arranque.usd !== 0
+    || datos.entradas.some((e) => e.moneda === "USD")
+    || datos.variables.some((v) => v.moneda === "USD")
+    || datos.cambios.length > 0
+    || datos.fijos.some((f) => f.moneda === "USD");
+  return hayDolares ? ["UYU", "USD"] : ["UYU"];
 }
 
 export function dibujarPersonalResumen(estado) {
@@ -188,13 +197,10 @@ function movimientos(estado, datos) {
   const seccion = nodo(html`
     <div class="botonera" style="margin:14px 0 18px">
       <button class="boton boton-chico" id="p-entro">Entró plata</button>
-      <button class="boton boton-chico" id="p-cambio">Cambié plata</button>
     </div>
   `);
   seccion.getElementById("p-entro").addEventListener("click",
     () => ventanaEntrada(estado, datos));
-  seccion.getElementById("p-cambio").addEventListener("click",
-    () => ventanaCambio(estado, datos));
   return seccion;
 }
 
@@ -242,64 +248,6 @@ function ventanaEntrada(estado, datos) {
   });
 }
 
-/* Se piden los DOS montos, el que sale y el que entra, en vez de pedir la cotización.
-
-   Es lo que uno sabe cuando vuelve del cambio: le dio 200 y le dieron 8.000. La cotización
-   sale de ahí, y pedirla al revés obliga a hacer una cuenta en el momento — y a que el saldo
-   quede corrido por unos pesos de redondeo. */
-function ventanaCambio(estado, datos) {
-  const puesto = { de: "USD", monto_de: null, monto_a: null };
-  const cuerpo = nodo(html`
-    <div class="panel-firma">
-      <h2 class="titulo" style="font-size:19px;margin-bottom:6px">Cambié plata</h2>
-      <p class="apunte" data-sentido style="margin-bottom:12px"></p>
-      <div class="tarjeta" style="padding:0;overflow:hidden" data-campos></div>
-      <div class="botonera" style="margin-top:14px">
-        <button class="boton boton-chico" data-dar-vuelta>Al revés</button>
-      </div>
-      <div class="botonera" style="margin-top:14px">
-        <button class="boton boton-primario" data-guardar>Guardar</button>
-        <button class="boton" data-cerrar>Cerrar</button>
-      </div>
-    </div>
-  `);
-  const { caja, cerrar } = telon(cuerpo);
-
-  const pintar = () => {
-    const de = puesto.de;
-    const a = de === "USD" ? "UYU" : "USD";
-    caja.querySelector("[data-sentido]").textContent =
-      de === "USD" ? "Vendiste dólares" : "Compraste dólares";
-    const campos = caja.querySelector("[data-campos]");
-    campos.replaceChildren();
-    campos.append(campoMonto("cam-de", "Salieron", de === "USD" ? "USD" : "$",
-      puesto.monto_de, (v) => { puesto.monto_de = v; }));
-    campos.append(campoMonto("cam-a", "Entraron", a === "USD" ? "USD" : "$",
-      puesto.monto_a, (v) => { puesto.monto_a = v; }));
-  };
-  pintar();
-
-  caja.querySelector("[data-dar-vuelta]").addEventListener("click", () => {
-    puesto.de = puesto.de === "USD" ? "UYU" : "USD";
-    const guardado = puesto.monto_de;
-    puesto.monto_de = puesto.monto_a;
-    puesto.monto_a = guardado;
-    pintar();
-  });
-  caja.querySelector("[data-cerrar]").addEventListener("click", cerrar);
-  caja.querySelector("[data-guardar]").addEventListener("click", () => {
-    if (!puesto.monto_de || !puesto.monto_a) { cerrar(); return; }
-    const cambios = [...datos.cambios, {
-      id: proximoId(datos.cambios), fecha: estado.hoy,
-      de: puesto.de, monto_de: puesto.monto_de,
-      a: puesto.de === "USD" ? "UYU" : "USD", monto_a: puesto.monto_a,
-    }];
-    guardar({ ...datos, cambios });
-    cerrar();
-    estado.redibujar();
-  });
-}
-
 /* ---------- Lo que ya se cargó, para poder deshacerlo ---------- */
 
 /* Sin esto, una entrada mal cargada quedaba para siempre inflando el saldo y no había forma
@@ -317,7 +265,10 @@ function losMovimientos(estado, datos) {
     })),
     ...datos.cambios.map((c) => ({
       tipo: "cambios", id: c.id, fecha: c.fecha,
-      que: c.de === "USD" ? "Vendiste dólares" : "Compraste dólares",
+      /* Los deducidos se nombran distinto a propósito: es una cuenta que hizo la app, no algo
+         que Juan anotó, y tiene que poder mirarla con desconfianza. */
+      que: `${c.de === "USD" ? "Vendiste dólares" : "Compraste dólares"}${
+        c.automatico ? " (deducido)" : ""}`,
       cuanto: `${monto(c.monto_de, c.de)} → ${monto(c.monto_a, c.a)}`,
     })),
   ].sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
@@ -327,7 +278,7 @@ function losMovimientos(estado, datos) {
   const seccion = nodo(html`
     <details class="grupo" style="margin-bottom:18px">
       <summary class="grupo-cabeza">
-        <span class="grupo-nombre">Plata que entró y cambios</span>
+        <span class="grupo-nombre">Plata que entró y cambios de moneda</span>
         <span class="apunte grupo-resumen">${filas.length}</span>
         <span class="grupo-flecha" aria-hidden="true">›</span>
       </summary>
@@ -469,6 +420,24 @@ function campoTexto(id, etiqueta, valor, alCambiar) {
   const control = fila.querySelector(".campo");
   control.addEventListener("input", () => alCambiar(control.value));
   return fila;
+}
+
+/* Guardar, y si al hacerlo una caja quedó en rojo, anotar el cambio de moneda que lo
+   explica. Lo usan las tres pantallas: es la única puerta por la que sale plata.
+
+   Nadie paga en pesos con plata que no tiene — si la caja de pesos queda negativa y hay
+   dólares, lo que pasó de verdad es que se cambiaron. El movimiento queda anotado y visible
+   en "Plata que entró y cambios de moneda", donde se puede corregir o borrar: es una
+   deducción de la app, no algo que el usuario dijo.
+
+   La cotización es la que la app tiene ese día. NO es la del BBVA: el BCU la publica pero no
+   deja leerla desde una página estática, y el BBVA no contesta. Por eso el cambio se guarda
+   con la cotización usada adentro, para poder auditarlo después. */
+export function guardarConCambio(estado, datos) {
+  const dolar = cotizacionVigente(estado.datos.ajustes, null).valor;
+  const { datos: conCambio } = conElCambioDeducido(
+    datos, estado.datos.negocios, estado.hoy, dolar);
+  guardar(conCambio);
 }
 
 export { campoMonto, campoTexto, monto, nombreDelMes };

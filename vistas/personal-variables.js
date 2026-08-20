@@ -11,7 +11,7 @@ import {
   leer, guardar, mesDe, proximoId, mesAnterior, CATEGORIAS,
 } from "../lib/personal.js";
 import { escapar, plata, numeroDesde, formatearMientrasEscribe } from "../lib/formato.js";
-import { monto, nombreDelMes } from "./personal-resumen.js";
+import { monto, nombreDelMes, guardarConCambio } from "./personal-resumen.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -101,7 +101,7 @@ function elCargador(estado, datos) {
       categoria: puesto.categoria,
       nota: "",
     }];
-    guardar({ ...datos, variables });
+    guardarConCambio(estado, { ...datos, variables });
     /* El monto se limpia y la categoría NO: el que carga tres gastos de comida seguidos no
        tiene que volver a elegirla cada vez. */
     puesto.monto = null;

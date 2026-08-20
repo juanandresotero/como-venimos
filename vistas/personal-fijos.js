@@ -9,10 +9,11 @@
 
 import {
   leer, guardar, mesDe, proximoId, estaPago, pagoDelMes, faltaPagar, montoEstimado,
+  yaEstabaPago,
 } from "../lib/personal.js";
 import { escapar, plata, numeroDesde, formatearMientrasEscribe } from "../lib/formato.js";
 import { telon } from "./ventana.js";
-import { monto } from "./personal-resumen.js";
+import { monto, guardarConCambio } from "./personal-resumen.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -65,11 +66,90 @@ export function dibujarPersonalFijos(estado) {
   const agregar = nodo(html`
     <div class="botonera" style="margin-top:16px">
       <button class="boton boton-primario" id="f-nuevo">Agregar uno</button>
+      ${falta.length
+        ? html`<button class="boton" id="f-ya">Ya pagué algunos</button>`
+        : ""}
     </div>`);
   agregar.getElementById("f-nuevo").addEventListener("click",
     () => ventanaFijo(estado, datos, null));
+  const ya = agregar.getElementById("f-ya");
+  if (ya) ya.addEventListener("click", () => ventanaYaPagados(estado, datos, falta, mes));
   trozo.append(agregar);
   return trozo;
+}
+
+/* "Estos ya estaban pagados cuando empecé".
+
+   Pasa al cargar la app por primera vez: el saldo inicial que se puso YA tiene descontados
+   los gastos del mes, así que tildarlos normalmente los cobraría dos veces. Van marcados
+   como `previo`: cuentan como gasto del mes —la plata salió— pero no tocan el saldo.
+
+   Es una pantalla aparte y no una pregunta al tildar porque esto se hace UNA VEZ. Meterle un
+   paso más al tilde de todos los meses, para resolver algo de un solo día, sería cobrarle a
+   la operación frecuente el precio de la rara. */
+function ventanaYaPagados(estado, datos, pendientes, mes) {
+  const elegidos = new Set();
+
+  const cuerpo = nodo(html`
+    <div class="panel-firma">
+      <h2 class="titulo" style="font-size:19px;margin-bottom:6px">¿Cuáles ya pagaste?</h2>
+      <p class="apunte" style="margin-bottom:12px">Estos quedan como pagados este mes pero no
+        se descuentan: la plata ya había salido antes de que empezaras a contar.</p>
+      <div class="lista" data-lista></div>
+      <div class="botonera" style="margin-top:14px">
+        <button class="boton boton-primario" data-guardar>Marcarlos</button>
+        <button class="boton" data-cerrar>Cerrar</button>
+      </div>
+    </div>
+  `);
+
+  const lista = cuerpo.querySelector("[data-lista]");
+  for (const f of pendientes) {
+    const fila = nodo(html`
+      <div class="fila fila-fijo">
+        <button class="tilde-pago" data-elegir="${f.id}" aria-pressed="false"
+                aria-label="Marcar ${escapar(f.nombre)}"></button>
+        <span class="fila-cuerpo"><span class="fila-titulo">${escapar(f.nombre)}</span></span>
+        <span class="fila-derecha">
+          <span class="cifra cifra-media">${f.aproximado ? "≈ " : ""}${monto(f.monto, f.moneda)}</span>
+        </span>
+      </div>
+    `);
+    const boton = fila.querySelector("[data-elegir]");
+    boton.addEventListener("click", () => {
+      if (elegidos.has(f.id)) elegidos.delete(f.id);
+      else elegidos.add(f.id);
+      const puesto = elegidos.has(f.id);
+      boton.classList.toggle("pagado", puesto);
+      boton.textContent = puesto ? "✓" : "";
+      boton.setAttribute("aria-pressed", puesto ? "true" : "false");
+    });
+    lista.append(fila);
+  }
+
+  const { caja, cerrar } = telon(cuerpo);
+  caja.querySelector("[data-cerrar]").addEventListener("click", cerrar);
+  caja.querySelector("[data-guardar]").addEventListener("click", () => {
+    if (!elegidos.size) { cerrar(); return; }
+    const fijos = datos.fijos.map((f) => {
+      if (!elegidos.has(f.id)) return f;
+      const estimado = montoEstimado(f);
+      return {
+        ...f,
+        pagos: {
+          ...(f.pagos || {}),
+          [mes]: {
+            monto: estimado.monto, moneda: f.moneda, fecha: estado.hoy, previo: true,
+          },
+        },
+      };
+    });
+    /* Se guarda SIN pasar por el cambio deducido: justamente lo que define a estos pagos es
+       que no mueven la caja. */
+    guardar({ ...datos, fijos });
+    cerrar();
+    estado.redibujar();
+  });
 }
 
 /* Un renglón por gasto: el tilde a la izquierda —que es lo que se toca todos los meses— y el
@@ -90,16 +170,19 @@ function laLista(estado, datos, fijos, mes) {
     const cifra = pago
       ? monto(pago.monto, pago.moneda || fijo.moneda)
       : `${estimado.aproximado ? "≈ " : ""}${monto(estimado.monto, fijo.moneda)}`;
+    const previo = yaEstabaPago(pago);
     const fila = nodo(html`
       <div class="fila fila-fijo">
-        <button class="tilde-pago ${pago ? "pagado" : ""}" data-pagar="${fijo.id}"
+        <button class="tilde-pago ${pago ? "pagado" : ""} ${previo ? "de-antes" : ""}"
+                data-pagar="${fijo.id}"
                 aria-label="${pago ? "Marcar sin pagar" : "Marcar pagado"}"
                 aria-pressed="${pago ? "true" : "false"}">${pago ? "✓" : ""}</button>
         <button class="fila-cuerpo" data-editar="${fijo.id}" style="text-align:left">
           <span class="fila-titulo">${escapar(fijo.nombre || "Sin nombre")}</span>
           ${pago
-            ? html`<span class="fila-sub">pagado el ${
-                escapar(String(pago.fecha || "").slice(8, 10))}</span>`
+            ? html`<span class="fila-sub">${previo
+                ? "ya estaba pagado"
+                : `pagado el ${escapar(String(pago.fecha || "").slice(8, 10))}`}</span>`
             : ""}
         </button>
         <span class="fila-derecha">
@@ -126,14 +209,14 @@ function laLista(estado, datos, fijos, mes) {
    con el promedio ya puesto. Guardar el estimado sin preguntar sería inventar un número en
    el único momento en que se conoce el verdadero: la factura está en la mano. */
 function cambiarPago(estado, datos, fijo, mes) {
-  const anotar = (cuanto) => {
+  const anotar = (cuanto, previo = false) => {
     const fijos = datos.fijos.map((f) => {
       if (f.id !== fijo.id) return f;
       const pagos = { ...(f.pagos || {}) };
-      pagos[mes] = { monto: Number(cuanto) || 0, moneda: f.moneda, fecha: estado.hoy };
+      pagos[mes] = { monto: Number(cuanto) || 0, moneda: f.moneda, fecha: estado.hoy, previo };
       return { ...f, pagos };
     });
-    guardar({ ...datos, fijos });
+    guardarConCambio(estado, { ...datos, fijos });
     estado.redibujar();
   };
 
