@@ -48,6 +48,15 @@ const HOJA_FIRMADA = `<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>`
 const REGLA = `<path d="M3.2 15.6 15.6 3.2l5.2 5.2L8.4 20.8z"/>`
   + `<path d="M6.4 12.4l2 2M9 9.8l3 3M11.6 7.2l2 2M14.2 4.6l3 3"/>`;
 
+/* El costo de vender: una torta a la que le sacaron una tajada.
+
+   No es una casa. A 22px una casa con algo al lado se empasta —ya se probaron la flecha y
+   la moneda—, y ademas todas las herramientas hablan de casas: el dibujo no distinguiria
+   nada. Lo que esta parada dice de verdad es "de lo que sale la venta, esto se va", y eso
+   es una porcion separada del resto. Dos formas cerradas, ninguna pieza chica. */
+const TAJADA = `<path d="M10.8 6.4A6.8 6.8 0 1 0 17.6 13.2L10.8 13.2Z"/>`
+  + `<path d="M13 11L13 4.2A6.8 6.8 0 0 1 19.8 11Z"/>`;
+
 /* Cada parada dice QUE HACER y nada mas. Antes cada una llevaba encima el momento en que
    se usa ("Antes de comprarla", "Al cerrar el negocio"): servia para explicar el concepto
    la primera vez, pero despues es texto que hay que saltear cada vez que se abre el menu
@@ -55,6 +64,9 @@ const REGLA = `<path d="M3.2 15.6 15.6 3.2l5.2 5.2L8.4 20.8z"/>`
 export const HERRAMIENTAS = [
   { vista: "renta", nombre: "Calcular renta", dibujo: CASA },
   { vista: "comisiones", nombre: "Calcular comisión", dibujo: PORCIENTO },
+  /* Va pegada a la comision: las dos contestan "¿cuanto sale esto?" en el mismo momento de
+     la operacion, y el orden de estas paradas es una linea de tiempo. */
+  { vista: "costos_cierre", nombre: "Cuánto cuesta cerrar", dibujo: TAJADA },
   { vista: "reajuste", nombre: "Calcular reajuste de alquiler", dibujo: ESCALONES },
   { vista: "carta_oferta", nombre: "Enviar carta oferta", dibujo: HOJA_FIRMADA },
   { vista: "padron", nombre: "Averiguar el padrón", dibujo: CHAPA },
