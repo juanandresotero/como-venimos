@@ -7,9 +7,11 @@
 
    Abajo, lo del mes: para poder mirar en qué se fue la plata sin salir de la pantalla. */
 
-import { leer, guardar, mesDe, proximoId, CATEGORIAS } from "../lib/personal.js";
+import {
+  leer, guardar, mesDe, proximoId, mesAnterior, CATEGORIAS,
+} from "../lib/personal.js";
 import { escapar, plata, numeroDesde, formatearMientrasEscribe } from "../lib/formato.js";
-import { monto } from "./personal-resumen.js";
+import { monto, nombreDelMes } from "./personal-resumen.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -23,16 +25,21 @@ function nodo(marca) {
    mitad de camino. */
 const puesto = { monto: null, moneda: "UYU", categoria: "Comida", nota: "" };
 
+/* Qué mes se está mirando abajo. Arranca en el actual y vuelve solo al cargar un gasto: sin
+   esto, un error del mes pasado no se podía corregir nunca — la lista mostraba únicamente el
+   mes en curso y no había ninguna otra pantalla donde apareciera. */
+let mesMirado = null;
+
 export function dibujarPersonalVariables(estado) {
   const datos = leer();
-  const mes = mesDe(estado.hoy);
+  if (!mesMirado) mesMirado = mesDe(estado.hoy);
   const delMes = (datos.variables || [])
-    .filter((v) => mesDe(v.fecha) === mes)
+    .filter((v) => mesDe(v.fecha) === mesMirado)
     .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)) || b.id - a.id);
 
   const trozo = document.createDocumentFragment();
   trozo.append(elCargador(estado, datos));
-  trozo.append(loDelMes(estado, datos, delMes));
+  trozo.append(loDelMes(estado, datos, delMes, mesDe(estado.hoy)));
   return trozo;
 }
 
@@ -98,6 +105,7 @@ function elCargador(estado, datos) {
     /* El monto se limpia y la categoría NO: el que carga tres gastos de comida seguidos no
        tiene que volver a elegirla cada vez. */
     puesto.monto = null;
+    mesMirado = estado.hoy.slice(0, 7);
     estado.redibujar();
   });
 
@@ -106,22 +114,44 @@ function elCargador(estado, datos) {
 
 /* ---------- Lo del mes ---------- */
 
-function loDelMes(estado, datos, delMes) {
+function loDelMes(estado, datos, delMes, mesDeHoy) {
   const porMoneda = { UYU: 0, USD: 0 };
   for (const v of delMes) porMoneda[v.moneda === "USD" ? "USD" : "UYU"] += Number(v.monto) || 0;
+  const esEsteMes = mesMirado === mesDeHoy;
 
   const seccion = nodo(html`
     <section>
       <div class="tarjeta-titulo" style="margin-bottom:10px">
-        <h2 class="titulo" style="font-size:17px">Este mes</h2>
+        <h2 class="titulo" style="font-size:17px">
+          <button class="chip-apagado" data-atras aria-label="Mes anterior">‹</button>
+          ${escapar(esEsteMes ? "Este mes" : nombreDelMes(mesMirado))}
+          ${esEsteMes
+            ? ""
+            : html`<button class="chip-apagado" data-adelante aria-label="Mes siguiente">›</button>`}
+        </h2>
         <span class="apunte">${["UYU", "USD"]
           .filter((m) => porMoneda[m] > 0)
           .map((m) => monto(porMoneda[m], m))
-          .join(" · ") || "todavía nada"}</span>
+          .join(" · ") || "nada"}</span>
       </div>
       <div class="lista" data-lista></div>
     </section>
   `);
+
+  /* Se puede ir para atrás sin límite y para adelante sólo hasta el mes en curso: no hay
+     gastos en el futuro y una flecha que no lleva a ningún lado es una flecha rota. */
+  seccion.querySelector("[data-atras]").addEventListener("click", () => {
+    mesMirado = mesAnterior(mesMirado);
+    estado.redibujar();
+  });
+  const adelante = seccion.querySelector("[data-adelante]");
+  if (adelante) {
+    adelante.addEventListener("click", () => {
+      const [a, m] = mesMirado.split("-").map(Number);
+      mesMirado = m === 12 ? `${a + 1}-01` : `${a}-${String(m + 1).padStart(2, "0")}`;
+      estado.redibujar();
+    });
+  }
 
   const lista = seccion.querySelector("[data-lista]");
   for (const gasto of delMes) {
@@ -143,6 +173,9 @@ function loDelMes(estado, datos, delMes) {
       estado.redibujar();
     });
     lista.append(fila);
+  }
+  if (!delMes.length) {
+    lista.replaceWith(nodo(html`<p class="apunte">No hay gastos cargados en ese mes.</p>`));
   }
   return seccion;
 }

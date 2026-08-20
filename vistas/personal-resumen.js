@@ -63,6 +63,7 @@ export function dibujarPersonalResumen(estado) {
   trozo.append(loQueTengo(r, monedas));
   trozo.append(esteMes(r, monedas));
   trozo.append(movimientos(estado, datos));
+  trozo.append(losMovimientos(estado, datos));
   if (r.hayMovimiento) trozo.append(elMesAMes(datos, estado.hoy, monedas));
   trozo.append(laCopia(estado, datos));
   return trozo;
@@ -292,6 +293,65 @@ function ventanaCambio(estado, datos) {
     cerrar();
     estado.redibujar();
   });
+}
+
+/* ---------- Lo que ya se cargó, para poder deshacerlo ---------- */
+
+/* Sin esto, una entrada mal cargada quedaba para siempre inflando el saldo y no había forma
+   de sacarla: los gastos se pueden borrar desde su pantalla, pero la plata que entra y los
+   cambios de moneda no vivían en ninguna lista.
+
+   Va plegado —se mira cuando algo no cierra, no todos los días— pero con la cuenta en la
+   tapa, para que se sepa que está ahí sin tener que abrirlo. */
+function losMovimientos(estado, datos) {
+  const filas = [
+    ...datos.entradas.map((e) => ({
+      tipo: "entradas", id: e.id, fecha: e.fecha,
+      que: e.nota || "Entró plata",
+      cuanto: monto(e.monto, e.moneda),
+    })),
+    ...datos.cambios.map((c) => ({
+      tipo: "cambios", id: c.id, fecha: c.fecha,
+      que: c.de === "USD" ? "Vendiste dólares" : "Compraste dólares",
+      cuanto: `${monto(c.monto_de, c.de)} → ${monto(c.monto_a, c.a)}`,
+    })),
+  ].sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+
+  if (!filas.length) return document.createDocumentFragment();
+
+  const seccion = nodo(html`
+    <details class="grupo" style="margin-bottom:18px">
+      <summary class="grupo-cabeza">
+        <span class="grupo-nombre">Plata que entró y cambios</span>
+        <span class="apunte grupo-resumen">${filas.length}</span>
+        <span class="grupo-flecha" aria-hidden="true">›</span>
+      </summary>
+      <div class="lista" style="margin-top:6px" data-lista></div>
+    </details>
+  `);
+
+  const lista = seccion.querySelector("[data-lista]");
+  for (const f of filas) {
+    const fila = nodo(html`
+      <div class="fila">
+        <span class="fila-cuerpo">
+          <span class="fila-titulo">${escapar(f.que)}</span>
+          <span class="fila-sub">${escapar(String(f.fecha).slice(8, 10))}/${
+            escapar(String(f.fecha).slice(5, 7))}</span>
+        </span>
+        <span class="fila-derecha">
+          <span class="cifra cifra-media">${f.cuanto}</span>
+          <span class="chip-apagado" data-borrar>borrar</span>
+        </span>
+      </div>
+    `);
+    fila.querySelector("[data-borrar]").addEventListener("click", () => {
+      guardar({ ...datos, [f.tipo]: datos[f.tipo].filter((x) => x.id !== f.id) });
+      estado.redibujar();
+    });
+    lista.append(fila);
+  }
+  return seccion;
 }
 
 /* ---------- Mes a mes y la proyección ---------- */
