@@ -36,6 +36,13 @@
 </div>
 
 <div class="cinta" id="cinta">
+  <!-- La perilla a la IZQUIERDA es la cara personal; a la derecha, el negocio. Sin rotulo:
+       al moverla cambia la app entera —otra barra abajo, otras pantallas— y eso se entiende
+       de una. Un texto al lado seria repetir lo que ya se ve. -->
+  <button class="cara-switch" id="boton-cara" role="switch" aria-checked="false"
+          aria-label="Cambiar de cara" title="Negocio o personal">
+    <span class="cara-perilla" aria-hidden="true"></span>
+  </button>
   <button class="boton-ajustes" id="boton-tema" aria-label="Cambiar a modo oscuro"
           title="Modo claro u oscuro"></button>
   <button class="boton-ajustes" id="boton-ajustes" aria-label="Ajustes" title="Ajustes">⚙</button>
@@ -59,6 +66,18 @@
   </button>
   <button class="nav-boton" data-vista="herramientas">
     <span class="nav-icono" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18.9 4.3a4.4 4.4 0 0 0-5.9 5.9L4.4 18.8a1.9 1.9 0 0 0 2.7 2.7l8.6-8.6a4.4 4.4 0 0 0 5.9-5.9l-2.9 2.9-2.6-2.6z"/></svg></span><span class="nav-texto">Herramientas</span>
+  </button>
+</nav>
+
+<nav class="navegacion" id="navegacion-personal" hidden>
+  <button class="nav-boton" data-vista="personal_resumen" aria-current="page">
+    <span class="nav-icono" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.4A2.4 2.4 0 0 1 5.4 5h11.2A2.4 2.4 0 0 1 19 7.4V9"/><path d="M3 7.4v9.2A2.4 2.4 0 0 0 5.4 19h13.2a2.4 2.4 0 0 0 2.4-2.4v-2.2"/><path d="M21 9.4h-4.2a2.3 2.3 0 0 0 0 4.6H21z"/></svg></span><span class="nav-texto">Resumen</span>
+  </button>
+  <button class="nav-boton" data-vista="personal_fijos">
+    <span class="nav-icono" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="5" width="17.6" height="15.8" rx="2.6"/><path d="M3.2 9.6h17.6"/><path d="M8 3.2v3.4"/><path d="M16 3.2v3.4"/><path d="M8.6 15.2l2.4 2.4 4.4-4.6"/></svg></span><span class="nav-texto">Fijos</span>
+  </button>
+  <button class="nav-boton" data-vista="personal_variables">
+    <span class="nav-icono" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5.4 3.2h13.2v17.6l-2.2-1.6-2.2 1.6-2.2-1.6-2.2 1.6-2.2-1.6-2.2 1.6z"/><path d="M9 8.4h6M9 12.4h6"/></svg></span><span class="nav-texto">Variables</span>
   </button>
 </nav>
 

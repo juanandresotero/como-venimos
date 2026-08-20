@@ -22,6 +22,9 @@ import { dibujarIndicador } from "./vistas/indicador.js";
 import { dibujarAjustes } from "./vistas/ajustes.js";
 import { dibujarHomogeneizacion } from "./vistas/homogeneizacion.js";
 import { dibujarCostosCierre } from "./vistas/costos-cierre.js";
+import { dibujarPersonalResumen } from "./vistas/personal-resumen.js";
+import { dibujarPersonalFijos } from "./vistas/personal-fijos.js";
+import { dibujarPersonalVariables } from "./vistas/personal-variables.js";
 
 const ARCHIVOS = [
   "cartera", "negocios", "ajustes", "eventos", "estado_robot", "mis_datos", "calculos_renta",
@@ -97,7 +100,24 @@ async function bajarDatos(token, shas) {
 /* El engranaje y el sol/luna solo en Hoy: en el resto de las pantallas se comian una
    franja entera de alto y no se usaban nunca. */
 function dibujarCinta() {
-  document.getElementById("cinta").hidden = estado.vista !== "hoy";
+  const casa = CARAS[cara].casa;
+  document.getElementById("cinta").hidden = estado.vista !== casa;
+  const boton = document.getElementById("boton-cara");
+  boton.setAttribute("aria-checked", cara === "personal" ? "true" : "false");
+  boton.classList.toggle("en-personal", cara === "personal");
+}
+
+/* Cada cara tiene su barra de abajo. Se muestran y se esconden enteras en vez de reescribir
+   los botones: son dos menus distintos, no uno que cambia de nombres. */
+function dibujarNavegacion() {
+  for (const [clave, datos] of Object.entries(CARAS)) {
+    document.getElementById(datos.nav).hidden = clave !== cara;
+  }
+}
+
+function cambiarDeCara() {
+  cara = cara === "personal" ? "negocios" : "personal";
+  irA(CARAS[cara].casa);
 }
 
 function dibujarBotonTema() {
@@ -138,6 +158,12 @@ function dibujarBarraGuardado(situacion, mensaje) {
   const texto = document.getElementById("texto-guardado");
   const boton = document.getElementById("boton-guardar");
 
+  /* Esta barra sube cambios AL REPO. Lo personal no va al repo, asi que en esa cara no
+     aparece: verla ahi seria invitar a subir lo que justamente no tiene que salir. */
+  if (cara === "personal") {
+    barra.hidden = true;
+    return;
+  }
   if (!situacion && !hayCambios(estado)) {
     barra.hidden = true;
     return;
@@ -181,7 +207,26 @@ const VISTAS = {
   homogeneizacion: dibujarHomogeneizacion,
   costos_cierre: dibujarCostosCierre,
   indicador: dibujarIndicador,
+  personal_resumen: dibujarPersonalResumen,
+  personal_fijos: dibujarPersonalFijos,
+  personal_variables: dibujarPersonalVariables,
 };
+
+/* ---------- Las dos caras ---------- */
+
+/* La app tiene DOS caras y no comparten nada salvo la ganancia de los negocios cobrados.
+
+   La cara ES DE LA SESION, no se guarda: al abrir la app siempre se entra por el negocio.
+   Lo pidio Juan asi y ademas cuida lo otro — si alguien agarra el telefono y abre la app, lo
+   primero que ve no son sus gastos personales. */
+const CARAS = {
+  negocios: { casa: "hoy", nav: "navegacion" },
+  personal: { casa: "personal_resumen", nav: "navegacion-personal" },
+};
+const VISTAS_PERSONALES = new Set(
+  ["personal_resumen", "personal_fijos", "personal_variables"]);
+const caraDe = (vista) => (VISTAS_PERSONALES.has(vista) ? "personal" : "negocios");
+let cara = "negocios";
 
 // La ficha de un negocio se llega desde Negocios, y la de una propiedad desde Cartera:
 // la barra de abajo tiene que quedar marcada en la pantalla de la que salio.
@@ -241,6 +286,7 @@ function dibujar({ desdeArriba = false } = {}) {
   for (const boton of document.querySelectorAll(".nav-boton")) {
     boton.setAttribute("aria-current", boton.dataset.vista === marcada ? "page" : "false");
   }
+  dibujarNavegacion();
   dibujarBarraGuardado();
   dibujarGlobo();
 }
@@ -254,6 +300,7 @@ let navegando = false;
 function irA(vista, foco = null) {
   // De donde vino, para que "Ficha completa" sepa a donde devolverlo.
   if (vista !== estado.vista) estado.anterior = estado.vista;
+  cara = caraDe(vista);
   estado.vista = vista;
   estado.foco = foco;
   const destino = foco ? `${vista}/${foco}` : vista;
@@ -271,7 +318,21 @@ function leerHash() {
   if (vista) {
     estado.vista = vista;
     estado.foco = foco || null;
+    cara = caraDe(vista);
   }
+}
+
+/* Al ABRIR la app se entra siempre por el negocio, aunque la direccion diga otra cosa.
+
+   Pasa cuando se cierra la app parado en una pantalla personal: el navegador guarda ese
+   `#personal_variables` y al volver a abrir mostraria los gastos de una. Lo pidio Juan asi
+   y ademas cuida lo otro: lo primero que ve cualquiera que agarre el telefono es el trabajo. */
+function entrarPorElNegocio() {
+  if (caraDe(estado.vista) !== "personal") return;
+  estado.vista = "hoy";
+  estado.foco = null;
+  cara = "negocios";
+  if (location.hash) history.replaceState(null, "", "#hoy");
 }
 
 /* Antes esto se quedaba en "Guardando…" y no decia nunca que habia terminado: la barra
@@ -322,11 +383,15 @@ async function arrancar() {
   estado.datos.cartera = completarConNegocios(estado.datos.cartera, estado.datos.negocios);
 
   leerHash();
+  entrarPorElNegocio();
 
-  document.getElementById("navegacion").addEventListener("click", (evento) => {
-    const boton = evento.target.closest(".nav-boton");
-    if (boton) irA(boton.dataset.vista);
-  });
+  for (const barra of document.querySelectorAll(".navegacion")) {
+    barra.addEventListener("click", (evento) => {
+      const boton = evento.target.closest(".nav-boton");
+      if (boton) irA(boton.dataset.vista);
+    });
+  }
+  document.getElementById("boton-cara").addEventListener("click", cambiarDeCara);
   document.getElementById("boton-guardar").addEventListener("click", guardar);
   document.getElementById("boton-tema").addEventListener("click", () => {
     tema.aplicar(tema.guardar(tema.opuesto(tema.vigente())));

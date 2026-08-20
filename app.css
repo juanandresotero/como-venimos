@@ -796,6 +796,63 @@ body {
   max-width: 640px; margin: 0 auto; padding: 10px 16px 0;
 }
 
+/* ---------- El switch de las dos caras ---------- */
+
+/* Va a la IZQUIERDA de todo en la cinta, que es de donde Juan lo pidio: la perilla corrida a
+   la izquierda es la cara personal.
+
+   Sin rotulo al lado a proposito. Al moverla cambia la app entera —otra barra abajo, otras
+   pantallas— y eso se entiende de una sola vez; un texto seria repetir lo que ya se ve. */
+.cara-switch {
+  margin-right: auto;
+  width: 46px; height: 26px;
+  padding: 3px;
+  border: 1px solid var(--linea);
+  border-radius: 999px;
+  background: var(--lienzo-2);
+  cursor: pointer;
+  display: flex; align-items: center;
+  /* La perilla arranca a la DERECHA, que es la cara del negocio. */
+  justify-content: flex-end;
+  transition: background .18s ease, border-color .18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.cara-switch .cara-perilla {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--tinta-2);
+  transition: background .18s ease;
+}
+.cara-switch.en-personal { justify-content: flex-start; background: var(--azul); border-color: var(--azul); }
+.cara-switch.en-personal .cara-perilla { background: #fff; }
+
+/* ---------- La cara personal ---------- */
+
+/* El tilde de un gasto fijo. Es lo unico que se toca todos los meses, asi que es grande:
+   con el dedo, sobre un renglon de lista, un cuadradito chico se falla. */
+.tilde-pago {
+  flex: none;
+  width: 28px; height: 28px;
+  border: 1.5px solid var(--linea);
+  border-radius: 9px;
+  background: var(--lienzo);
+  color: #fff; font-size: 15px; font-weight: 700; line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tilde-pago.pagado { background: var(--azul); border-color: var(--azul); }
+
+/* La fila de un fijo lleva el tilde adelante, asi que el cuerpo tiene que poder achicarse. */
+.fila-fijo { gap: 10px; }
+.fila-fijo .fila-cuerpo { flex: 1; background: none; border: none; font: inherit; color: inherit; cursor: pointer; padding: 0; }
+
+/* Las categorias de un gasto suelto, todas a la vista. Un desplegable son tres toques y
+   encima tapa la pantalla; esto es uno solo. */
+.menu-categorias {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 12px;
+}
+
 /* El mes comparte renglon con el engranaje y el sol/luna en vez de comerse uno propio.
    La cinta vive en index.html, arriba de la vista, asi que el mes se sube hasta su altura
    con un margen negativo — la cinta deja libre todo el lado izquierdo. */
