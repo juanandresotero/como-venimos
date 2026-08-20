@@ -113,29 +113,48 @@ export function pedirFirma({ titulo = "Firmá acá", pie = "", alFirmar }) {
    red de seguridad de todo el metodo — si salio mal, se ve. */
 /* El mismo panel lo usan dos pantallas: Ajustes, donde el usuario carga SU firma para que
    quede guardada, y la carta que abre el cliente, donde firma una sola vez. Cambia lo que
-   dice el botón; lo que hace es idéntico. */
+   dice el botón; lo que hace es idéntico.
+
+   SE PROBO ABRIR LA CAMARA DESDE ACA Y SE SACO. La idea era esquivar el selector de archivos,
+   que adentro del navegador de WhatsApp no abre. No rindio: la camara del navegador no
+   prende el flash en varios telefonos —se intento de tres formas distintas— y sin flash la
+   sombra del propio telefono sobre la hoja arruinaba la foto. La camara del telefono, en
+   cambio, tiene flash de verdad, enfoque y todo lo demas.
+
+   Asi que se pide lo que si funciona: que saque la foto con SU camara, de cerca y con flash,
+   y la suba. Y se le muestra con dos dibujos como tiene que quedar, que se entiende sin
+   leer. Menos piezas y menos formas de fallar. */
 export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto",
   botonListo = "Guardar mi firma" }) {
   const marca = nodo(html`
     <div class="panel-firma">
       <p class="etiqueta">${titulo}</p>
-      <p class="apunte" style="margin:2px 0 10px">Firmá en un papel blanco, sacale una foto
-        y subila. Sirve con lapicera de cualquier color. Si la foto quedó torcida, la
-        enderezás con los botones de girar.</p>
-      <div class="botonera" style="margin-bottom:10px">
-        <button class="boton boton-chico boton-primario" data-hacer="camara">Sacar la foto ahora</button>
+      <p class="apunte" style="margin:2px 0 10px">Firmá <strong>grande</strong> en una hoja
+        blanca y sacale una foto <strong>de cerca y con flash</strong>, con la cámara de tu
+        teléfono, de modo que en la foto se vea sólo la hoja. Sirve lapicera de cualquier color.</p>
+
+      <div class="ejemplos-firma">
+        <figure class="ejemplo">
+          <svg viewBox="0 0 90 120" aria-hidden="true">
+            <rect x="1" y="1" width="88" height="118" rx="3" fill="#fff" stroke="#c9cede"/>
+            <path d="M22 84 C 30 30, 52 26, 50 52 C 48 78, 34 74, 40 58 C 47 40, 62 74, 70 40"
+                  fill="none" stroke="#2f3ba8" stroke-width="3.2" stroke-linecap="round"/>
+          </svg>
+          <figcaption class="ejemplo-si">Así: sólo la hoja</figcaption>
+        </figure>
+        <figure class="ejemplo">
+          <svg viewBox="0 0 90 120" aria-hidden="true">
+            <rect x="1" y="1" width="88" height="118" rx="3" fill="#6b6f76"/>
+            <rect x="20" y="34" width="50" height="56" fill="#fff"/>
+            <rect x="20" y="34" width="15" height="56" fill="#2c2f36" opacity=".6"/>
+            <path d="M40 74 C 43 52, 52 50, 51 60 C 50 70, 45 68, 47 62 C 50 54, 57 68, 61 56"
+                  fill="none" stroke="#2f3ba8" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+          <figcaption class="ejemplo-no">Así no: mesa y sombra</figcaption>
+        </figure>
       </div>
+
       <input type="file" accept="image/*" class="campo" id="foto-firma">
-      <div class="camara-firma" hidden>
-        <video class="camara-video" playsinline muted></video>
-        <div class="botonera">
-          <button class="boton boton-chico boton-primario" data-hacer="capturar">Capturar</button>
-          <button class="boton boton-chico" data-hacer="luz" hidden>Prender la luz</button>
-          <button class="boton boton-chico" data-hacer="cortar-camara">Cerrar la cámara</button>
-        </div>
-        <p class="apunte aviso-luz" hidden></p>
-      </div>
-      <p class="apunte camara-error" hidden></p>
       <div class="vista-firma" hidden>
         <canvas class="lienzo-recorte" width="600" height="240"></canvas>
         <div class="botonera">
@@ -158,13 +177,7 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
   const lienzo = panel.caja.querySelector(".lienzo-recorte");
   const aviso = panel.caja.querySelector(".aviso-brillo");
   const listo = panel.caja.querySelector('[data-hacer="listo"]');
-  const cajaCamara = panel.caja.querySelector(".camara-firma");
-  const botonLuz = panel.caja.querySelector('[data-hacer="luz"]');
-  const avisoLuz = panel.caja.querySelector(".aviso-luz");
-  const video = panel.caja.querySelector(".camara-video");
-  const errorCamara = panel.caja.querySelector(".camara-error");
   let mascara = null;
-  let corriente = null;
   /* La foto tal como llego, para poder volver a recortarla despues de cada giro sin perder
      calidad: se gira SIEMPRE desde el original y no encima de lo ya girado. */
   let original = null;
@@ -237,196 +250,6 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
     listo.disabled = false;
   }
 
-  const apagarCamara = () => {
-    if (corriente) corriente.getTracks().forEach((pista) => pista.stop());
-    corriente = null;
-    cajaCamara.hidden = true;
-    botonLuz.hidden = true;
-    avisoLuz.hidden = true;
-  };
-
-  /* La linterna del telefono.
-
-     Una firma en papel sale mejor con luz pareja que con la sombra de la propia mano
-     encima, asi que se intenta prender sola y queda el boton para apagarla.
-
-     Ojo: esto es un EXTRA, no algo de lo que dependa el recorte. El recorte compara cada
-     punto contra su vecindario, asi que aguanta luz despareja por si solo. Si el telefono
-     no da la linterna, la firma sale igual.
-
-     Se prueban DOS caminos, porque no todos los telefonos aceptan el mismo:
-       1. Pedirsela a la pista que ya esta andando (`applyConstraints`), que es lo normal.
-       2. Volver a pedir la camara YA con la linterna incluida, que es lo que necesitan
-          algunos Android.
-
-     Y hay que ESPERAR: las capacidades de la camara no estan listas apenas arranca. Se
-     preguntaba de una, venia sin definir, y se decidia que no habia linterna. */
-  let luzPrendida = false;
-
-  const pistaDeVideo = () => corriente && corriente.getVideoTracks()[0];
-
-  /* Espera a que la camara diga que sabe hacer. Hasta un segundo y medio.
-     Devuelve true / false, o null si nunca contesto. */
-  async function declaraLinterna(pista) {
-    for (let intento = 0; intento < 10; intento++) {
-      if (typeof pista.getCapabilities === "function") {
-        const puede = pista.getCapabilities();
-        if (puede && "torch" in puede) return Boolean(puede.torch);
-      }
-      await new Promise((sigue) => { setTimeout(sigue, 150); });
-    }
-    return null;
-  }
-
-  const decirDeLaLuz = (texto) => {
-    avisoLuz.hidden = false;
-    avisoLuz.textContent = texto;
-  };
-
-  /* Comprobar que la linterna QUEDO PRENDIDA, no que el pedido no dio error.
-
-     Es la diferencia que importa: pedir la linterna en `advanced` es un pedido OPCIONAL —si
-     el telefono no puede, no falla, la ignora—. Sin comprobar, el boton decia "Apagar la
-     luz" con la linterna apagada, que es peor que no tener boton. */
-  const quedoPrendida = (pista) => {
-    if (typeof pista.getSettings !== "function") return null;   // no se puede saber
-    const ahora = pista.getSettings();
-    return "torch" in ahora ? Boolean(ahora.torch) : null;
-  };
-
-  const mostrarLuz = (encendida) => {
-    luzPrendida = encendida;
-    botonLuz.hidden = false;
-    botonLuz.textContent = encendida ? "Apagar la luz" : "Prender la luz";
-    avisoLuz.hidden = true;
-  };
-
-  async function prenderLuz(encender) {
-    const pista = pistaDeVideo();
-    if (!pista) return;
-
-    const declarada = await declaraLinterna(pista);
-    /* Si la camara dice de frente que no tiene, no se insiste: los caminos de abajo
-       "andarian" sin prender nada. */
-    if (declarada === false) {
-      botonLuz.hidden = true;
-      decirDeLaLuz("Esta cámara no tiene linterna. No importa: el recorte funciona igual.");
-      return;
-    }
-
-    // ---- camino 1: pedirsela a la pista que ya esta andando
-    try {
-      await pista.applyConstraints({ advanced: [{ torch: encender }] });
-      if (quedoPrendida(pista) !== !encender) {
-        mostrarLuz(encender);
-        return;
-      }
-    } catch { /* se prueba el otro */ }
-
-    // ---- camino 2: volver a pedir la camara con la linterna adentro
-    if (encender) {
-      try {
-        const nueva = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { exact: "environment" },
-            advanced: [{ torch: true }],
-          },
-          audio: false,
-        });
-        const suPista = nueva.getVideoTracks()[0];
-        if (quedoPrendida(suPista) === false) {
-          nueva.getTracks().forEach((sinUso) => sinUso.stop());
-        } else {
-          if (corriente) corriente.getTracks().forEach((vieja) => vieja.stop());
-          corriente = nueva;
-          video.srcObject = corriente;
-          await video.play();
-          mostrarLuz(true);
-          return;
-        }
-      } catch { /* no se pudo, se avisa abajo */ }
-    }
-
-    /* Si no se pudo, se DICE, y se dice que da igual: el recorte no la necesita. */
-    botonLuz.hidden = true;
-    decirDeLaLuz("No pude prender la luz desde el navegador. "
-      + "No importa: el recorte funciona igual.");
-  }
-
-  /* La camara por JavaScript y no por el campo de archivo.
-
-     No es un lujo: adentro del navegador que WhatsApp trae incorporado el selector de
-     archivos NO ABRE —la aplicacion que lo hospeda tiene que implementarlo y WhatsApp no lo
-     hace—, asi que el boton de subir una foto no reacciona. Pedir la camara es otro camino
-     distinto, y donde este permitido funciona sin selector de archivos. */
-  const prenderCamara = async () => {
-    /* Se avisa ANTES de pedir nada: pedir la camara puede tardar, o quedarse esperando una
-       respuesta que no llega nunca, y un boton que no reacciona es exactamente el problema
-       que se esta tratando de resolver. */
-    errorCamara.hidden = false;
-    errorCamara.textContent = "Pidiendo permiso para usar la cámara…";
-
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      errorCamara.textContent = "Este navegador no me deja usar la cámara. "
-        + "Sacá la foto con la cámara del teléfono y buscala con el botón de abajo.";
-      return;
-    }
-
-    try {
-      /* Con reloj: el pedido de camara puede no contestar NUNCA —pasa adentro de los
-         navegadores que vienen dentro de otra app— y sin esto la pantalla se queda esperando
-         para siempre. Diez segundos y se ofrece el otro camino. */
-      /* Se pide la camara de ATRAS de forma EXIGENTE, no "si se puede".
-
-         Con `ideal` el navegador es libre de dar la de adelante, y varios lo hacen. Eso
-         explicaba dos cosas a la vez: la foto salia peor —la frontal tiene menos resolucion
-         y enfoca de lejos— y la linterna no prendia nunca, porque la camara de adelante NO
-         TIENE linterna. Si el telefono no tiene camara trasera, se cae al pedido de antes. */
-      const conReloj = (promesa) => Promise.race([
-        promesa,
-        new Promise((_, rechazar) => {
-          setTimeout(() => rechazar(new Error("sin respuesta")), 10000);
-        }),
-      ]);
-      const grande = { width: { ideal: 1920 }, height: { ideal: 1080 } };
-      try {
-        corriente = await conReloj(navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { exact: "environment" }, ...grande }, audio: false,
-        }));
-      } catch (sinTrasera) {
-        if (sinTrasera && sinTrasera.message === "sin respuesta") throw sinTrasera;
-        corriente = await conReloj(navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" }, ...grande }, audio: false,
-        }));
-      }
-      video.srcObject = corriente;
-      await video.play();
-      cajaCamara.hidden = false;
-      errorCamara.hidden = true;
-      prenderLuz(true);
-    } catch (error) {
-      apagarCamara();
-      errorCamara.hidden = false;
-      errorCamara.textContent = error && error.name === "NotAllowedError"
-        ? "No me diste permiso para usar la cámara. Sacá la foto con la cámara del teléfono "
-          + "y buscala con el botón de abajo."
-        : "No pude abrir la cámara desde acá. Sacá la foto con la cámara del teléfono y "
-          + "buscala con el botón de abajo.";
-    }
-  };
-
-  const capturar = () => {
-    if (!corriente) return;
-    const foto = document.createElement("canvas");
-    foto.width = video.videoWidth;
-    foto.height = video.videoHeight;
-    foto.getContext("2d").drawImage(video, 0, 0);
-    apagarCamara();
-    const imagen = new Image();
-    imagen.onload = () => procesar(imagen);
-    imagen.src = foto.toDataURL("image/png");
-  };
-
   entrada.addEventListener("change", () => {
     const archivo = entrada.files && entrada.files[0];
     if (!archivo) return;
@@ -441,20 +264,12 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
   panel.caja.addEventListener("click", (e) => {
     const boton = e.target.closest ? e.target.closest("[data-hacer]") : null;
     const que = boton ? boton.dataset.hacer : null;
-    if (que === "camara") prenderCamara();
-    if (que === "capturar") capturar();
-    if (que === "luz") prenderLuz(!luzPrendida);
-    if (que === "cortar-camara") apagarCamara();
     /* De a 20 grados: alcanza para enderezar una foto sacada a mano y no obliga a tocar
        quince veces para dar la vuelta entera. */
     if (que === "girar-izq") { vueltas -= 20; recortarDeNuevo(); }
     if (que === "girar-der") { vueltas += 20; recortarDeNuevo(); }
-    if (que === "cancelar") {
-      apagarCamara();
-      panel.cerrar();
-    }
+    if (que === "cancelar") panel.cerrar();
     if (que === "listo" && mascara) {
-      apagarCamara();
       panel.cerrar();
       alFirmar(aBytes(mascara));
     }

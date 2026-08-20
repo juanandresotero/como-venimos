@@ -1372,18 +1372,17 @@ body {
 
 /* Un `<input type="file">` con los estilos de `.campo` queda mudo en el celular: se ve
    una caja vacía y no se entiende que hay que tocarla. Se convierte en un botón. */
-/* La camara adentro del panel. Existe porque el selector de archivos no abre adentro del
-   navegador que WhatsApp trae incorporado, y pedir la camara es otro camino. */
-.camara-firma { display: grid; gap: 8px; margin-bottom: 10px; }
-.camara-video {
-  width: 100%; max-height: 46vh; border-radius: 12px;
-  background: #000; object-fit: contain;
+/* Los dos dibujitos de como sacar la foto. Se explica mostrando, no escribiendo: el que
+   la saca puede ser un cliente y no tiene por que leer un instructivo. */
+.ejemplos-firma { display: flex; gap: 12px; margin-bottom: 12px; }
+.ejemplo { margin: 0; flex: 1; display: grid; gap: 4px; justify-items: center; }
+.ejemplo svg {
+  width: 100%; max-width: 92px; height: auto;
+  border-radius: 8px; background: var(--lienzo-2);
 }
-.camara-error { color: var(--rojo-tinta); margin: 0 0 10px; }
-.aviso-luz { margin: 0; }
-/* El recorte y los botones de enderezarlo, juntos: se mira el resultado y se corrige ahi
-   mismo, sin volver a sacar la foto. */
-.vista-firma { display: grid; gap: 8px; margin-bottom: 10px; }
+.ejemplo figcaption { font-size: 11px; font-weight: 650; text-align: center; }
+.ejemplo-si { color: var(--azul); }
+.ejemplo-no { color: var(--rojo-tinta); }
 
 .panel-firma input[type="file"] {
   width: 100%;

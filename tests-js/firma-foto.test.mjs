@@ -248,3 +248,30 @@ test("una firma que parte la hoja en dos no se recorta por la mitad", () => {
      el alto seria la mitad. */
   assert.ok(r.alto > r.ancho * 0.1, `quedo ${r.ancho}x${r.alto}`);
 });
+
+/* LA SOMBRA DEL PROPIO TELEFONO. Juan mando cuatro capturas girando la misma firma: en todas
+   aparecia una barra negra maciza que se movia con la imagen. No era el borde de la hoja:
+   era la sombra del telefono sobre el papel, tapando la luz.
+
+   Lo que la separa de una firma es el GROSOR. Una lapicera deja trazos finos por mas grande
+   que sea la foto; una sombra es un manchon macizo de decenas de pixeles de lado. */
+test("la sombra del telefono sobre la hoja no entra en el recorte", () => {
+  const NEGRO = [38, 36, 40];
+  const PAPEL = [230, 228, 232];
+  const firma = (x, y) => Math.abs(y - 110 - 18 * Math.sin(x / 18)) < 3 && x > 60 && x < 340;
+  const sombra = (x, y) => x >= 30 && x < 120 && y >= 20 && y < 180;   // manchon macizo
+  const r = recortar(foto(400, 220, (x, y) =>
+    (firma(x, y) || sombra(x, y) ? NEGRO : PAPEL)));
+  assert.ok(r, "tiene que encontrar la firma");
+  /* La firma va de x=60 a 340 y mide unos 40 de alto. Con la sombra adentro, el recorte
+     seria mucho mas alto que ancho de lo que corresponde. */
+  assert.ok(r.alto < r.ancho * 0.35, `quedo ${r.ancho}x${r.alto}: se colo la sombra`);
+});
+
+test("una firma con trazo grueso NO se confunde con una sombra", () => {
+  const NEGRO = [38, 36, 40];
+  const PAPEL = [230, 228, 232];
+  const gordo = (x, y) => Math.abs(y - 110 - 20 * Math.sin(x / 20)) < 6 && x > 60 && x < 340;
+  const r = recortar(foto(400, 220, (x, y) => (gordo(x, y) ? NEGRO : PAPEL)));
+  assert.ok(r, "una firma con lapicera gruesa tiene que salir igual");
+});
