@@ -20,14 +20,16 @@ function nodo(marca) {
 
 /* Lo cargado vive acá y no en el disco: es una cuenta de un rato, como las otras
    calculadoras. Al salir y volver se conserva mientras la app siga abierta. */
-const medidas = { padron: null, construido: null, semi: null, otras: null };
+const medidas = {
+  padron: null, construido: null, semi: null, otras: null, patio: null, valor_m2: null,
+};
 const pesos = { ...POR_DEFECTO };
 let pesosAbiertos = false;
 
 /* Los pedazos que cambian mientras se escribe. Se guardan las referencias para refrescarlos
    SOLOS: redibujar la pantalla entera en cada tecla manda el scroll a cualquier lado, que es
    lo que Juan reportó en la carta oferta. */
-const vivos = { total: null, resumen: null, tapa: null };
+const vivos = { total: null, resumen: null, tapa: null, patio: null, valor: null };
 
 /* Con un decimal cuando lo hay: 202,5 m² no es 203 m². `plata` redondea a entero, que va
    bien para la plata y mal para los metros. */
@@ -41,6 +43,10 @@ const CAMPOS = [
   { clave: "construido", etiqueta: "Construido", pista: "en m²" },
   { clave: "semi", etiqueta: "Semiconstruido", pista: "en m² · terraza techada, barbacoa" },
   { clave: "otras", etiqueta: "Otras construcciones", pista: "en m² · galpón, depósito" },
+  /* El patio se puede dejar vacío: sale de restarle al padrón todo lo construido. Se escribe
+     cuando esa resta no sirve — una casa de dos plantas construye más metros de los que
+     pisa— y ahí conviene borrar el padrón y poner el patio real. */
+  { clave: "patio", etiqueta: "Patio", pista: "en m² · si lo dejás vacío, lo calculo" },
 ];
 
 const PESOS = [
@@ -59,6 +65,7 @@ export function dibujarHomogeneizacion(estado) {
   trozo.append(campos());
   trozo.append(cuantoSeToma(estado));
   trozo.append(resumen());
+  trozo.append(cuantoVale());
   refrescar();
   return trozo;
 }
@@ -88,6 +95,7 @@ function campos() {
       <input class="campo" id="h-${campo.clave}" type="number" inputmode="decimal"
              min="0" step="any" value="${medidas[campo.clave] ?? ""}" placeholder="0">
     `;
+    if (campo.clave === "patio") vivos.patio = fila.querySelector(".campo");
     const control = fila.querySelector(".campo");
     /* Se anota mientras se escribe: no hay que confirmar nada y no se pierde el renglón. */
     control.addEventListener("input", () => {
@@ -159,6 +167,30 @@ function resumen() {
   return seccion;
 }
 
+/* Lo que vale la propiedad. Va al final porque necesita el resultado de arriba: metros
+   homogeneizados por el precio del metro de la zona. */
+function cuantoVale() {
+  const seccion = nodo(html`
+    <section class="tarjeta" id="h-vale">
+      <div class="campo-fila" style="padding:0">
+        <label for="h-valor_m2">Valor del m² <span class="apunte">en USD</span></label>
+        <input class="campo" id="h-valor_m2" type="number" inputmode="decimal"
+               min="0" step="any" value="${medidas.valor_m2 ?? ""}" placeholder="0">
+      </div>
+      <p class="cifra cifra-heroe" style="color:var(--azul);margin:14px 0 0" id="h-valor"></p>
+      <p class="apunte" id="h-valor-pie"></p>
+    </section>
+  `);
+  const control = seccion.getElementById("h-valor_m2");
+  control.addEventListener("input", () => {
+    medidas.valor_m2 = control.value === "" ? null : Number(control.value);
+    refrescar();
+  });
+  vivos.valor = seccion.getElementById("h-valor");
+  vivos.valorPie = seccion.getElementById("h-valor-pie");
+  return seccion;
+}
+
 function refrescar() {
   const r = homogeneizar(medidas, pesos);
 
@@ -182,9 +214,22 @@ function refrescar() {
       <span class="dato-valor">${m2(r.total)}</span>
     </div>`;
 
+  /* El campo del patio muestra, apagado, cuánto daría la resta. Así se ve de dónde sale sin
+     tener que escribirlo, y si no cierra se escribe encima. */
+  if (vivos.patio) {
+    vivos.patio.placeholder = r.padronParaElPatio ? `${Math.round(r.patioCalculado)}` : "0";
+  }
+
+  if (vivos.valor) {
+    vivos.valor.textContent = r.valor ? `USD ${CON_DECIMAL.format(Math.round(r.valor))}` : "";
+    vivos.valorPie.textContent = r.valor
+      ? `${m2(r.total)} × USD ${CON_DECIMAL.format(r.valorM2)}`
+      : "";
+  }
+
   vivos.aviso.hidden = !r.seExcede;
   if (r.seExcede) {
     vivos.aviso.textContent = "Lo construido no entra en el padrón. Si son dos plantas, "
-      + "el patio te queda corto: cargalo aparte en “Otras construcciones”.";
+      + "borrá el padrón y escribí el patio real arriba.";
   }
 }

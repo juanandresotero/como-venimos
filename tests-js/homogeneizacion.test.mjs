@@ -71,3 +71,50 @@ test("devuelve el desglose, sin las filas vacías", () => {
   const suma = r.partes.reduce((n, p) => n + p.computa, 0);
   assert.equal(suma, r.total, "las partes tienen que sumar el total");
 });
+
+/* El patio escrito a mano. Lo pidio Juan para las casas de dos plantas: ahi el patio que
+   sale de restar queda corto, asi que se borra el padron y se pone el patio real. */
+test("el patio escrito a mano le gana al que sale del padrón", () => {
+  const r = homogeneizar({ padron: 500, construido: 100, patio: 120 }, POR_DEFECTO);
+  assert.equal(r.patio, 120, "manda el escrito");
+  assert.equal(r.patioCalculado, 400, "pero sigue diciendo cuánto daba la resta");
+  assert.equal(r.total, 100 + 30);
+});
+
+test("sin padrón, con el patio a mano alcanza", () => {
+  const r = homogeneizar({ construido: 200, patio: 80 }, POR_DEFECTO);
+  assert.equal(r.patio, 80);
+  assert.equal(r.total, 200 + 20);
+  assert.equal(r.hayDatos, true);
+});
+
+/* Un cero ESCRITO es un dato —"no tiene patio"— y no lo mismo que el campo vacio. */
+test("un patio en cero escrito a mano se respeta", () => {
+  const r = homogeneizar({ padron: 500, construido: 100, patio: 0 }, POR_DEFECTO);
+  assert.equal(r.patio, 0, "dijo que no tiene patio");
+  assert.equal(r.total, 100);
+});
+
+test("con el patio a mano ya no avisa que lo construido no entra en el padrón", () => {
+  const sinPatio = homogeneizar({ padron: 200, construido: 300 }, POR_DEFECTO);
+  assert.equal(sinPatio.seExcede, true);
+  const conPatio = homogeneizar({ padron: 200, construido: 300, patio: 90 }, POR_DEFECTO);
+  assert.equal(conPatio.seExcede, false, "el padrón ya no se usa para nada");
+  assert.equal(conPatio.patio, 90);
+});
+
+/* Lo que vale la propiedad: metros homogeneizados por el precio del metro. */
+test("con el valor del m² da el valor de la propiedad", () => {
+  const r = homogeneizar(
+    { padron: 500, construido: 100, semi: 50, otras: 50, valor_m2: 1200 },
+    POR_DEFECTO,
+  );
+  assert.equal(r.total, 202.5);
+  assert.equal(r.valor, 202.5 * 1200);
+});
+
+test("sin el valor del m² no se inventa un valor", () => {
+  const r = homogeneizar({ padron: 500, construido: 100 }, POR_DEFECTO);
+  assert.equal(r.valorM2, 0);
+  assert.equal(r.valor, 0);
+});
