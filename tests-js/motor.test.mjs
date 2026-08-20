@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   base, splitVigente, calcular, pctPorDefecto, revisar, REGIMENES,
-  plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando } from "../lib/motor.js";
+  plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando, estaCaido, CAIDO, hayAlgoEnMarcha } from "../lib/motor.js";
 
 const AJUSTES = {
   agente: { nombre: "Juan Andrés Otero" },
@@ -607,4 +607,71 @@ test("comoEstaContando dice qué está contando y qué pasa si está mal", () =>
   assert.match(comoEstaContando({ puntas: 2 }, AJUSTES), /LAS DOS PUNTAS/);
   assert.match(comoEstaContando({ puntas: 1 }, AJUSTES), /el doble/);
   assert.match(comoEstaContando({ puntas: 0 }, AJUSTES), /no está sumando ganancia/);
+});
+
+/* ---------- Un negocio se puede caer ---------- */
+
+/* EL CASO EXACTO QUE REPORTÓ JUAN: le borró la fecha de negociación a un negocio para avisar
+   que se había caído. La app se la reponía sola desde la cartera —la propiedad seguía
+   figurando en negociación en RE/MAX— y encima le seguía pidiendo confirmar las puntas. */
+test("a un negocio caído no se le repone la fecha que se borró", () => {
+  const cartera = propiedadEn("en_negociacion", { fecha_negociacion: "2026-08-07" });
+  const sinFecha = negocio({
+    estado: CAIDO, fecha_fin: null, fecha_negociacion: null,
+    entity_id_cartera: "flam",
+  });
+  const n = revisar(sinFecha, AJUSTES, "2026-08-20", cartera);
+  assert.equal(n.fecha_negociacion, null, "la fecha borrada NO vuelve");
+  assert.equal(n.estado, CAIDO, "y no revive solo");
+});
+
+test("a un negocio caído no se le pide nada", () => {
+  const n = revisar(negocio({ estado: CAIDO, fecha_fin: null, direccion: null, barrio: null }),
+    AJUSTES, "2026-08-20");
+  assert.deepEqual(tipos(n), [], "ni las puntas ni los datos que falten");
+  assert.equal(estaCaido(n), true);
+});
+
+/* Todos los cálculos filtran por "en_curso" o "cerrado", así que un caído queda afuera solo:
+   no suma a lo encaminado ni a lo cobrado. */
+test("un caído no es ni en curso ni cerrado, así que no suma en ningún lado", () => {
+  const n = revisar(negocio({ estado: CAIDO, fecha_fin: null }), AJUSTES, "2026-08-20");
+  assert.notEqual(n.estado, "en_curso");
+  assert.notEqual(n.estado, "cerrado");
+});
+
+/* ---------- Las puntas sólo cuando hay algo pasando ---------- */
+
+/* Una ficha abierta donde todavía no pasó nada no tiene puntas que confirmar. Preguntarlo
+   ahí es preguntar algo que la app puede saber mirando las fechas y la propiedad. */
+test("sin nada en marcha no se pregunta por las puntas", () => {
+  const n = revisar(negocio({
+    estado: "en_curso", fecha_fin: null, fecha_negociacion: null, fecha_boleto: null,
+  }), AJUSTES, "2026-08-20", {});
+  assert.ok(!tipos(n).includes("revisar_puntas"));
+});
+
+test("con fecha de negociación sí se pregunta", () => {
+  const n = revisar(negocio({
+    estado: "en_curso", fecha_fin: null, fecha_negociacion: "2026-08-07",
+  }), AJUSTES, "2026-08-20", {});
+  assert.ok(tipos(n).includes("revisar_puntas"));
+});
+
+test("y también si la propiedad está en negociación aunque el negocio no tenga fechas", () => {
+  const cartera = propiedadEn("en_negociacion");
+  const n = revisar(negocio({
+    estado: "en_curso", fecha_fin: null, fecha_negociacion: null, fecha_boleto: null,
+    entity_id_cartera: "flam", ficha_completa: false,
+  }), AJUSTES, "2026-08-20", cartera);
+  assert.ok(tipos(n).includes("revisar_puntas"));
+});
+
+test("hayAlgoEnMarcha mira las fechas y el estado de la propiedad", () => {
+  assert.equal(hayAlgoEnMarcha({ fecha_negociacion: "2026-08-07" }, null), true);
+  assert.equal(hayAlgoEnMarcha({ fecha_boleto: "2026-08-07" }, null), true);
+  assert.equal(hayAlgoEnMarcha({}, { activa: true, estado: "reservada" }), true);
+  assert.equal(hayAlgoEnMarcha({}, { activa: true, estado: "publicada" }), false);
+  assert.equal(hayAlgoEnMarcha({}, { activa: false, estado: "en_negociacion" }), false);
+  assert.equal(hayAlgoEnMarcha({}, null), false);
 });

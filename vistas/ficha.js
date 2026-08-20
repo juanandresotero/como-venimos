@@ -7,7 +7,9 @@ import { editarNegocio, borrarNegocio } from "../lib/guardado.js";
 import {
   plata, plataUSD, escapar, fechaRazonable, numeroDesde, formatearMientrasEscribe,
 } from "../lib/formato.js";
-import { esBusqueda, puntasSegunAgentes, momentoDeLaPropiedad, nombrePropio } from "../lib/motor.js";
+import {
+  esBusqueda, puntasSegunAgentes, momentoDeLaPropiedad, nombrePropio, estaCaido, CAIDO,
+} from "../lib/motor.js";
 import {
   AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, EXPLICACION_ORIGEN,
   ORIGENES_QUE_LLEVAN_NOMBRE,
@@ -69,12 +71,14 @@ export function dibujarFicha(estado) {
     </section>
   `));
 
+  if (estaCaido(n)) trozo.append(cartelDeCaido(n, estado));
   if (falta.has("revisar_puntas")) trozo.append(confirmarPuntas(n, estado));
   trozo.append(campos(n, falta, estado));
   trozo.append(propiedadVinculada(n, estado));
   trozo.append(gente(n, estado));
   trozo.append(avisos(n));
-  trozo.append(fichaCompleta(n, estado));
+  if (!estaCaido(n)) trozo.append(fichaCompleta(n, estado));
+  if (n.estado !== "cerrado") trozo.append(seCayo(n, estado));
   if (n.manual) trozo.append(borrar(n, estado));
 
   trozo.getElementById("volver").addEventListener("click", () => estado.irA("negocios"));
@@ -493,6 +497,48 @@ function confirmarPuntas(n, estado) {
     estado.redibujar();
   });
   return seccion;
+}
+
+/* ---------- Se cayó ---------- */
+
+/* Un negocio que se cae no tenía dónde decirse. Juan lo intentó borrando la fecha de
+   negociación y la app se la repuso sola desde la cartera, porque la propiedad seguía
+   figurando en negociación en RE/MAX. El aviso de cerrar hasta decía "si se cayó, marcalo",
+   prometiendo un botón que no existía.
+
+   Marcado así deja de sumar en todos lados —los cálculos filtran por "en_curso" o "cerrado",
+   así que queda afuera solo—, deja de pedir datos y deja de preguntar por las puntas. Pero
+   NO se borra: cuántos se caen y en qué momento es información del negocio. */
+function seCayo(n, estado) {
+  const caido = estaCaido(n);
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">
+        ${caido ? "Este negocio se cayó" : "¿Se cayó?"}</h2>
+      <p class="apunte" style="margin-bottom:12px">${caido
+        ? "No suma en ningún lado y no te pido más datos. Queda guardado."
+        : "Dejo de contarlo en la proyección y de pedirte datos. Se puede deshacer."}</p>
+      <button class="boton ${caido ? "" : "boton-chico"}" id="cayo">
+        ${caido ? "Sigue en marcha" : "Se cayó"}
+      </button>
+    </section>
+  `);
+  seccion.getElementById("cayo").addEventListener("click", () => {
+    editarNegocio(estado, n.id, { estado: caido ? "en_curso" : CAIDO });
+    estado.redibujar();
+  });
+  return seccion;
+}
+
+/* Arriba de todo, para que no haya dudas de por qué esta ficha no pide nada. */
+function cartelDeCaido(n, estado) {
+  return nodo(html`
+    <section class="tarjeta" style="border-color:var(--rojo)">
+      <p class="apunte" style="margin:0;color:var(--rojo-tinta)">
+        <strong>Este negocio se cayó.</strong> No suma en la proyección ni aparece en
+        pendientes.</p>
+    </section>
+  `);
 }
 
 function avisos(n) {
