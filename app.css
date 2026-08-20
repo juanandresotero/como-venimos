@@ -798,13 +798,16 @@ body {
 
 /* ---------- El switch de las dos caras ---------- */
 
-/* Va a la IZQUIERDA de todo en la cinta, que es de donde Juan lo pidio: la perilla corrida a
-   la izquierda es la cara personal.
+/* Va con los otros dos —el sol/luna y el engranaje—, todos juntos a la derecha.
 
-   Sin rotulo al lado a proposito. Al moverla cambia la app entera —otra barra abajo, otras
-   pantallas— y eso se entiende de una sola vez; un texto seria repetir lo que ya se ve. */
+   Estuvo un rato a la izquierda de la cinta y ahi se le montaba encima al mes: la cabecera
+   de Hoy se sube hasta esta altura con un margen negativo justamente porque ese lado esta
+   libre. Los tres botones de la cinta van del mismo lado y el mes se queda con el suyo.
+
+   Sin rotulo al lado a proposito. Al mover la perilla cambia la app entera —otra barra
+   abajo, otras pantallas— y eso se entiende de una sola vez; un texto seria repetir lo que
+   ya se ve. La perilla corrida a la IZQUIERDA es la cara personal, como lo pidio Juan. */
 .cara-switch {
-  margin-right: auto;
   width: 46px; height: 26px;
   padding: 3px;
   border: 1px solid var(--linea);
