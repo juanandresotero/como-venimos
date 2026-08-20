@@ -89,12 +89,15 @@ export function dibujarRenta(estado) {
 
   const r = calcular(entradas);
 
+  /* "Ajustes finos" va ARRIBA del desglose "De 7% a 5,2%", y no abajo como estaba: los
+     ajustes son las entradas —gastos, vacancia, lo que se le descuenta— y el desglose es
+     justamente lo que sale de ellas. Se cargan y en el renglón siguiente se ve el efecto. */
   const trozo = document.createDocumentFragment();
   trozo.append(resultado(r, entradas, cotizacion));
   trozo.append(basicos(estado, cotizacion));
+  trozo.append(finos(estado, cotizacion));
   trozo.append(desglose(r, entradas));
   trozo.append(inverso(entradas, estado));
-  trozo.append(finos(estado, cotizacion));
   trozo.append(paraElCliente(estado, r, cotizacion));
   return trozo;
 }
