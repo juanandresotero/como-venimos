@@ -222,5 +222,20 @@
   "internal_id": "940041154-207",
   "tipo": "cambio_estado",
   "titulo": "Venta Casa 3 dormitorios playa pascual parrillero"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 145226.0
+  },
+  "direccion": "Jose Batlle y Ordoñes 2500",
+  "entity_id": "289eef8c-1a9c-4417-b483-8875104847ac",
+  "fecha": "2026-08-20",
+  "id": "2026-08-20|289eef8c-1a9c-4417-b483-8875104847ac|alta",
+  "internal_id": "940041154-219",
+  "tipo": "alta",
+  "titulo": "Venta Apto 1 dormitorio con cochera la Blanqueda"
  }
 ]
