@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ratios, capas, ritmo, porAnio, metricas, comparativaCategorias, estimacionPorPuntas,
+  formaDelAnio,
 } from "../lib/salud.js";
 
 const AJUSTES = {
@@ -462,4 +463,65 @@ test("proyectar sobre el publicado infla justo lo que esta por entrar", () => {
     { p1: propiedad({ entity_id: "p1", estado: "en_negociacion", operacion: "venta", precio: 240000, ...extra }) },
     AJUSTES, "2026").negociacion.facturacion;
   assert.ok(como({ precio_negociacion: 200000 }) < como({}));
+});
+
+/* LA FORMA DEL AÑO. El año de Juan no es parejo: contando 2023, 2024 y 2025 el 63% de lo que
+   factura cierra en el segundo semestre, y marzo, abril y noviembre son casi vacíos. Con una
+   división pareja del almanaque, en abril la app le decía que debería ir por el 33% cuando
+   en sus tres años a esa altura llevaba el 20%. */
+const cerrado = (fecha, plata) => ({
+  estado: "cerrado", fecha_fin: fecha, facturacion: plata,
+});
+
+test("la forma del año sale de los años completos, no del almanaque", () => {
+  /* Dos años iguales: todo cierra en el segundo semestre. */
+  const negocios = [
+    cerrado("2023-09-15", 100), cerrado("2023-11-20", 100),
+    cerrado("2024-09-15", 50), cerrado("2024-11-20", 50),
+    cerrado("2025-09-15", 80), cerrado("2025-11-20", 80),
+  ];
+  const forma = formaDelAnio(negocios, 2026);
+  assert.ok(forma, "con tres años tiene que poder");
+  assert.equal(forma.anios, 2, "el primero se descarta: siempre es parcial");
+  assert.equal(forma.alDia(180), 0, "a mitad de año no habia cerrado nada");
+  assert.equal(forma.alDia(365), 1, "a fin de año, todo");
+});
+
+test("con menos de dos años completos no se inventa una forma", () => {
+  assert.equal(formaDelAnio([cerrado("2025-09-15", 100)], 2026), null);
+  assert.equal(formaDelAnio([], 2026), null);
+  assert.equal(formaDelAnio(null, 2026), null);
+});
+
+test("el año que corre no cuenta: todavia no tiene total contra el que medir", () => {
+  const negocios = [
+    cerrado("2023-06-30", 100), cerrado("2024-06-30", 100), cerrado("2025-06-30", 100),
+    cerrado("2026-01-05", 999),
+  ];
+  const forma = formaDelAnio(negocios, 2026);
+  assert.equal(forma.alDia(10), 0, "lo de enero de 2026 no puede entrar en la forma");
+  /* Día 200 y no 181: 2024 es bisiesto y el 30 de junio le cae un día más adelante. */
+  assert.equal(forma.alDia(200), 1);
+});
+
+test("sin historia el ritmo se mide contra el almanaque, como antes", () => {
+  const r = ritmo(5000, 10000, 2026, "2026-07-02", null);
+  assert.ok(Math.abs(r.esperado - r.calendario) < 0.01, "cae al almanaque");
+  assert.equal(r.aniosDeHistoria, 0);
+});
+
+/* Lo que de verdad cambia para el usuario: en abril, con un año que carga al final, deja de
+   decirle que va atrasado cuando va como siempre. */
+test("con la forma del año, un abril flojo deja de ser 'atrasado'", () => {
+  const negocios = [
+    cerrado("2022-10-01", 10),
+    cerrado("2023-04-15", 20), cerrado("2023-10-15", 80),
+    cerrado("2024-04-15", 20), cerrado("2024-10-15", 80),
+  ];
+  const forma = formaDelAnio(negocios, 2025);
+  const conForma = ritmo(21, 100, 2025, "2025-04-20", forma);
+  const conAlmanaque = ritmo(21, 100, 2025, "2025-04-20", null);
+  assert.equal(conAlmanaque.aRitmo, false, "el almanaque pide 30% y tiene 21%");
+  assert.equal(conForma.aRitmo, true, "su historia pide 20% a esa altura");
+  assert.equal(conForma.aniosDeHistoria, 2);
 });

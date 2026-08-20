@@ -13,7 +13,7 @@
        histórica. Si el recorte no incluye el año en curso, esas tarjetas se esconden en
        vez de mostrar la cartera de hoy bajo un título de 2023, que sería mentira. */
 
-import { capas, ritmo, porAnio } from "../lib/salud.js";
+import { capas, ritmo, porAnio, formaDelAnio } from "../lib/salud.js";
 import {
   aniosDisponibles, cerradosDe, etiquetaDeAnios, mesesDe, mesesPorAnio, acumular,
   mejorYPeorMes,
@@ -83,7 +83,8 @@ export function dibujarSalud(estado) {
   const objetivo = unSoloAnio ? (ajustes.objetivo_personal || {})[unSoloAnio] || 0 : 0;
   const cerroElAnio = unSoloAnio && unSoloAnio < anioActual;
   const r = objetivo
-    ? ritmo(cobrado.facturacion, objetivo, unSoloAnio, cerroElAnio ? `${unSoloAnio}-12-31` : estado.hoy)
+    ? ritmo(cobrado.facturacion, objetivo, unSoloAnio, cerroElAnio ? `${unSoloAnio}-12-31` : estado.hoy,
+      formaDelAnio(estado.datos.negocios, unSoloAnio))
     : null;
 
   const guardar = (cambios) => {
@@ -405,7 +406,7 @@ function cabecera(etiqueta, cobrado, c) {
 
 function barraDeRitmo(r, objetivo, c, anio, incluyeHoy, cerroElAnio) {
   const relleno = Math.min(100, r.avance * 100);
-  const marca = Math.min(100, r.calendario * 100);
+  const marca = Math.min(100, r.esperado * 100);
   const veredicto = cerroElAnio
     ? (r.avance >= 1 ? "Llegaste" : "No llegaste")
     : (r.aRitmo ? "Vas a ritmo" : "Vas atrasado");
@@ -423,9 +424,15 @@ function barraDeRitmo(r, objetivo, c, anio, incluyeHoy, cerroElAnio) {
         </div>
         <div class="ritmo-pies">
           <span><strong>${pct(r.avance)}</strong> del objetivo</span>
-          ${cerroElAnio ? "" : html`<span>${pct(r.calendario)} del año</span>`}
+          ${cerroElAnio ? "" : html`<span>${pct(r.esperado)} del año, a tu ritmo</span>`}
         </div>
       </div>
+      ${!cerroElAnio && r.aniosDeHistoria ? html`
+        <p class="apunte" style="margin-top:8px">La marca no parte el año en partes iguales:
+          es lo que llevabas cerrado a esta altura en tus últimos ${r.aniosDeHistoria} años.
+          Tu año carga al final —agosto y diciembre son los meses fuertes—, así que el
+          almanaque te pediría ${pct(r.calendario)} y tu historia ${pct(r.esperado)}.</p>` : ""}
+
       <div class="datos" style="margin-top:16px">
         <div class="dato"><span class="dato-nombre">Objetivo ${anio}</span><span class="dato-valor">${plata(objetivo)}</span></div>
         <div class="dato"><span class="dato-nombre">${cerroElAnio ? "Quedó sin cubrir" : "Te faltan"}</span><span class="dato-valor">${plata(r.falta)}</span></div>

@@ -12,7 +12,7 @@
    acá hacia adelante. Ver dos veces la misma tarjeta no le sirve a nadie. */
 
 import { bandeja, cuantosPendientes, accionesDe } from "../lib/pendientes.js";
-import { capas, ritmo, comparativaCategorias } from "../lib/salud.js";
+import { capas, ritmo, formaDelAnio, comparativaCategorias } from "../lib/salud.js";
 import { marcarAtendido } from "../lib/guardado.js";
 import { medir, vale_la_pena_ajustar } from "../lib/seguridad.js";
 import { nivelDe, nivelDelObjetivo } from "../lib/niveles.js";
@@ -80,7 +80,8 @@ function cuantoFalta(estado) {
     `);
   }
 
-  const r = ritmo(c.cobrado.facturacion, objetivo, anio, estado.hoy);
+  const forma = formaDelAnio(estado.datos.negocios, anio);
+  const r = ritmo(c.cobrado.facturacion, objetivo, anio, estado.hoy, forma);
   const encaminado = c.avanzado.facturacion;
   const descubierto = Math.max(0, objetivo - c.cobrado.facturacion - encaminado);
   const parte = (x) => `${Math.max(0, Math.min(100, (x / objetivo) * 100))}%`;
@@ -98,11 +99,11 @@ function cuantoFalta(estado) {
         <div class="camino">
           <div class="camino-tramo cobrado" style="width:${parte(c.cobrado.facturacion)}"></div>
           <div class="camino-tramo encaminado" style="width:${parte(encaminado)}"></div>
-          <div class="camino-marca" style="left:${parte(objetivo * r.calendario)}"></div>
+          <div class="camino-marca" style="left:${parte(objetivo * r.esperado)}"></div>
         </div>
         <!-- La marca decia con un parrafo lo que ahora dice ella misma. Se corre para
              adentro en los bordes para que la etiqueta no se salga de la tarjeta. -->
-        <span class="camino-hoy" style="left:${Math.min(78, Math.max(22, (r.calendario * 100)))}%">
+        <span class="camino-hoy" style="left:${Math.min(78, Math.max(22, (r.esperado * 100)))}%">
           deberías ir acá</span>
       </div>
 
