@@ -45,6 +45,7 @@ const entradas = {
   adentroPct: 0.03,
 };
 let adentroAbierto = false;
+let ponerAbierto = false;
 
 const decimal = (n, cifras = 2) => (n || 0).toFixed(cifras).replace(".", ",");
 
@@ -60,27 +61,37 @@ export function dibujarComisiones(estado) {
 
   const f = facturar(r, { regimen: entradas.regimen, split, conIva: entradas.conIva });
 
+  /* EL ORDEN ES EL DEL TRABAJO, y lo puso Juan mirando cómo la usa:
+
+     1. el precio y las puntas — lo que siempre se carga;
+     2. las dos formas de resignar plata, las dos plegadas, para elegir una:
+        "Poner plata para cerrar" y "Pago tanto, con tu comisión adentro". La segunda estaba
+        abajo de todo, y es de las primeras que hace falta: si el cliente dice un número con
+        la comisión adentro, ESE es el descuento que está pidiendo;
+     3. quién cobra y el IVA;
+     4. y AL FINAL los dos resúmenes, que son el resultado y van con otro fondo. */
   const trozo = document.createDocumentFragment();
   trozo.append(cabecera(estado, r, f, split));
   trozo.append(basicos(estado));
   for (const [i] of activas.entries()) trozo.append(campoPunta(i, estado));
   trozo.append(repartirDiferencia(estado));
-  trozo.append(quienCobra(estado, split));
-  if (r.neto) trozo.append(detalle(r, split));
-  if (r.neto) trozo.append(paraCadaCliente(f, estado));
   trozo.append(comisionAdentro(estado));
+  trozo.append(quienCobra(estado, split));
+  if (r.neto) trozo.append(paraCadaCliente(f, estado));
+  if (r.neto) trozo.append(detalle(r, split));
   return trozo;
 }
 
 /* ---------- El número grande ---------- */
 
+/* El título va SUELTO, sin tarjeta y sin botón de volver: se vuelve por la barra de abajo,
+   igual que en las demás pantallas. Y sin el "cargá el precio y elegí las puntas": los
+   campos están ahí abajo y se explican solos. */
 function cabecera(estado, r, f, split) {
   const hayDescuento = r.descuento > 0;
   const seccion = nodo(html`
-    <section class="tarjeta">
-      <button class="volver" id="volver">‹ Herramientas</button>
-      <p class="etiqueta" style="margin-top:10px">Calculadora</p>
-      <h1 class="titulo" style="font-size:25px;margin:4px 0 0">Comisiones</h1>
+    <section style="margin-bottom:16px">
+      <h1 class="titulo" style="font-size:26px">Calculadora de comisiones</h1>
       ${entradas.precio
         ? html`
           <div class="dos-rentas" style="margin-top:14px">
@@ -106,11 +117,9 @@ function cabecera(estado, r, f, split) {
                  Resignás ${plataUSD(r.descuento)}, que de tu bolsillo son
                  <strong>${plataUSD(r.costo_del_descuento)}</strong>.</p>`
             : ""}`
-        : html`<p class="apunte" style="margin-top:12px">
-             Cargá el precio y elegí si tenés una punta o las dos.</p>`}
+        : ""}
     </section>
   `);
-  seccion.getElementById("volver").addEventListener("click", () => estado.irA("herramientas"));
   return seccion;
 }
 
@@ -272,14 +281,15 @@ function repartirDiferencia(estado) {
   const total = activas.reduce((t, p) => t + (puestoEn(p) || 0), 0);
   const unaSola = entradas.cantidad === 1;
 
+  /* Plegada, y arriba de "Pago tanto": son las dos maneras de resignar plata y se usa una u
+     otra, no las dos. Plegadas se ven las dos de un vistazo y se elige. */
   const seccion = nodo(html`
-    <section class="tarjeta">
-      <h2 class="titulo" style="font-size:17px;margin-bottom:4px">Poner plata para cerrar</h2>
-      <p class="apunte" style="margin-bottom:12px">
-        ${unaSola
-          ? "Si ponés plata de tu comisión para que el negocio cierre, cargá cuánto."
-          : "Si ponés plata de tu comisión para que el negocio cierre, cargá cuánto sale de cada lado."}
-      </p>
+    <details class="grupo" ${ponerAbierto ? "open" : ""}>
+      <summary class="grupo-cabeza">
+        <span class="grupo-nombre">Poner plata para cerrar</span>
+        <span class="grupo-flecha" aria-hidden="true">›</span>
+      </summary>
+      <div class="tarjeta" style="margin-top:6px">
       <div id="campos-poner"></div>
       ${total
         ? html`<p class="frase" style="margin-top:14px">
@@ -294,8 +304,12 @@ function repartirDiferencia(estado) {
           <button class="filtro" data-reparto="vendedora">Toda de la vendedora</button>
           <button class="filtro" data-reparto="compradora">Toda de la compradora</button>
         </div>`}
-    </section>
+      </div>
+    </details>
   `);
+  seccion.querySelector("details").addEventListener("toggle", (e) => {
+    ponerAbierto = e.target.open;
+  });
 
   const contenedor = seccion.getElementById("campos-poner");
   activas.forEach((p, i) => {
@@ -351,12 +365,7 @@ function quienCobra(estado, split) {
   const seccion = nodo(html`
     <section class="tarjeta">
       <h2 class="titulo" style="font-size:17px;margin-bottom:4px">Quién cobra e IVA</h2>
-      <p class="apunte" style="margin-bottom:12px">
-        La oficina se lleva siempre el 20%. Marcá quién factura con IVA y se suma el
-        ${Math.round(IVA * 100)}% sobre esa parte.
-      </p>
-
-      <p class="apunte" style="margin-bottom:6px">Cómo llegó el negocio</p>
+      <p class="apunte" style="margin:8px 0 6px">Cómo llegó el negocio</p>
       <div class="botonera" style="margin:0 0 14px">
         ${REGIMENES.map((r) => `<button class="filtro ${entradas.regimen === r.clave ? "prendido" : ""}" data-regimen="${r.clave}">${r.nombre}</button>`).join("")}
       </div>
@@ -434,7 +443,7 @@ function paraCadaCliente(f, estado) {
   };
 
   const seccion = nodo(html`
-    <section class="tarjeta">
+    <section class="tarjeta tarjeta-resumen">
       <div class="tarjeta-titulo">
         <h2 class="titulo" style="font-size:17px">Para cada cliente</h2>
         <span class="apunte">${f.puntas.length === 1 ? "una punta" : "las dos puntas"}</span>
@@ -522,7 +531,7 @@ function detalle(r, split) {
     </div>`;
 
   return nodo(html`
-    <section class="tarjeta">
+    <section class="tarjeta tarjeta-resumen">
       <div class="tarjeta-titulo">
         <h2 class="titulo" style="font-size:17px">Punta por punta</h2>
         <span class="apunte">sobre ${plataUSD(r.precio)}</span>
@@ -556,10 +565,6 @@ function comisionAdentro(estado) {
         <span class="grupo-flecha" aria-hidden="true">›</span>
       </summary>
       <div class="tarjeta" style="margin-top:6px">
-        <p class="apunte" style="margin-bottom:12px">
-          Cuánto queda de oferta para el vendedor y cuánto de comisión para vos, cuando el
-          comprador pone un número con todo incluido.
-        </p>
         <div id="campos-adentro"></div>
         ${entradas.adentroTotal
           ? html`
@@ -568,12 +573,7 @@ function comisionAdentro(estado) {
               <div class="dato"><span class="dato-nombre">Tu comisión</span><span class="dato-valor">${plata(r.comision)}</span></div>
               <div class="dato"><span class="dato-nombre"><strong>Pone el comprador</strong></span><span class="dato-valor">${plata(r.total)}</span></div>
             </div>
-            <p class="apunte" style="margin-top:12px">
-              La cuenta se despeja dividiendo por ${decimal(1 + r.pct, 2)}, no restándole el
-              ${pct(r.pct)} al total. Restando daría ${plata(r.comision_ingenua)} de comisión,
-              que sobre los ${plata(r.oferta_ingenua)} que se escrituran es
-              ${pctFino(r.comision_ingenua / (r.oferta_ingenua || 1))} y no ${pctFino(r.pct)}.
-            </p>`
+            `
           : ""}
       </div>
     </details>

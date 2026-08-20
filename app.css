@@ -519,6 +519,13 @@ body {
 .boton-mini:disabled { opacity: .5; cursor: default; }
 .barra-guardado.error .boton-mini { background: var(--rojo); }
 
+/* Los dos resumenes finales de la calculadora: son EL RESULTADO, no un paso mas. Van con
+   otro fondo para que se distingan de las tarjetas donde se carga y se elige. */
+.tarjeta-resumen {
+  background: var(--azul-suave);
+  border-color: var(--azul-claro);
+}
+
 /* ---------- Listas y filtros ---------- */
 
 .filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
