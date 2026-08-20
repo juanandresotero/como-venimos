@@ -22,6 +22,13 @@ function nodo(marca) {
   return molde.content;
 }
 
+/* Los dos grupos de la pantalla. Van en este orden porque el de monto fijo es el que se
+   tilda sin pensar —alquiler, colegio— y el otro pide mirar la factura. */
+const GRUPOS = [
+  { varia: false, nombre: "Siempre igual" },
+  { varia: true, nombre: "Cambia cada mes" },
+];
+
 export function dibujarPersonalFijos(estado) {
   const datos = leer();
   const mes = mesDe(estado.hoy);
@@ -43,7 +50,16 @@ export function dibujarPersonalFijos(estado) {
     trozo.append(nodo(html`
       <p class="apunte" style="margin-bottom:16px">Todavía no cargaste ninguno.</p>`));
   } else {
-    trozo.append(laLista(estado, datos, activos, mes));
+    /* Separados por título, con los mismos nombres que se eligen al crearlos: lo que se
+       marcó en la ventanita es el título del grupo donde el gasto aparece. Un grupo vacío no
+       se muestra — un encabezado sin nada abajo es una pregunta sin respuesta. */
+    for (const grupo of GRUPOS) {
+      const suyos = activos.filter((f) => Boolean(f.varia) === grupo.varia);
+      if (!suyos.length) continue;
+      trozo.append(nodo(html`
+        <h2 class="titulo" style="font-size:15px;margin:18px 0 8px">${escapar(grupo.nombre)}</h2>`));
+      trozo.append(laLista(estado, datos, suyos, mes));
+    }
   }
 
   const agregar = nodo(html`
@@ -79,7 +95,6 @@ function laLista(estado, datos, fijos, mes) {
         <button class="fila-cuerpo" data-editar="${fijo.id}" style="text-align:left">
           <span class="fila-titulo">${escapar(fijo.nombre || "Sin nombre")}</span>
           <span class="fila-sub">${fijo.dia ? `el ${fijo.dia}` : "sin día"}${
-            fijo.varia && !pago ? " · el monto cambia" : ""}${
             pago ? ` · pagado ${escapar(String(pago.fecha || "").slice(8, 10))}` : ""}</span>
         </button>
         <span class="fila-derecha">
