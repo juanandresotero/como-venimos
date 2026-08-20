@@ -62,7 +62,6 @@ export function dibujarHerramientas(estado) {
   trozo.append(nodo(html`
     <section style="margin-bottom:20px">
       <h1 class="titulo" style="font-size:29px">¿Qué vamos a hacer?</h1>
-      <p class="apunte" style="margin-top:6px">En el orden en que pasan las cosas.</p>
     </section>
   `));
 
