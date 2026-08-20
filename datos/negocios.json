@@ -2847,12 +2847,7 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "revisar_puntas",
-    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
-   }
-  ],
+  "avisos": [],
   "barrio": "Zapican",
   "base": 5394,
   "categoria_vigente": "RAP",
@@ -2884,7 +2879,8 @@
   "yo_referi": false,
   "ficha_vigente": true,
   "fecha_negociacion": "2026-02-26",
-  "ficha_completa_momento": "reservada"
+  "ficha_completa_momento": "reservada",
+  "puntas_confirmadas": true
  },
  {
   "agente_compra": "Juan Andrés Otero",
