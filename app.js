@@ -20,6 +20,7 @@ import { dibujarCartaOferta } from "./vistas/carta-oferta.js";
 import { dibujarPadron } from "./vistas/padron.js";
 import { dibujarIndicador } from "./vistas/indicador.js";
 import { dibujarAjustes } from "./vistas/ajustes.js";
+import { dibujarHomogeneizacion } from "./vistas/homogeneizacion.js";
 
 const ARCHIVOS = [
   "cartera", "negocios", "ajustes", "eventos", "estado_robot", "mis_datos", "calculos_renta",
@@ -176,6 +177,7 @@ const VISTAS = {
   carta_oferta: dibujarCartaOferta,
   padron: dibujarPadron,
   ajustes: dibujarAjustes,
+  homogeneizacion: dibujarHomogeneizacion,
   indicador: dibujarIndicador,
 };
 
@@ -185,7 +187,8 @@ const VISTAS = {
    viven adentro de Herramientas, asi que su pestaña es esa. */
 const PADRE = { ficha: "negocios", propiedad: "cartera", indicador: "salud",
   renta: "herramientas", comisiones: "herramientas", reajuste: "herramientas",
-  carta_oferta: "herramientas", padron: "herramientas" };
+  carta_oferta: "herramientas", padron: "herramientas",
+  homogeneizacion: "herramientas" };
 
 /* Cambiar de pantalla sube arriba de todo. Corregir un dato NO: hay que quedarse donde
    estaba y con el cursor en el mismo campo.

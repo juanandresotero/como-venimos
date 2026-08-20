@@ -13,7 +13,7 @@
    abrir y al volver a la app, y recarga sola cuando el service worker nuevo toma el
    mando. Entre las dos, abrir y cerrar la app alcanza para actualizarse. */
 
-const CACHE = "como-venimos-v97";
+const CACHE = "como-venimos-v98";
 
 const ARMAZON = [
   "./",
@@ -53,6 +53,8 @@ const ARMAZON = [
   "./vistas/propiedad.js",
   "./vistas/renta.js",
   "./vistas/herramientas.js",
+  "./lib/homogeneizacion.js",
+  "./vistas/homogeneizacion.js",
   "./vistas/comisiones.js",
   "./vistas/reajuste.js",
   "./lib/comisiones.js",

@@ -533,6 +533,15 @@ body {
   font-size: 30px; font-weight: 800; color: var(--azul);
   min-width: 76px; text-align: right;
 }
+/* Cada porcentaje de la homogeneizacion: el nombre y el numero arriba, la barra abajo.
+   Apilado y no al lado, porque los nombres son largos y al lado la barra queda de dos
+   centimetros. */
+.fila-peso { display: grid; gap: 4px; margin-bottom: 14px; }
+.fila-peso-nombre { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.fila-peso-cifra { font-size: 22px; font-weight: 800; color: var(--azul); }
+/* El resumen que la tapa del plegable muestra sin abrirlo. */
+.grupo-resumen { margin-left: auto; margin-right: 8px; }
+
 .barra-puntas {
   display: flex; justify-content: space-between;
   font-size: 11px; color: var(--tinta-2); margin: 2px 0 0 90px;

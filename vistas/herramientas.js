@@ -43,6 +43,10 @@ const CHAPA = `<path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5z"/>`
   + `<path d="M12 10.2v3.6"/><path d="M10.4 11.4h3.2"/>`;
 const HOJA_FIRMADA = `<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>`
   + `<path d="M8.8 16.6c1.6-3.4 2.6-3.4 3.2-1.4.5 1.7 1.6 1.9 3.2-1"/>`;
+/* Una regla, en diagonal para que entre larga en el circulo. Las rayitas van de a una y
+   alternadas largo/corto, que es lo que hace que se lea "regla" y no "escalera". */
+const REGLA = `<path d="M3.2 15.6 15.6 3.2l5.2 5.2L8.4 20.8z"/>`
+  + `<path d="M6.4 12.4l2 2M9 9.8l3 3M11.6 7.2l2 2M14.2 4.6l3 3"/>`;
 
 /* Cada parada dice QUE HACER y nada mas. Antes cada una llevaba encima el momento en que
    se usa ("Antes de comprarla", "Al cerrar el negocio"): servia para explicar el concepto
@@ -54,6 +58,7 @@ export const HERRAMIENTAS = [
   { vista: "reajuste", nombre: "Calcular reajuste de alquiler", dibujo: ESCALONES },
   { vista: "carta_oferta", nombre: "Enviar carta oferta", dibujo: HOJA_FIRMADA },
   { vista: "padron", nombre: "Averiguar el padrón", dibujo: CHAPA },
+  { vista: "homogeneizacion", nombre: "Homogeneizar los m²", dibujo: REGLA },
 ];
 
 export function dibujarHerramientas(estado) {
