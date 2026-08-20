@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { aEnlace, deEnlace, comoWhatsApp, PRESUPUESTO } from "../lib/carta-enlace.js";
+import { aEnlace, aEnlaceQueEntre, deEnlace, comoWhatsApp, PRESUPUESTO } from "../lib/carta-enlace.js";
 import { deTrazos, aBytes } from "../lib/firma.js";
 import { recortar } from "../lib/firma-foto.js";
 
@@ -114,4 +114,47 @@ test("el boton de WhatsApp abre la conversacion con quien corresponde", () => {
 
 test("sin telefono, WhatsApp pregunta a quien mandarsela", () => {
   assert.match(comoWhatsApp("https://x.y/#abc"), /^https:\/\/wa\.me\/\?text=/);
+});
+
+/* EL ENLACE QUE NO SE CORTA.
+
+   Juan mando cinco pantallas de un enlace verde interminable: "es todo esto. absurdo". Una
+   firma sacada de una foto es un dibujo de puntos y puede pesar catorce mil bytes; el enlace
+   salia de miles de caracteres y WhatsApp lo cortaba por la mitad. Un enlace cortado es una
+   carta que no vuelve.
+
+   Ahora el enlace se MIDE y, si no entra, se achica la firma y se vuelve a medir. */
+test("una firma enorme se achica hasta que el enlace entra", async () => {
+  const gorda = {
+    clase: "mascara", ancho: 600, alto: 800, bits: new Uint8Array(75 * 800),
+  };
+  /* Ruido a proposito: un dibujo desparejo comprime pesimo, que es el caso peor. */
+  for (let i = 0; i < gorda.bits.length; i++) gorda.bits[i] = (i * 37) % 251;
+
+  const base = "https://x.uy/firmar.html";
+  const estado = {
+    valores: { calle: "Rivera 3393", precio: 134000 }, quitadas: [],
+    turno: "comprador", agente: "Juan Andrés Otero", firmas: { oferente: aBytes(gorda) },
+  };
+
+  const sinControl = await aEnlace(base, estado);
+  const controlado = await aEnlaceQueEntre(base, estado, 500);
+  assert.ok(controlado.length <= 500,
+    `quedo en ${controlado.length}, y sin control media ${sinControl.length}`);
+
+  /* Y la firma sigue estando: achicar no es tirarla. */
+  const vuelta = await deEnlace(controlado);
+  assert.ok(vuelta.firmas.oferente, "la firma tiene que seguir viajando");
+});
+
+test("una firma dibujada con el dedo no se toca: ya es chica", async () => {
+  const base = "https://x.uy/firmar.html";
+  const dedo = aBytes(deTrazos([[{ x: 10, y: 10 }, { x: 400, y: 200 }, { x: 700, y: 60 }]]));
+  const estado = {
+    valores: { calle: "Rivera 3393" }, quitadas: [],
+    turno: "comprador", agente: "Juan", firmas: { oferente: dedo },
+  };
+  const enlace = await aEnlaceQueEntre(base, estado);
+  const vuelta = await deEnlace(enlace);
+  assert.deepEqual([...vuelta.firmas.oferente], [...dedo], "vuelve igualita");
 });

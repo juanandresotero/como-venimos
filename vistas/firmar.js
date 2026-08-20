@@ -7,7 +7,7 @@
    Todo pasa en el telefono del cliente. Nada se sube a ningun lado. */
 
 import { CAMPOS, armar, fundir } from "../lib/carta-oferta.js";
-import { deEnlace, aEnlace } from "../lib/carta-enlace.js";
+import { deEnlace, aEnlaceQueEntre } from "../lib/carta-enlace.js";
 import { paraMandar, copiarAlToque, copiarTexto } from "../lib/compartir.js";
 import { esNavegadorDeOtraApp } from "../lib/navegador.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
@@ -85,7 +85,7 @@ async function prepararSalidas({ devolver, bajar }) {
   const firmas = { ...estado.firmas };
   delete firmas.depositario;
 
-  const enlace = await aEnlace(base, {
+  const enlace = await aEnlaceQueEntre(base, {
     valores: estado.valores,
     quitadas: estado.quitadas,
     turno: estado.turno,

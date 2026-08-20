@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { recortar, ANCHO_GUARDADO } from "../lib/firma-foto.js";
+import { recortar, ANCHO_GUARDADO, ALTO_GUARDADO } from "../lib/firma-foto.js";
 
 /* Arma pixeles RGBA como los que devuelve un canvas. */
 function foto(ancho, alto, pintar) {
@@ -33,8 +33,26 @@ test("separa la tinta azul del fondo gris aunque la luz sea despareja", () => {
 
 test("recorta al rectangulo de la firma y tira el fondo", () => {
   const r = recortar(foto(200, 100, (x, y) => (trazoGordo(x, y) ? AZUL : GRIS)));
-  assert.equal(r.ancho, ANCHO_GUARDADO);
-  assert.equal(r.alto, Math.round((ANCHO_GUARDADO * 40) / 120), "conserva la proporcion");
+  assert.equal(r.ancho / r.alto, 3, "conserva la proporcion: el trazo es 120x40");
+  assert.ok(r.ancho <= ANCHO_GUARDADO && r.alto <= ALTO_GUARDADO, "entra en la caja");
+});
+
+/* Una firma ALTA no puede salir gigante. Con el ancho fijo en 300 daba 300x377 —catorce mil
+   bytes— y el enlace que el cliente devuelve por WhatsApp llegaba cortado por la mitad. Un
+   enlace cortado es una carta que no vuelve. */
+test("una firma alta se achica por el alto, no por el ancho", () => {
+  const alta = (x, y) => x >= 40 && x < 100 && y >= 20 && y < 420;
+  const r = recortar(foto(200, 460, (x, y) => (alta(x, y) ? AZUL : GRIS)));
+  assert.ok(r, "tiene que encontrarla");
+  assert.ok(r.alto <= ALTO_GUARDADO, `quedo de ${r.alto} de alto`);
+  assert.ok(r.ancho <= ANCHO_GUARDADO);
+  assert.ok(Math.abs(r.ancho / r.alto - 60 / 400) < 0.05, "conserva la proporcion");
+});
+
+test("una firma chica no se agranda: no se inventa detalle que la foto no tiene", () => {
+  const chico = (x, y) => x >= 20 && x < 80 && y >= 20 && y < 40;
+  const r = recortar(foto(120, 70, (x, y) => (chico(x, y) ? AZUL : GRIS)));
+  assert.ok(r.ancho <= 60 && r.alto <= 20, `quedo ${r.ancho}x${r.alto}`);
 });
 
 /* Una mota de polvo en la mesa agranda el recorte y deja la firma chiquita en un rincon. */
@@ -128,7 +146,7 @@ test("un PNG con fondo transparente se recorta por la transparencia", () => {
   const r = recortar(pngTransparente(200, 100, trazo));
   assert.ok(r, "tiene que encontrar la firma");
   assert.equal(r.porBrillo, false, "no cayo al metodo de respaldo");
-  assert.equal(r.alto, Math.round((ANCHO_GUARDADO * 40) / 120), "recorto al trazo, no a la hoja");
+  assert.equal(r.ancho / r.alto, 3, "recorto al trazo (120x40), no a la hoja");
 });
 
 test("un PNG transparente con tinta NEGRA tambien sale bien", () => {

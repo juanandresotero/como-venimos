@@ -8,7 +8,7 @@
    llama decide cuándo guardarla y cuándo redibujar. */
 
 import { armar } from "../lib/carta-oferta.js";
-import { aEnlace } from "../lib/carta-enlace.js";
+import { aEnlaceQueEntre } from "../lib/carta-enlace.js";
 import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
 import { armarPDF, nombreDelArchivo } from "../lib/carta-pdf.js";
 import { cargarMembrete } from "../lib/membrete.js";
@@ -41,7 +41,7 @@ export async function mandarCartaA(carta, turno, { agente = "", telefono = "" } 
      de cada parte caiga en SU carta y no en la que esté abierta. */
   const conNumero = { ...carta, id: carta.id || nuevoId() };
 
-  const enlace = await aEnlace(base, {
+  const enlace = await aEnlaceQueEntre(base, {
     valores: conNumero.valores,
     quitadas: conNumero.quitadas,
     turno,
