@@ -247,27 +247,27 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
 
   /* La linterna del telefono.
 
-     Una firma en papel sale mucho mejor con luz pareja que con la sombra de la propia mano
-     encima, asi que se intenta prender SOLA y queda el boton para apagarla.
+     Una firma en papel sale mejor con luz pareja que con la sombra de la propia mano
+     encima, asi que se intenta prender sola y queda el boton para apagarla.
 
-     Dos cosas que costaron:
+     Ojo: esto es un EXTRA, no algo de lo que dependa el recorte. El recorte compara cada
+     punto contra su vecindario, asi que aguanta luz despareja por si solo. Si el telefono
+     no da la linterna, la firma sale igual.
 
-     1. Las capacidades de la camara NO estan listas apenas arranca. Se preguntaba `torch`
-        de una, todavia venia sin definir, se decidia que no habia linterna y no se mostraba
-        nada. Ahora se espera a que la pista este viva y se pregunta varias veces.
+     Se prueban DOS caminos, porque no todos los telefonos aceptan el mismo:
+       1. Pedirsela a la pista que ya esta andando (`applyConstraints`), que es lo normal.
+       2. Volver a pedir la camara YA con la linterna incluida, que es lo que necesitan
+          algunos Android.
 
-     2. Hay navegadores que no declaran `torch` en las capacidades pero igual la aceptan.
-        Asi que si no la declara, se PRUEBA lo mismo: sale gratis y a veces anda.
-
-     Si de verdad no se puede, se dice. Antes no aparecia nada y quedaba la duda de si el
-     boton estaba roto — las camaras frontales no tienen linterna y el iPhone no se la
-     muestra al navegador, y eso el usuario no tiene por que saberlo. */
+     Y hay que ESPERAR: las capacidades de la camara no estan listas apenas arranca. Se
+     preguntaba de una, venia sin definir, y se decidia que no habia linterna. */
   let luzPrendida = false;
 
   const pistaDeVideo = () => corriente && corriente.getVideoTracks()[0];
 
-  /* Espera a que la camara diga que sabe hacer. Hasta un segundo y medio. */
-  async function tieneLinterna(pista) {
+  /* Espera a que la camara diga que sabe hacer. Hasta un segundo y medio.
+     Devuelve true / false, o null si nunca contesto. */
+  async function declaraLinterna(pista) {
     for (let intento = 0; intento < 10; intento++) {
       if (typeof pista.getCapabilities === "function") {
         const puede = pista.getCapabilities();
@@ -275,34 +275,82 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
       }
       await new Promise((sigue) => { setTimeout(sigue, 150); });
     }
-    return null;      // nunca contesto: se probara igual
+    return null;
   }
+
+  const decirDeLaLuz = (texto) => {
+    avisoLuz.hidden = false;
+    avisoLuz.textContent = texto;
+  };
+
+  /* Comprobar que la linterna QUEDO PRENDIDA, no que el pedido no dio error.
+
+     Es la diferencia que importa: pedir la linterna en `advanced` es un pedido OPCIONAL —si
+     el telefono no puede, no falla, la ignora—. Sin comprobar, el boton decia "Apagar la
+     luz" con la linterna apagada, que es peor que no tener boton. */
+  const quedoPrendida = (pista) => {
+    if (typeof pista.getSettings !== "function") return null;   // no se puede saber
+    const ahora = pista.getSettings();
+    return "torch" in ahora ? Boolean(ahora.torch) : null;
+  };
+
+  const mostrarLuz = (encendida) => {
+    luzPrendida = encendida;
+    botonLuz.hidden = false;
+    botonLuz.textContent = encendida ? "Apagar la luz" : "Prender la luz";
+    avisoLuz.hidden = true;
+  };
 
   async function prenderLuz(encender) {
     const pista = pistaDeVideo();
     if (!pista) return;
 
-    const declarada = await tieneLinterna(pista);
+    const declarada = await declaraLinterna(pista);
+    /* Si la camara dice de frente que no tiene, no se insiste: los caminos de abajo
+       "andarian" sin prender nada. */
     if (declarada === false) {
       botonLuz.hidden = true;
-      avisoLuz.hidden = false;
-      avisoLuz.textContent = "Esta cámara no deja prender la luz desde el navegador. "
-        + "Si podés, sacá la foto con buena luz de ambiente.";
+      decirDeLaLuz("Esta cámara no tiene linterna. No importa: el recorte funciona igual.");
       return;
     }
 
+    // ---- camino 1: pedirsela a la pista que ya esta andando
     try {
       await pista.applyConstraints({ advanced: [{ torch: encender }] });
-      luzPrendida = encender;
-      botonLuz.hidden = false;
-      botonLuz.textContent = encender ? "Apagar la luz" : "Prender la luz";
-      avisoLuz.hidden = true;
-    } catch {
-      botonLuz.hidden = true;
-      avisoLuz.hidden = false;
-      avisoLuz.textContent = "No pude prender la luz de la cámara. "
-        + "Si podés, sacá la foto con buena luz de ambiente.";
+      if (quedoPrendida(pista) !== !encender) {
+        mostrarLuz(encender);
+        return;
+      }
+    } catch { /* se prueba el otro */ }
+
+    // ---- camino 2: volver a pedir la camara con la linterna adentro
+    if (encender) {
+      try {
+        const nueva = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { exact: "environment" },
+            advanced: [{ torch: true }],
+          },
+          audio: false,
+        });
+        const suPista = nueva.getVideoTracks()[0];
+        if (quedoPrendida(suPista) === false) {
+          nueva.getTracks().forEach((sinUso) => sinUso.stop());
+        } else {
+          if (corriente) corriente.getTracks().forEach((vieja) => vieja.stop());
+          corriente = nueva;
+          video.srcObject = corriente;
+          await video.play();
+          mostrarLuz(true);
+          return;
+        }
+      } catch { /* no se pudo, se avisa abajo */ }
     }
+
+    /* Si no se pudo, se DICE, y se dice que da igual: el recorte no la necesita. */
+    botonLuz.hidden = true;
+    decirDeLaLuz("No pude prender la luz desde el navegador. "
+      + "No importa: el recorte funciona igual.");
   }
 
   /* La camara por JavaScript y no por el campo de archivo.
@@ -328,21 +376,29 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
       /* Con reloj: el pedido de camara puede no contestar NUNCA —pasa adentro de los
          navegadores que vienen dentro de otra app— y sin esto la pantalla se queda esperando
          para siempre. Diez segundos y se ofrece el otro camino. */
-      corriente = await Promise.race([
-        navigator.mediaDevices.getUserMedia({
-          /* La de ATRAS y lo mas grande que se pueda: la de adelante no tiene linterna y
-             saca peor, y cuantos mas pixeles tenga la foto mas fino sale el recorte. */
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-          },
-          audio: false,
-        }),
+      /* Se pide la camara de ATRAS de forma EXIGENTE, no "si se puede".
+
+         Con `ideal` el navegador es libre de dar la de adelante, y varios lo hacen. Eso
+         explicaba dos cosas a la vez: la foto salia peor —la frontal tiene menos resolucion
+         y enfoca de lejos— y la linterna no prendia nunca, porque la camara de adelante NO
+         TIENE linterna. Si el telefono no tiene camara trasera, se cae al pedido de antes. */
+      const conReloj = (promesa) => Promise.race([
+        promesa,
         new Promise((_, rechazar) => {
           setTimeout(() => rechazar(new Error("sin respuesta")), 10000);
         }),
       ]);
+      const grande = { width: { ideal: 1920 }, height: { ideal: 1080 } };
+      try {
+        corriente = await conReloj(navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { exact: "environment" }, ...grande }, audio: false,
+        }));
+      } catch (sinTrasera) {
+        if (sinTrasera && sinTrasera.message === "sin respuesta") throw sinTrasera;
+        corriente = await conReloj(navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, ...grande }, audio: false,
+        }));
+      }
       video.srcObject = corriente;
       await video.play();
       cajaCamara.hidden = false;
