@@ -2,8 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   base, splitVigente, calcular, pctPorDefecto, revisar, REGIMENES,
-  plantillaNegocio, esBusqueda, ATAJOS,
-} from "../lib/motor.js";
+  plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando } from "../lib/motor.js";
 
 const AJUSTES = {
   agente: { nombre: "Juan Andrés Otero" },
@@ -307,9 +306,20 @@ const completo = (extra = {}) => negocio({
 });
 
 test("ficha completa aguanta mientras la propiedad no se mueve", () => {
-  const n = revisar(completo(), AJUSTES, "2026-08-17", propiedadEn("en_negociacion"));
+  const n = revisar(completo({ puntas_confirmadas: true }), AJUSTES, "2026-08-17",
+    propiedadEn("en_negociacion"));
   assert.equal(n.ficha_vigente, true);
   assert.deepEqual(tipos(n), []);
+});
+
+/* LA EXCEPCIÓN, y es a propósito. "Ficha completa" quiere decir "ya cargué todo lo que se
+   puede cargar hoy", y las puntas no son un dato que falte: son un número puesto solo que
+   puede duplicar la plata proyectada. Callarlo con la marca dejaba sin revisar justo los
+   negocios más viejos, que son los que más tiempo llevan contando de más. */
+test("las puntas se piden aunque la ficha esté dada por completa", () => {
+  const n = revisar(completo(), AJUSTES, "2026-08-17", propiedadEn("en_negociacion"));
+  assert.equal(n.ficha_vigente, true, "la marca sigue valiendo para todo lo demás");
+  assert.deepEqual(tipos(n), ["revisar_puntas"]);
 });
 
 test("si la propiedad pasa a reservada, el negocio vuelve a la bandeja", () => {
@@ -374,7 +384,10 @@ test("volver a marcar ficha completa en el momento nuevo la mantiene callada", (
 });
 
 test("un negocio sin propiedad de la cartera conserva su ficha completa para siempre", () => {
-  const suelto = negocio({ ficha_completa: true, ficha_completa_momento: null, fecha_fin: null });
+  const suelto = negocio({
+    ficha_completa: true, ficha_completa_momento: null, fecha_fin: null,
+    puntas_confirmadas: true,
+  });
   const n = revisar(suelto, AJUSTES, "2026-08-17", {});
   assert.equal(n.ficha_vigente, true);
   assert.deepEqual(tipos(n), []);
@@ -548,4 +561,50 @@ test("con una sola de las dos fechas no inventa un aviso", () => {
       AJUSTES, "2026-08-18", {});
     assert.ok(!(r.avisos || []).some((a) => a.tipo === "fechas_al_reves"));
   }
+});
+
+/* ---------- Una punta o dos ---------- */
+
+/* EL PROBLEMA QUE ESTO EVITA: cuando una propiedad de la cartera pasa a negociación, el
+   negocio nace con Juan de los DOS lados —la propiedad es suya, así que el aviso es suyo— y
+   eso da 2 puntas. Pero al comprador casi siempre lo trae otro agente: ahí es 1, y ese
+   negocio está proyectando el DOBLE de la ganancia que va a entrar.
+
+   Mirando la pantalla no se nota: un 2 puesto por defecto se ve igual que un 2 confirmado. */
+test("revisar: un negocio en curso pide confirmar si es una punta o dos", () => {
+  const n = revisar(negocio({ estado: "en_curso", fecha_fin: null, puntas: 2 }),
+    AJUSTES, "2026-08-17");
+  assert.ok(tipos(n).includes("revisar_puntas"));
+  assert.match(n.avisos.find((a) => a.tipo === "revisar_puntas").detalle, /vale la mitad/);
+});
+
+/* No alcanza con avisar cuando el dato FALTA: acá el dato está, lo que no se sabe es si
+   alguien lo miró. Por eso se pide hasta que se confirma a mano. */
+test("revisar: el aviso se apaga recién cuando se confirma", () => {
+  const n = revisar(negocio({ estado: "en_curso", fecha_fin: null, puntas_confirmadas: true }),
+    AJUSTES, "2026-08-17");
+  assert.ok(!tipos(n).includes("revisar_puntas"));
+});
+
+/* Un negocio ya cobrado no hace falta revisarlo: la plata entró y se sabe cuánta fue.
+   Pedirlo para los ochenta y pico cerrados sería un aluvión que no cambia nada. */
+test("revisar: a un negocio ya cobrado no se le pide", () => {
+  assert.ok(!tipos(revisar(negocio(), AJUSTES, "2026-08-17")).includes("revisar_puntas"));
+});
+
+/* En una búsqueda el aviso dice lo contrario, porque el riesgo es el opuesto: cuenta una
+   punta y podrían ser dos. */
+test("revisar: en una búsqueda el aviso habla de la punta compradora", () => {
+  const n = revisar(negocio({
+    estado: "en_curso", fecha_fin: null, puntas: 1,
+    agente_vende: "Otro", agente_compra: "Juan Andrés Otero",
+  }), AJUSTES, "2026-08-17");
+  const texto = n.avisos.find((a) => a.tipo === "revisar_puntas").detalle;
+  assert.match(texto, /1 punta, la compradora/);
+});
+
+test("comoEstaContando dice qué está contando y qué pasa si está mal", () => {
+  assert.match(comoEstaContando({ puntas: 2 }, AJUSTES), /LAS DOS PUNTAS/);
+  assert.match(comoEstaContando({ puntas: 1 }, AJUSTES), /el doble/);
+  assert.match(comoEstaContando({ puntas: 0 }, AJUSTES), /no está sumando ganancia/);
 });

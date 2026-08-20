@@ -7,7 +7,7 @@ import { editarNegocio, borrarNegocio } from "../lib/guardado.js";
 import {
   plata, plataUSD, escapar, fechaRazonable, numeroDesde, formatearMientrasEscribe,
 } from "../lib/formato.js";
-import { esBusqueda, puntasSegunAgentes, momentoDeLaPropiedad } from "../lib/motor.js";
+import { esBusqueda, puntasSegunAgentes, momentoDeLaPropiedad, nombrePropio } from "../lib/motor.js";
 import {
   AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, EXPLICACION_ORIGEN,
   ORIGENES_QUE_LLEVAN_NOMBRE,
@@ -69,6 +69,7 @@ export function dibujarFicha(estado) {
     </section>
   `));
 
+  if (falta.has("revisar_puntas")) trozo.append(confirmarPuntas(n, estado));
   trozo.append(campos(n, falta, estado));
   trozo.append(propiedadVinculada(n, estado));
   trozo.append(gente(n, estado));
@@ -330,8 +331,14 @@ function campos(n, falta, estado) {
   /* Las puntas son las de la OPERACIÓN, no las tuyas: una suplencia o un referido que
      diste igual se hace sobre un negocio de una o de dos puntas, y eso es lo que fija la
      comisión total. Por eso no hay opción "cero". */
+  /* En rojo hasta que se confirme. Es EL campo que Juan pidió marcar: el número que hay
+     puesto puede estar bien, pero mientras nadie lo haya mirado no se sabe, y de él depende
+     que la ganancia proyectada sea la que es o el doble. */
   agregar("puntas", "Puntas de la operación", "number", n.puntas,
-    opcionesCon([[1, "1 punta"], [2, "2 puntas"]], n.puntas));
+    opcionesCon([[1, "1 punta"], [2, "2 puntas"]], n.puntas),
+    falta.has("revisar_puntas"),
+    /* Elegirlo ES confirmarlo: para tocar este campo hay que estar mirando justo esto. */
+    () => ({ puntas_confirmadas: true }));
 
   // En una búsqueda no hubo captación: lo que salió de algún lado es el COMPRADOR.
   agregar(
@@ -384,9 +391,12 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
         const vende = clave === "agente_vende" ? valor : otroLado;
         const compra = clave === "agente_compra" ? valor : otroLado;
         const puntas = puntasSegunAgentes(vende, compra, estado.datos.ajustes);
+        /* Cambiar un lado ES confirmar las puntas: para tocar ese campo hay que estar
+           mirando justamente eso. Así el aviso se apaga solo, sin un paso más. */
+        const confirmado = { puntas_confirmadas: true };
         /* Si ningún lado es tuyo, las puntas de la OPERACIÓN no se pueden deducir: puede
            haber sido de una o de dos igual. Se deja lo que haya en vez de poner cero. */
-        return puntas ? { ...extra, puntas } : extra;
+        return puntas ? { ...extra, ...confirmado, puntas } : { ...extra, ...confirmado };
       });
 
     // "Team", "Ofi Único" y "Otra Oficina" son un grupo, no una persona: se puede anotar
@@ -445,6 +455,45 @@ const NOMBRE_REGIMEN = {
 };
 
 const explicarRegimen = (n) => NOMBRE_REGIMEN[regimenDe(n)] || "";
+
+/* Una punta o dos, preguntado de frente y arriba de todo.
+
+   No alcanza con pintar los campos en rojo: el número que hay puesto puede estar bien, y
+   entonces no hay nada que corregir — hay que poder decir "sí, es así". Sin este botón, el
+   aviso no se apagaría nunca en los negocios que ya están bien cargados. */
+function confirmarPuntas(n, estado) {
+  const cuantas = n.puntas === 2 ? "las dos puntas" : n.puntas === 1 ? "una punta" : "ninguna punta";
+  const seccion = nodo(html`
+    <section class="tarjeta" style="border-color:var(--rojo)">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">¿Una punta o dos?</h2>
+      <p class="apunte" style="margin-bottom:12px">Está contando <strong>${escapar(cuantas)}</strong>.
+        ${n.puntas === 2
+          ? "Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad."
+          : "Si los dos lados fueron tuyos son dos, y la ganancia es el doble."}</p>
+      <div class="botonera">
+        <button class="boton boton-primario" id="puntas-ok">Está bien así</button>
+        <button class="boton" id="puntas-cambiar">Es ${n.puntas === 2 ? "una sola" : "las dos"}</button>
+      </div>
+    </section>
+  `);
+
+  seccion.getElementById("puntas-ok").addEventListener("click", () => {
+    editarNegocio(estado, n.id, { puntas_confirmadas: true });
+    estado.redibujar();
+  });
+  /* El atajo del caso que pasa siempre: la propiedad es tuya y el comprador lo trajo otro.
+     Cambia las puntas Y el lado comprador, que es de donde salen. */
+  seccion.getElementById("puntas-cambiar").addEventListener("click", () => {
+    const aDos = n.puntas !== 2;
+    editarNegocio(estado, n.id, {
+      puntas: aDos ? 2 : 1,
+      agente_compra: aDos ? nombrePropio(estado.datos.ajustes) : "Otro",
+      puntas_confirmadas: true,
+    });
+    estado.redibujar();
+  });
+  return seccion;
+}
 
 function avisos(n) {
   const lista = n.avisos || [];

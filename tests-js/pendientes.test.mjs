@@ -374,3 +374,40 @@ test("un cambio de precio sigue pidiendo que lo des por visto", () => {
   const cartera = { p1: { entity_id: "p1", activa: true, origen_captacion: "Ref. Martin" } };
   assert.ok(derivar([], [evento], "2026-08-19", cartera).find((g) => g.clave === "cambio_precio"));
 });
+
+/* Va arriba y en rojo porque es plata mal contada, no trabajo administrativo: un negocio con
+   dos puntas cuando es una proyecta el doble de lo que va a entrar. */
+test("confirmar las puntas es urgente y va antes que los datos que faltan", () => {
+  const bandeja = derivar([
+    { id: "a", estado: "en_curso", direccion: "Rivera 100",
+      avisos: [{ tipo: "revisar_puntas", detalle: "Está contando LAS DOS PUNTAS." }] },
+    { id: "b", estado: "en_curso", direccion: "Otra 200",
+      avisos: [{ tipo: "falta_barrio", detalle: "Falta el barrio" }] },
+  ], [], "2026-08-20", {});
+
+  const puntas = bandeja.find((g) => g.clave === "revisar_puntas");
+  assert.ok(puntas, "el grupo tiene que existir en la bandeja");
+  assert.equal(puntas.urgente, true);
+  assert.equal(puntas.items.length, 1);
+  const barrio = bandeja.find((g) => g.clave === "falta_barrio");
+  assert.ok(puntas.orden < barrio.orden, "las puntas van antes que el barrio");
+});
+
+/* "Ficha completa" quiere decir "ya cargué todo lo que se puede cargar hoy", y las puntas no
+   faltan: están puestas con un valor por defecto que puede duplicar la ganancia sin que se
+   note. El día que se agregó el aviso, CUATRO de los seis negocios en curso de Juan estaban
+   dados por completos con dos puntas puestas solas. Si respetara la marca, no veía ninguno. */
+test("confirmar las puntas se pide aunque la ficha esté dada por completa", () => {
+  const bandeja = derivar([
+    { id: "a", estado: "en_curso", direccion: "Rivera 100", ficha_completa: true,
+      avisos: [
+        { tipo: "revisar_puntas", detalle: "Está contando LAS DOS PUNTAS." },
+        { tipo: "falta_barrio", detalle: "Falta el barrio" },
+      ] },
+  ], [], "2026-08-20", {});
+
+  assert.ok(bandeja.find((g) => g.clave === "revisar_puntas"),
+    "las puntas se piden igual");
+  assert.ok(!bandeja.find((g) => g.clave === "falta_barrio"),
+    "pero el resto sigue callado: la marca vale para lo que de verdad falta");
+});
