@@ -8,10 +8,17 @@ import {
   origenSegunReferidor, esOrigenDeReferido, normalizarOrigen,
 } from "../lib/catalogos.js";
 
-test("los agentes son la lista corta que se acordo", () => {
+/* "Inmobiliaria exterior" se agregó para las búsquedas: ahí el aviso lo tiene, muchas veces,
+   una inmobiliaria de afuera de RE/MAX. */
+test("los agentes son la lista corta que se acordo, con la de afuera", () => {
   assert.deepEqual(AGENTES, [
     "Juan Andrés Otero", "Martin Sedes", "Team", "Ofi Único", "Otra Oficina",
+    "Inmobiliaria exterior",
   ]);
+});
+
+test("una inmobiliaria de afuera lleva el nombre de cuál es", () => {
+  assert.equal(AGENTES_QUE_LLEVAN_NOMBRE.has("Inmobiliaria exterior"), true);
 });
 
 test("solo los que son un grupo o una oficina llevan el nombre de la persona", () => {

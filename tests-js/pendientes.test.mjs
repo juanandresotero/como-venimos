@@ -74,12 +74,12 @@ test("una baja de propiedad reservada es urgente: puede ser una venta", () => {
   assert.equal(derivar([], eventos, "2026-08-17")[0].urgente, true);
 });
 
-test("los cambios de precio no son urgentes, son informativos", () => {
+test("una baja es urgente: hay que decidir que paso", () => {
   const eventos = [
-    { id: "e1", tipo: "cambio_precio", titulo: "X", fecha: "2026-08-17", atendido: false,
+    { id: "e1", tipo: "baja", titulo: "X", fecha: "2026-08-17", atendido: false,
       detalle: { antes: 100, ahora: 90, moneda: "USD" } },
   ];
-  assert.equal(derivar([], eventos, "2026-08-17")[0].urgente, false);
+  assert.equal(derivar([], eventos, "2026-08-17")[0].urgente, true);
 });
 
 test("sin nada pendiente devuelve lista vacia", () => {
@@ -197,9 +197,9 @@ test("cada clase de pendiente ofrece lo suyo", () => {
 /* Que los avisos del robot SIGAN trayendo las dos llaves: si un dia alguien saca
    `entity_id` de `derivar`, el boton de arreglar desaparece sin que nada falle. */
 test("derivar le pone las dos llaves a los avisos del robot", () => {
-  const eventos = [{ id: "e1", entity_id: "abc", tipo: "cambio_estado", fecha: "2026-08-19",
-    direccion: "San Jose 1200", detalle: { antes: "en_negociacion", ahora: "reservada" } }];
-  const grupo = derivar([], eventos, "2026-08-19", {}).find((g) => g.clave === "cambio_estado");
+  const eventos = [{ id: "e1", entity_id: "abc", tipo: "baja", fecha: "2026-08-19",
+    direccion: "San Jose 1200", detalle: {} }];
+  const grupo = derivar([], eventos, "2026-08-19", {}).find((g) => g.clave === "baja");
   assert.equal(grupo.items[0].entity_id, "abc");
   assert.equal(accionesDe(grupo.items[0]).length, 2);
 });
@@ -225,15 +225,15 @@ test("una propiedad repetida en dos grupos queda en uno solo", () => {
 test("el que sobrevive es el del grupo MAS urgente, sin importar el orden de entrada", () => {
   const juntos = juntarRepetidos([
     grupo("falta_precio_negociacion", [{ entity_id: "p1", titulo: "Minas 1600", detalle: "a" }]),
-    grupo("cambio_estado", [{ entity_id: "p1", titulo: "Minas 1600", detalle: "b", eventos: ["e9"] }]),
+    grupo("falta_barrio", [{ entity_id: "p1", titulo: "Minas 1600", detalle: "b", eventos: ["e9"] }]),
   ]);
   assert.equal(juntos[0].clave, "falta_precio_negociacion");
 });
 
 test("al juntar, 'Ya lo resolvi' despacha TODOS los avisos que quedaron adentro", () => {
   const juntos = juntarRepetidos([
-    grupo("cambio_precio", [{ entity_id: "p1", titulo: "X", detalle: "a", eventos: ["e1"] }]),
-    grupo("cambio_estado", [{ entity_id: "p1", titulo: "X", detalle: "b", eventos: ["e2"] }]),
+    grupo("baja", [{ entity_id: "p1", titulo: "X", detalle: "a", eventos: ["e1"] }]),
+    grupo("falta_barrio", [{ entity_id: "p1", titulo: "X", detalle: "b", eventos: ["e2"] }]),
   ]);
   const atender = accionesDe(juntos[0].items[0]).find((a) => a.tipo === "atendido");
   assert.deepEqual(atender.destino, ["e1", "e2"], "si se pierde uno, el aviso vuelve manana");
@@ -367,12 +367,28 @@ test("un aviso que pide el origen se calla cuando el origen ya esta", () => {
     undefined, "con el origen cargado no puede seguir pidiendolo");
 });
 
-/* Los otros avisos del robot NO se resuelven solos: son noticias. */
-test("un cambio de precio sigue pidiendo que lo des por visto", () => {
-  const evento = { id: "e1", entity_id: "p1", tipo: "cambio_precio", fecha: "2026-08-19",
-    detalle: { antes: 100000, ahora: 90000, moneda: "USD" } };
+/* LO QUE ES SOLO PARA MIRAR NO VA A LA BANDEJA. Lo pidio Juan: "que no me avise si hay
+   cambios de precio, estado o reapariciones si es solo para chequeo". El robot los sigue
+   detectando y quedan en el historial de la propiedad — pero la bandeja es lo que hay que
+   HACER, y esos no piden nada.
+
+   Lo que si llega es lo que esos cambios DESTAPAN: si pasa a negociacion aparece "falta a
+   que precio", si vuelve al mercado el negocio se da por caido. El cambio en si no hace
+   falta contarlo dos veces. */
+test("los cambios de precio, estado y reaparicion no van a la bandeja", () => {
   const cartera = { p1: { entity_id: "p1", activa: true, origen_captacion: "Ref. Martin" } };
-  assert.ok(derivar([], [evento], "2026-08-19", cartera).find((g) => g.clave === "cambio_precio"));
+  for (const tipo of ["cambio_precio", "cambio_estado", "reaparecio"]) {
+    const evento = { id: "e1", entity_id: "p1", tipo, fecha: "2026-08-19", detalle: {} };
+    assert.deepEqual(derivar([], [evento], "2026-08-19", cartera), [],
+      `${tipo} es para mirar, no para hacer`);
+  }
+});
+
+/* Pero una BAJA si: pide decidir que paso con esa propiedad. */
+test("una baja sigue yendo a la bandeja: hay que decidir", () => {
+  const evento = { id: "e1", entity_id: "p1", tipo: "baja", fecha: "2026-08-19", detalle: {} };
+  const cartera = { p1: { entity_id: "p1", activa: false, origen_captacion: "Ref. Martin" } };
+  assert.ok(derivar([], [evento], "2026-08-19", cartera).find((g) => g.clave === "baja"));
 });
 
 /* Va arriba y en rojo porque es plata mal contada, no trabajo administrativo: un negocio con

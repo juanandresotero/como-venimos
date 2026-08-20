@@ -357,13 +357,18 @@ test("cuando la propiedad se va de la cartera, el negocio pide el cierre", () =>
   assert.ok(t.includes("ficha_reabierta"));
   assert.ok(t.includes("cerrar_negocio"));
   assert.ok(t.includes("sin_fecha_fin"), "ahora si se puede pedir la fecha de firma");
-  assert.match(n.avisos.find((a) => a.tipo === "cerrar_negocio").detalle, /se cerró/);
+  assert.match(n.avisos.find((a) => a.tipo === "cerrar_negocio").detalle, /estando reservada/);
 });
 
-test("si se va sin estar reservada, se pregunta si se concreto o se cayo", () => {
+/* UNA SOLA PREGUNTA. Lo demás la app lo sabe: la fecha de firma es el día que dejó de
+   aparecer y lo cobrado sale del precio de cierre ya cargado. Lo pidió Juan así. */
+test("al irse de la cartera se pregunta UNA cosa: si se concretó o se cayó", () => {
   const cartera = propiedadEn("fuera", { desenlace_propuesto: "caida" });
   const n = revisar(completo(), AJUSTES, "2026-09-15", cartera);
-  assert.match(n.avisos.find((a) => a.tipo === "cerrar_negocio").detalle, /si se cayó/);
+  const texto = n.avisos.find((a) => a.tipo === "cerrar_negocio").detalle;
+  assert.match(texto, /¿Se concretó o se cayó\?/);
+  assert.doesNotMatch(texto, /Cargá la fecha/, "la fecha ya no se pide: la pone sola");
+  assert.doesNotMatch(texto, /lo que cobraste/, "y lo cobrado sale del precio de cierre");
 });
 
 test("una vez cargado el cierre, deja de reclamarse", () => {
@@ -592,17 +597,18 @@ test("revisar: a un negocio ya cobrado no se le pide", () => {
   assert.ok(!tipos(revisar(negocio(), AJUSTES, "2026-08-17")).includes("revisar_puntas"));
 });
 
-/* En una búsqueda el aviso dice lo contrario, porque el riesgo es el opuesto: cuenta una
-   punta y podrían ser dos. */
-test("revisar: en una búsqueda el aviso habla de la punta compradora", () => {
+/* UNA BUSQUEDA ES SIEMPRE UNA PUNTA, Y SIEMPRE LA COMPRADORA. Es la definicion: le
+   encontraste vos la propiedad a un comprador, el aviso era de otro. Lo dijo Juan como
+   regla, asi que no hay nada que preguntar: se fija sola. */
+test("en una búsqueda las puntas no se preguntan: se fijan solas", () => {
   const n = revisar(negocio({
-    estado: "en_curso", fecha_fin: null, puntas: 1,
+    estado: "en_curso", fecha_fin: null, puntas: 2,
     agente_vende: "Otro", agente_compra: "Juan Andrés Otero",
   }), AJUSTES, "2026-08-17");
-  const texto = n.avisos.find((a) => a.tipo === "revisar_puntas").detalle;
-  assert.match(texto, /1 punta, la compradora/);
+  assert.equal(n.puntas, 1, "una búsqueda es una punta, aunque estuviera cargada con dos");
+  assert.equal(n.puntas_confirmadas, true);
+  assert.ok(!tipos(n).includes("revisar_puntas"), "y no se pregunta nada");
 });
-
 test("comoEstaContando dice qué está contando y qué pasa si está mal", () => {
   assert.match(comoEstaContando({ puntas: 2 }, AJUSTES), /LAS DOS PUNTAS/);
   assert.match(comoEstaContando({ puntas: 1 }, AJUSTES), /el doble/);
@@ -745,4 +751,61 @@ test("con fecha de firma no se da por caído nada", () => {
   const cartera = propiedadEn("publicada", { fecha_negociacion: "2026-08-07" });
   const n = revisar(negocio({ entity_id_cartera: "flam" }), AJUSTES, "2026-08-20", cartera);
   assert.equal(n.estado, "cerrado");
+});
+
+/* ---------- Lo que la app puede averiguar sola ---------- */
+
+/* La dirección y el barrio estaban entre los que pedía TENIÉNDOLOS: si el negocio cuelga de
+   una propiedad, esos datos están en la cartera. Juan: "sólo pregunte si por algún motivo no
+   pudo averiguarlo y ese campo quedó vacío". */
+test("la dirección y el barrio salen de la propiedad, no se preguntan", () => {
+  const cartera = { flam: { entity_id: "flam", activa: true, estado: "en_negociacion",
+    direccion: "Flammarion 5046", barrio: "Prado", fecha_negociacion: "2026-08-17" } };
+  const n = revisar(negocio({
+    direccion: null, barrio: null, entity_id_cartera: "flam", ficha_completa: false,
+  }), AJUSTES, "2026-08-20", cartera);
+  assert.equal(n.direccion, "Flammarion 5046");
+  assert.equal(n.barrio, "Prado");
+  assert.ok(!tipos(n).includes("falta_direccion"));
+  assert.ok(!tipos(n).includes("falta_barrio"));
+});
+
+/* Pero si NO se pudieron averiguar, se piden: es el caso que Juan dejó abierto. */
+test("si no hay propiedad de donde sacarlos, ahí sí se piden", () => {
+  const n = revisar(negocio({
+    direccion: null, barrio: null, entity_id_cartera: null, ficha_completa: false,
+  }), AJUSTES, "2026-08-20", {});
+  assert.ok(tipos(n).includes("falta_direccion"));
+  assert.ok(tipos(n).includes("falta_barrio"));
+});
+
+/* ---------- Las búsquedas ---------- */
+
+/* Una búsqueda cargada YA ESTÁ en negociación: por eso se cargó. Decírselo es contarle lo
+   que acaba de escribir. Sólo se pide lo que falta. */
+test("una búsqueda completa no genera ningún aviso", () => {
+  const n = revisar(negocio({
+    estado: "en_curso", fecha_fin: null,
+    agente_vende: "Inmobiliaria exterior", agente_compra: "Juan Andrés Otero",
+    origen_captacion: "B.d.r.", precio_operacion: 134000,
+    fecha_negociacion: "2026-08-18", fecha_boleto: null,
+    direccion: "Calle 6", barrio: "Pinar",
+    ficha_completa: false, entity_id_cartera: null,
+  }), AJUSTES, "2026-08-20", {});
+  assert.deepEqual(tipos(n), [], "está todo cargado: no hay nada que pedir");
+});
+
+test("y si le falta algo, se pide eso y sólo eso", () => {
+  const n = revisar(negocio({
+    estado: "en_curso", fecha_fin: null,
+    agente_vende: "Inmobiliaria exterior", agente_compra: "Juan Andrés Otero",
+    origen_captacion: null, precio_operacion: null,
+    fecha_negociacion: "2026-08-18", fecha_boleto: null,
+    direccion: "Calle 6", barrio: "Pinar",
+    ficha_completa: false, entity_id_cartera: null,
+  }), AJUSTES, "2026-08-20", {});
+  const texto = n.avisos.find((a) => a.tipo === "busqueda_en_curso").detalle;
+  assert.match(texto, /de dónde salió el comprador/);
+  assert.match(texto, /a qué precio se cierra/);
+  assert.doesNotMatch(texto, /quién tiene el aviso/, "ese sí está cargado");
 });

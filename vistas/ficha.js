@@ -72,6 +72,7 @@ export function dibujarFicha(estado) {
   `));
 
   if (estaCaido(n)) trozo.append(cartelDeCaido(n, estado));
+  if (falta.has("cerrar_negocio")) trozo.append(comoTermino(n, estado));
   if (falta.has("revisar_puntas")) trozo.append(confirmarPuntas(n, estado));
   trozo.append(campos(n, falta, estado));
   trozo.append(propiedadVinculada(n, estado));
@@ -335,14 +336,12 @@ function campos(n, falta, estado) {
   /* Las puntas son las de la OPERACIÓN, no las tuyas: una suplencia o un referido que
      diste igual se hace sobre un negocio de una o de dos puntas, y eso es lo que fija la
      comisión total. Por eso no hay opción "cero". */
-  /* En rojo hasta que se confirme. Es EL campo que Juan pidió marcar: el número que hay
-     puesto puede estar bien, pero mientras nadie lo haya mirado no se sabe, y de él depende
-     que la ganancia proyectada sea la que es o el doble. */
-  agregar("puntas", "Puntas de la operación", "number", n.puntas,
-    opcionesCon([[1, "1 punta"], [2, "2 puntas"]], n.puntas),
-    falta.has("revisar_puntas"),
-    /* Elegirlo ES confirmarlo: para tocar este campo hay que estar mirando justo esto. */
-    () => ({ puntas_confirmadas: true }));
+  /* Las puntas NO son un campo suelto: viven en la tarjeta de arriba junto con "quién trajo
+     al comprador", porque son la misma pregunta. Acá sólo se muestran, ya confirmadas. */
+  if (n.puntas_confirmadas) {
+    agregar("puntas", "Puntas de la operación", "number", n.puntas,
+      opcionesCon([[1, "1 punta"], [2, "2 puntas"]], n.puntas));
+  }
 
   // En una búsqueda no hubo captación: lo que salió de algún lado es el COMPRADOR.
   agregar(
@@ -411,7 +410,9 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
   };
 
   lado("agente_vende", "Quién tenía el aviso", true);
-  lado("agente_compra", "Quién trajo al comprador", true);
+  /* "Quién trajo al comprador" sólo se muestra una vez confirmadas las puntas: mientras
+     tanto se pregunta arriba, en la tarjeta, que es donde tiene sentido. */
+  if (n.puntas_confirmadas) lado("agente_compra", "Quién trajo al comprador", true);
 
   /* "A quién se lo referiste" solo tiene sentido si efectivamente lo referiste. Y "quién
      te lo refirió" desapareció: era la misma pregunta que "cómo llegó el negocio". */
@@ -460,40 +461,116 @@ const NOMBRE_REGIMEN = {
 
 const explicarRegimen = (n) => NOMBRE_REGIMEN[regimenDe(n)] || "";
 
-/* Una punta o dos, preguntado de frente y arriba de todo.
+/* Una punta o dos, y de quién fue la otra — todo en la misma tarjeta.
 
-   No alcanza con pintar los campos en rojo: el número que hay puesto puede estar bien, y
-   entonces no hay nada que corregir — hay que poder decir "sí, es así". Sin este botón, el
-   aviso no se apagaría nunca en los negocios que ya están bien cargados. */
+   Antes eran dos preguntas en dos lugares distintos de la ficha: "puntas de la operación"
+   arriba y "quién trajo al comprador" más abajo, entre los agentes. Es la MISMA pregunta
+   hecha dos veces: las puntas SALEN de quién puso cada lado.
+
+   2 puntas quiere decir que las dos personas vinieron por Juan — ahí no hay a quién elegir.
+   Con 1 punta sí: la compradora fue de otro, y de eso depende la comisión. */
 function confirmarPuntas(n, estado) {
-  const cuantas = n.puntas === 2 ? "las dos puntas" : n.puntas === 1 ? "una punta" : "ninguna punta";
+  const dos = n.puntas === 2;
   const seccion = nodo(html`
     <section class="tarjeta" style="border-color:var(--rojo)">
       <h2 class="titulo" style="font-size:17px;margin-bottom:6px">¿Una punta o dos?</h2>
-      <p class="apunte" style="margin-bottom:12px">Está contando <strong>${escapar(cuantas)}</strong>.
-        ${n.puntas === 2
-          ? "Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad."
-          : "Si los dos lados fueron tuyos son dos, y la ganancia es el doble."}</p>
+      <p class="apunte" style="margin-bottom:12px">${dos
+        ? "Está contando <strong>las dos puntas</strong>: las dos personas vinieron por vos. "
+          + "Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad."
+        : "Está contando <strong>una punta</strong>. Si las dos personas vinieron por vos son "
+          + "dos, y la ganancia es el doble."}</p>
       <div class="botonera">
-        <button class="boton boton-primario" id="puntas-ok">Está bien así</button>
-        <button class="boton" id="puntas-cambiar">Es ${n.puntas === 2 ? "una sola" : "las dos"}</button>
+        <button class="filtro ${dos ? "" : "prendido"}" data-puntas="1">Una punta</button>
+        <button class="filtro ${dos ? "prendido" : ""}" data-puntas="2">Las dos</button>
+      </div>
+      <div id="quien-comprador"></div>
+      <div class="botonera" style="margin-top:14px">
+        <button class="boton boton-primario" id="puntas-ok">Listo</button>
       </div>
     </section>
   `);
+
+  /* El box de quién trajo al comprador aparece SOLO con una punta, que es cuando existe la
+     pregunta. Con las dos, el comprador lo trajiste vos y no hay nada que elegir. */
+  if (!dos) {
+    const caja = seccion.getElementById("quien-comprador");
+    const fila = document.createElement("div");
+    fila.className = "campo-fila";
+    fila.style.marginTop = "10px";
+    fila.innerHTML = html`
+      <label for="campo-quien-compra">¿Quién trajo al comprador?</label>
+      <select class="campo" id="campo-quien-compra">
+        ${["", ...AGENTES.filter((a) => a !== nombrePropio(estado.datos.ajustes))]
+          .map((a) => html`<option value="${escapar(a)}" ${
+            n.agente_compra === a ? "selected" : ""}>${escapar(a || "sin cargar")}</option>`)
+          .join("")}
+      </select>
+    `;
+    fila.querySelector("select").addEventListener("change", (evento) => {
+      editarNegocio(estado, n.id, { agente_compra: evento.target.value || null });
+      estado.redibujar();
+    });
+    caja.append(fila);
+  }
+
+  for (const boton of seccion.querySelectorAll("[data-puntas]")) {
+    boton.addEventListener("click", () => {
+      const aDos = boton.dataset.puntas === "2";
+      editarNegocio(estado, n.id, {
+        puntas: aDos ? 2 : 1,
+        /* Al pasar a dos, el comprador sos vos: se pone solo. Al pasar a una, se vacía para
+           que el box de abajo pregunte de quién fue. */
+        agente_compra: aDos ? nombrePropio(estado.datos.ajustes) : null,
+      });
+      estado.redibujar();
+    });
+  }
 
   seccion.getElementById("puntas-ok").addEventListener("click", () => {
     editarNegocio(estado, n.id, { puntas_confirmadas: true });
     estado.redibujar();
   });
-  /* El atajo del caso que pasa siempre: la propiedad es tuya y el comprador lo trajo otro.
-     Cambia las puntas Y el lado comprador, que es de donde salen. */
-  seccion.getElementById("puntas-cambiar").addEventListener("click", () => {
-    const aDos = n.puntas !== 2;
+  return seccion;
+}
+
+/* ---------- Cómo terminó ---------- */
+
+/* La propiedad ya no está en el portal, así que la operación terminó. Lo único que la app no
+   puede saber es CÓMO: se vendió o se cayó.
+
+   Todo lo demás lo pone sola. La fecha de firma es el día que dejó de aparecer —Juan lo
+   eligió así— y lo cobrado sale del precio de cierre que ya cargó cuando pasó a negociación.
+   Las dos quedan editables abajo, en los campos de siempre, por si un cierre importante cayó
+   corrido de mes. */
+function comoTermino(n, estado) {
+  const propiedad = (estado.datos.cartera || {})[n.entity_id_cartera] || {};
+  const cuando = propiedad.fecha_desaparicion || estado.hoy;
+  const precio = propiedad.precio_negociacion || n.precio_operacion || null;
+
+  const seccion = nodo(html`
+    <section class="tarjeta" style="border-color:var(--rojo)">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">¿Se concretó o se cayó?</h2>
+      <p class="apunte" style="margin-bottom:12px">Ya no está en RE/MAX desde el
+        ${escapar(cuando)}.${precio
+          ? html` Si se concretó, la doy por firmada ese día por
+            <strong>${plataUSD(precio)}</strong>.`
+          : ""}</p>
+      <div class="botonera">
+        <button class="boton boton-primario" id="concreto">Se concretó</button>
+        <button class="boton" id="se-cayo-fin">Se cayó</button>
+      </div>
+    </section>
+  `);
+
+  seccion.getElementById("concreto").addEventListener("click", () => {
     editarNegocio(estado, n.id, {
-      puntas: aDos ? 2 : 1,
-      agente_compra: aDos ? nombrePropio(estado.datos.ajustes) : "Otro",
-      puntas_confirmadas: true,
+      fecha_fin: cuando,
+      precio_operacion: precio || n.precio_operacion,
     });
+    estado.redibujar();
+  });
+  seccion.getElementById("se-cayo-fin").addEventListener("click", () => {
+    editarNegocio(estado, n.id, { estado: CAIDO, estado_a_mano: true, se_cayo_solo: false });
     estado.redibujar();
   });
   return seccion;
