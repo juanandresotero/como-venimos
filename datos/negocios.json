@@ -3007,12 +3007,7 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "revisar_puntas",
-    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
-   }
-  ],
+  "avisos": [],
   "barrio": "Cerrito",
   "base": 2400,
   "categoria_vigente": "RAP",
@@ -3056,7 +3051,8 @@
    "nombre": "claudio Pagani Dueño Estanislao",
    "telefono": "+59899601877"
   },
-  "ficha_completa_momento": "en_negociacion"
+  "ficha_completa_momento": "en_negociacion",
+  "puntas_confirmadas": true
  },
  {
   "id": "manual-1",
