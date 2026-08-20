@@ -73,13 +73,16 @@ export function dibujarPersonalFijos(estado) {
 }
 
 /* Un renglón por gasto: el tilde a la izquierda —que es lo que se toca todos los meses— y el
-   nombre, que abre la edición. Se ordenan por día de vencimiento: es el orden en que van
-   llegando. */
+   nombre, que abre la edición.
+
+   Ordenados de mayor a menor. Antes iban por día de vencimiento, pero ese dato ya no se
+   guarda; en una lista de cinco se encuentra igual, y así se ve de un golpe cuál pesa más. */
 function laLista(estado, datos, fijos, mes) {
   const caja = document.createElement("div");
   caja.className = "lista";
 
-  for (const fijo of [...fijos].sort((a, b) => (a.dia || 32) - (b.dia || 32))) {
+  const cuanto = (f) => montoEstimado(f).monto;
+  for (const fijo of [...fijos].sort((a, b) => cuanto(b) - cuanto(a))) {
     const pago = pagoDelMes(fijo, mes);
     const estimado = montoEstimado(fijo);
     /* Los que cambian de monto se muestran con "≈" y con lo que se pagó de verdad cuando ya
@@ -94,8 +97,10 @@ function laLista(estado, datos, fijos, mes) {
                 aria-pressed="${pago ? "true" : "false"}">${pago ? "✓" : ""}</button>
         <button class="fila-cuerpo" data-editar="${fijo.id}" style="text-align:left">
           <span class="fila-titulo">${escapar(fijo.nombre || "Sin nombre")}</span>
-          <span class="fila-sub">${fijo.dia ? `el ${fijo.dia}` : "sin día"}${
-            pago ? ` · pagado ${escapar(String(pago.fecha || "").slice(8, 10))}` : ""}</span>
+          ${pago
+            ? html`<span class="fila-sub">pagado el ${
+                escapar(String(pago.fecha || "").slice(8, 10))}</span>`
+            : ""}
         </button>
         <span class="fila-derecha">
           <span class="cifra cifra-media">${cifra}</span>
@@ -188,7 +193,6 @@ function ventanaFijo(estado, datos, fijo) {
     nombre: (fijo && fijo.nombre) || "",
     monto: fijo ? fijo.monto : null,
     moneda: (fijo && fijo.moneda) || "UYU",
-    dia: (fijo && fijo.dia) || null,
     varia: Boolean(fijo && fijo.varia),
   };
 
@@ -225,7 +229,6 @@ function ventanaFijo(estado, datos, fijo) {
   const campoDelMonto = campoMonto("fij-monto", puesto.varia ? "Más o menos cuánto" : "Cuánto",
     "", puesto.monto, (v) => { puesto.monto = v; });
   campos.append(campoDelMonto);
-  campos.append(campoDia("fij-dia", "Qué día del mes", puesto.dia, (v) => { puesto.dia = v; }));
 
   const { caja, cerrar } = telon(cuerpo);
 
@@ -311,20 +314,5 @@ function campoMonto(id, etiqueta, sufijo, valor, alCambiar) {
   const control = fila.querySelector(".campo");
   formatearMientrasEscribe(control);
   control.addEventListener("input", () => alCambiar(numeroDesde(control.value)));
-  return fila;
-}
-
-function campoDia(id, etiqueta, valor, alCambiar) {
-  const fila = document.createElement("div");
-  fila.className = "campo-fila";
-  fila.innerHTML = html`
-    <label for="${id}">${escapar(etiqueta)} <span class="apunte">del 1 al 31</span></label>
-    <input class="campo" id="${id}" type="number" inputmode="numeric" min="1" max="31"
-           value="${valor ?? ""}" placeholder="1">
-  `;
-  fila.querySelector(".campo").addEventListener("input", (evento) => {
-    const n = Number(evento.target.value);
-    alCambiar(Number.isFinite(n) && n >= 1 && n <= 31 ? n : null);
-  });
   return fila;
 }
