@@ -64,13 +64,12 @@ const TAJADA = `<path d="M10.8 6.4A6.8 6.8 0 1 0 17.6 13.2L10.8 13.2Z"/>`
 export const HERRAMIENTAS = [
   { vista: "renta", nombre: "Calcular renta", dibujo: CASA },
   { vista: "comisiones", nombre: "Calcular comisión", dibujo: PORCIENTO },
-  /* Va pegada a la comision: las dos contestan "¿cuanto sale esto?" en el mismo momento de
-     la operacion, y el orden de estas paradas es una linea de tiempo. */
-  { vista: "costos_cierre", nombre: "Cuánto cuesta cerrar", dibujo: TAJADA },
   { vista: "reajuste", nombre: "Calcular reajuste de alquiler", dibujo: ESCALONES },
   { vista: "carta_oferta", nombre: "Enviar carta oferta", dibujo: HOJA_FIRMADA },
   { vista: "padron", nombre: "Averiguar el padrón", dibujo: CHAPA },
   { vista: "homogeneizacion", nombre: "Homogeneizar los m²", dibujo: REGLA },
+  /* La ultima de todas, lo pidio Juan asi. */
+  { vista: "costos_cierre", nombre: "Cuánto cuesta cerrar", dibujo: TAJADA },
 ];
 
 export function dibujarHerramientas(estado) {

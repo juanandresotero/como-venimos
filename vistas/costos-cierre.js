@@ -36,6 +36,8 @@ const entradas = {
   compra: null,
   irpf: "ganancia",
   dolar: null,
+  /* Un solo tipo para las dos puntas, y un valor por cada una: a veces se cobra una sola. */
+  comision: { tipo: "pct", vendedor: POR_DEFECTO.comision, comprador: POR_DEFECTO.comision },
 };
 const tasas = { ...POR_DEFECTO };
 let finosAbiertos = false;
@@ -76,6 +78,7 @@ export function dibujarCostosCierre(estado) {
   trozo.append(cabecera(r));
   trozo.append(basicos(estado));
   trozo.append(deDondeSaleElIrpf(estado, r));
+  trozo.append(laComision(estado));
   trozo.append(finos(estado, cotizacion));
   if (r.hayDatos) trozo.append(laCuenta(r));
   if (r.hayDatos) trozo.append(paraElCliente(estado, r, cotizacion));
@@ -198,6 +201,68 @@ function deDondeSaleElIrpf(estado, r) {
   return seccion;
 }
 
+/* ---------- La comisión ---------- */
+
+const LADOS = [
+  { clave: "vendedor", etiqueta: "Al vendedor" },
+  { clave: "comprador", etiqueta: "Al comprador" },
+];
+
+/* La comisión va ADENTRO de la cuenta: es el gasto más grande de los dos lados, y dejarlo
+   afuera hacía que el "te queda" pareciera final cuando no lo era.
+
+   UN SOLO tipo para las dos puntas —o las dos en porcentaje, o las dos en monto— porque
+   mezclarlas es un caso que no pasa y agregaba un control más a la pantalla. Cada punta sí
+   lleva su propio valor: a veces se cobra una sola, y ahí la otra va en cero.
+
+   Al cambiar de tipo el valor se CONVIERTE, no se borra: pasar de "3%" a monto fijo tiene
+   que dejar los 4.500 puestos, no un campo vacío que hay que volver a llenar. */
+function laComision(estado) {
+  const com = entradas.comision;
+  const enMonto = com.tipo === "monto";
+
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo" style="margin-bottom:10px">
+        <h2 class="titulo" style="font-size:17px">Comisión inmobiliaria</h2>
+        <span class="apunte">a cada parte</span>
+      </div>
+      <div class="botonera">
+        <button class="filtro ${enMonto ? "" : "prendido"}" data-comision="pct">%</button>
+        <button class="filtro ${enMonto ? "prendido" : ""}" data-comision="monto">Monto fijo</button>
+      </div>
+      <div id="c-caja-comision"></div>
+    </section>
+  `);
+
+  for (const boton of seccion.querySelectorAll("[data-comision]")) {
+    boton.addEventListener("click", () => {
+      const nuevo = boton.dataset.comision;
+      if (nuevo === com.tipo) return;
+      const precio = entradas.precio || 0;
+      for (const lado of LADOS) {
+        const valor = com[lado.clave] || 0;
+        if (nuevo === "monto") com[lado.clave] = precio * valor;
+        else com[lado.clave] = precio ? valor / precio : POR_DEFECTO.comision;
+      }
+      com.tipo = nuevo;
+      estado.redibujar();
+    });
+  }
+
+  const caja = seccion.getElementById("c-caja-comision");
+  for (const lado of LADOS) {
+    const guardar = (v) => { com[lado.clave] = v === null ? 0 : v; estado.redibujar(); };
+    caja.append(enMonto
+      ? campoMonto(`comision-${lado.clave}`, lado.etiqueta, "en USD",
+        com[lado.clave], guardar)
+      : campoNumero(`comision-${lado.clave}`, lado.etiqueta, "% del precio",
+        Number(((com[lado.clave] || 0) * 100).toFixed(3)),
+        (v) => guardar(v === null ? null : v / 100), "0.1"));
+  }
+  return seccion;
+}
+
 /* ---------- Los porcentajes, plegados ---------- */
 
 function campoNumero(clave, etiqueta, sufijo, valor, alCambiar, paso = "any") {
@@ -298,11 +363,10 @@ function laCuenta(r) {
       </div>
 
       <p class="apunte" style="margin-top:16px">
-        Los honorarios del escribano <strong>de la parte vendedora</strong> no están acá: son
-        menores que los del comprador y se acuerdan con él.<br><br>
+        Los honorarios del <strong>escribano del vendedor</strong> se acuerdan con él, pero
+        son menores a lo que cobra un escribano de la parte compradora.<br><br>
         Puede haber otros gastos de escritura —certificados, timbres, inscripción— que no se
-        pueden calcular de antemano y que el escribano sí va a poder detallar.<br><br>
-        La comisión inmobiliaria va aparte.
+        pueden calcular de antemano y que el escribano sí va a poder detallar.
       </p>
     </section>
   `);
