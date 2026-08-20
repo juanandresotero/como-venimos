@@ -130,9 +130,10 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
         <video class="camara-video" playsinline muted></video>
         <div class="botonera">
           <button class="boton boton-chico boton-primario" data-hacer="capturar">Capturar</button>
-          <button class="boton boton-chico" data-hacer="luz" hidden>Luz</button>
+          <button class="boton boton-chico" data-hacer="luz" hidden>Prender la luz</button>
           <button class="boton boton-chico" data-hacer="cortar-camara">Cerrar la cámara</button>
         </div>
+        <p class="apunte aviso-luz" hidden></p>
       </div>
       <p class="apunte camara-error" hidden></p>
       <div class="vista-firma" hidden>
@@ -159,6 +160,7 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
   const listo = panel.caja.querySelector('[data-hacer="listo"]');
   const cajaCamara = panel.caja.querySelector(".camara-firma");
   const botonLuz = panel.caja.querySelector('[data-hacer="luz"]');
+  const avisoLuz = panel.caja.querySelector(".aviso-luz");
   const video = panel.caja.querySelector(".camara-video");
   const errorCamara = panel.caja.querySelector(".camara-error");
   let mascara = null;
@@ -240,39 +242,79 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
     corriente = null;
     cajaCamara.hidden = true;
     botonLuz.hidden = true;
+    avisoLuz.hidden = true;
   };
 
-  /* La linterna del telefono. Una firma en papel sale mucho mejor con luz pareja que con la
-     sombra de la propia mano encima, asi que se prende SOLA y queda el boton para apagarla.
+  /* La linterna del telefono.
 
-     No todas las camaras la tienen —las frontales nunca, y iPhone no la expone al navegador—,
-     asi que el boton solo aparece donde de verdad se puede. */
+     Una firma en papel sale mucho mejor con luz pareja que con la sombra de la propia mano
+     encima, asi que se intenta prender SOLA y queda el boton para apagarla.
+
+     Dos cosas que costaron:
+
+     1. Las capacidades de la camara NO estan listas apenas arranca. Se preguntaba `torch`
+        de una, todavia venia sin definir, se decidia que no habia linterna y no se mostraba
+        nada. Ahora se espera a que la pista este viva y se pregunta varias veces.
+
+     2. Hay navegadores que no declaran `torch` en las capacidades pero igual la aceptan.
+        Asi que si no la declara, se PRUEBA lo mismo: sale gratis y a veces anda.
+
+     Si de verdad no se puede, se dice. Antes no aparecia nada y quedaba la duda de si el
+     boton estaba roto — las camaras frontales no tienen linterna y el iPhone no se la
+     muestra al navegador, y eso el usuario no tiene por que saberlo. */
   let luzPrendida = false;
+
+  const pistaDeVideo = () => corriente && corriente.getVideoTracks()[0];
+
+  /* Espera a que la camara diga que sabe hacer. Hasta un segundo y medio. */
+  async function tieneLinterna(pista) {
+    for (let intento = 0; intento < 10; intento++) {
+      if (typeof pista.getCapabilities === "function") {
+        const puede = pista.getCapabilities();
+        if (puede && "torch" in puede) return Boolean(puede.torch);
+      }
+      await new Promise((sigue) => { setTimeout(sigue, 150); });
+    }
+    return null;      // nunca contesto: se probara igual
+  }
+
   async function prenderLuz(encender) {
-    const pista = corriente && corriente.getVideoTracks()[0];
-    if (!pista || typeof pista.getCapabilities !== "function") return;
-    if (!pista.getCapabilities().torch) return;
+    const pista = pistaDeVideo();
+    if (!pista) return;
+
+    const declarada = await tieneLinterna(pista);
+    if (declarada === false) {
+      botonLuz.hidden = true;
+      avisoLuz.hidden = false;
+      avisoLuz.textContent = "Esta cámara no deja prender la luz desde el navegador. "
+        + "Si podés, sacá la foto con buena luz de ambiente.";
+      return;
+    }
+
     try {
       await pista.applyConstraints({ advanced: [{ torch: encender }] });
       luzPrendida = encender;
       botonLuz.hidden = false;
       botonLuz.textContent = encender ? "Apagar la luz" : "Prender la luz";
-    } catch { /* si no deja, queda sin boton y se saca la foto igual */ }
+      avisoLuz.hidden = true;
+    } catch {
+      botonLuz.hidden = true;
+      avisoLuz.hidden = false;
+      avisoLuz.textContent = "No pude prender la luz de la cámara. "
+        + "Si podés, sacá la foto con buena luz de ambiente.";
+    }
   }
 
   /* La camara por JavaScript y no por el campo de archivo.
 
      No es un lujo: adentro del navegador que WhatsApp trae incorporado el selector de
-     archivos NO ABRE —la aplicacion que lo hospeda tiene que implementarlo y WhatsApp no
-     lo hace—, asi que el boton de subir una foto no reacciona. Pedir la camara es otro
-     camino distinto, y donde este permitido funciona sin selector de archivos.
-
-     Si tampoco se puede, se dice por que y queda el campo de archivo, que en un navegador
-     normal anda perfecto. */
+     archivos NO ABRE —la aplicacion que lo hospeda tiene que implementarlo y WhatsApp no lo
+     hace—, asi que el boton de subir una foto no reacciona. Pedir la camara es otro camino
+     distinto, y donde este permitido funciona sin selector de archivos. */
   const prenderCamara = async () => {
-    /* Se avisa ANTES de pedir nada: pedir la cámara puede tardar, o quedarse esperando una
-       respuesta que no llega nunca, y un botón que no reacciona es exactamente el problema
-       que se está tratando de resolver. */
+    /* Se avisa ANTES de pedir nada: pedir la camara puede tardar, o quedarse esperando una
+       respuesta que no llega nunca, y un boton que no reacciona es exactamente el problema
+       que se esta tratando de resolver. */
     errorCamara.hidden = false;
     errorCamara.textContent = "Pidiendo permiso para usar la cámara…";
 
@@ -283,12 +325,19 @@ export function pedirFirmaDeFoto({ alFirmar, titulo = "Tu firma, desde una foto"
     }
 
     try {
-      /* Con reloj: el pedido de cámara puede no contestar NUNCA —pasa adentro de los
+      /* Con reloj: el pedido de camara puede no contestar NUNCA —pasa adentro de los
          navegadores que vienen dentro de otra app— y sin esto la pantalla se queda esperando
          para siempre. Diez segundos y se ofrece el otro camino. */
       corriente = await Promise.race([
         navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } }, audio: false,
+          /* La de ATRAS y lo mas grande que se pueda: la de adelante no tiene linterna y
+             saca peor, y cuantos mas pixeles tenga la foto mas fino sale el recorte. */
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+          audio: false,
         }),
         new Promise((_, rechazar) => {
           setTimeout(() => rechazar(new Error("sin respuesta")), 10000);

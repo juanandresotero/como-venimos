@@ -204,3 +204,47 @@ test("sin avisar, ese mismo borde SI ensucia — por eso hace falta el aviso", (
   assert.notEqual(sinAvisar.alto, Math.round((sinAvisar.ancho * 40) / 120),
     "sin la bandera el recorte NO es el trazo");
 });
+
+/* EL CASO DE LAS FOTOS DE VERDAD. Juan mando dos recortes con barras negras alrededor de una
+   firma diminuta. No era la tinta: era el BORDE DE LA HOJA apoyada sobre la mesa. Para un
+   umbral local, esa raya es el trazo mas marcado de toda la foto.
+
+   Una firma esta en el medio del papel; el canto de la hoja y la sombra de abajo llegan
+   siempre hasta el borde de la foto. */
+const papelSobreMesa = (ancho, alto, margen, hayFirma) => foto(ancho, alto, (x, y) => {
+  const enElPapel = x >= margen && y >= margen && x < ancho - margen && y < alto - margen;
+  if (!enElPapel) return [70, 66, 62];              // la mesa, oscura
+  if (hayFirma(x, y)) return [38, 36, 40];          // la firma
+  return [226, 224, 228];                           // el papel
+});
+
+test("el borde de la hoja no entra en el recorte", () => {
+  const firma = (x, y) => x >= 140 && x < 260 && y >= 90 && y < 130;
+  const r = recortar(papelSobreMesa(400, 240, 26, firma));
+  assert.ok(r, "tiene que encontrar la firma");
+  /* La firma mide 120x40. Si hubiera entrado el borde, el recorte seria de 348x188. */
+  assert.equal(r.alto, Math.round((r.ancho * 40) / 120), "recorto la firma, no el marco");
+});
+
+/* La salvedad: si la foto ya viene recortada al ras y la firma llega hasta el borde, hay
+   que dejarla. Sin esto, una foto ajustada devolveria una firma vacia. */
+test("si la firma llega al borde porque la foto vino al ras, igual se queda", () => {
+  const trazo = (x, y) => x < 280 && Math.abs(y - 50) < 4;
+  const r = recortar(foto(300, 100, (x, y) => (trazo(x, y) ? [38, 36, 40] : [226, 224, 228])));
+  assert.ok(r, "no se puede quedar sin firma");
+  assert.ok(r.ancho > 0 && r.alto > 0);
+});
+
+/* Una rubrica que cruza la hoja de lado a lado la parte en dos pedazos de papel. Si se
+   tomara solo el pedazo mas grande, la firma quedaria cortada justo al medio. */
+test("una firma que parte la hoja en dos no se recorta por la mitad", () => {
+  const raya = (x, y) => y >= 48 && y < 54;                       // cruza todo el ancho
+  const arriba = (x, y) => x >= 60 && x < 240 && y >= 20 && y < 46;
+  const abajo = (x, y) => x >= 60 && x < 240 && y >= 56 && y < 80;
+  const r = recortar(papelSobreMesa(400, 200, 24,
+    (x, y) => raya(x, y) || arriba(x, y) || abajo(x, y)));
+  assert.ok(r, "tiene que encontrar la firma");
+  /* Lo escrito va de y=20 a y=80: sesenta de alto. Si se hubiera quedado con media hoja,
+     el alto seria la mitad. */
+  assert.ok(r.alto > r.ancho * 0.1, `quedo ${r.ancho}x${r.alto}`);
+});
