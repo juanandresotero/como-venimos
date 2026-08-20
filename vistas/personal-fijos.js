@@ -8,7 +8,7 @@
    solas. */
 
 import {
-  leer, guardar, mesDe, proximoId, estaPago, pagoDelMes, faltaPagar,
+  leer, guardar, mesDe, proximoId, estaPago, pagoDelMes, faltaPagar, montoEstimado,
 } from "../lib/personal.js";
 import { escapar, plata, numeroDesde, formatearMientrasEscribe } from "../lib/formato.js";
 import { telon } from "./ventana.js";
@@ -65,6 +65,12 @@ function laLista(estado, datos, fijos, mes) {
 
   for (const fijo of [...fijos].sort((a, b) => (a.dia || 32) - (b.dia || 32))) {
     const pago = pagoDelMes(fijo, mes);
+    const estimado = montoEstimado(fijo);
+    /* Los que cambian de monto se muestran con "≈" y con lo que se pagó de verdad cuando ya
+       está pagado: el promedio sirve para saber cuánto reservar, no para el historial. */
+    const cifra = pago
+      ? monto(pago.monto, pago.moneda || fijo.moneda)
+      : `${estimado.aproximado ? "≈ " : ""}${monto(estimado.monto, fijo.moneda)}`;
     const fila = nodo(html`
       <div class="fila fila-fijo">
         <button class="tilde-pago ${pago ? "pagado" : ""}" data-pagar="${fijo.id}"
@@ -73,10 +79,11 @@ function laLista(estado, datos, fijos, mes) {
         <button class="fila-cuerpo" data-editar="${fijo.id}" style="text-align:left">
           <span class="fila-titulo">${escapar(fijo.nombre || "Sin nombre")}</span>
           <span class="fila-sub">${fijo.dia ? `el ${fijo.dia}` : "sin día"}${
+            fijo.varia && !pago ? " · el monto cambia" : ""}${
             pago ? ` · pagado ${escapar(String(pago.fecha || "").slice(8, 10))}` : ""}</span>
         </button>
         <span class="fila-derecha">
-          <span class="cifra cifra-media">${monto(fijo.monto, fijo.moneda)}</span>
+          <span class="cifra cifra-media">${cifra}</span>
         </span>
       </div>
     `);
@@ -93,17 +100,70 @@ function laLista(estado, datos, fijos, mes) {
 }
 
 /* Tildar guarda el monto y el día en que se pagó. Destildar borra ese pago: es la forma de
-   deshacer un toque equivocado sin tener que inventar una pantalla de correcciones. */
+   deshacer un toque equivocado sin tener que inventar una pantalla de correcciones.
+
+   Si el gasto CAMBIA de monto —UTE, OSE, Antel, BPS— tildar pregunta cuánto fue esta vez,
+   con el promedio ya puesto. Guardar el estimado sin preguntar sería inventar un número en
+   el único momento en que se conoce el verdadero: la factura está en la mano. */
 function cambiarPago(estado, datos, fijo, mes) {
-  const fijos = datos.fijos.map((f) => {
-    if (f.id !== fijo.id) return f;
-    const pagos = { ...(f.pagos || {}) };
-    if (pagos[mes]) delete pagos[mes];
-    else pagos[mes] = { monto: Number(f.monto) || 0, moneda: f.moneda, fecha: estado.hoy };
-    return { ...f, pagos };
+  const anotar = (cuanto) => {
+    const fijos = datos.fijos.map((f) => {
+      if (f.id !== fijo.id) return f;
+      const pagos = { ...(f.pagos || {}) };
+      pagos[mes] = { monto: Number(cuanto) || 0, moneda: f.moneda, fecha: estado.hoy };
+      return { ...f, pagos };
+    });
+    guardar({ ...datos, fijos });
+    estado.redibujar();
+  };
+
+  if (estaPago(fijo, mes)) {
+    const fijos = datos.fijos.map((f) => {
+      if (f.id !== fijo.id) return f;
+      const pagos = { ...(f.pagos || {}) };
+      delete pagos[mes];
+      return { ...f, pagos };
+    });
+    guardar({ ...datos, fijos });
+    estado.redibujar();
+    return;
+  }
+
+  if (!fijo.varia) {
+    anotar(fijo.monto);
+    return;
+  }
+  ventanaCuantoFue(fijo, anotar);
+}
+
+/* Una sola pregunta y dos botones. Es lo que se hace con la factura en la mano, así que
+   cuanto menos haya que leer, mejor. */
+function ventanaCuantoFue(fijo, anotar) {
+  const estimado = montoEstimado(fijo);
+  let cuanto = Math.round(estimado.monto);
+
+  const cuerpo = nodo(html`
+    <div class="panel-firma">
+      <h2 class="titulo" style="font-size:19px;margin-bottom:6px">${escapar(fijo.nombre)}</h2>
+      <p class="apunte" style="margin-bottom:12px">${estimado.sobre
+        ? `Los últimos ${estimado.sobre} dieron ${monto(estimado.monto, fijo.moneda)} en promedio.`
+        : "¿Cuánto vino este mes?"}</p>
+      <div class="tarjeta" style="padding:0;overflow:hidden" data-campos></div>
+      <div class="botonera" style="margin-top:14px">
+        <button class="boton boton-primario" data-guardar>Pagado</button>
+        <button class="boton" data-cerrar>Cerrar</button>
+      </div>
+    </div>
+  `);
+  cuerpo.querySelector("[data-campos]").append(
+    campoMonto("pag-monto", "Cuánto fue", "", cuanto, (v) => { cuanto = v; }));
+
+  const { caja, cerrar } = telon(cuerpo);
+  caja.querySelector("[data-cerrar]").addEventListener("click", cerrar);
+  caja.querySelector("[data-guardar]").addEventListener("click", () => {
+    cerrar();
+    anotar(cuanto);
   });
-  guardar({ ...datos, fijos });
-  estado.redibujar();
 }
 
 /* ---------- Alta y edición ---------- */
@@ -114,6 +174,7 @@ function ventanaFijo(estado, datos, fijo) {
     monto: fijo ? fijo.monto : null,
     moneda: (fijo && fijo.moneda) || "UYU",
     dia: (fijo && fijo.dia) || null,
+    varia: Boolean(fijo && fijo.varia),
   };
 
   const cuerpo = nodo(html`
@@ -125,6 +186,13 @@ function ventanaFijo(estado, datos, fijo) {
         <button class="filtro ${puesto.moneda === "UYU" ? "prendido" : ""}" data-moneda="UYU">Pesos</button>
         <button class="filtro ${puesto.moneda === "USD" ? "prendido" : ""}" data-moneda="USD">Dólares</button>
       </div>
+      <!-- UTE, OSE, Antel, BPS: se pagan sí o sí todos los meses pero por otro número cada
+           vez. Al tildarlos, la app pregunta cuánto vino. -->
+      <div class="botonera" style="margin-top:10px">
+        <button class="filtro ${puesto.varia ? "" : "prendido"}" data-varia="no">Siempre igual</button>
+        <button class="filtro ${puesto.varia ? "prendido" : ""}" data-varia="si">Cambia cada mes</button>
+      </div>
+      <p class="apunte" style="margin-top:8px" data-pista></p>
       <div class="botonera" style="margin-top:14px">
         <button class="boton boton-primario" data-guardar>Guardar</button>
         <button class="boton" data-cerrar>Cerrar</button>
@@ -139,10 +207,30 @@ function ventanaFijo(estado, datos, fijo) {
 
   const campos = cuerpo.querySelector("[data-campos]");
   campos.append(campoTexto("fij-nombre", "Qué es", puesto.nombre, (v) => { puesto.nombre = v; }));
-  campos.append(campoMonto("fij-monto", "Cuánto", "", puesto.monto, (v) => { puesto.monto = v; }));
+  const campoDelMonto = campoMonto("fij-monto", puesto.varia ? "Más o menos cuánto" : "Cuánto",
+    "", puesto.monto, (v) => { puesto.monto = v; });
+  campos.append(campoDelMonto);
   campos.append(campoDia("fij-dia", "Qué día del mes", puesto.dia, (v) => { puesto.dia = v; }));
 
   const { caja, cerrar } = telon(cuerpo);
+
+  const pintarVaria = () => {
+    caja.querySelector("[data-pista]").textContent = puesto.varia
+      ? "Al tildarlo te pregunto cuánto vino. Mientras tanto uso el promedio de los últimos."
+      : "";
+    const etiqueta = campoDelMonto.querySelector("label");
+    if (etiqueta) etiqueta.textContent = puesto.varia ? "Más o menos cuánto" : "Cuánto";
+  };
+  pintarVaria();
+  for (const boton of caja.querySelectorAll("[data-varia]")) {
+    boton.addEventListener("click", () => {
+      puesto.varia = boton.dataset.varia === "si";
+      for (const otro of caja.querySelectorAll("[data-varia]")) {
+        otro.classList.toggle("prendido", otro === boton);
+      }
+      pintarVaria();
+    });
+  }
 
   for (const boton of caja.querySelectorAll("[data-moneda]")) {
     boton.addEventListener("click", () => {

@@ -4,6 +4,7 @@ import {
   VACIO, sanear, aTexto, desdeTexto, leer, guardar, proximoId,
   cobrosDeNegocios, faltaPagar, estaPago, saldos, resumen,
   gastadoEnElMes, gastadoHastaElDia, mesAnterior, diasDelMes, mesAMes, proyeccionDelMes,
+  montoEstimado,
 } from "../lib/personal.js";
 
 /* Como arranca Juan el 2026-08-20: 750 dólares y 3.800 pesos, y nada de lo anterior cuenta. */
@@ -315,4 +316,76 @@ test("la app no sube ningún archivo personal al repo", async () => {
   assert.ok(lista, "no encontré la lista de archivos que la app sube");
   assert.ok(!lista[0].includes("personal"),
     "lo personal vive en el teléfono: no puede estar en lo que se sube al repo");
+});
+
+/* ---------- Los que se pagan siempre pero cambian de monto ---------- */
+
+/* UTE, OSE, Antel, BPS. No son variables —no se puede elegir no pagarlos— pero tampoco
+   tienen un número fijo. El monto de la ficha es sólo la referencia del primer mes. */
+const ute = (pagos) => ({
+  id: 9, nombre: "UTE", monto: 3000, moneda: "UYU", dia: 12, varia: true, pagos,
+});
+
+test("un gasto que cambia se estima con el promedio de lo que se viene pagando", () => {
+  const r = montoEstimado(ute({
+    "2026-06": { monto: 3400, moneda: "UYU", fecha: "2026-06-12" },
+    "2026-07": { monto: 4200, moneda: "UYU", fecha: "2026-07-12" },
+    "2026-08": { monto: 3800, moneda: "UYU", fecha: "2026-08-12" },
+  }));
+  assert.equal(r.monto, 3800);
+  assert.equal(r.aproximado, true);
+  assert.equal(r.sobre, 3);
+});
+
+/* Sólo los últimos tres: con más, un verano entero de aire acondicionado deja la estimación
+   arriba todo el invierno. */
+test("se promedian los tres últimos, no todos", () => {
+  const r = montoEstimado(ute({
+    "2026-01": { monto: 90000, moneda: "UYU", fecha: "2026-01-12" },
+    "2026-06": { monto: 3000, moneda: "UYU", fecha: "2026-06-12" },
+    "2026-07": { monto: 3000, moneda: "UYU", fecha: "2026-07-12" },
+    "2026-08": { monto: 3000, moneda: "UYU", fecha: "2026-08-12" },
+  }));
+  assert.equal(r.monto, 3000, "el enero raro ya no pesa");
+  assert.equal(r.sobre, 3);
+});
+
+test("el primer mes, sin nada pagado, usa el número que se cargó", () => {
+  const r = montoEstimado(ute({}));
+  assert.equal(r.monto, 3000);
+  assert.equal(r.aproximado, true, "igual se avisa que es aproximado");
+  assert.equal(r.sobre, 0);
+});
+
+test("un fijo de monto fijo no estima nada: es el número y punto", () => {
+  const r = montoEstimado({ monto: 25000, moneda: "UYU", pagos: {} });
+  assert.equal(r.monto, 25000);
+  assert.equal(r.aproximado, false);
+});
+
+/* Es la única forma de que "me queda" sirva antes de que lleguen las facturas. */
+test("lo que falta pagar cuenta los que cambian con su estimación, marcados", () => {
+  const d = conDatos({
+    fijos: [
+      alquiler(),
+      ute({
+        "2026-06": { monto: 3000, moneda: "UYU", fecha: "2026-06-12" },
+        "2026-07": { monto: 5000, moneda: "UYU", fecha: "2026-07-12" },
+      }),
+    ],
+  });
+  const pendientes = faltaPagar(d, "2026-08");
+  const luz = pendientes.find((p) => p.nombre === "UTE");
+  assert.equal(luz.monto, 4000, "el promedio de los dos pagos");
+  assert.equal(luz.aproximado, true);
+  assert.equal(pendientes.find((p) => p.nombre === "Alquiler").aproximado, false);
+  assert.equal(resumen(d, [], "2026-08-20").falta.UYU, 25000 + 4000);
+});
+
+/* Lo que ya se pagó vale lo que se pagó, no el promedio: el historial no se estima. */
+test("un mes ya pagado guarda su monto real, no la estimación", () => {
+  const d = conDatos({
+    fijos: [ute({ "2026-08": { monto: 5200, moneda: "UYU", fecha: "2026-08-12" } })],
+  });
+  assert.equal(gastadoEnElMes(d, "2026-08").UYU, 5200);
 });

@@ -140,8 +140,10 @@ function esteMes(r, monedas) {
             ${r.pendientes.length
               ? html`<br><span class="apunte">${r.pendientes.length} sin pagar</span>`
               : ""}</span>
-          <span class="dato-valor">${
-            r.pendientes.length ? enLasDos(r.falta, { saltearCeros: true }) : "al día"}</span>
+          <span class="dato-valor">${r.pendientes.length
+            ? `${r.pendientes.some((p) => p.aproximado) ? "≈ " : ""}${
+                enLasDos(r.falta, { saltearCeros: true })}`
+            : "al día"}</span>
         </div>
         <div class="dato">
           <span class="dato-nombre"><strong>Me queda</strong></span>
@@ -168,6 +170,9 @@ function esteMes(r, monedas) {
 
 /* Contra el mes pasado a la misma altura. Sin comparación, no se inventa un porcentaje. */
 function comoVieneElRitmo(ritmo) {
+  /* "100% menos que el mes pasado" es correcto y se lee pésimo. Si todavía no se gastó
+     nada, eso es lo que hay que decir. */
+  if (!ritmo.ahora) return "todavía nada";
   if (ritmo.cambio === null) return "primer mes";
   const puntos = Math.round(Math.abs(ritmo.cambio) * 100);
   if (puntos < 5) return "igual que el mes pasado";
