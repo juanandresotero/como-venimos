@@ -79,7 +79,8 @@
   "ef3b2daf-c46d-4f0b-901b-2686f89b915e": {
    "fecha_captacion_real": "2026-08-18",
    "fecha_captacion_estimada": false,
-   "origen_captacion": "Ref. Martin"
+   "origen_captacion": "Ref. Martin",
+   "usar_en_proyeccion": false
   },
   "289eef8c-1a9c-4417-b483-8875104847ac": {
    "origen_captacion": "Ref. Martin",
