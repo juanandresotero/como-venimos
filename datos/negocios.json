@@ -2045,7 +2045,12 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "revisar_puntas",
+    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
+   }
+  ],
   "barrio": "Pando",
   "base": 4500,
   "categoria_vigente": "RAP",
@@ -2271,7 +2276,12 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "revisar_puntas",
+    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
+   }
+  ],
   "barrio": "Malvin norte",
   "base": 3600,
   "categoria_vigente": "RAP",
@@ -2841,7 +2851,12 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "revisar_puntas",
+    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
+   }
+  ],
   "barrio": "Zapican",
   "base": 5394,
   "categoria_vigente": "RAP",
@@ -3000,7 +3015,12 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "revisar_puntas",
+    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
+   }
+  ],
   "barrio": "Cerrito",
   "base": 2400,
   "categoria_vigente": "RAP",
@@ -3071,7 +3091,12 @@
   "manual": true,
   "atajo": "venta",
   "fecha_negociacion": "2026-07-16",
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "revisar_puntas",
+    "detalle": "Está contando 1 punta. Confirmalo: si los dos lados fueron tuyos son 2 y la ganancia es el doble."
+   }
+  ],
   "ficha_vigente": true,
   "regimen_comision": "captacion_mia",
   "base": 9000,
@@ -3114,16 +3139,8 @@
   "atajo": "busqueda",
   "avisos": [
    {
-    "tipo": "sin_fecha_fin",
-    "detalle": "Sin fecha de firma no se sabe a qué año pertenece"
-   },
-   {
-    "tipo": "falta_fecha_boleto",
-    "detalle": "Falta la fecha de la reserva o boleto"
-   },
-   {
-    "tipo": "falta_fecha_inicio",
-    "detalle": "Sin la fecha en que se publicó no se puede medir el plazo"
+    "tipo": "busqueda_en_curso",
+    "detalle": "Estás del lado del comprador y está en negociación. Cuando se firme, cargale la fecha."
    }
   ],
   "ficha_vigente": false,
@@ -3139,6 +3156,7 @@
   "cliente_comprador": {
    "nombre": "Majo García por interbalnearia",
    "telefono": "+59898199800"
-  }
+  },
+  "puntas_confirmadas": true
  }
 ]
