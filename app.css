@@ -526,6 +526,43 @@ body {
   border-color: var(--azul-claro);
 }
 
+/* La barra para elegir la renta objetivo. Reemplaza a cinco botones con valores fijos:
+   corriendo el dedo se recorre del 1% al 15% y se ve el numero cambiar al lado. */
+.barra-objetivo { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
+.barra-objetivo-cifra {
+  font-size: 30px; font-weight: 800; color: var(--azul);
+  min-width: 76px; text-align: right;
+}
+.barra-puntas {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--tinta-2); margin: 2px 0 0 90px;
+}
+.deslizador {
+  flex: 1; min-width: 0; height: 32px;
+  -webkit-appearance: none; appearance: none;
+  background: transparent; cursor: pointer;
+}
+.deslizador::-webkit-slider-runnable-track {
+  height: 8px; border-radius: 4px; background: var(--lienzo-2);
+  border: 1px solid var(--linea);
+}
+.deslizador::-moz-range-track {
+  height: 8px; border-radius: 4px; background: var(--lienzo-2);
+  border: 1px solid var(--linea);
+}
+/* El tirador es grande a proposito: se agarra con el dedo, no con el mouse. */
+.deslizador::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 28px; height: 28px; margin-top: -11px;
+  border-radius: 50%; background: var(--azul); border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(11, 15, 26, .3);
+}
+.deslizador::-moz-range-thumb {
+  width: 28px; height: 28px;
+  border-radius: 50%; background: var(--azul); border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(11, 15, 26, .3);
+}
+
 /* ---------- Listas y filtros ---------- */
 
 .filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }

@@ -442,7 +442,16 @@ function inverso(e, estado) {
         <h2 class="titulo" style="font-size:17px">Para que dé lo que querés</h2>
         <span class="apunte">renta real objetivo</span>
       </div>
-      <div class="botonera" style="margin-top:0" id="objetivos"></div>
+
+      <div class="barra-objetivo">
+        <span class="cifra barra-objetivo-cifra" id="objetivo-cifra">${pct(objetivoPct)}</span>
+        <input type="range" class="deslizador" id="objetivo-barra"
+               min="1" max="15" step="0.5" value="${(objetivoPct * 100).toFixed(1)}"
+               aria-label="Renta real objetivo">
+      </div>
+      <div class="barra-puntas">
+        <span>1%</span><span>15%</span>
+      </div>
 
       <p class="apunte" style="margin:14px 0 6px">Dejo quieto</p>
       <div class="botonera" style="margin-top:0">
@@ -461,7 +470,7 @@ function inverso(e, estado) {
             ${fijandoPrecio && !hayPrecio ? " (cargá el precio)" : ""}
             ${!fijandoPrecio && !hayAlquiler ? " (cargá el alquiler)" : ""}
           </span>
-          <span class="dato-valor">${
+          <span class="dato-valor" id="objetivo-valor">${
             hace_falta
               ? (fijandoPrecio
                   ? (alquilerEnPesos() ? `$ ${plata(hace_falta)}` : plataUSD(hace_falta))
@@ -470,23 +479,49 @@ function inverso(e, estado) {
           }</span>
         </div>
       </div>
-      ${diferencia !== null && Math.abs(diferencia) > 1
-        ? html`<p class="apunte" style="margin-top:10px">${comparar(fijandoPrecio, diferencia)}</p>`
-        : ""}
+      <p class="apunte" style="margin-top:10px" id="objetivo-comparar"
+         ${diferencia !== null && Math.abs(diferencia) > 1 ? "" : "hidden"}>${
+        diferencia !== null && Math.abs(diferencia) > 1 ? comparar(fijandoPrecio, diferencia) : ""
+      }</p>
     </section>
   `);
 
-  const botonera = seccion.getElementById("objetivos");
-  for (const valor of [0.05, 0.06, 0.07, 0.08, 0.1]) {
-    const boton = document.createElement("button");
-    boton.className = `filtro ${Math.abs(objetivoPct - valor) < 1e-9 ? "prendido" : ""}`;
-    boton.textContent = pct(valor);
-    boton.addEventListener("click", () => {
-      objetivoPct = valor;
-      estado.redibujar();
-    });
-    botonera.append(boton);
-  }
+  /* La barra NO redibuja la pantalla en cada movimiento del dedo: se refrescan sólo el
+     número de al lado, el resultado y la comparación. Redibujar todo mientras se arrastra
+     hace saltar el scroll y se siente trabado. La pantalla entera se rehace recién al
+     soltar, para que el resto quede al día. */
+  const barra = seccion.getElementById("objetivo-barra");
+  const cifra = seccion.getElementById("objetivo-cifra");
+  const valorNodo = seccion.getElementById("objetivo-valor");
+  const compararNodo = seccion.getElementById("objetivo-comparar");
+
+  /* Rehace la MISMA cuenta de arriba, con el objetivo nuevo. Se repite a proposito y no se
+     saca a una funcion aparte: son cuatro renglones y tenerlos al lado del calculo original
+     hace evidente si alguna vez se separan. */
+  const refrescar = () => {
+    cifra.textContent = pct(objetivoPct);
+    const nuevoAlquiler = alquilerNecesario(e, objetivoPct);
+    const nuevoPrecio = precioMaximo(e, objetivoPct);
+    const falta = fijandoPrecio
+      ? (nuevoAlquiler !== null && alquilerEnPesos() ? nuevoAlquiler * e.tipo_cambio : nuevoAlquiler)
+      : nuevoPrecio;
+    const cuantoHay = fijandoPrecio ? e.alquiler_mensual : e.precio;
+    const dif = cuantoHay && falta ? falta - cuantoHay : null;
+
+    valorNodo.textContent = falta
+      ? (fijandoPrecio
+        ? (alquilerEnPesos() ? `$ ${plata(falta)}` : plataUSD(falta))
+        : plataUSD(falta))
+      : "—";
+    compararNodo.hidden = !(dif !== null && Math.abs(dif) > 1);
+    if (!compararNodo.hidden) compararNodo.innerHTML = comparar(fijandoPrecio, dif);
+  };
+
+  barra.addEventListener("input", () => {
+    objetivoPct = Number(barra.value) / 100;
+    refrescar();
+  });
+  barra.addEventListener("change", () => estado.redibujar());
   for (const boton of seccion.querySelectorAll("[data-candado]")) {
     boton.addEventListener("click", () => {
       candado = boton.dataset.candado;
