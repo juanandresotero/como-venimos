@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   base, splitVigente, calcular, pctPorDefecto, revisar, REGIMENES,
-  plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando, estaCaido, CAIDO, hayAlgoEnMarcha, volvioAlMercado } from "../lib/motor.js";
+  plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando, estaCaido, CAIDO, hayAlgoEnMarcha, volvioAlMercado, esReferidaMia } from "../lib/motor.js";
 
 const AJUSTES = {
   agente: { nombre: "Juan Andrés Otero" },
@@ -834,4 +834,77 @@ test("en un alquiler, 1,5 son meses y no se avisa nada", () => {
 test("una venta con una comisión normal no dispara nada", () => {
   assert.ok(!tipos(revisar(negocio({ pct_comision_total: 0.03 }), AJUSTES, "2026-08-21"))
     .includes("comision_absurda"));
+});
+
+/* ---------- Una propiedad que referiste ---------- */
+
+/* Es el ESPEJO de una búsqueda. En una búsqueda tenés la punta compradora y el aviso es de
+   otro; acá NO TENÉS NINGUNA PUNTA — la propiedad no es tuya, no está en tu cartera y el
+   negocio lo hace el colega. Te toca el 25% de la comisión TOTAL, de una punta o de dos, y de
+   ahí tu split. Lo explicó Juan el 2026-08-21. */
+test("de un referido que diste te toca el 25% de la comisión total, y de ahí tu split", () => {
+  const [factura, bolsillo] = calcular("yo_referi", 12000, "2026-08-21", AJUSTES);
+  assert.equal(factura, 3000, "el 25% de los 12.000 de comisión total");
+  assert.equal(bolsillo, 1350, "y el 45% de RAP sobre esos 3.000");
+});
+
+/* No cambia con las puntas: el 25% es del total de la operación, la haya hecho el colega con
+   una punta o con las dos. */
+test("el 25% es del total, no cambia con las puntas", () => {
+  const [unaPunta] = calcular("yo_referi", 6000, "2026-08-21", AJUSTES);
+  const [dosPuntas] = calcular("yo_referi", 12000, "2026-08-21", AJUSTES);
+  assert.equal(unaPunta, 1500);
+  assert.equal(dosPuntas, 3000, "el doble de comisión total, el doble para vos");
+});
+
+test("una referida se reconoce por la marca, no por los agentes", () => {
+  assert.equal(esReferidaMia({ yo_referi: true }), true);
+  assert.equal(esReferidaMia({ yo_referi: false }), false);
+  assert.equal(esReferidaMia(null), false);
+});
+
+/* No tenés ninguna punta, así que preguntarlas no tiene sentido. */
+test("a una referida no se le preguntan las puntas", () => {
+  const n = revisar(negocio({
+    yo_referi: true, regimen_comision: "yo_referi", estado: "en_curso", fecha_fin: null,
+    fecha_negociacion: "2026-08-18", fecha_boleto: null, referido_a: "Otra Oficina",
+    referido_a_nombre: "Ana Pérez", precio_operacion: 200000, ficha_completa: false,
+  }), AJUSTES, "2026-08-21", {});
+  assert.ok(!tipos(n).includes("revisar_puntas"));
+});
+
+/* PUEDE CARGARSE ANTES DE QUE NEGOCIE: la refirió hoy y el colega todavía no la vendió. Ahí no
+   se le pide la fecha ni el precio — no existen. */
+test("una referida sin negociar todavía no pide precio ni fecha", () => {
+  const n = revisar(negocio({
+    yo_referi: true, regimen_comision: "yo_referi", estado: "en_curso", fecha_fin: null,
+    fecha_negociacion: null, fecha_boleto: null, fecha_inicio: null,
+    referido_a_nombre: "Ana Pérez", direccion: "Rivera 2020", ficha_completa: false,
+  }), AJUSTES, "2026-08-21", {});
+  const av = n.avisos.find((a) => a.tipo === "referida_en_curso");
+  assert.ok(av);
+  assert.match(av.detalle, /todavía sin negociar/);
+  assert.doesNotMatch(av.detalle, /Falta/, "no le falta nada: es que todavía no pasó");
+});
+
+test("pero si ya negoció y no está el precio, ahí sí se pide", () => {
+  const n = revisar(negocio({
+    yo_referi: true, regimen_comision: "yo_referi", estado: "en_curso", fecha_fin: null,
+    fecha_negociacion: "2026-08-18", fecha_boleto: null,
+    referido_a_nombre: "Ana Pérez", direccion: "Rivera 2020",
+    precio_operacion: null, ficha_completa: false,
+  }), AJUSTES, "2026-08-21", {});
+  assert.match(n.avisos.find((a) => a.tipo === "referida_en_curso").detalle,
+    /a qué precio se cierra/);
+});
+
+test("y se pide a quién se la referiste, que es el único que sabe cómo va", () => {
+  const n = revisar(negocio({
+    yo_referi: true, regimen_comision: "yo_referi", estado: "en_curso", fecha_fin: null,
+    fecha_negociacion: null, fecha_boleto: null, fecha_inicio: null,
+    referido_a: null, referido_a_nombre: null, direccion: "Rivera 2020",
+    ficha_completa: false,
+  }), AJUSTES, "2026-08-21", {});
+  assert.match(n.avisos.find((a) => a.tipo === "referida_en_curso").detalle,
+    /a quién se la referiste/);
 });

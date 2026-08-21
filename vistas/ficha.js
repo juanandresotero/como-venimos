@@ -416,7 +416,13 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
 
   /* "A quién se lo referiste" solo tiene sentido si efectivamente lo referiste. Y "quién
      te lo refirió" desapareció: era la misma pregunta que "cómo llegó el negocio". */
-  if (n.yo_referi) lado("referido_a", "A quién se lo referiste", false);
+  if (n.yo_referi) {
+    lado("referido_a", "A quién se lo referiste", false);
+    /* Y el NOMBRE a mano, siempre. Una propiedad que referís se la pasás a cualquiera —un
+       colega de otra oficina, de otro país— y esa gente no está ni va a estar en la lista
+       corta de agentes. Sin este campo, el dato del que tiene tu negocio se pierde. */
+    agregar("referido_a_nombre", "  ↳ Nombre y apellido", "text", n.referido_a_nombre);
+  }
 }
 
 /* Suplencia y "yo la referí" van sueltas del origen: un negocio puede llegar por "Dueño

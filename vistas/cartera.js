@@ -5,7 +5,7 @@
 
 import { listar, estadoVisible, nombreEstado, diasEnCartera, rendimiento } from "../lib/cartera.js";
 import { plata, plataUSD, fechaCorta, escapar } from "../lib/formato.js";
-import { esBusqueda } from "../lib/motor.js";
+import { esBusqueda, esReferidaMia } from "../lib/motor.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -80,6 +80,8 @@ export function dibujarCartera(estado) {
      lo que de verdad tenés en marcha. Van al final y aparte, porque no son publicaciones
      tuyas y no se pueden proyectar como las otras. */
   if (!filtro.archivo && busquedas.length) trozo.append(busquedasAbiertas(estado, busquedas));
+  const referidas = referidasAbiertas(estado);
+  if (!filtro.archivo && referidas.length) trozo.append(lasReferidas(estado, referidas));
 
   for (const boton of trozo.querySelectorAll("[data-filtro]")) {
     boton.addEventListener("click", () => {
@@ -96,6 +98,58 @@ function abiertas(estado) {
   return (estado.datos.negocios || []).filter(
     (n) => n.estado !== "cerrado" && esBusqueda(n, estado.datos.ajustes)
   );
+}
+
+/* Las propiedades que referiste y todavia no cerraron.
+
+   Van en Cartera aunque NO sean de tu cartera: no estan en tu portal, no las ve el robot y no
+   figuran en ninguna otra pantalla. Si no estuvieran aca, la unica forma de acordarte de una
+   seria que el colega te llame. */
+function referidasAbiertas(estado) {
+  return (estado.datos.negocios || []).filter(
+    (n) => n.estado !== "cerrado" && esReferidaMia(n)
+  );
+}
+
+function lasReferidas(estado, lista) {
+  const anio = Number(estado.hoy.slice(0, 4));
+  const trozo = nodo(html`
+    <div class="separador-indicadores">
+      <span class="separador-nombre">Propiedades referidas</span>
+    </div>
+    <div class="lista" id="lista-referidas"></div>
+  `);
+
+  const caja = trozo.getElementById("lista-referidas");
+  for (const n of lista) {
+    /* El estado real de una referida es "todavía no negoció" o "en negociación": no hay
+       reservada ni publicada, porque de eso se entera el colega y no siempre lo cuenta. */
+    const negociando = Boolean(n.fecha_negociacion);
+    const aQuien = n.referido_a_nombre || n.referido_a || "sin cargar a quién";
+    const fila = nodo(html`
+      <button class="fila" data-negocio="${escapar(n.id)}">
+        <span class="fila-cuerpo">
+          <span class="fila-titulo">${escapar(n.direccion || "Sin dirección")}</span>
+          <span class="fila-marca">
+            ${negociando
+              ? html`<span class="chip-estado chip-negociacion">${nombreEstado("en_negociacion")}</span>`
+              : html`<span class="chip-apagado">sin negociar</span>`}
+            <span class="fila-sub">${escapar(aQuien)}</span>
+          </span>
+        </span>
+        <span class="fila-derecha fila-plata">
+          <span class="cifra cifra-media">${plata(n.ganancia)}</span>
+          <span class="fila-sub">${n.fecha_negociacion
+            ? `desde ${fechaCorta(n.fecha_negociacion, anio)}`
+            : "te toca el 25%"}</span>
+        </span>
+      </button>
+    `);
+    fila.querySelector("[data-negocio]").addEventListener("click",
+      () => estado.irA("ficha", n.id));
+    caja.append(fila);
+  }
+  return trozo;
 }
 
 function busquedasAbiertas(estado, lasAbiertas) {
