@@ -3240,25 +3240,21 @@
   "tipo_cambio": null,
   "origen_captacion": "Ref. Martin",
   "estado": "en_curso",
-  "ficha_completa": false,
-  "puntas_confirmadas": false,
+  "ficha_completa": true,
+  "puntas_confirmadas": true,
   "notas": "",
   "manual": true,
   "atajo": "venta",
   "nacio_solo": true,
-  "avisos": [
-   {
-    "tipo": "revisar_puntas",
-    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
-   }
-  ],
-  "ficha_vigente": false,
+  "avisos": [],
+  "ficha_vigente": true,
   "regimen_comision": "ref_martin",
   "base": 3120,
   "facturacion": 1560,
   "ganancia": 1092,
   "categoria_vigente": "RAP",
   "recalculado": true,
-  "fecha_fin_estimada": false
+  "fecha_fin_estimada": false,
+  "ficha_completa_momento": "en_negociacion"
  }
 ]
