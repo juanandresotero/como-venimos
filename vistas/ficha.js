@@ -24,6 +24,12 @@ const redondear = (x) => (x ? Math.round(x * 100) / 100 : null);
 
 /* Un negocio cobrado en pesos: la app lo cuenta en dólares y hay que decirlo, si no el
    "a tu bolsillo USD 897" de un alquiler de 40.000 pesos se lee como un error. */
+/* Una suplencia con el monto escrito a mano no tiene "comisión total" ni "facturación": las
+   dos son cero por definición, y dos ceros arriba del único número que importa se leen como
+   un error de la app. */
+const montoEscrito = (n) =>
+  n.es_suplencia && n.cobrado_suplencia !== null && n.cobrado_suplencia !== undefined;
+
 const enPesosEsto = (n) => n.moneda === "UYU" && Number(n.tipo_cambio) > 0 && Number(n.ganancia) > 0;
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -71,8 +77,10 @@ export function dibujarFicha(estado) {
         <span class="apunte">${n.recalculado ? "recalculado" : "viene del Excel"}</span>
       </div>
       <div class="datos">
-        <div class="dato"><span class="dato-nombre">Comisión total (BASE)</span><span class="dato-valor">${plata(n.base)}</span></div>
-        <div class="dato"><span class="dato-nombre">Facturación RE/MAX</span><span class="dato-valor">${plataUSD(n.facturacion)}</span></div>
+        ${montoEscrito(n)
+          ? ""
+          : html`<div class="dato"><span class="dato-nombre">Comisión total (BASE)</span><span class="dato-valor">${plata(n.base)}</span></div>
+        <div class="dato"><span class="dato-nombre">Facturación RE/MAX</span><span class="dato-valor">${plataUSD(n.facturacion)}</span></div>`}
         <div class="dato"><span class="dato-nombre">A tu bolsillo</span><span class="dato-valor">${plataUSD(n.ganancia)}</span></div>
       </div>
       ${enPesosEsto(n)
@@ -653,7 +661,13 @@ const NOMBRE_REGIMEN = {
   suplencia: "Suplencia: no factura por RE/MAX y el 12,5% va entero a tu bolsillo.",
 };
 
-const explicarRegimen = (n) => NOMBRE_REGIMEN[regimenDe(n)] || "";
+const explicarRegimen = (n) => {
+  /* Si el monto lo escribiste vos, hablar del 12,5% es contarte una cuenta que no se hizo. */
+  if (n.es_suplencia && n.cobrado_suplencia !== null && n.cobrado_suplencia !== undefined) {
+    return "Suplencia: no factura por RE/MAX y entra entero lo que cobraste.";
+  }
+  return NOMBRE_REGIMEN[regimenDe(n)] || "";
+};
 
 /* Una punta o dos, y de quién fue la otra — todo en la misma tarjeta.
 

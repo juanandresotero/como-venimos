@@ -1057,3 +1057,46 @@ test("un cobro de cero es un dato, no un campo vacio", () => {
   }, AJUSTES, "2026-08-20");
   assert.equal(n.ganancia, 0, "si cobraste cero, entraron cero: no el 12,5%");
 });
+
+/* ==================================================== LO QUE LE FALTA A UNA SUPLENCIA
+
+   Juan, mirando la ficha de una suplencia recién cargada: "en el apartado de que falta aca
+   esta todo mal". Le reclamaba cuándo se publicó y de dónde salió — dos campos que ni
+   siquiera existen en una suplencia, porque esa propiedad no es tuya y ese cliente no llegó
+   a vos. Pedía datos que el propio formulario no ofrece.
+
+   Lo único que falta en una suplencia es la fecha del día que te la pagan. */
+
+const unaSuplencia = (extra = {}) => revisar({
+  ...plantillaNegocio("suplencia", AJUSTES, "2026-08-18"),
+  id: "sup", direccion: "Buenos Aires y Río Danubio", barrio: "Lagomar",
+  agente_vende: "Martin Sedes", cobrado_suplencia: 16800, ...extra,
+}, AJUSTES, "2026-08-21");
+
+const tiposDe = (n) => (n.avisos || []).map((a) => a.tipo);
+
+test("a una suplencia no se le pide cuándo se publicó ni de dónde salió", () => {
+  const t = tiposDe(unaSuplencia());
+  assert.ok(!t.includes("falta_fecha_inicio"), "ese campo no existe en una suplencia");
+  assert.ok(!t.includes("origen_sin_clasificar"), "el negocio no salió de vos");
+  assert.ok(!t.includes("faltan_agentes"), "los agentes de esa operación no son puntas tuyas");
+});
+
+test("lo único que le falta a una suplencia cargada es la fecha de cierre", () => {
+  const n = unaSuplencia();
+  assert.deepEqual(tiposDe(n), ["suplencia_sin_cobrar"]);
+  assert.match(n.avisos[0].detalle, /fecha de cierre/);
+});
+
+test("si además falta el monto o a quién cubriste, lo dice en el mismo aviso", () => {
+  const n = unaSuplencia({ cobrado_suplencia: undefined, agente_vende: null });
+  const [a] = n.avisos.filter((x) => x.tipo === "suplencia_sin_cobrar");
+  assert.match(a.detalle, /cuánto cobraste/);
+  assert.match(a.detalle, /a quién cubriste/);
+  assert.match(a.detalle, /fecha de cierre/);
+});
+
+test("una suplencia ya cobrada deja de reclamar nada", () => {
+  const n = unaSuplencia({ fecha_fin: "2026-08-21" });
+  assert.ok(!tiposDe(n).includes("suplencia_sin_cobrar"));
+});
