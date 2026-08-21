@@ -5,6 +5,7 @@ import {
   cobrosDeNegocios, faltaPagar, estaPago, saldos, resumen,
   gastadoEnElMes, gastadoHastaElDia, mesAnterior, diasDelMes, mesAMes, proyeccionDelMes,
   montoEstimado, cambioQueHaceFalta, conElCambioDeducido, yaEstabaPago,
+  categoriasDe, agregarCategoria, sacarCategoria, cuantosUsan, CATEGORIAS_DE_FABRICA,
 } from "../lib/personal.js";
 
 /* Como arranca Juan el 2026-08-20: 750 dólares y 3.800 pesos, y nada de lo anterior cuenta. */
@@ -475,4 +476,66 @@ test("si no hace falta ningún cambio, no se agrega nada", () => {
   const { datos, cambio } = conElCambioDeducido(conDatos(), [], "2026-08-20", 40);
   assert.equal(cambio, null);
   assert.deepEqual(datos.cambios, []);
+});
+
+/* ---------- Las categorías son del usuario ---------- */
+
+/* Una lista cerrada obliga a meter medio gasto en "Otros", y "Otros" con la mitad de la plata
+   adentro no dice nada. Las de fábrica son sólo el punto de partida. */
+test("sin tocar nada, se ofrecen las de fábrica", () => {
+  assert.deepEqual(categoriasDe(sanear({})), CATEGORIAS_DE_FABRICA);
+});
+
+test("se puede agregar una propia", () => {
+  const d = agregarCategoria(sanear({}), "Mascotas");
+  assert.ok(categoriasDe(d).includes("Mascotas"));
+  assert.equal(categoriasDe(d).length, CATEGORIAS_DE_FABRICA.length + 1);
+});
+
+/* Dos categorías que sólo se distinguen por una mayúscula o un espacio son dos formas de
+   perder la misma plata. */
+test("no se repite una que ya está, ni con otra mayúscula o espacios", () => {
+  let d = agregarCategoria(sanear({}), "Mascotas");
+  d = agregarCategoria(d, "  mascotas ");
+  d = agregarCategoria(d, "MASCOTAS");
+  assert.equal(categoriasDe(d).filter((c) => c.toLowerCase() === "mascotas").length, 1);
+});
+
+test("un nombre vacío no agrega nada", () => {
+  const d = agregarCategoria(sanear({}), "   ");
+  assert.deepEqual(categoriasDe(d), CATEGORIAS_DE_FABRICA);
+});
+
+test("se puede sacar una que no se usa", () => {
+  const d = sacarCategoria(sanear({}), "Ropa");
+  assert.ok(!categoriasDe(d).includes("Ropa"));
+});
+
+/* Sin categorías no se puede cargar un gasto. */
+test("nunca se queda sin ninguna", () => {
+  let d = sanear({ categorias: ["Comida"] });
+  d = sacarCategoria(d, "Comida");
+  assert.deepEqual(categoriasDe(d), ["Comida"], "la última no se saca");
+});
+
+/* Cada gasto lleva su categoría escrita adentro. Reescribir el pasado por un cambio de hoy es
+   lo que hace que las gráficas de meses cerrados cambien solas. */
+test("sacar una categoría NO toca los gastos ya cargados", () => {
+  const conGastos = sanear({
+    arranque: ARRANQUE,
+    variables: [
+      { id: 1, fecha: "2026-08-21", monto: 500, moneda: "UYU", categoria: "Ropa" },
+      { id: 2, fecha: "2026-08-21", monto: 300, moneda: "UYU", categoria: "Ropa" },
+    ],
+  });
+  assert.equal(cuantosUsan(conGastos, "Ropa"), 2, "se puede avisar antes de sacarla");
+  const d = sacarCategoria(conGastos, "Ropa");
+  assert.equal(d.variables[0].categoria, "Ropa", "el gasto viejo sigue diciendo lo mismo");
+  assert.equal(gastadoEnElMes(d, "2026-08").UYU, 800, "y sigue contando igual");
+});
+
+test("lo que se agrega sobrevive a guardar y volver a leer", () => {
+  const d = depositoFalso();
+  guardar(agregarCategoria(sanear({ arranque: ARRANQUE }), "Mascotas"), d);
+  assert.ok(categoriasDe(leer(d)).includes("Mascotas"));
 });

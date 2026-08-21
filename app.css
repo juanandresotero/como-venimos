@@ -858,6 +858,14 @@ body {
   display: flex; flex-wrap: wrap; gap: 8px;
   margin-top: 12px;
 }
+/* El de agregar una categoria propia. Va al final de la fila y se distingue de las
+   categorias en si: es una accion, no una opcion mas para elegir. */
+.filtro-mas {
+  font-weight: 700; font-size: 17px; line-height: 1;
+  padding-left: 14px; padding-right: 14px;
+  border-style: dashed;
+  color: var(--tinta-2);
+}
 
 /* El mes comparte renglon con el engranaje y el sol/luna en vez de comerse uno propio.
    La cinta vive en index.html, arriba de la vista, asi que el mes se sube hasta su altura

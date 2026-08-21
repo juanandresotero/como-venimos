@@ -8,7 +8,8 @@
    Abajo, lo del mes: para poder mirar en qué se fue la plata sin salir de la pantalla. */
 
 import {
-  leer, guardar, mesDe, proximoId, mesAnterior, CATEGORIAS,
+  leer, guardar, mesDe, proximoId, mesAnterior,
+  categoriasDe, agregarCategoria, sacarCategoria, cuantosUsan,
 } from "../lib/personal.js";
 import { leerAvisos, categoriaSugerida, aprender } from "../lib/sms-banco.js";
 import { telon } from "./ventana.js";
@@ -96,9 +97,16 @@ function elCargador(estado, datos) {
   }
 
   /* Las categorías son botones y no una lista desplegable: un desplegable son tres toques
-     (abrir, buscar, elegir) y encima tapa la pantalla. Acá se ven todas juntas. */
+     (abrir, buscar, elegir) y encima tapa la pantalla. Acá se ven todas juntas.
+
+     La lista es del usuario, no fija: al final va el botón para agregar las suyas y sacar las
+     que no usa. Una lista cerrada obliga a meter medio gasto en "Otros", y "Otros" con la
+     mitad de la plata adentro no dice nada. */
   const menu = seccion.querySelector("[data-categorias]");
-  for (const categoria of CATEGORIAS) {
+  const suyas = categoriasDe(datos);
+  if (!suyas.includes(puesto.categoria)) puesto.categoria = suyas[0];
+
+  for (const categoria of suyas) {
     const boton = document.createElement("button");
     boton.className = `filtro ${puesto.categoria === categoria ? "prendido" : ""}`;
     boton.textContent = categoria;
@@ -110,6 +118,13 @@ function elCargador(estado, datos) {
     });
     menu.append(boton);
   }
+
+  const mas = document.createElement("button");
+  mas.className = "filtro filtro-mas";
+  mas.textContent = "+";
+  mas.setAttribute("aria-label", "Agregar o sacar categorías");
+  mas.addEventListener("click", () => ventanaCategorias(estado, datos));
+  menu.append(mas);
 
   seccion.querySelector("[data-banco]").addEventListener("click",
     () => ventanaDelBanco(estado, datos, ""));
@@ -133,6 +148,92 @@ function elCargador(estado, datos) {
   });
 
   return seccion;
+}
+
+/* ---------- Las categorías ---------- */
+
+/* La lista es del usuario. Se agregan las que le faltan y se sacan las que no usa.
+
+   Sacar una NO toca los gastos ya cargados: cada uno lleva su categoría escrita adentro, y
+   reescribir el pasado por un cambio de hoy es lo que hace que las gráficas de meses cerrados
+   cambien solas. Simplemente deja de ofrecerse para los nuevos, y se avisa cuántos la usan. */
+function ventanaCategorias(estado, datos) {
+  const cuerpo = nodo(html`
+    <div class="panel-firma">
+      <h2 class="titulo" style="font-size:19px;margin-bottom:12px">Categorías</h2>
+      <div class="campo-fila" style="padding:0">
+        <label for="cat-nueva">Agregar una</label>
+        <input class="campo" id="cat-nueva" type="text" placeholder="Mascotas, Regalos…">
+      </div>
+      <div class="botonera" style="margin-top:10px">
+        <button class="boton boton-chico boton-primario" data-agregar>Agregar</button>
+      </div>
+      <div class="lista" style="margin-top:16px" data-lista></div>
+      <div class="botonera" style="margin-top:14px">
+        <button class="boton" data-cerrar>Listo</button>
+      </div>
+    </div>
+  `);
+
+  const { caja, cerrar } = telon(cuerpo);
+  const campo = caja.querySelector("#cat-nueva");
+
+  const pintar = () => {
+    const lista = caja.querySelector("[data-lista]");
+    lista.replaceChildren();
+    const suyas = categoriasDe(datos);
+    for (const categoria of suyas) {
+      const usan = cuantosUsan(datos, categoria);
+      const fila = nodo(html`
+        <div class="fila">
+          <span class="fila-cuerpo">
+            <span class="fila-titulo">${escapar(categoria)}</span>
+            ${usan ? html`<span class="fila-sub">${usan} gasto${usan === 1 ? "" : "s"}</span>` : ""}
+          </span>
+          <span class="fila-derecha">
+            ${suyas.length > 1
+              ? html`<span class="chip-apagado" data-sacar>sacar</span>`
+              : ""}
+          </span>
+        </div>
+      `);
+      const sacar = fila.querySelector("[data-sacar]");
+      if (sacar) {
+        sacar.addEventListener("click", () => {
+          if (usan && !window.confirm(
+            `${usan} gasto${usan === 1 ? "" : "s"} ya cargado${usan === 1 ? "" : "s"} `
+            + `con "${categoria}". Se quedan como están, pero no vas a poder elegirla más. `
+            + "¿La sacamos?")) return;
+          datos = sacarCategoria(datos, categoria);
+          guardar(datos);
+          pintar();
+        });
+      }
+      lista.append(fila);
+    }
+  };
+  pintar();
+
+  const agregar = () => {
+    const antes = categoriasDe(datos).length;
+    datos = agregarCategoria(datos, campo.value);
+    if (categoriasDe(datos).length === antes && campo.value.trim()) {
+      window.alert("Esa categoría ya está.");
+      return;
+    }
+    guardar(datos);
+    campo.value = "";
+    pintar();
+  };
+  caja.querySelector("[data-agregar]").addEventListener("click", agregar);
+  campo.addEventListener("keydown", (evento) => {
+    if (evento.key === "Enter") { evento.preventDefault(); agregar(); }
+  });
+
+  caja.querySelector("[data-cerrar]").addEventListener("click", () => {
+    cerrar();
+    estado.redibujar();
+  });
 }
 
 /* ---------- Lo que manda el banco ---------- */
@@ -202,7 +303,7 @@ function ventanaDelBanco(estado, datos, textoInicial) {
 
       const menu = fila.querySelector("[data-cats]");
       if (menu) {
-        for (const categoria of CATEGORIAS) {
+        for (const categoria of categoriasDe(datos)) {
           const boton = document.createElement("button");
           boton.className = `filtro ${sugerida === categoria ? "prendido" : ""}`;
           boton.textContent = categoria;
