@@ -3256,5 +3256,55 @@
   "recalculado": true,
   "fecha_fin_estimada": false,
   "ficha_completa_momento": "en_negociacion"
+ },
+ {
+  "id": "manual-6",
+  "tipo_negocio": "venta",
+  "es_suplencia": true,
+  "yo_referi": false,
+  "puntas": 0,
+  "agente_vende": null,
+  "agente_compra": null,
+  "pct_comision_total": 0.03,
+  "fecha_inicio": null,
+  "fecha_negociacion": null,
+  "fecha_boleto": "2026-08-21",
+  "fecha_fin": null,
+  "entity_id_cartera": null,
+  "direccion": "",
+  "barrio": "",
+  "tipo_propiedad": null,
+  "precio_operacion": null,
+  "moneda": "USD",
+  "tipo_cambio": null,
+  "origen_captacion": null,
+  "estado": "en_curso",
+  "ficha_completa": false,
+  "puntas_confirmadas": true,
+  "notas": "",
+  "manual": true,
+  "atajo": "suplencia",
+  "avisos": [
+   {
+    "tipo": "suplencia_sin_cobrar",
+    "detalle": "Suplencia sin cobrar. Falta cuánto cobraste, a quién cubriste, la dirección, y la fecha de cierre."
+   },
+   {
+    "tipo": "falta_direccion",
+    "detalle": "Falta la dirección"
+   },
+   {
+    "tipo": "falta_barrio",
+    "detalle": "Falta el barrio"
+   }
+  ],
+  "ficha_vigente": false,
+  "regimen_comision": "suplencia",
+  "base": 0,
+  "facturacion": 0,
+  "ganancia": 0,
+  "categoria_vigente": "RAP",
+  "recalculado": true,
+  "fecha_fin_estimada": false
  }
 ]
