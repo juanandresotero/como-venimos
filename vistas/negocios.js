@@ -257,9 +257,22 @@ const OPCIONES = [
   { clave: "busqueda", nombre: "Búsqueda", abre: ["busqueda", "busqueda_alquiler"] },
   { clave: "suplencia", nombre: "Suplencia", abre: ["suplencia", "suplencia_alquiler"] },
   { clave: "yo_referi", nombre: "Propiedad referida" },
-  { clave: "venta", nombre: "Venta" },
-  { clave: "alquiler", nombre: "Alquiler" },
 ];
+
+/* VENTA Y ALQUILER YA NO ESTAN, y es a proposito.
+
+   Desde que los negocios nacen solos (lib/nacen-solos.js), una venta o un alquiler tuyo se
+   abren SIN QUE TOQUES NADA el dia que la propiedad pasa a negociacion o queda reservada en
+   tu portal. Juan no trabaja ninguna de las dos por fuera de RE/MAX, asi que todo lo suyo
+   pasa por ahi y el robot lo ve.
+
+   Dejarlos era ofrecer dos caminos para lo mismo, y el manual carga peor: sin enganchar la
+   propiedad, sin las fechas del portal y con el riesgo de terminar con dos negocios abiertos
+   sobre la misma casa.
+
+   Lo que queda en el menu es lo unico que el robot NO puede ver, porque no esta en el portal
+   de Juan: una busqueda (la propiedad es de otro), una suplencia (cubriste a otro) y una
+   referida (se la pasaste a otro). */
 
 const COMO_SE_LLAMA = {
   busqueda: "De venta", busqueda_alquiler: "De alquiler",

@@ -19,6 +19,9 @@ import {
 import { ROLES, enlaceWhatsapp, hayPicker, elegirContacto } from "../lib/contactos.js";
 import { sugerencias } from "../lib/cruce.js";
 import { cotizacionVigente } from "../lib/cambio.js";
+import {
+  oficinasParaElegir, agentesParaElegir, nombreDeAgente, miOficina, EXTERIOR,
+} from "../lib/colegas.js";
 
 const redondear = (x) => (x ? Math.round(x * 100) / 100 : null);
 
@@ -465,6 +468,14 @@ function campos(n, falta, estado) {
     agregar("pct_comision_total",
       esAlquiler ? "Comisión en meses (1,5 = mes y medio)" : "% de comisión (0,03 = 3%)",
       "number", n.pct_comision_total);
+    /* EN UNA REFERIDA, lo que entra no es la comisión entera: es una tajada de ella. Casi
+       siempre el 25%, pero se puede acordar otra cosa con el colega, así que se puede
+       escribir. Lo que sigue después —tu 45, 60 u 80% según seas RAP, ALTO o PURO— lo pone
+       la app sola con la categoría que tenías ese día. */
+    if (esReferidaMia(n)) {
+      agregar("pct_referido", "Lo que te toca de esa comisión (0,25 = 25%)", "number",
+        n.pct_referido ?? (estado.datos.ajustes || {}).pct_referido_saliente ?? 0.25);
+    }
   }
 
   /* EL TIPO DE CAMBIO SE GUARDA EN EL NEGOCIO, no se mira el de hoy cada vez: un alquiler
@@ -491,7 +502,9 @@ function campos(n, falta, estado) {
   /* Y EN UNA SUPLENCIA TAMPOCO: podés cubrir al comprador o al vendedor, una punta o las
      dos, y no cambia nada — lo que entra es el monto que cobraste. Juan: "las puntas sacalo
      porque no vamos a tomar en cuenta este dato para las cuentas". */
-  if (n.puntas_confirmadas && !busqueda && !suplencia) {
+  /* Y EN UNA REFERIDA TAMPOCO: el negocio lo hace el colega y a vos te toca una tajada del
+     TOTAL, sea de una punta o de dos. Juan: "no agreguemos las puntas solo las comisiones". */
+  if (n.puntas_confirmadas && !busqueda && !suplencia && !esReferidaMia(n)) {
     agregar("puntas", "Puntas de la operación", "number", n.puntas,
       opcionesCon([[1, "1 punta"], [2, "2 puntas"]], n.puntas));
   }
@@ -608,8 +621,31 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
      agentes son de otra oficina. Aparecían los dos, y encima marcados como "falta", pidiendo
      un dato que no existe. Lo único que importa es a quién se la pasaste, que va abajo. */
   if (esReferidaMia(n)) {
-    lado("referido_a", "A quién se la referiste", false);
-    agregar("referido_a_nombre", "  ↳ Nombre y apellido", "text", n.referido_a_nombre);
+    /* A QUIEN SE LA REFERISTE, EN DOS PASOS: primero la oficina, después el agente.
+
+       Antes era un campo de texto libre y ahí moría: con un nombre suelto la app no sabe
+       quién es ni cómo ir a mirar si ese colega publicó la propiedad. Eligiéndolo de la guía
+       queda anotado su ID, que es la llave para pedirle su cartera a RE/MAX. */
+    const guia = estado.datos.agentes_remax;
+    const mia = miOficina(guia, estado.datos.ajustes);
+
+    agregar("referido_a_oficina", "¿De qué oficina es?", "text", n.referido_a_oficina,
+      oficinasParaElegir(guia), false,
+      // Al cambiar de oficina, el agente elegido deja de tener sentido.
+      () => ({ referido_a_agente: null, referido_a_nombre: null }));
+
+    if (n.referido_a_oficina === EXTERIOR) {
+      /* Una oficina de otro país no está en la guía uruguaya: el nombre va a mano, y el LINK
+         de su cartera es lo único que después permite ir a mirarla. */
+      agregar("referido_a_nombre", "  ↳ Nombre y apellido", "text", n.referido_a_nombre);
+      agregar("referido_a_link", "  ↳ Link a su cartera", "text", n.referido_a_link);
+    } else if (n.referido_a_oficina) {
+      agregar("referido_a_agente", "  ↳ ¿Qué agente?", "text", n.referido_a_agente,
+        agentesParaElegir(guia, n.referido_a_oficina, mia), false,
+        // El nombre se guarda igual: si algún día ese agente se va de RE/MAX, la guía deja
+        // de tenerlo y sin esto el negocio se quedaría sin decir a quién se la pasaste.
+        (id) => ({ referido_a_nombre: nombreDeAgente(guia, id) }));
+    }
     return;
   }
 

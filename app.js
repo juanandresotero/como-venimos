@@ -30,8 +30,15 @@ import { dibujarPersonalVariables } from "./vistas/personal-variables.js";
 const ARCHIVOS = [
   "cartera", "negocios", "ajustes", "eventos", "estado_robot", "mis_datos", "calculos_renta",
   "indices",
+  /* La guia de agentes de RE/MAX: las doce oficinas del pais y quien trabaja en cada una.
+     La baja el robot. Sirve para elegir a que colega le referiste una propiedad SIN
+     escribirlo a mano — y con eso queda anotado su ID, que es lo que despues permite ir a
+     mirar su cartera y enterarse de como viene el negocio. */
+  "agentes_remax",
 ];
-const VACIO_OBJETO = new Set(["cartera", "ajustes", "estado_robot", "mis_datos", "indices"]);
+const VACIO_OBJETO = new Set([
+  "cartera", "ajustes", "estado_robot", "mis_datos", "indices", "agentes_remax",
+]);
 
 const estado = {
   datos: {},

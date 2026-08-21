@@ -14,7 +14,7 @@ import datetime
 import os
 import sys
 
-from robot import almacen, api, indices, modelo, procesar
+from robot import agentes, almacen, api, indices, modelo, procesar
 
 
 def main() -> int:
@@ -57,6 +57,14 @@ def main() -> int:
         almacen.escribir_json("indices.json", indices.traer(hoy, previos))
     except Exception as error:   # noqa: BLE001 - ninguna falla de afuera puede tumbar la corrida
         print(f"AVISO: no se pudieron actualizar los indices: {error}", file=sys.stderr)
+
+    # La guia de agentes de RE/MAX: quien trabaja en cada oficina. Sirve para elegir a quien
+    # le referiste una propiedad y despues poder mirar su cartera. Va aparte y sin tumbar
+    # nada, igual que los indices: si falla, se sigue usando la guia de ayer.
+    try:
+        almacen.escribir_json("agentes_remax.json", agentes.traer())
+    except Exception as error:   # noqa: BLE001 - ninguna falla de afuera puede tumbar la corrida
+        print(f"AVISO: no se pudo actualizar la guia de agentes: {error}", file=sys.stderr)
 
     almacen.escribir_json("cartera.json", cartera)
     almacen.escribir_json("eventos.json", eventos_previos + eventos)

@@ -46,6 +46,7 @@ propiedades del agente y anota los cambios en `datos/`:
 | `datos/cartera.json` | Robot | Cada propiedad con su historial de precios y sus fechas |
 | `datos/eventos.json` | Robot | La bitácora de novedades. Se agrega al final, nunca se borra |
 | `datos/estado_robot.json` | Robot | Si la última corrida salió bien y cuándo fue |
+| `datos/agentes_remax.json` | Robot | Las 12 oficinas de RE/MAX Uruguay y sus 373 agentes |
 | `datos/negocios.json` | App | Los negocios: la plata |
 | `datos/mis_datos.json` | App | Lo que editás de la cartera y los eventos que ya atendiste |
 | `datos/ajustes.json` | App | Categoría, objetivos, comisiones, probabilidades |
