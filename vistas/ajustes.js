@@ -18,6 +18,9 @@ import * as respaldo from "../lib/respaldo.js";
 import { bajarArchivo } from "../lib/compartir.js";
 import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
 import { pedirFirma, pedirFirmaDeFoto } from "./firma-panel.js";
+import {
+  elTeam, slugsDelTeam, oficinasParaElegir, agentesDe, miOficina, miId, TEAM, EXTERIOR,
+} from "../lib/colegas.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -197,6 +200,7 @@ export function dibujarAjustes(estado) {
   `));
   trozo.append(bajarPlanilla(estado));
   trozo.append(tuNegocio(estado));
+  trozo.append(miTeam(estado));
   trozo.append(tuFirma(estado));
   trozo.append(cuentasParaCobrar(estado));
 
@@ -521,6 +525,118 @@ function tuNegocio(estado) {
    trabajo— pero publicado JUNTO A sus cierres, sus comisiones y sus fechas es el material
    exacto para una estafa dirigida: alguien que lo llama sabiendo que cerró tal propiedad y
    por cuánto tiene la mitad del trabajo hecho. */
+/* MI TEAM: quiénes son los tuyos.
+
+   Se usa al referir una propiedad —"¿de qué oficina es?" → "Mi Team"— para no tener que
+   buscar entre los 65 de tu oficina a los siete que ves todos los días.
+
+   Se guarda por SLUG, que es la identidad estable de un agente en RE/MAX: "martin-sedes" no
+   cambia porque alguien lo escriba con o sin tilde. Guardar nombres sueltos habría hecho que
+   el team se rompiera solo el día que RE/MAX corrigiera un acento. */
+/* Lo último que pasó con el team. Vive afuera de la función porque sumar o sacar a alguien
+   redibuja la pantalla entera: si el mensaje viviera adentro, se borraría justo cuando hay
+   que leerlo y sacar a alguien no daría ninguna señal de haber funcionado. */
+let avisoDelTeam = "";
+
+function miTeam(estado) {
+  const guia = estado.datos.agentes_remax;
+  const ajustes = estado.datos.ajustes || {};
+  const mia = miOficina(guia, ajustes);
+  const yo = miId(guia, ajustes);
+  const equipo = elTeam(guia, ajustes);
+
+  /* Se arranca mostrando TU oficina, que es de donde sale casi siempre. Las otras están
+     igual: alguien se puede mudar de oficina y seguir siendo del equipo. */
+  const oficinas = oficinasParaElegir(guia).filter(([v]) => v !== TEAM && v !== EXTERIOR);
+
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2 class="titulo" style="font-size:17px">Mi Team</h2>
+        <span class="apunte">${equipo.length} ${equipo.length === 1 ? "persona" : "personas"}</span>
+      </div>
+      <p class="apunte" style="margin-bottom:14px">
+        Los que aparecen primero cuando referís una propiedad, para no buscarlos entre los
+        cientos de agentes de RE/MAX.
+      </p>
+      <div class="lista" id="lista-team"></div>
+      <div class="campo-fila" style="padding:12px 0 0">
+        <label for="team-oficina">Agregar a alguien</label>
+        <select class="campo" id="team-oficina">
+          ${oficinas.map(([v, t]) =>
+            `<option value="${escapar(v)}"${v === mia ? " selected" : ""}>${escapar(t)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="campo-fila" style="padding:6px 0 0">
+        <select class="campo" id="team-agente"></select>
+      </div>
+      <div class="botonera" style="margin-top:10px">
+        <button class="boton boton-primario" id="team-sumar">Sumar al team</button>
+      </div>
+      <p class="apunte" id="team-aviso" style="margin-top:10px">${escapar(avisoDelTeam)}</p>
+    </section>
+  `);
+
+  const caja = seccion.getElementById("lista-team");
+  const elegirOficina = seccion.getElementById("team-oficina");
+  const elegirAgente = seccion.getElementById("team-agente");
+  const aviso = seccion.getElementById("team-aviso");
+
+  const guardar = (slugs, texto) => {
+    editarAjustes(estado, { team: slugs });
+    avisoDelTeam = texto;
+    estado.redibujar();
+  };
+
+  if (!equipo.length) {
+    caja.append(nodo(html`<p class="apunte">Todavía no hay nadie. Sumalos acá abajo.</p>`));
+  }
+  for (const a of equipo) {
+    /* Vos podés estar en tu propio team —lo estás— pero no te aparecés como opción al referir
+       una propiedad, porque no te la podés referir a vos mismo. Si no se dijera acá, la lista
+       tendría un nombre más que la otra y parecería un error. */
+    const sosVos = Boolean(yo) && a.id === yo;
+    const fila = nodo(html`
+      <div class="fila">
+        <span class="fila-cuerpo">
+          <span class="fila-titulo">${escapar(a.nombre)}${sosVos ? " · vos" : ""}</span>
+          <span class="fila-sub">${sosVos
+            ? "no aparecés al referir: no te la podés referir a vos mismo"
+            : escapar(a.oficina || "")}</span>
+        </span>
+        <button class="filtro" data-sacar="${escapar(a.slug)}">Sacar</button>
+      </div>
+    `);
+    fila.querySelector("[data-sacar]").addEventListener("click", () => {
+      guardar(slugsDelTeam(ajustes).filter((s) => s !== a.slug), `${a.nombre} salió del team.`);
+    });
+    caja.append(fila);
+  }
+
+  /* Los que YA están no vuelven a ofrecerse: sumar dos veces a la misma persona la duplicaría
+     en la lista de referidos. */
+  const llenarAgentes = () => {
+    const puestos = new Set(slugsDelTeam(ajustes));
+    const libres = agentesDe(guia, elegirOficina.value, ajustes, yo)
+      .filter((a) => !puestos.has(a.slug));
+    elegirAgente.innerHTML = libres.length
+      ? libres.map((a) => `<option value="${escapar(a.slug)}">${escapar(a.nombre)}</option>`).join("")
+      : '<option value="">ya están todos</option>';
+  };
+  llenarAgentes();
+  elegirOficina.addEventListener("change", llenarAgentes);
+
+  seccion.getElementById("team-sumar").addEventListener("click", () => {
+    const slug = elegirAgente.value;
+    if (!slug) { aviso.textContent = "Elegí a alguien primero."; return; }
+    // Sin esto, el mensaje anterior se queda pegado y contradice al nuevo.
+    const nombre = elegirAgente.selectedOptions[0].textContent;
+    guardar([...slugsDelTeam(ajustes), slug], `${nombre} entró al team.`);
+  });
+
+  return seccion;
+}
+
 function tuTelefono(estado) {
   const puesto = contacto.leer();
   const deAntes = ((estado.datos.ajustes || {}).agente || {}).telefono || "";
