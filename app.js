@@ -327,6 +327,26 @@ function leerHash() {
    Pasa cuando se cierra la app parado en una pantalla personal: el navegador guarda ese
    `#personal_variables` y al volver a abrir mostraria los gastos de una. Lo pidio Juan asi
    y ademas cuida lo otro: lo primero que ve cualquiera que agarre el telefono es el trabajo. */
+/* Lo que llega cuando se comparte un mensaje CON la app.
+
+   El aviso de consumo del banco se comparte desde la app de mensajes y cae acá como un
+   parámetro de la dirección. NO se leen los mensajes del teléfono —ninguna página web puede,
+   y está bien que sea así: por SMS llegan los códigos de un solo uso del banco— sino
+   únicamente el que el usuario decidió pasar.
+
+   Se guarda en el estado y se limpia la dirección: si quedara pegada, recargar la pantalla
+   volvería a cargar el mismo gasto. */
+function recibirLoCompartido() {
+  const parametros = new URLSearchParams(location.search);
+  const texto = parametros.get("texto") || parametros.get("text") || "";
+  if (!texto.trim()) return;
+  estado.compartido = texto;
+  history.replaceState(null, "", `${location.pathname}#personal_variables`);
+  estado.vista = "personal_variables";
+  estado.foco = null;
+  cara = "personal";
+}
+
 function entrarPorElNegocio() {
   if (caraDe(estado.vista) !== "personal") return;
   estado.vista = "hoy";
@@ -384,6 +404,7 @@ async function arrancar() {
 
   leerHash();
   entrarPorElNegocio();
+  recibirLoCompartido();
 
   for (const barra of document.querySelectorAll(".navegacion")) {
     barra.addEventListener("click", (evento) => {
