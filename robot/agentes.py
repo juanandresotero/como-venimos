@@ -72,6 +72,10 @@ def traer(bajar=api.bajar) -> dict:
             "id": a.get("id"),
             "nombre": a.get("name"),
             "oficina_id": oficina_id,
+            # El slug es la identidad ESTABLE de un agente: no lleva acentos ni depende de
+            # como este escrito el nombre. Es lo que permite decir "estos ocho son el team"
+            # sin que se rompa porque alguien figura como "Martin" y no "Martín".
+            "slug": a.get("slug") or "",
         })
 
     oficinas.sort(key=lambda o: o["nombre"].lower())

@@ -7,7 +7,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   oficinasParaElegir, agentesParaElegir, agentesDe, nombreDeAgente, nombreDeOficina,
-  miOficina, comoSeLlamaElColega, TEAM, EXTERIOR,
+  miOficina, miId, comoSeLlamaElColega, TEAM, EXTERIOR, SLUGS_DEL_TEAM,
 } from "../lib/colegas.js";
 
 const GUIA = {
@@ -16,9 +16,11 @@ const GUIA = {
     { id: "of-mar", nombre: "REMAX Mar" },
   ],
   agentes: [
-    { id: "a1", nombre: "Juan Andrés Otero", oficina_id: "of-unico" },
-    { id: "a2", nombre: "Martin Sedes", oficina_id: "of-unico" },
-    { id: "a3", nombre: "Pepito Pérez", oficina_id: "of-mar" },
+    { id: "a1", nombre: "Juan Andrés Otero", oficina_id: "of-unico", slug: "juan-andres-otero" },
+    { id: "a2", nombre: "Martin Sedes", oficina_id: "of-unico", slug: "martin-sedes" },
+    { id: "a4", nombre: "Leticia Varela", oficina_id: "of-unico", slug: "leticia-varela" },
+    { id: "a5", nombre: "Otro de Único", oficina_id: "of-unico", slug: "otro-de-unico" },
+    { id: "a3", nombre: "Pepito Pérez", oficina_id: "of-mar", slug: "pepito-perez" },
   ],
 };
 
@@ -35,20 +37,33 @@ test("elegida la oficina, aparecen sólo sus agentes", () => {
   assert.deepEqual(claves(agentesParaElegir(GUIA, "of-mar")), ["", "a3"]);
 });
 
-/* EL TEAM SON LOS DE TU PROPIA OFICINA. En la API de RE/MAX no existe ningún "equipo": todos
-   figuran como agentes sueltos. Ofrecer los de tu oficina es lo más cerca que se puede estar
-   sin inventar un dato. */
-test("el Team ofrece los de tu oficina", () => {
-  const mia = miOficina(GUIA, AJUSTES);
-  assert.equal(mia, "of-unico", "sale de la guía, no hay que cargarla a mano");
-  assert.deepEqual(agentesDe(GUIA, TEAM, mia).map((a) => a.nombre),
-    ["Juan Andrés Otero", "Martin Sedes"]);
+/* EL TEAM SON LOS OCHO QUE DIO JUAN, no toda la oficina: en RE/MAX Único son 66. Se
+   identifican por SLUG, que no lleva acentos ni depende de cómo esté escrito el nombre. */
+test("el Team son los que dio Juan, no toda la oficina", () => {
+  const yo = miId(GUIA, AJUSTES);
+  assert.deepEqual(agentesDe(GUIA, TEAM, null, yo).map((a) => a.nombre),
+    ["Martin Sedes", "Leticia Varela"], "en su orden, y sin él mismo");
+  assert.equal(SLUGS_DEL_TEAM.length, 8);
+});
+
+/* VOS NO ESTAS EN NINGUNA LISTA: no te podés referir una propiedad a vos mismo, y verte ahí
+   sólo sirve para elegirte sin querer. */
+test("no aparecés entre los colegas a los que referir", () => {
+  const yo = miId(GUIA, AJUSTES);
+  assert.equal(yo, "a1", "te encuentra en la guía por tu nombre de Ajustes");
+  const unico = agentesDe(GUIA, "of-unico", null, yo).map((a) => a.nombre);
+  assert.ok(!unico.includes("Juan Andrés Otero"));
+  assert.equal(unico.length, 3, "los otros tres de Único sí");
+});
+
+test("la oficina propia se sigue sabiendo sola", () => {
+  assert.equal(miOficina(GUIA, AJUSTES), "of-unico", "sale de la guía, no se carga a mano");
 });
 
 /* UNA OFICINA DEL EXTERIOR no está en la guía uruguaya: ahí el nombre va a mano y lo que
    sirve es el link de su cartera. Ofrecer una lista de agentes sería ofrecer una lista vacía. */
 test("una oficina del exterior no ofrece agentes", () => {
-  assert.deepEqual(agentesDe(GUIA, EXTERIOR, "of-unico"), []);
+  assert.deepEqual(agentesDe(GUIA, EXTERIOR, "of-unico", "a1"), []);
 });
 
 test("sin guía bajada todavía, no se rompe nada", () => {

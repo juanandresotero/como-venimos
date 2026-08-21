@@ -20,7 +20,7 @@ import { ROLES, enlaceWhatsapp, hayPicker, elegirContacto } from "../lib/contact
 import { sugerencias } from "../lib/cruce.js";
 import { cotizacionVigente } from "../lib/cambio.js";
 import {
-  oficinasParaElegir, agentesParaElegir, nombreDeAgente, miOficina, EXTERIOR,
+  oficinasParaElegir, agentesParaElegir, nombreDeAgente, miOficina, miId, EXTERIOR,
 } from "../lib/colegas.js";
 
 const redondear = (x) => (x ? Math.round(x * 100) / 100 : null);
@@ -628,6 +628,8 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
        queda anotado su ID, que es la llave para pedirle su cartera a RE/MAX. */
     const guia = estado.datos.agentes_remax;
     const mia = miOficina(guia, estado.datos.ajustes);
+    // Tu propio id: no te podés referir una propiedad a vos mismo.
+    const yo = miId(guia, estado.datos.ajustes);
 
     agregar("referido_a_oficina", "¿De qué oficina es?", "text", n.referido_a_oficina,
       oficinasParaElegir(guia), false,
@@ -641,7 +643,7 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
       agregar("referido_a_link", "  ↳ Link a su cartera", "text", n.referido_a_link);
     } else if (n.referido_a_oficina) {
       agregar("referido_a_agente", "  ↳ ¿Qué agente?", "text", n.referido_a_agente,
-        agentesParaElegir(guia, n.referido_a_oficina, mia), false,
+        agentesParaElegir(guia, n.referido_a_oficina, mia, yo), false,
         // El nombre se guarda igual: si algún día ese agente se va de RE/MAX, la guía deja
         // de tenerlo y sin esto el negocio se quedaría sin decir a quién se la pasaste.
         (id) => ({ referido_a_nombre: nombreDeAgente(guia, id) }));
