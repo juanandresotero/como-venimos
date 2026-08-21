@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es-UY" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Anotar gasto</title>
+<link rel="manifest" href="gasto.webmanifest">
+<meta name="theme-color" content="#0043ff">
+<link rel="apple-touch-icon" href="iconos/gasto-192.png">
+<link rel="stylesheet" href="app.css">
+<!--
+  UNA PANTALLA SOLA PARA ANOTAR UN GASTO.
+
+  Vive aparte de la app y se instala como su propio icono, con su propio manifest. Juan pidio
+  un widget: en Android una pagina web no puede poner uno —eso necesita una app nativa— y esto
+  es lo mas cerca que se llega. Un icono en la pantalla de inicio que abre DIRECTO al campo
+  del monto.
+
+  Y abre rapido a proposito: no carga la app, no baja los datos del negocio, no habla con
+  GitHub. Solo el CSS, el modelo de lo personal y el teclado. Anotar un gasto es lo unico que
+  se hace parado en la caja del super, y ahi cada segundo de espera es una razon para no
+  hacerlo.
+-->
+<style>
+  /* Sin barra de abajo ni cinta: esta pagina es una sola cosa. */
+  body { padding: 0; }
+  .caja-gasto { max-width: 640px; margin: 0 auto; padding: 22px 16px 28px; }
+  .listo { text-align: center; padding: 40px 0; }
+  .listo .cifra { color: var(--azul); }
+</style>
+</head>
+<body>
+<main class="caja-gasto" id="vista"></main>
+<script type="module" src="gasto.js"></script>
+</body>
+</html>
