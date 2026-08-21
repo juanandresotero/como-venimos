@@ -370,7 +370,8 @@ function laCopia(estado, datos) {
       </summary>
       <div class="tarjeta" style="margin-top:6px">
         <p class="apunte">Esto vive sólo en este teléfono. Si lo cambiás o borrás los datos
-          del navegador, se pierde.</p>
+          del navegador, se pierde. Acá bajás una copia de <strong>lo personal</strong>; en
+          Ajustes hay una que trae <strong>todo</strong> lo del teléfono junto.</p>
         <div class="botonera" style="margin-top:12px">
           <button class="boton boton-chico" id="p-bajar">Bajar una copia</button>
           <button class="boton boton-chico" id="p-subir">Cargar una copia</button>

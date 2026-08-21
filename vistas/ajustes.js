@@ -13,6 +13,8 @@ import { negociosACsv, carteraACsv, nombrePlanilla } from "../lib/planilla.js";
 import { leerFirmaPropia, guardarFirmaPropia, olvidarFirmaPropia }
   from "../lib/carta-guardado.js";
 import { deBytes } from "../lib/firma.js";
+import * as respaldo from "../lib/respaldo.js";
+import { bajarArchivo } from "../lib/compartir.js";
 import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
 import { pedirFirma, pedirFirmaDeFoto } from "./firma-panel.js";
 
@@ -226,7 +228,89 @@ export function dibujarAjustes(estado) {
     });
   }
 
+  trozo.append(laCopia(estado));
   return trozo;
+}
+
+/* ---------- La copia de seguridad ---------- */
+
+/* Lo que se perdería si se borra la app, y cómo traerlo de vuelta.
+
+   Los datos del negocio —cartera, negocios, ajustes, cálculos— viven en el repo y vuelven
+   solos al reinstalar. Lo que NO vuelve es lo que nunca sale del teléfono: la firma, el
+   historial de cartas oferta, las cuentas bancarias y los gastos personales.
+
+   Juan lo preguntó con estas palabras: "me gustaría que si la borro esté todo respaldado,
+   me refiero a mis datos de las propiedades; capaz claves y llaves no, pero sí todo lo
+   demás". Las propiedades ya estaban cubiertas; esto es lo otro. */
+function laCopia(estado) {
+  const hay = respaldo.queHayGuardado();
+
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">Copia de seguridad</h2>
+      <p class="apunte" style="margin-bottom:12px">
+        Tus <strong>propiedades y negocios ya están respaldados</strong> en GitHub: si borrás
+        la app y la volvés a instalar, vuelven solos. Esto es para lo que vive únicamente en
+        este teléfono.
+      </p>
+      <div class="datos" id="copia-lista"></div>
+      <div class="botonera" style="margin-top:14px">
+        <button class="boton boton-primario" id="copia-bajar">Bajar una copia</button>
+        <button class="boton" id="copia-cargar">Cargar una copia</button>
+      </div>
+      <p class="apunte" style="margin-top:12px">
+        La llave de GitHub <strong>no entra</strong> en la copia: un archivo así termina en
+        Descargas o en un mail, y ahí una llave es una puerta abierta. Se vuelve a pegar acá
+        arriba en un minuto.
+      </p>
+      <p class="apunte" style="margin-top:8px;color:var(--rojo-tinta)">
+        Pero lo demás sí va adentro, incluidos tus gastos y tus cuentas bancarias. Guardá ese
+        archivo donde guardarías un resumen del banco.
+      </p>
+      <p class="apunte" id="copia-resultado" style="margin-top:10px"></p>
+      <input type="file" id="copia-archivo" accept="application/json,.json" hidden>
+    </section>
+  `);
+
+  const lista = seccion.getElementById("copia-lista");
+  if (!hay.length) {
+    lista.replaceWith(nodo(html`
+      <p class="apunte">Todavía no hay nada guardado en este teléfono.</p>`));
+  } else {
+    /* Se muestra QUÉ hay antes de bajar nada: una copia que no se sabe qué trae adentro no
+       tranquiliza a nadie. */
+    lista.innerHTML = hay.map((x) => html`
+      <div class="dato">
+        <span class="dato-nombre">${escapar(x.nombre)}</span>
+        <span class="dato-valor">${x.bytes > 1024
+          ? `${Math.round(x.bytes / 1024)} KB`
+          : `${x.bytes} B`}</span>
+      </div>`).join("");
+  }
+
+  const resultado = seccion.getElementById("copia-resultado");
+
+  seccion.getElementById("copia-bajar").addEventListener("click", async () => {
+    const trozo = new Blob([respaldo.aTexto()], { type: "application/json" });
+    await bajarArchivo(trozo, respaldo.nombreDelArchivo(estado.hoy));
+  });
+
+  const archivo = seccion.getElementById("copia-archivo");
+  seccion.getElementById("copia-cargar").addEventListener("click", () => archivo.click());
+  archivo.addEventListener("change", async () => {
+    const elegido = archivo.files && archivo.files[0];
+    if (!elegido) return;
+    const puesto = respaldo.desdeTexto(await elegido.text());
+    if (!puesto) {
+      resultado.textContent = "Ese archivo no es una copia de esta app.";
+      return;
+    }
+    resultado.textContent = `Listo: se restauraron ${puesto.claves.length} cosas. `
+      + "Cerrá la app y volvé a abrirla para verlas.";
+  });
+
+  return seccion;
 }
 
 /* Las reglas del negocio, editables.
