@@ -16,6 +16,7 @@ import {
 } from "../lib/pendientes.js";
 import { capas, ritmo, formaDelAnio, comparativaCategorias } from "../lib/salud.js";
 import { marcarAtendido, editarPropiedad } from "../lib/guardado.js";
+import { mandarAlRobot, comoVaElRobot } from "../lib/github.js";
 import { medir, vale_la_pena_ajustar } from "../lib/seguridad.js";
 import { nivelDe, nivelDelObjetivo } from "../lib/niveles.js";
 import { plata, pct, fechaCorta, escapar } from "../lib/formato.js";
@@ -47,7 +48,83 @@ export function dibujarHoy(estado) {
   trozo.append(queTanSeguro(estado));
   trozo.append(pendientes(total));
   for (const grupo of grupos) trozo.append(dibujarGrupo(grupo, estado));
+  trozo.append(mirarLaCartera(estado));
   return trozo;
+}
+
+/* ---------- Mandar al robot a mirar ahora ---------- */
+
+/* El robot mira la cartera solo, una vez por dia a las 6 de la mañana. Esto lo manda AHORA.
+
+   Sirve cuando algo cambio en RE/MAX y no se quiere esperar: se publico una propiedad, una
+   paso a negociacion, o —el caso que lo pidio— una volvio al mercado y hay que ver que la app
+   la de por caida.
+
+   La app no puede correr el robot: es Python y necesita las credenciales de RE/MAX. Lo que
+   hace es pedirle a GitHub que lo corra. Por eso tarda un par de minutos y por eso hace falta
+   un permiso mas en la llave. */
+function mirarLaCartera(estado) {
+  const seccion = nodo(html`
+    <section style="margin-top:26px;text-align:center">
+      <button class="boton boton-chico" id="mirar-cartera">Mirar mi cartera ahora</button>
+      <p class="apunte" id="mirar-resultado" style="margin-top:10px"></p>
+    </section>
+  `);
+
+  const boton = seccion.getElementById("mirar-cartera");
+  const resultado = seccion.getElementById("mirar-resultado");
+
+  boton.addEventListener("click", async () => {
+    boton.disabled = true;
+    boton.textContent = "Mandando…";
+    resultado.textContent = "";
+
+    const salida = await mandarAlRobot(estado.token);
+    if (!salida.ok) {
+      boton.disabled = false;
+      boton.textContent = "Mirar mi cartera ahora";
+      resultado.textContent = salida.mensaje;
+      return;
+    }
+
+    boton.textContent = "Mirando…";
+    resultado.textContent = "El robot está mirando RE/MAX. Tarda un par de minutos.";
+    esperarAlRobot(estado, boton, resultado);
+  });
+
+  return seccion;
+}
+
+/* Se pregunta cada diez segundos si termino, hasta cuatro minutos.
+
+   Cuatro minutos es el doble de lo que tarda una corrida buena. Pasado eso se deja de
+   preguntar y se dice como mirarlo, en vez de quedar dando vueltas para siempre: una rueda
+   que gira sin fin es peor que un cartel que dice que no se sabe. */
+const CADA = 10000;
+const HASTA = 24;
+
+async function esperarAlRobot(estado, boton, resultado) {
+  for (let vuelta = 0; vuelta < HASTA; vuelta += 1) {
+    await new Promise((seguir) => setTimeout(seguir, CADA));
+    const como = await comoVaElRobot(estado.token);
+    if (!como.ok || !como.terminada) continue;
+
+    if (!como.salioBien) {
+      boton.disabled = false;
+      boton.textContent = "Mirar mi cartera ahora";
+      resultado.textContent = "El robot falló. Fijate el aviso rojo de arriba en un rato.";
+      return;
+    }
+    boton.textContent = "Listo";
+    resultado.textContent = "Terminó. Traigo lo nuevo…";
+    /* Los datos ya estan en el repo: se recarga la app entera para bajarlos. Es lo mas
+       simple y lo unico que garantiza que TODO quede al dia, no solo la cartera. */
+    setTimeout(() => location.reload(), 1200);
+    return;
+  }
+  boton.disabled = false;
+  boton.textContent = "Mirar mi cartera ahora";
+  resultado.textContent = "Está tardando más de lo normal. Cerrá y volvé a abrir la app en un rato.";
 }
 
 function encabezado(estado, total) {
