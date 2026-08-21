@@ -1,6 +1,6 @@
 /* Arranque: baja los datos, arma la navegacion y dibuja la vista activa. */
 
-import { bandeja, cuantosPendientes } from "./lib/pendientes.js";
+import { bandeja, cuantosPendientes, sinAtender } from "./lib/pendientes.js";
 import * as github from "./lib/github.js";
 import * as tema from "./lib/tema.js";
 import { fusionar, completarConNegocios } from "./lib/cartera.js";
@@ -176,11 +176,11 @@ function dibujarBarraGuardado(situacion, mensaje) {
   boton.textContent = situacion === "error" ? "Reintentar" : "Guardar";
 }
 
-/* Los eventos que el usuario ya despacho se filtran con lo anotado en mis_datos. */
-function eventosSinAtender() {
-  const atendidos = new Set((estado.datos.mis_datos || {}).eventos_atendidos || []);
-  return (estado.datos.eventos || []).filter((e) => !atendidos.has(e.id));
-}
+/* Una sola regla, en lib/pendientes.js: estaba copiada acá y en la vista de Hoy, y al
+   cambiarla en un lado el otro seguía con la vieja. */
+const eventosSinAtender = () =>
+  sinAtender(estado.datos.eventos, estado.datos.mis_datos, estado.datos.cartera);
+
 
 function dibujarGlobo() {
   const globo = document.getElementById("globo-pendientes");

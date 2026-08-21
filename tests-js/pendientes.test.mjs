@@ -427,3 +427,45 @@ test("confirmar las puntas se pide aunque la ficha esté dada por completa", () 
   assert.ok(!bandeja.find((g) => g.clave === "falta_barrio"),
     "pero el resto sigue callado: la marca vale para lo que de verdad falta");
 });
+
+/* ---------- Los avisos que piden un dato ---------- */
+
+/* PASÓ DE VERDAD: Juan despachó quince avisos con "Ya lo resolví", y dos de ellos —Juana de
+   Ibarbourou 200 y Minas 1600— quedaron sin el origen de la captación. De ese dato sale la
+   regla de comisión, así que esas dos proyectaban plata con una regla inventada y la app ya
+   no se lo iba a pedir nunca más. El botón decía una cosa y hacía otra. */
+test("en los avisos que piden un dato, el botón dice lo que de verdad hace", () => {
+  const evento = { id: "e1", entity_id: "p1", tipo: "alta", fecha: "2026-08-21", detalle: {} };
+  const bandeja = derivar([], [evento], "2026-08-21",
+    { p1: { entity_id: "p1", activa: true, estado: "publicada" } });
+  const acciones = accionesDe(bandeja[0].items[0]);
+  assert.ok(acciones.some((a) => a.texto === "No lo voy a cargar"));
+  assert.ok(!acciones.some((a) => a.texto === "Ya lo resolví"));
+});
+
+test("en una noticia sigue diciendo 'Ya lo resolví'", () => {
+  const evento = { id: "e1", entity_id: "p1", tipo: "baja", fecha: "2026-08-21", detalle: {} };
+  const bandeja = derivar([], [evento], "2026-08-21",
+    { p1: { entity_id: "p1", activa: false, origen_captacion: "B.d.r." } });
+  assert.ok(accionesDe(bandeja[0].items[0]).some((a) => a.texto === "Ya lo resolví"));
+});
+
+/* ---------- El duplicado se contesta con sí o no ---------- */
+
+/* El robot, al detectarlo, ya lo saca de la proyección: contar dos veces la misma propiedad
+   infla los números. Pero si son DOS distintas —dos unidades del mismo edificio al mismo
+   precio— hay que poder devolverla. Lo pidió Juan con esas palabras: "la pregunta que hay que
+   hacer acá es si esta propiedad duplicada contarla en los números". */
+test("un duplicado ofrece las dos respuestas y ninguna otra", () => {
+  const evento = { id: "e1", entity_id: "p2", tipo: "posible_duplicado",
+    fecha: "2026-08-21", detalle: { duplicado_de: "p1" } };
+  const bandeja = derivar([], [evento], "2026-08-21", {
+    p1: { entity_id: "p1", activa: true, origen_captacion: "B.d.r." },
+    p2: { entity_id: "p2", activa: true, origen_captacion: "B.d.r." },
+  });
+  const acciones = accionesDe(bandeja[0].items[0]);
+  assert.deepEqual(acciones.map((a) => a.texto), ["Son dos distintas", "Es la misma"]);
+  assert.equal(acciones[0].tipo, "cuenta");
+  assert.equal(acciones[1].tipo, "no-cuenta");
+  assert.equal(acciones[0].destino, "p2", "la que se toca es la duplicada, no la original");
+});

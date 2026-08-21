@@ -11,9 +11,11 @@
    queda descubierto. Los mismos números contando otra cosa: allá se mira hacia atrás,
    acá hacia adelante. Ver dos veces la misma tarjeta no le sirve a nadie. */
 
-import { bandeja, cuantosPendientes, accionesDe } from "../lib/pendientes.js";
+import {
+  bandeja, cuantosPendientes, accionesDe, sinAtender,
+} from "../lib/pendientes.js";
 import { capas, ritmo, formaDelAnio, comparativaCategorias } from "../lib/salud.js";
-import { marcarAtendido } from "../lib/guardado.js";
+import { marcarAtendido, editarPropiedad } from "../lib/guardado.js";
 import { medir, vale_la_pena_ajustar } from "../lib/seguridad.js";
 import { nivelDe, nivelDelObjetivo } from "../lib/niveles.js";
 import { plata, pct, fechaCorta, escapar } from "../lib/formato.js";
@@ -32,8 +34,8 @@ const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "
 
 export function dibujarHoy(estado) {
   // Los eventos que el usuario ya despacho no se vuelven a mostrar.
-  const atendidos = new Set((estado.datos.mis_datos || {}).eventos_atendidos || []);
-  const eventos = (estado.datos.eventos || []).filter((e) => !atendidos.has(e.id));
+  const eventos = sinAtender(
+    estado.datos.eventos, estado.datos.mis_datos, estado.datos.cartera);
   const grupos = bandeja(estado.datos.negocios, eventos, estado.hoy, estado.datos.cartera);
   const total = cuantosPendientes(grupos);
 
@@ -297,10 +299,21 @@ function dibujarGrupo(grupo, estado) {
       const boton = document.createElement("button");
       boton.className = `boton boton-chico${i === 0 ? " boton-primario" : ""}`;
       boton.textContent = accion.texto;
-      boton.addEventListener("click", () => {
+      boton.addEventListener("click", async () => {
         if (accion.tipo === "atendido") {
           // Puede traer varios: un pendiente juntado despacha todos sus avisos de una.
           for (const id of accion.destino) marcarAtendido(estado, id);
+          estado.redibujar();
+        } else if (accion.tipo === "cuenta" || accion.tipo === "no-cuenta") {
+          /* El duplicado: la unica pregunta que hay que contestar es si esa propiedad cuenta
+             en los numeros. El robot ya la saco de la proyeccion al detectarla; esto la
+             devuelve, o confirma que se queda afuera. */
+          editarPropiedad(estado, accion.destino, {
+            usar_en_proyeccion: accion.tipo === "cuenta",
+            posible_duplicado_de: accion.tipo === "cuenta" ? null : undefined,
+          });
+          for (const id of item.eventos || []) marcarAtendido(estado, id);
+          await estado.guardar();
           estado.redibujar();
         } else {
           estado.irA(accion.tipo, accion.destino);
