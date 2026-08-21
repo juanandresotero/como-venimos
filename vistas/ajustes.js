@@ -260,13 +260,18 @@ function laCopia(estado) {
         <button class="boton" id="copia-cargar">Cargar una copia</button>
       </div>
       <p class="apunte" style="margin-top:12px">
-        La llave de GitHub <strong>no entra</strong> en la copia: un archivo así termina en
-        Descargas o en un mail, y ahí una llave es una puerta abierta. Se vuelve a pegar acá
-        arriba en un minuto.
+        <strong>No entran</strong> ${escapar(respaldo.NO_ENTRA.join(", ").toLowerCase())}.
+        Esas tres no son un dato: son una puerta. Con la llave se escribe en tu repo, con la
+        firma se firma en tu nombre y con la cuenta se le dice a un cliente "transferí acá".
+        Las tres se vuelven a cargar en un minuto.
       </p>
-      <p class="apunte" style="margin-top:8px;color:var(--rojo-tinta)">
-        Pero lo demás sí va adentro, incluidos tus gastos y tus cuentas bancarias. Guardá ese
-        archivo donde guardarías un resumen del banco.
+      <p class="apunte" style="margin-top:8px">
+        Del historial de cartas se copia el registro pero <strong>no las firmas</strong> que
+        lleva adentro.
+      </p>
+      <p class="apunte" style="margin-top:12px;color:var(--rojo-tinta)">
+        Lo que sí va son tus gastos y tus saldos. Guardá ese archivo donde guardarías un
+        resumen del banco.
       </p>
       <p class="apunte" id="copia-resultado" style="margin-top:10px"></p>
       <input type="file" id="copia-archivo" accept="application/json,.json" hidden>
