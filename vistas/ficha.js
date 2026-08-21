@@ -269,7 +269,10 @@ function campos(n, falta, estado) {
   /* `faltaExtra` marca en rojo un campo cuyo aviso no sigue el patrón falta_<clave>.
      `derivar` deja que un campo actualice a otro: cambiar quién puso cada lado recalcula
      las puntas, que son las que deciden la plata. */
-  const agregar = (clave, etiqueta, tipo, valor, opciones, faltaExtra, derivar) => {
+  const agregar = (clave, etiqueta, tipo, valor, opciones, faltaExtra, derivar, saltearSiVacio) => {
+    // Un campo que este tipo de negocio no necesita igual se muestra si YA trae algo cargado:
+    // asi los negocios viejos del Excel se pueden seguir viendo y corrigiendo.
+    if (saltearSiVacio && (valor === null || valor === undefined || valor === "")) return;
     const faltaEste = faltaExtra || falta.has(`falta_${clave}`) || falta.has(`sin_${clave}`);
     const fila = document.createElement("div");
     fila.className = `campo-fila${faltaEste ? " falta" : ""}`;
@@ -345,12 +348,14 @@ function campos(n, falta, estado) {
      queda EDITABLE. Estaba como un texto fijo y era un error: si la cargas tarde — te
      acordaste recien cuando quedo reservada — esa fecha esta mal y tenes que poder
      corregirla. Que venga contestada no es lo mismo que no poder cambiarla. */
-  /* EN UN ALQUILER NO HAY NEGOCIACION: se firma y listo. El renglón sólo aparece si el
-     negocio YA trae una fecha —uno viejo del Excel— para poder corregirla.
+  /* "CUANDO PASO A NEGOCIACION" ES UN ESTADO DEL PORTAL, y hay dos casos donde no existe:
 
-     Antes decía "los alquileres casi nunca pasan por acá", que es admitir que la pregunta
-     sobra y hacerla igual. */
-  if (!esAlquiler || n.fecha_negociacion) {
+       - EN UN ALQUILER: va de publicado a reservado y se va. No pasa por negociación.
+       - EN UNA SUPLENCIA: el portal es de OTRO agente. Ese estado ni lo ves.
+
+     El renglón igual aparece si el negocio YA trae una fecha —uno viejo del Excel— para
+     poder corregirla. */
+  if ((!esAlquiler && !suplencia) || n.fecha_negociacion) {
     fecha("fecha_negociacion", "Cuándo pasó a negociación", n.fecha_negociacion);
   }
 
@@ -360,7 +365,10 @@ function campos(n, falta, estado) {
      La RESERVA sí existe —es un estado del portal— lo que no existe es el BOLETO, que es de
      una venta. Y la FIRMA es el día que se va del portal: eso es el cierre, no la reserva.
      Lo corrigió Juan. */
-  fecha("fecha_boleto", esAlquiler
+  /* La aclaración "(boleto)" es para ubicar el momento en una venta TUYA, donde el boleto lo
+     firmás vos. En una suplencia el boleto es de otro y vos ni lo ves: lo que ves es que la
+     propiedad quedó reservada. */
+  fecha("fecha_boleto", esAlquiler || suplencia
     ? "Cuándo quedó reservada"
     : "Cuándo quedó reservada (boleto)", n.fecha_boleto);
   fecha("fecha_fin", esAlquiler
@@ -368,8 +376,28 @@ function campos(n, falta, estado) {
     : "Cuándo cerró y cobraste", n.fecha_fin);
   agregar("direccion", "Dirección", "text", n.direccion);
   agregar("barrio", "Barrio", "text", n.barrio);
-  agregar("precio_operacion", "Precio de la operación (USD)", "moneda", n.precio_operacion);
-  agregar("pct_comision_total", "% de comisión (0,03 = 3%)", "number", n.pct_comision_total);
+  /* EN UNA SUPLENCIA LO UNICO QUE IMPORTA ES CUANTO COBRASTE.
+
+     Cubriste la visita de un colega: no facturás nada por RE/MAX y lo que entra es lo que
+     arreglaste con él. Ese número no sale del precio, ni del porcentaje, ni de las puntas
+     —lo dijo Juan— así que pedirle esas tres cosas para deducirlo era hacerle una cuenta que
+     él ya tiene hecha.
+
+     El precio y el % siguen a la vista si el negocio YA los trae, que es como vinieron las
+     suplencias del Excel: ahí el monto sale del 12,5% mientras no escriba uno. */
+  if (suplencia) {
+    agregar("cobrado_suplencia", "Cuánto cobraste (USD)", "moneda", n.cobrado_suplencia);
+  }
+  /* En una suplencia el precio y el % SOLO se muestran si hay un precio cargado, que es como
+     vinieron las del Excel: ahí el monto sale del 12,5% mientras no escriba uno.
+
+     Manda el PRECIO, no el %: el % nace con un valor por defecto, así que mirarlo a él para
+     decidir dejaría el renglón puesto siempre. */
+  const laPlataVieja = !suplencia || Boolean(n.precio_operacion);
+  if (laPlataVieja) {
+    agregar("precio_operacion", "Precio de la operación (USD)", "moneda", n.precio_operacion);
+    agregar("pct_comision_total", "% de comisión (0,03 = 3%)", "number", n.pct_comision_total);
+  }
 
   /* En una SUPLENCIA no se pregunta como llego el negocio ni si es una suplencia: lo primero
      no llego a vos —cubriste una visita de otro— y lo segundo ya se eligio al crearla. */
@@ -384,7 +412,10 @@ function campos(n, falta, estado) {
   /* EN UNA BUSQUEDA SIEMPRE ES UNA, y es la compradora: es la definición, y la app ya la fija
      sola. Mostrar un campo con una sola respuesta posible es dar a entender que hay algo que
      decidir. */
-  if (n.puntas_confirmadas && !busqueda) {
+  /* Y EN UNA SUPLENCIA TAMPOCO: podés cubrir al comprador o al vendedor, una punta o las
+     dos, y no cambia nada — lo que entra es el monto que cobraste. Juan: "las puntas sacalo
+     porque no vamos a tomar en cuenta este dato para las cuentas". */
+  if (n.puntas_confirmadas && !busqueda && !suplencia) {
     agregar("puntas", "Puntas de la operación", "number", n.puntas,
       opcionesCon([[1, "1 punta"], [2, "2 puntas"]], n.puntas));
   }
@@ -423,7 +454,13 @@ function campos(n, falta, estado) {
      nacen de una propiedad de la cartera. */
   if (!n.atajo) agregarMarcas(contenedor, n, estado);
 
-  agregar("tipo_negocio", "Tipo", "text", n.tipo_negocio, opcionesCon(TIPOS_NEGOCIO, n.tipo_negocio));
+  /* "TIPO" (venta o alquiler) YA SE ELIGIO EN "+ Nuevo": los cinco botones abren venta o
+     alquiler, y las dos que podían ser cualquiera de los dos —búsqueda y suplencia— lo
+     preguntan ahí mismo. Volver a mostrarlo adentro es preguntar dos veces, y encima deja
+     que las dos respuestas no coincidan. Lo cazó Juan cargando una suplencia. */
+  if (!n.atajo) {
+    agregar("tipo_negocio", "Tipo", "text", n.tipo_negocio, opcionesCon(TIPOS_NEGOCIO, n.tipo_negocio));
+  }
   agregar("notas", "Notas", "text", n.notas);
 
   return seccion;

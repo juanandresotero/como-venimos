@@ -510,23 +510,38 @@ test("revisar: un negocio viejo con fecha sigue sin recalcularse", () => {
 
 /* ---------- Una busqueda no tiene fecha de publicacion propia ---------- */
 
-/* La propiedad la publico OTRO agente: cuando salio a la venta no se sabe y no sirve. Y la
-   negociacion arranca el dia que se carga el negocio, que es cuando aparecio el comprador. */
-test("una busqueda arranca sin fecha de publicacion y con la negociacion de hoy", () => {
+/* La propiedad la publico OTRO agente: cuando salio a la venta no se sabe y no sirve. */
+test("ninguna busqueda inventa cuando se publico", () => {
   for (const atajo of ["busqueda", "busqueda_alquiler"]) {
     const p = plantillaNegocio(atajo, AJUSTES, "2026-08-18");
     assert.equal(p.fecha_inicio, null, `${atajo} no deberia inventar cuando se publico`);
-    assert.equal(p.fecha_negociacion, "2026-08-18");
     assert.equal(esBusqueda(p, AJUSTES), true);
   }
 });
 
-/* UNA SUPLENCIA SE ANOTA CUANDO YA PASO. Juan: "si la estoy ingresando es porque se cerró la
-   negociación". Así que la fecha viene puesta con el día de la carga —y queda editable, por
-   si la anotó tarde. Y "cuándo se publicó" no se pide: esa propiedad ni es suya. */
-test("una suplencia de venta nace con la fecha de negociación de hoy", () => {
-  const p = plantillaNegocio("suplencia", AJUSTES, "2026-08-18");
+/* Una busqueda DE VENTA se carga el dia que aparecio el comprador: eso es la negociacion. */
+test("una busqueda de venta arranca con la negociacion de hoy", () => {
+  const p = plantillaNegocio("busqueda", AJUSTES, "2026-08-18");
   assert.equal(p.fecha_negociacion, "2026-08-18");
+  assert.equal(p.fecha_boleto, null);
+});
+
+/* Pero una busqueda DE ALQUILER se carga recien cuando YA hay reserva. Juan: "la cargo solo
+   si consegui la reserva del alquiler". Ahi la fecha que se pone sola es la de la reserva. */
+test("una busqueda de alquiler arranca con la reserva de hoy, sin negociacion", () => {
+  const p = plantillaNegocio("busqueda_alquiler", AJUSTES, "2026-08-18");
+  assert.equal(p.fecha_boleto, "2026-08-18");
+  assert.equal(p.fecha_negociacion, null, "un alquiler no pasa por negociacion");
+});
+
+/* UNA SUPLENCIA SE ANOTA CUANDO YA PASO, así que la fecha viene puesta con el día de la
+   carga —y queda editable, por si la anotó tarde—. Pero la que se pone es LA RESERVA, no la
+   negociación: la negociación es un estado del portal de OTRO agente, que ni ve.
+   Y "cuándo se publicó" no se pide: esa propiedad ni es suya. */
+test("una suplencia de venta nace con la reserva de hoy, sin negociación", () => {
+  const p = plantillaNegocio("suplencia", AJUSTES, "2026-08-18");
+  assert.equal(p.fecha_boleto, "2026-08-18");
+  assert.equal(p.fecha_negociacion, null, "el portal es de otro: ese estado no lo ves");
   assert.equal(p.fecha_inicio, null, "cuándo se publicó no importa: no es tu propiedad");
 });
 
@@ -989,4 +1004,56 @@ test("en una búsqueda vos sos el que trae al comprador", () => {
   const p = plantillaNegocio("busqueda", AJUSTES, "2026-08-21");
   assert.equal(p.agente_compra, "Juan Andrés Otero");
   assert.notEqual(p.agente_vende, "Juan Andrés Otero", "el aviso es de otro");
+});
+
+/* ================================================================== EL COBRO DE UNA SUPLENCIA
+
+   Juan: "no importa las puntas sino el monto que cobro para sumarlo a mis ganancias. la
+   realidad que de ahi no facturo nada a remax".
+
+   Cubrir una visita no sale de ningun porcentaje: es lo que arreglo con el colega. Si lo
+   escribe, ese es el numero. Si no, sigue valiendo la cuenta vieja del 12,5%, que es de
+   donde salen las suplencias que vinieron del Excel. */
+
+test("en una suplencia manda el monto que cobraste, y no factura nada", () => {
+  const n = revisar({
+    ...plantillaNegocio("suplencia", AJUSTES, "2026-08-18"),
+    id: "s-1",
+    precio_operacion: 200000,
+    pct_comision_total: 0.03,
+    cobrado_suplencia: 400,
+    fecha_fin: "2026-08-18",
+  }, AJUSTES, "2026-08-20");
+  assert.equal(n.ganancia, 400, "lo que entra es lo que cobraste");
+  assert.equal(n.facturacion, 0, "una suplencia no factura por RE/MAX");
+});
+
+test("sin monto cargado, una suplencia sigue calculando el 12,5%", () => {
+  const n = revisar({
+    ...plantillaNegocio("suplencia", AJUSTES, "2026-08-18"),
+    id: "s-2",
+    precio_operacion: 200000,
+    pct_comision_total: 0.03,
+    fecha_fin: "2026-08-18",
+  }, AJUSTES, "2026-08-20");
+  assert.equal(n.ganancia, 750, "el 12,5% de 6.000");
+  assert.equal(n.facturacion, 0);
+});
+
+test("el monto cobrado manda aunque el precio diga otra cosa", () => {
+  const uno = { id: "s-3", es_suplencia: true, tipo_negocio: "venta", puntas: 0,
+    precio_operacion: 200000, pct_comision_total: 0.03, cobrado_suplencia: 400,
+    fecha_fin: "2026-08-18" };
+  const a = revisar(uno, AJUSTES, "2026-08-20");
+  const b = revisar({ ...uno, precio_operacion: 900000 }, AJUSTES, "2026-08-20");
+  assert.equal(a.ganancia, b.ganancia, "cambiar el precio no puede mover lo que cobraste");
+});
+
+test("un cobro de cero es un dato, no un campo vacio", () => {
+  const n = revisar({
+    id: "s-4", es_suplencia: true, tipo_negocio: "venta", puntas: 0,
+    precio_operacion: 200000, pct_comision_total: 0.03, cobrado_suplencia: 0,
+    fecha_fin: "2026-08-18",
+  }, AJUSTES, "2026-08-20");
+  assert.equal(n.ganancia, 0, "si cobraste cero, entraron cero: no el 12,5%");
 });
