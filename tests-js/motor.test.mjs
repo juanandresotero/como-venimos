@@ -965,3 +965,28 @@ test("sin la marca, la plata se recalcula como siempre", () => {
   }), AJUSTES, "2026-08-21");
   assert.equal(n.facturacion, 3000, "vuelve a salir de la regla");
 });
+
+/* ---------- Cada tipo pide lo suyo ---------- */
+
+/* Todo lo que se carga desde "+ Nuevo" trae `atajo`: ahí ya se eligió qué es, y volver a
+   preguntarlo adentro deja la puerta abierta a que las dos respuestas no coincidan. */
+test("los negocios cargados a mano traen el atajo con el que se crearon", () => {
+  for (const atajo of ["busqueda", "suplencia", "suplencia_alquiler", "yo_referi", "venta"]) {
+    assert.equal(plantillaNegocio(atajo, AJUSTES, "2026-08-21").atajo, atajo);
+  }
+});
+
+/* Ni la vendedora ni la compradora son tuyas: el negocio lo hace el colega. Antes los dos
+   campos aparecían, y encima marcados como "falta", pidiendo un dato que no existe. */
+test("en una referida no se pide ningún agente del negocio", () => {
+  const p = plantillaNegocio("yo_referi", AJUSTES, "2026-08-21");
+  assert.equal(p.agente_vende, null);
+  assert.equal(p.agente_compra, null);
+});
+
+/* En una búsqueda el comprador lo trajiste vos: es la definición. */
+test("en una búsqueda vos sos el que trae al comprador", () => {
+  const p = plantillaNegocio("busqueda", AJUSTES, "2026-08-21");
+  assert.equal(p.agente_compra, "Juan Andrés Otero");
+  assert.notEqual(p.agente_vende, "Juan Andrés Otero", "el aviso es de otro");
+});

@@ -9,6 +9,7 @@ import {
 } from "../lib/formato.js";
 import {
   esBusqueda, puntasSegunAgentes, momentoDeLaPropiedad, nombrePropio, estaCaido, CAIDO,
+  esReferidaMia,
 } from "../lib/motor.js";
 import {
   AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, EXPLICACION_ORIGEN,
@@ -331,25 +332,33 @@ function campos(n, falta, estado) {
   /* CUANDO SE PUBLICO no se pide en una busqueda ni en una suplencia: el aviso era de otro y
      esa propiedad ni es tuya. Se sigue mostrando si el negocio YA la trae —uno viejo del
      Excel— para poder corregirla. */
-  fecha("fecha_inicio", "Cuándo se publicó", n.fecha_inicio, busqueda || suplencia);
+  /* CUANDO SE PUBLICO no se pide en una busqueda ni en una suplencia: esa propiedad no es
+     tuya y ese dato no lo tenés. Se sigue mostrando si el negocio YA lo trae —uno viejo del
+     Excel— para poder corregirlo.
+
+     EN UNA REFERIDA la fecha SÍ importa, pero es OTRA: no cuándo se publicó —la publica el
+     colega— sino CUÁNDO SE LA PASASTE. Es la que mide cuánto lleva en manos de otro. */
+  fecha("fecha_inicio", esReferidaMia(n) ? "Cuándo se la referiste" : "Cuándo se publicó",
+    n.fecha_inicio, busqueda || suplencia);
 
   /* En una busqueda la fecha de negociacion viene puesta con el dia de la carga, pero
      queda EDITABLE. Estaba como un texto fijo y era un error: si la cargas tarde — te
      acordaste recien cuando quedo reservada — esa fecha esta mal y tenes que poder
      corregirla. Que venga contestada no es lo mismo que no poder cambiarla. */
-  /* EN UN ALQUILER NO HAY NEGOCIACION: se firma y listo. En una suplencia de alquiler ese
-     renglon era una pregunta sin respuesta posible, así que directamente no está. */
-  if (!(suplencia && esAlquiler)) {
-    fecha("fecha_negociacion",
-      busqueda || suplencia
-        ? "Cuándo pasó a negociación"
-        : `Cuándo pasó a negociación${esAlquiler ? " (los alquileres casi nunca pasan por acá)" : ""}`,
-      n.fecha_negociacion);
+  /* EN UN ALQUILER NO HAY NEGOCIACION: se firma y listo. El renglón sólo aparece si el
+     negocio YA trae una fecha —uno viejo del Excel— para poder corregirla.
+
+     Antes decía "los alquileres casi nunca pasan por acá", que es admitir que la pregunta
+     sobra y hacerla igual. */
+  if (!esAlquiler || n.fecha_negociacion) {
+    fecha("fecha_negociacion", "Cuándo pasó a negociación", n.fecha_negociacion);
   }
 
 
-  fecha("fecha_boleto", suplencia && esAlquiler
-    ? "Cuándo quedó reservada"
+  /* El BOLETO es de una venta. En un alquiler se firma el contrato y no hay boleto que
+     valga: nombrarlo ahí es pedirle al usuario que traduzca. */
+  fecha("fecha_boleto", esAlquiler
+    ? "Cuándo se firmó"
     : "Cuándo quedó reservada (boleto)", n.fecha_boleto);
   fecha("fecha_fin", "Cuándo cerró y cobraste", n.fecha_fin);
   agregar("direccion", "Dirección", "text", n.direccion);
@@ -367,7 +376,10 @@ function campos(n, falta, estado) {
      comisión total. Por eso no hay opción "cero". */
   /* Las puntas NO son un campo suelto: viven en la tarjeta de arriba junto con "quién trajo
      al comprador", porque son la misma pregunta. Acá sólo se muestran, ya confirmadas. */
-  if (n.puntas_confirmadas) {
+  /* EN UNA BUSQUEDA SIEMPRE ES UNA, y es la compradora: es la definición, y la app ya la fija
+     sola. Mostrar un campo con una sola respuesta posible es dar a entender que hay algo que
+     decidir. */
+  if (n.puntas_confirmadas && !busqueda) {
     agregar("puntas", "Puntas de la operación", "number", n.puntas,
       opcionesCon([[1, "1 punta"], [2, "2 puntas"]], n.puntas));
   }
@@ -396,10 +408,15 @@ function campos(n, falta, estado) {
   }
   }
 
-  /* 9) LAS MARCAS TAMPOCO: "¿es una suplencia o la referiste?" ya se contestó al tocar
-     "+ Nuevo". Volver a preguntarlo adentro es preguntar dos veces lo mismo, y encima deja
-     abierta la puerta a que las dos respuestas no coincidan. */
-  if (!suplencia && !n.yo_referi) agregarMarcas(contenedor, n, estado);
+  /* "¿ES UNA SUPLENCIA O LA REFERISTE?" SOLO SI NADIE LO ELIGIO.
+
+     Todo lo que se carga desde "+ Nuevo" trae `atajo`: ahí la respuesta ya se dio al tocar el
+     botón, y volver a preguntarla adentro es preguntar dos veces lo mismo — con la puerta
+     abierta a que las dos respuestas no coincidan.
+
+     Los que SÍ la necesitan son los que nadie eligió: los que vinieron del Excel y los que
+     nacen de una propiedad de la cartera. */
+  if (!n.atajo) agregarMarcas(contenedor, n, estado);
 
   agregar("tipo_negocio", "Tipo", "text", n.tipo_negocio, opcionesCon(TIPOS_NEGOCIO, n.tipo_negocio));
   agregar("notas", "Notas", "text", n.notas);
@@ -469,20 +486,27 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
     return;
   }
 
+  /* EN UNA REFERIDA NINGUNO DE LOS DOS LADOS ES TUYO: el negocio lo hace el colega y esos
+     agentes son de otra oficina. Aparecían los dos, y encima marcados como "falta", pidiendo
+     un dato que no existe. Lo único que importa es a quién se la pasaste, que va abajo. */
+  if (esReferidaMia(n)) {
+    lado("referido_a", "A quién se la referiste", false);
+    agregar("referido_a_nombre", "  ↳ Nombre y apellido", "text", n.referido_a_nombre);
+    return;
+  }
+
   lado("agente_vende", "Quién tenía el aviso", true);
-  /* "Quién trajo al comprador" sólo se muestra una vez confirmadas las puntas: mientras
-     tanto se pregunta arriba, en la tarjeta, que es donde tiene sentido. */
-  if (n.puntas_confirmadas) lado("agente_compra", "Quién trajo al comprador", true);
+
+  /* EN UNA BUSQUEDA el comprador lo trajiste vos: es la definición. Preguntarlo es preguntar
+     algo que la app ya sabe. */
+  const busqueda = esBusqueda(n, estado.datos.ajustes);
+  if (!busqueda && n.puntas_confirmadas) {
+    lado("agente_compra", "Quién trajo al comprador", true);
+  }
 
   /* "A quién se lo referiste" solo tiene sentido si efectivamente lo referiste. Y "quién
      te lo refirió" desapareció: era la misma pregunta que "cómo llegó el negocio". */
-  if (n.yo_referi) {
-    lado("referido_a", "A quién se lo referiste", false);
-    /* Y el NOMBRE a mano, siempre. Una propiedad que referís se la pasás a cualquiera —un
-       colega de otra oficina, de otro país— y esa gente no está ni va a estar en la lista
-       corta de agentes. Sin este campo, el dato del que tiene tu negocio se pierde. */
-    agregar("referido_a_nombre", "  ↳ Nombre y apellido", "text", n.referido_a_nombre);
-  }
+
 }
 
 /* Suplencia y "yo la referí" van sueltas del origen: un negocio puede llegar por "Dueño
