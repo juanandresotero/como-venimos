@@ -5,7 +5,7 @@
 
 import { listar, estadoVisible, nombreEstado, diasEnCartera, rendimiento } from "../lib/cartera.js";
 import { plata, plataUSD, fechaCorta, escapar } from "../lib/formato.js";
-import { esBusqueda, esReferidaMia } from "../lib/motor.js";
+import { esBusqueda, esReferidaMia, estaCaido } from "../lib/motor.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -82,6 +82,8 @@ export function dibujarCartera(estado) {
   if (!filtro.archivo && busquedas.length) trozo.append(busquedasAbiertas(estado, busquedas));
   const referidas = referidasAbiertas(estado);
   if (!filtro.archivo && referidas.length) trozo.append(lasReferidas(estado, referidas));
+  const suplencias = suplenciasSinCobrar(estado);
+  if (!filtro.archivo && suplencias.length) trozo.append(lasSuplencias(estado, suplencias));
 
   for (const boton of trozo.querySelectorAll("[data-filtro]")) {
     boton.addEventListener("click", () => {
@@ -142,6 +144,64 @@ function lasReferidas(estado, lista) {
           <span class="fila-sub">${n.fecha_negociacion
             ? `desde ${fechaCorta(n.fecha_negociacion, anio)}`
             : "te toca el 25%"}</span>
+        </span>
+      </button>
+    `);
+    fila.querySelector("[data-negocio]").addEventListener("click",
+      () => estado.irA("ficha", n.id));
+    caja.append(fila);
+  }
+  return trozo;
+}
+
+/* LAS SUPLENCIAS QUE TODAVIA NO COBRASTE. Las pidió Juan acá, debajo de las referidas.
+
+   Es el mismo motivo que las referidas: la propiedad no es tuya, no está en tu portal, el
+   robot no la ve nunca y no figura en ninguna otra pantalla. Si no estuviera acá, la única
+   forma de acordarte de una plata que te deben sería que el colega se acuerde.
+
+   Una que se cayó NO va: ahí no hay nada por cobrar. */
+function suplenciasSinCobrar(estado) {
+  return (estado.datos.negocios || []).filter(
+    (n) => n.estado !== "cerrado" && !estaCaido(n) && n.es_suplencia
+  );
+}
+
+function lasSuplencias(estado, lista) {
+  const anio = Number(estado.hoy.slice(0, 4));
+  const trozo = nodo(html`
+    <div class="separador-indicadores">
+      <span class="separador-nombre">Suplencias</span>
+    </div>
+    <div class="lista" id="lista-suplencias"></div>
+  `);
+
+  const caja = trozo.getElementById("lista-suplencias");
+  for (const n of lista) {
+    const cubierto = n.agente_vende_nombre || n.agente_vende;
+    // Sin el nombre cargado, "cubriste a sin cargar a quién cubriste" no se puede leer.
+    const aQuien = cubierto ? `cubriste a ${cubierto}` : "sin cargar a quién cubriste";
+    /* El monto va en la moneda en que lo vas a cobrar: una suplencia de alquiler que
+       arreglaste en pesos son pesos, y traducirla a dólares acá sería hacerte una cuenta al
+       revés para que la vuelvas a hacer vos. */
+    const enPesos = n.moneda === "UYU" && Number(n.tipo_cambio) > 0;
+    const monto = enPesos
+      ? `$ ${Math.round((n.ganancia || 0) * n.tipo_cambio).toLocaleString("es-UY")}`
+      : plataUSD(n.ganancia);
+    const fila = nodo(html`
+      <button class="fila" data-negocio="${escapar(n.id)}">
+        <span class="fila-cuerpo">
+          <span class="fila-titulo">${escapar(n.direccion || "Sin dirección")}</span>
+          <span class="fila-marca">
+            <span class="chip-estado chip-reservada">${nombreEstado("reservada")}</span>
+            <span class="fila-sub">${escapar(aQuien)}</span>
+          </span>
+        </span>
+        <span class="fila-derecha fila-plata">
+          <span class="cifra cifra-media">${monto}</span>
+          <span class="fila-sub">${n.fecha_boleto
+            ? `desde ${fechaCorta(n.fecha_boleto, anio)}`
+            : "sin cobrar"}</span>
         </span>
       </button>
     `);
