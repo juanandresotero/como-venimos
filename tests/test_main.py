@@ -38,8 +38,15 @@ class TestMain(unittest.TestCase):
         self.carpeta = pathlib.Path(self.tmp.name)
         self.parche_datos = mock.patch.object(almacen, "DATOS", self.carpeta)
         self.parche_datos.start()
+        # La guia de agentes tambien sale por internet, y va en TODAS las corridas — hasta en
+        # las que prueban que la API se cayo. Se parchea aca una vez y no en cada `with`.
+        self.parche_guia = mock.patch.object(
+            main.agentes, "traer",
+            return_value={"bajada_el": "2026-08-18", "oficinas": [], "agentes": []})
+        self.parche_guia.start()
 
     def tearDown(self):
+        self.parche_guia.stop()
         self.parche_datos.stop()
         self.tmp.cleanup()
 

@@ -481,3 +481,64 @@ test("una suplencia sin cobrar no llega a la bandeja de Hoy", () => {
   assert.ok(!grupos.some((g) => g.clave === "suplencia_sin_cobrar"),
     "vive en Cartera, no en Hoy");
 });
+
+/* ================================================== LO QUE PASA CON LO QUE REFERISTE
+
+   Juan: "cuando alguien refiere algo los agentes que recibieron mi referido no me informan de
+   como viene la cosa y este sistema que te planteo aca me garantiza enterarme".
+
+   El robot le mira la cartera al colega y deja estos avisos. Acá se prueba que llegan enteros
+   a la bandeja: con su negocio, con el texto que trae el robot, y con el Sí/No. */
+
+const avisoDelRobot = (tipo, extra = {}) => ({
+  id: `2026-08-21|manual-7|${tipo}`,
+  fecha: "2026-08-21",
+  tipo,
+  entity_id: null,
+  negocio_id: "manual-7",
+  titulo: "Flammarión 5046",
+  direccion: "Flammarión 5046",
+  detalle: "Tu colega publicó «Flammarion 5000». ¿Es la que le referiste?",
+  atendido: false,
+  ...extra,
+});
+
+test("un aviso de referida llega a la bandeja con su negocio", () => {
+  const [g] = derivar([], [avisoDelRobot("referida_candidata", { entity_id: "p-colega" })],
+    "2026-08-21");
+  assert.equal(g.clave, "referida_candidata");
+  assert.equal(g.items[0].negocio_id, "manual-7", "sin esto el botón no sabe a qué ficha ir");
+  assert.match(g.items[0].detalle, /¿Es la que le referiste\?/);
+});
+
+/* SE CONTESTA CON SI O NO Y NADA MAS: el único que sabe es el colega, así que Juan le
+   pregunta y vuelve con la respuesta. "Ya lo resolví" acá no sirve de nada. */
+test("«¿es la que le referiste?» se contesta con sí o no", () => {
+  const [g] = derivar([], [avisoDelRobot("referida_candidata", { entity_id: "p-colega" })],
+    "2026-08-21");
+  assert.deepEqual(accionesDe(g.items[0]).map((a) => a.tipo),
+    ["es-la-referida", "no-es-la-referida"]);
+});
+
+/* Los otros tres no son una pregunta de sí o no: son novedades sobre un negocio tuyo, y lo
+   que corresponde es abrir la ficha. */
+test("los demás avisos de referida abren la ficha del negocio", () => {
+  for (const tipo of ["referida_avanzo", "referida_se_fue", "referida_cambio_precio"]) {
+    const [g] = derivar([], [avisoDelRobot(tipo)], "2026-08-21");
+    assert.equal(accionesDe(g.items[0])[0].tipo, "ficha", tipo);
+    assert.equal(accionesDe(g.items[0])[0].destino, "manual-7", tipo);
+  }
+});
+
+/* "¿SE VENDIO O SE CAYO?" ES LO MAS URGENTE de los cuatro: es el único donde hay plata que
+   podés estar por perder sin enterarte. */
+test("«¿cómo terminó?» sale marcado como urgente", () => {
+  const [g] = derivar([], [avisoDelRobot("referida_se_fue")], "2026-08-21");
+  assert.equal(g.urgente, true);
+});
+
+test("un aviso ya atendido no vuelve a la bandeja", () => {
+  const grupos = derivar([], [avisoDelRobot("referida_avanzo", { atendido: true })],
+    "2026-08-21");
+  assert.deepEqual(grupos, []);
+});

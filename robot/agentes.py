@@ -54,7 +54,38 @@ def _completo(crudo, que: str) -> list:
     return items
 
 
-def traer(bajar=api.bajar) -> dict:
+# CADA CUANTOS DIAS SE VUELVE A BAJAR. Lo pidio Juan asi: "capaz esto lo hace menos
+# frecuente, 1 vez cada 2 o 3 dias". Y tiene razon: la cartera cambia todos los dias, pero
+# que entre o salga un agente de RE/MAX es cosa de meses. Bajar 373 agentes todas las
+# mañanas para que el archivo quede igual es pedirle a la API algo que ya sabemos.
+CADA_CUANTOS_DIAS = 3
+
+
+def _dias(desde: str, hasta: str) -> int:
+    import datetime
+    try:
+        a = datetime.date.fromisoformat(desde)
+        b = datetime.date.fromisoformat(hasta)
+    except (TypeError, ValueError):
+        return 10 ** 6
+    return (b - a).days
+
+
+def toca_bajarla(guia, hoy: str) -> bool:
+    """Si hoy corresponde volver a bajar la guia.
+
+    Sin guia todavia, siempre. Con una del futuro —el reloj de la maquina anda mal, o se
+    probo con FECHA_HOY— tambien se baja: es preferible una llamada de mas que quedarse
+    pegado para siempre con una guia que nunca se va a renovar.
+    """
+    bajada = (guia or {}).get("bajada_el")
+    if not bajada:
+        return True
+    dias = _dias(bajada, hoy)
+    return dias < 0 or dias >= CADA_CUANTOS_DIAS
+
+
+def traer(bajar=api.bajar, hoy: str = "") -> dict:
     """{oficinas: [...], agentes: [...]} listo para guardar."""
     oficinas = [
         {"id": o.get("id"), "nombre": o.get("name"), "direccion": o.get("address") or ""}
@@ -80,4 +111,4 @@ def traer(bajar=api.bajar) -> dict:
 
     oficinas.sort(key=lambda o: o["nombre"].lower())
     agentes.sort(key=lambda a: a["nombre"].lower())
-    return {"oficinas": oficinas, "agentes": agentes}
+    return {"bajada_el": hoy, "oficinas": oficinas, "agentes": agentes}

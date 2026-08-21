@@ -35,9 +35,14 @@ const ARCHIVOS = [
      escribirlo a mano — y con eso queda anotado su ID, que es lo que despues permite ir a
      mirar su cartera y enterarse de como viene el negocio. */
   "agentes_remax",
+  /* LO QUE EL ROBOT VIO EN LA CARTERA DE TUS COLEGAS. Una entrada por cada propiedad que
+     referiste: las candidatas que encontró por la dirección, y —una vez que confirmaste cuál
+     es— en qué estado está y a qué precio. Es cómo Juan se entera de algo que hasta ahora
+     dependía de que el colega se acordara de contárselo. */
+  "referidas",
 ];
 const VACIO_OBJETO = new Set([
-  "cartera", "ajustes", "estado_robot", "mis_datos", "indices", "agentes_remax",
+  "cartera", "ajustes", "estado_robot", "mis_datos", "indices", "agentes_remax", "referidas",
 ]);
 
 const estado = {

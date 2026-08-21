@@ -14,7 +14,7 @@ import datetime
 import os
 import sys
 
-from robot import agentes, almacen, api, indices, modelo, procesar
+from robot import agentes, almacen, api, indices, modelo, procesar, referidas
 
 
 def main() -> int:
@@ -59,12 +59,33 @@ def main() -> int:
         print(f"AVISO: no se pudieron actualizar los indices: {error}", file=sys.stderr)
 
     # La guia de agentes de RE/MAX: quien trabaja en cada oficina. Sirve para elegir a quien
-    # le referiste una propiedad y despues poder mirar su cartera. Va aparte y sin tumbar
-    # nada, igual que los indices: si falla, se sigue usando la guia de ayer.
+    # le referiste una propiedad y despues poder mirar su cartera. Se refresca cada tres dias,
+    # no todos: la cartera cambia a diario, pero que entre o salga alguien de RE/MAX es cosa
+    # de meses. Va aparte y sin tumbar nada, igual que los indices.
+    guia = almacen.leer_json("agentes_remax.json", {})
+    if agentes.toca_bajarla(guia, hoy):
+        try:
+            almacen.escribir_json("agentes_remax.json", agentes.traer(hoy=hoy))
+            print("guia de agentes: actualizada")
+        except Exception as error:   # noqa: BLE001 - nada de afuera puede tumbar la corrida
+            print(f"AVISO: no se pudo actualizar la guia de agentes: {error}", file=sys.stderr)
+    else:
+        print(f"guia de agentes: al dia (bajada el {guia.get('bajada_el')})")
+
+    # LAS PROPIEDADES QUE JUAN REFIRIO A UN COLEGA. Se le mira la cartera al colega, porque
+    # el no le cuenta como viene la cosa. Tambien aparte: si un colega no se puede consultar,
+    # la corrida del dia se guarda igual.
     try:
-        almacen.escribir_json("agentes_remax.json", agentes.traer())
-    except Exception as error:   # noqa: BLE001 - ninguna falla de afuera puede tumbar la corrida
-        print(f"AVISO: no se pudo actualizar la guia de agentes: {error}", file=sys.stderr)
+        negocios = almacen.leer_json("negocios.json", [])   # de la app: se lee, nunca se escribe
+        visto, avisos_referidas = referidas.mirar(
+            negocios, almacen.leer_json("referidas.json", {}), hoy,
+            lambda agente: api.traer_listings(api.url_de(agente)))
+        almacen.escribir_json("referidas.json", visto)
+        eventos.extend(avisos_referidas)
+        for a in avisos_referidas:
+            print(f"  - {a['tipo']}: {a['titulo']}")
+    except Exception as error:   # noqa: BLE001 - nada de afuera puede tumbar la corrida
+        print(f"AVISO: no se pudieron mirar las referidas: {error}", file=sys.stderr)
 
     almacen.escribir_json("cartera.json", cartera)
     almacen.escribir_json("eventos.json", eventos_previos + eventos)

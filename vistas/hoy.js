@@ -15,7 +15,7 @@ import {
   bandeja, cuantosPendientes, accionesDe, sinAtender,
 } from "../lib/pendientes.js";
 import { capas, ritmo, formaDelAnio, comparativaCategorias } from "../lib/salud.js";
-import { marcarAtendido, editarPropiedad } from "../lib/guardado.js";
+import { marcarAtendido, editarPropiedad, editarNegocio } from "../lib/guardado.js";
 import { mandarAlRobot, comoVaElRobot } from "../lib/github.js";
 import { medir, vale_la_pena_ajustar } from "../lib/seguridad.js";
 import { nivelDe, nivelDelObjetivo } from "../lib/niveles.js";
@@ -380,6 +380,38 @@ function dibujarGrupo(grupo, estado) {
         if (accion.tipo === "atendido") {
           // Puede traer varios: un pendiente juntado despacha todos sus avisos de una.
           for (const id of accion.destino) marcarAtendido(estado, id);
+          estado.redibujar();
+        } else if (accion.tipo === "es-la-referida" || accion.tipo === "no-es-la-referida") {
+          /* "¿ES LA QUE LE REFERISTE?" — el único que sabe es el colega, así que Juan le
+             pregunta y vuelve con la respuesta.
+
+             CON UN SÍ quedan enganchadas, y de ahí en más el robot le sigue el rastro solo:
+             cuándo pasa a negociación, cuándo se reserva, cuándo se va del portal. De paso se
+             copian la fecha en que el colega la publicó y el precio al que la publicó, que
+             son los dos datos que Juan no tenía forma de saber.
+
+             CON UN NO queda descartada para siempre: volver a preguntar es hacerle llamar al
+             colega otra vez por lo mismo. */
+          const dice = accion.tipo === "es-la-referida";
+          const negocio = (estado.datos.negocios || [])
+            .find((n) => n.id === item.negocio_id) || {};
+          const visto = ((estado.datos.referidas || {}).negocios || {})[item.negocio_id] || {};
+          const suya = (visto.candidatas || [])
+            .find((c) => c.entity_id === item.entity_id) || {};
+
+          editarNegocio(estado, item.negocio_id, dice
+            ? {
+              referido_entity_id: item.entity_id,
+              fecha_publico_el_colega: estado.hoy,
+              precio_operacion: negocio.precio_operacion || suya.precio_cartera || null,
+            }
+            : {
+              referido_descartadas: [
+                ...(negocio.referido_descartadas || []), item.entity_id,
+              ],
+            });
+          for (const id of item.eventos || []) marcarAtendido(estado, id);
+          await estado.guardar();
           estado.redibujar();
         } else if (accion.tipo === "cuenta" || accion.tipo === "no-cuenta") {
           /* El duplicado: la unica pregunta que hay que contestar es si esa propiedad cuenta

@@ -44,6 +44,20 @@ def bajar(url: str = URL, intentos: int = 3, espera: int = 5):
     )
 
 
+def url_de(asociado: str) -> str:
+    """La cartera de CUALQUIER agente, no solo la de Juan.
+
+    Es la misma llamada publica, cambiando el id. Sirve para seguir las propiedades que Juan
+    refirio a un colega: el no se entera de como viene la cosa si el otro no le cuenta.
+    """
+    return (
+        "https://api-ar.redremax.com/remaxweb-uy/api/listings/findAllWithEntrepreneurships"
+        f"?page=0&pageSize={PAGINA}"
+        f"&eq=associateId:{asociado}"
+        "&eq=entrepreneurship:false"
+    )
+
+
 def traer_listings(url: str = URL) -> list:
     crudo = bajar(url)
     datos = (crudo or {}).get("data") or {}
