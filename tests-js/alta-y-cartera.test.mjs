@@ -320,3 +320,23 @@ test("mientras la captacion sea la estimacion del robot, cualquier fecha la reem
   assert.equal(e.datos.cartera.aaa.fecha_captacion_real, "2026-07-01");
   assert.equal(e.datos.cartera.aaa.fecha_captacion_estimada, false);
 });
+
+/* Borrar un negocio que nació solo se ANOTA en su propiedad: si no, la app se lo vuelve a
+   estrenar al abrirla mañana y borrarlo no serviría de nada. */
+test("borrar un negocio que nació solo se anota en la propiedad", () => {
+  const e = estado();
+  e.datos.negocios.push({
+    id: "manual-9", nacio_solo: true, entity_id_cartera: "aaa", estado: "en_curso",
+  });
+  assert.equal(borrarNegocio(e, "manual-9"), true);
+  assert.equal(e.datos.cartera.aaa.sin_negocio, true);
+  assert.ok(e.sucios.has(ARCHIVO_MIS_DATOS), "se guarda, si no se pierde al cerrar");
+});
+
+test("borrar uno que cargaste vos no anota nada en la propiedad", () => {
+  const e = estado();
+  e.datos.negocios.push({ id: "manual-9", entity_id_cartera: "aaa", estado: "en_curso" });
+  borrarNegocio(e, "manual-9");
+  assert.equal(e.datos.cartera.aaa.sin_negocio, undefined,
+    "lo cargaste a mano: si lo borrás es cosa tuya, no una regla para siempre");
+});

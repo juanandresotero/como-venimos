@@ -66,7 +66,10 @@ export function dibujarFicha(estado) {
   trozo.append(nodo(html`
     <section style="margin-bottom:14px">
       <button class="boton" id="volver" style="padding:8px 13px;font-size:13px">‹ Negocios</button>
-      <p class="etiqueta" style="margin-top:14px">${escapar(TIPOS[n.tipo_negocio] || n.tipo_negocio)} · ${escapar(n.id)}</p>
+      <p class="etiqueta" style="margin-top:14px">${escapar(TIPOS[n.tipo_negocio] || n.tipo_negocio)} · ${escapar(n.id)}${
+        /* Que se sepa que este no lo cargó él. Un negocio que aparece de la nada sin decir de
+           dónde salió se lee como un error de la app, no como una ayuda. */
+        n.nacio_solo ? " · lo abrí yo" : ""}</p>
       <h1 class="titulo" style="font-size:24px;margin-top:4px">${escapar(n.direccion || "Sin dirección")}</h1>
       <p class="apunte">${escapar(n.barrio || "sin barrio")}</p>
     </section>
@@ -267,7 +270,10 @@ function borrar(n, estado) {
   const seccion = nodo(html`
     <section class="tarjeta">
       <p class="apunte" style="margin-bottom:12px">
-        Este negocio lo cargaste a mano. Si lo creaste sin querer, lo podés borrar.
+        ${n.nacio_solo
+          ? "Este negocio lo abrí yo al ver que la propiedad avanzó en RE/MAX. "
+            + "Si no corresponde, borralo: no lo vuelvo a crear."
+          : "Este negocio lo cargaste a mano. Si lo creaste sin querer, lo podés borrar."}
       </p>
       <button class="boton boton-borrar" id="borrar-negocio">Borrar este negocio</button>
     </section>

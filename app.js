@@ -5,7 +5,8 @@ import * as github from "./lib/github.js";
 import * as tema from "./lib/tema.js";
 import { fusionar, completarConNegocios } from "./lib/cartera.js";
 import { revisar } from "./lib/motor.js";
-import { hayCambios, resumenCambios, sincronizar } from "./lib/guardado.js";
+import { hayCambios, resumenCambios, sincronizar, ARCHIVO_NEGOCIOS } from "./lib/guardado.js";
+import { negociosQueFaltan } from "./lib/nacen-solos.js";
 import { dibujarSalud } from "./vistas/salud.js";
 import { dibujarHoy } from "./vistas/hoy.js";
 import { dibujarNegocios } from "./vistas/negocios.js";
@@ -415,6 +416,19 @@ async function arrancar() {
   estado.datos.negocios = (estado.datos.negocios || []).map(
     (n) => revisar(n, estado.datos.ajustes, estado.hoy, estado.datos.cartera)
   );
+
+  /* LOS NEGOCIOS QUE FALTAN NACEN SOLOS. Una venta que paso a negociacion o un alquiler que
+     quedo reservado ya son plata en camino, y hasta ahora habia que cargarlos a mano desde
+     "+ Nuevo" copiando lo que el robot ya tenia delante. Regla de Juan.
+
+     ESTO SI MARCA PARA SUBIR, a diferencia del repaso de arriba: un negocio nuevo es un dato
+     que no existia, y si se quedara solo en memoria desapareceria al cerrar la app. */
+  const reciennacidos = negociosQueFaltan(
+    estado.datos.cartera, estado.datos.negocios, estado.datos.ajustes, estado.hoy);
+  if (reciennacidos.length) {
+    estado.datos.negocios.push(...reciennacidos);
+    estado.sucios.add(ARCHIVO_NEGOCIOS);
+  }
 
   /* Y al reves: la propiedad toma lo que ya esta cargado en sus negocios. Sin esto, un
      dato cargado desde el negocio hace semanas seguia apareciendo en rojo en la ficha de
