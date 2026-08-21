@@ -13,7 +13,6 @@ import {
 } from "../lib/motor.js";
 import {
   AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, EXPLICACION_ORIGEN,
-  ORIGENES_QUE_LLEVAN_NOMBRE,
   MARCAS, marcaActual, admiteMarcas, TIPOS_NEGOCIO, regimenDe,
 } from "../lib/catalogos.js";
 import { ROLES, enlaceWhatsapp, hayPicker, elegirContacto } from "../lib/contactos.js";
@@ -522,21 +521,15 @@ function campos(n, falta, estado) {
     opcionesCon([["", "sin cargar"], ...ORIGENES.map(
       (o) => [o, EXPLICACION_ORIGEN[o] ? `${o} — ${EXPLICACION_ORIGEN[o]}` : o]
     )], n.origen_captacion),
-    falta.has("origen_sin_clasificar"),
-    // Al cambiar de origen, el nombre de quien referia deja de tener sentido.
-    (valor) => (ORIGENES_QUE_LLEVAN_NOMBRE.has(valor) ? {} : { origen_quien: null })
+    falta.has("origen_sin_clasificar")
   );
 
-  /* El origen ya dice quién refirió. Lo único que falta saber es quién en concreto, y solo
-     cuando el que refiere es un grupo, una oficina o un cliente.
+  /* "¿QUIEN EN CONCRETO?" YA NO SE PREGUNTA. Juan: "en ese lugar de dónde me llegó era la
+     respuesta y no quería más específico que las opciones desplegables que tenemos".
 
-     EN UNA REFERIDA NO SE PREGUNTA. Arriba acabás de contestar de qué oficina es el colega y
-     qué agente es; un "¿quién en concreto?" tres renglones más abajo se lee como si te
-     estuviera volviendo a preguntar lo mismo, aunque hable de otra cosa. Lo pidió Juan
-     mirando esa pantalla. */
-  if (ORIGENES_QUE_LLEVAN_NOMBRE.has(n.origen_captacion) && !esReferidaMia(n)) {
-    agregar("origen_quien", "  ↳ ¿Quién en concreto?", "text", n.origen_quien);
-  }
+     La lista de orígenes ya dice lo que hay que saber —qué canal te está dando plata— y para
+     eso alcanza con "Ref. Team" o "Ref. Cliente". Pedir además el nombre era pedir un dato
+     más fino que la pregunta. Y se nota: en 87 negocios nunca lo llenó ni una vez. */
   }
 
   /* "¿ES UNA SUPLENCIA O LA REFERISTE?" SOLO SI NADIE LO ELIGIO.
