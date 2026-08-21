@@ -347,6 +347,25 @@ function recibirLoCompartido() {
   cara = "personal";
 }
 
+/* El atajo del icono: mantener apretado el icono de la app y elegir "Anotar un gasto".
+
+   Va derecho al campo del monto, con el teclado abierto. Anotar un gasto es lo unico que se
+   hace TODOS LOS DIAS y en cualquier lado —parado en la caja del super, con una mano— y cada
+   pantalla de por medio es una razon mas para no hacerlo. Juan lo dijo con todas las letras:
+   "es muy dificil anotar todos mis gastos, seguro que algunas veces me olvidare".
+
+   Corre DESPUES de `entrarPorElNegocio`, que manda a la cara del trabajo: este atajo es la
+   excepcion a esa regla, porque el usuario dijo a donde quiere ir. */
+function atajoDeGasto() {
+  const parametros = new URLSearchParams(location.search);
+  if (parametros.get("anotar") !== "gasto") return;
+  history.replaceState(null, "", `${location.pathname}#personal_variables`);
+  estado.vista = "personal_variables";
+  estado.foco = null;
+  estado.anotarYa = true;
+  cara = "personal";
+}
+
 function entrarPorElNegocio() {
   if (caraDe(estado.vista) !== "personal") return;
   estado.vista = "hoy";
@@ -405,6 +424,7 @@ async function arrancar() {
   leerHash();
   entrarPorElNegocio();
   recibirLoCompartido();
+  atajoDeGasto();
 
   for (const barra of document.querySelectorAll(".navegacion")) {
     barra.addEventListener("click", (evento) => {

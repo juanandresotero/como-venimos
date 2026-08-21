@@ -76,6 +76,16 @@ function elCargador(estado, datos) {
     (v) => { puesto.monto = v; });
   campos.append(campoDelMonto);
 
+  /* Si se entró por el atajo del ícono, el teclado se abre solo: el usuario ya dijo que venía
+     a anotar un gasto, y hacerle tocar el campo es un toque de más justo en lo único que se
+     hace todos los días. Se apaga después del primer dibujo para no robar el foco cuando la
+     pantalla se redibuja sola. */
+  if (estado.anotarYa) {
+    estado.anotarYa = false;
+    const control = campoDelMonto.querySelector(".campo");
+    setTimeout(() => control.focus(), 60);
+  }
+
   for (const boton of seccion.querySelectorAll("[data-moneda]")) {
     boton.addEventListener("click", () => {
       puesto.moneda = boton.dataset.moneda;
