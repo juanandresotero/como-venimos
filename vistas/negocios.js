@@ -3,7 +3,7 @@
 import { plata, plataUSD, pct, fechaCorta, escapar } from "../lib/formato.js";
 import { capas } from "../lib/salud.js";
 import { crearNegocio } from "../lib/guardado.js";
-import { ATAJOS, GRUPOS_ATAJOS, esBusqueda } from "../lib/motor.js";
+import { esBusqueda } from "../lib/motor.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -46,7 +46,6 @@ const filtro = { anio: "todos", tipo: "todos", conAvisos: false, orden: "cierre"
 // Cual de los desplegables del menu esta abierto. Fuera del dibujado: si viviera en el
 // HTML se cerraria solo en cada redibujado.
 let menuAbierto = null;
-let altaAbierta = false;
 // Fuera del dibujado: tocar una propiedad redibuja, y si el estado viviera en el HTML la
 // solapa se cerraria sola en cada toque.
 let potencialesAbierto = false;
@@ -79,7 +78,10 @@ export function dibujarNegocios(estado) {
     <section style="margin-bottom:12px">
       <div class="cabecera-linea">
         <h1 class="titulo" style="font-size:27px">${lista.length} de ${todos.length}</h1>
-        <button class="boton boton-primario boton-chico" id="abrir-alta">+ Nuevo</button>
+        <div class="colgante">
+          <button class="boton boton-primario boton-chico" id="abrir-alta">+ Nuevo</button>
+          <div class="colgante-menu" id="menu-alta" hidden></div>
+        </div>
       </div>
       <div class="resumen-cartera resumen-dos">
         <div class="resumen-dato">
@@ -96,7 +98,7 @@ export function dibujarNegocios(estado) {
 
   trozo.append(barraDeFiltros(estado, todos, anios));
 
-  if (altaAbierta) trozo.append(alta(estado));
+
 
   // Lo publicado que todavia no se movio. Vive aca y no en Salud porque es una lista de
   // propiedades sobre las que hay algo para HACER: entrar, revisar el precio, o apagarla
@@ -113,9 +115,22 @@ export function dibujarNegocios(estado) {
   }
   trozo.append(contenedor);
 
-  trozo.getElementById("abrir-alta").addEventListener("click", () => {
-    altaAbierta = !altaAbierta;
-    estado.redibujar();
+  /* El menú se abre y se cierra SIN redibujar la pantalla: redibujar por abrir un menú
+     manda el scroll arriba y hace pestañear la lista entera. */
+  const boton = trozo.getElementById("abrir-alta");
+  const menu = trozo.getElementById("menu-alta");
+  llenarMenuDeAlta(menu, estado);
+
+  boton.addEventListener("click", (evento) => {
+    evento.stopPropagation();
+    menu.hidden = !menu.hidden;
+    if (!menu.hidden) llenarMenuDeAlta(menu, estado);
+  });
+
+  /* Un toque en cualquier otro lado lo cierra: es lo que hace todo menú, y sin eso queda
+     abierto tapando la lista hasta que alguien se acuerde de tocar el botón otra vez. */
+  document.addEventListener("click", (evento) => {
+    if (!menu.hidden && !menu.contains(evento.target)) menu.hidden = true;
   });
 
   return trozo;
@@ -226,56 +241,61 @@ function barraDeFiltros(estado, todos, anios) {
   return barra;
 }
 
-/* El alta manual (§7.3), agrupada por lo que de verdad se carga desde acá.
+/* EL MENU DE "+ Nuevo": cinco opciones y nada mas.
 
-   Si un negocio hay que cargarlo a mano es porque la propiedad NO está en tu cartera, y
-   entonces el aviso casi siempre era de otro agente: es una búsqueda. Las ventas y
-   alquileres propios quedan abajo, para la propiedad que el robot nunca llegó a ver. */
-function alta(estado) {
-  const seccion = nodo(html`
-    <section class="tarjeta">
-      <h2 class="titulo" style="font-size:17px;margin-bottom:4px">¿Qué querés cargar?</h2>
-      <p class="apunte" style="margin-bottom:14px">
-        Elegí y se abre la ficha con la regla de comisión ya puesta. Después completás
-        precio y fechas.
-      </p>
-      <div id="atajos"></div>
-    </section>
-  `);
-  const contenedor = seccion.getElementById("atajos");
+   Antes era una tarjeta al final de la pantalla, con tres titulos de grupo, un apunte por
+   grupo y una explicacion abajo de cada opcion. Juan lo corto: "tiene muchisimo texto, no
+   tiene que estar explicado porque yo entiendo bien que es cada cosa".
 
-  for (const grupo of GRUPOS_ATAJOS) {
-    const claves = Object.keys(ATAJOS).filter((c) => ATAJOS[c].grupo === grupo.clave);
-    if (!claves.length) continue;
+   Y cuelga DEL BOTON, no del final de la pantalla: un menu que aparece a tres pantallazos de
+   distancia del boton que lo abrio no se lee como un menu, se lee como otra seccion.
 
-    const bloque = nodo(html`
-      <p class="etiqueta" style="margin-top:16px">${escapar(grupo.nombre)}</p>
-      <p class="apunte" style="margin:2px 0 8px">${escapar(grupo.apunte)}</p>
-      <div class="lista"></div>
-    `);
-    const lista = bloque.querySelector(".lista");
+   La busqueda se despliega en dos —venta o alquiler— en vez de ocupar dos renglones: es la
+   unica que tiene esa pregunta, y ponerla como dos opciones sueltas alarga la lista para
+   todos los demas casos. */
+const OPCIONES = [
+  { clave: "busqueda", nombre: "Búsqueda", abre: ["busqueda", "busqueda_alquiler"] },
+  { clave: "suplencia", nombre: "Suplencia" },
+  { clave: "yo_referi", nombre: "Propiedad referida" },
+  { clave: "venta", nombre: "Venta" },
+  { clave: "alquiler", nombre: "Alquiler" },
+];
 
-    for (const clave of claves) {
-      const molde = ATAJOS[clave];
-      const boton = nodo(html`
-        <button class="fila" data-atajo="${clave}">
-          <span class="fila-cuerpo">
-            <span class="fila-titulo">${escapar(molde.nombre)}</span>
-            <span class="fila-sub">${escapar(molde.explicacion)}</span>
-          </span>
-          <span class="fila-derecha"><span class="apunte">›</span></span>
-        </button>
-      `);
-      boton.querySelector(".fila").addEventListener("click", () => {
-        const nuevo = crearNegocio(estado, clave);
-        altaAbierta = false;
-        estado.irA("ficha", nuevo.id);
-      });
-      lista.append(boton);
-    }
-    contenedor.append(bloque);
+const COMO_SE_LLAMA = { busqueda: "De venta", busqueda_alquiler: "De alquiler" };
+
+function llenarMenuDeAlta(caja, estado) {
+  caja.replaceChildren();
+
+  const crear = (clave) => {
+    const nuevo = crearNegocio(estado, clave);
+    estado.irA("ficha", nuevo.id);
+  };
+
+  for (const opcion of OPCIONES) {
+    const fila = document.createElement("button");
+    fila.className = "colgante-opcion";
+    fila.textContent = opcion.nombre;
+    fila.addEventListener("click", (evento) => {
+      /* Sin esto el menú se cierra solo: al reemplazar la fila por las dos opciones, el
+         evento sigue subiendo hasta el `document` — que cierra el menú al tocar afuera— y
+         para entonces la fila tocada YA NO ESTÁ adentro, así que cuenta como afuera. */
+      evento.stopPropagation();
+      if (!opcion.abre) { crear(opcion.clave); return; }
+      /* La búsqueda pregunta de qué: las dos salen en el lugar de la fila que se tocó, así
+         no hay que volver a buscar con la vista dónde estaba. */
+      const dos = document.createElement("div");
+      dos.className = "colgante-dos";
+      for (const clave of opcion.abre) {
+        const chico = document.createElement("button");
+        chico.className = "filtro";
+        chico.textContent = COMO_SE_LLAMA[clave];
+        chico.addEventListener("click", (e) => { e.stopPropagation(); crear(clave); });
+        dos.append(chico);
+      }
+      fila.replaceWith(dos);
+    });
+    caja.append(fila);
   }
-  return seccion;
 }
 
 function fila(n, estado) {

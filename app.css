@@ -796,6 +796,37 @@ body {
   max-width: 640px; margin: 0 auto; padding: 10px 16px 0;
 }
 
+/* ---------- Un menu que cuelga de su boton ---------- */
+
+/* Para el "+ Nuevo" de Negocios. Antes el alta se abria como una tarjeta al FINAL de la
+   pantalla: un menu que aparece a tres pantallazos del boton que lo abrio no se lee como un
+   menu, se lee como otra seccion. */
+.colgante { position: relative; }
+.colgante-menu {
+  position: absolute;
+  top: calc(100% + 6px); right: 0;
+  z-index: 40;
+  min-width: 190px;
+  padding: 6px;
+  background: var(--lienzo);
+  border: 1px solid var(--linea);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(11, 15, 26, .18);
+}
+.colgante-opcion {
+  display: block; width: 100%;
+  padding: 11px 12px;
+  border: none; border-radius: 10px;
+  background: none; color: inherit;
+  font: inherit; font-weight: 600; font-size: 14.5px;
+  text-align: left; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.colgante-opcion:active { background: var(--lienzo-2); }
+/* Las dos de la busqueda salen EN EL LUGAR de la fila que se toco, no abajo de todo: asi no
+   hay que volver a buscar con la vista donde estaba. */
+.colgante-dos { display: flex; gap: 6px; padding: 6px 8px; }
+
 /* ---------- El switch de las dos caras ---------- */
 
 /* Va con los otros dos —el sol/luna y el engranaje—, todos juntos a la derecha.
