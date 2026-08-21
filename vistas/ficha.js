@@ -19,6 +19,7 @@ import {
 import { ROLES, enlaceWhatsapp, hayPicker, elegirContacto } from "../lib/contactos.js";
 import { sugerencias } from "../lib/cruce.js";
 import { cotizacionVigente } from "../lib/cambio.js";
+import { slugDelEnlace } from "../lib/enlace-remax.js";
 import {
   oficinasParaElegir, agentesParaElegir, nombreDeAgente, miId, EXTERIOR,
 } from "../lib/colegas.js";
@@ -630,7 +631,36 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
     // Tu propio id: no te podés referir una propiedad a vos mismo.
     const yo = miId(guia, estado.datos.ajustes);
 
-    agregar("referido_a_oficina", "¿De qué oficina es?", "text", n.referido_a_oficina,
+    /* EL LINK DE LA PUBLICACION ES EL CAMINO CORTO. Con él no hay nada que adivinar: la app
+       le pide esa propiedad a RE/MAX y le sigue el rastro sola, sin buscarla por la dirección
+       y sin que Juan tenga que confirmar cuál es. Lo pidió él: "que pueda directamente poner
+       el link de la propiedad para que le haga seguimiento y no tengo que buscar el match".
+
+       Va ARRIBA de la oficina porque es lo que más sirve: con el link, elegir al colega pasa
+       a ser opcional. */
+    agregar("referido_link", "Link de la publicación (si ya la tenés)", "text",
+      n.referido_link,
+      null, false,
+      /* Se guarda el SLUG, no el link: es lo que la app usa después, y sacarlo una vez acá
+         evita tener que volver a interpretar el texto pegado en cada corrida del robot. */
+      (texto) => ({ referido_slug: slugDelEnlace(texto) }));
+
+    if (n.referido_link && !n.referido_slug) {
+      contenedor.append(nodo(html`
+        <p class="apunte" style="margin:-6px 0 0;padding:0 16px 12px;color:var(--rojo)">
+          Ese no parece un link de RE/MAX. Tiene que empezar con
+          <strong>remax.com.uy/listings/</strong>.
+        </p>`));
+    } else if (n.referido_slug) {
+      contenedor.append(nodo(html`
+        <p class="apunte" style="margin:-6px 0 0;padding:0 16px 12px">
+          Listo: le sigo el rastro a esta publicación sola. No hace falta que confirmes nada.
+        </p>`));
+    }
+
+    agregar("referido_a_oficina",
+      n.referido_slug ? "¿De qué oficina es? (opcional)" : "¿De qué oficina es?",
+      "text", n.referido_a_oficina,
       oficinasParaElegir(guia), false,
       // Al cambiar de oficina, el agente elegido deja de tener sentido.
       () => ({ referido_a_agente: null, referido_a_nombre: null }));

@@ -58,6 +58,33 @@ def url_de(asociado: str) -> str:
     )
 
 
+POR_SLUG = "https://api-ar.redremax.com/remaxweb-uy/api/listings/findBySlug/"
+
+
+def traer_por_slug(slug: str, bajar=None):
+    """Una propiedad sola, por el slug de su link. Devuelve None si no esta.
+
+    Sirve para seguir una propiedad que Juan le refirio a un colega SIN tener que adivinar
+    cual es por la direccion: si el pega el link, es esa y punto.
+
+    OJO: cuando el slug no existe la API contesta 200 con data en null, no 404. Mirar solo el
+    codigo de respuesta daria por buena una propiedad que no existe.
+    """
+    if not slug:
+        return None
+    crudo = (bajar or bajar_json)(POR_SLUG + slug)
+    return (crudo or {}).get("data") or None
+
+
+def bajar_json(url: str):
+    """Como `bajar`, pero un fallo devuelve None en vez de tumbar la corrida. Se usa para
+    cosas sueltas —una propiedad de un colega— donde no encontrarla no es un desastre."""
+    try:
+        return bajar(url)
+    except RuntimeError:
+        return None
+
+
 def traer_listings(url: str = URL) -> list:
     crudo = bajar(url)
     datos = (crudo or {}).get("data") or {}

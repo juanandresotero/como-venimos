@@ -15,9 +15,13 @@ Juan, y se mira todos los dias que paso.
 LOS CUATRO MOMENTOS, en el orden que los conto Juan:
 
   1. Al referir, lo unico que se sabe es la fecha. Eso ya lo pone la app sola.
-  2. El colega la publica. El robot la encuentra por la DIRECCION que Juan cargo y avisa
-     "puede ser esta". Juan le pregunta al colega y contesta si o no. Con un si se cargan
-     la fecha de publicacion y el precio.
+  2. El colega la publica. Hay DOS caminos:
+
+       - CON EL LINK PEGADO, que es el bueno: Juan pega el link de la publicacion y no hay
+         nada que adivinar. Es esa. Lo pidio el: "agregale que pueda directamente poner el
+         link de la propiedad para que le haga seguimiento y no tengo que buscar el match".
+       - SIN EL LINK: el robot la busca por la DIRECCION y avisa "puede ser esta". Juan le
+         pregunta al colega y contesta si o no.
   3. Ya identificada: pasa a negociacion o queda reservada, y se avisa. Puede saltearse la
      negociacion —hay colegas que mandan una venta directo a reservada— asi que se avisa de
      cualquier cambio de estado, no de una secuencia esperada.
@@ -48,12 +52,13 @@ def a_quien_seguir(negocios) -> dict:
     Un negocio CERRADO o CAIDO no se sigue: ya sabes como termino. Y sin colega elegido de la
     guia no hay a quien mirarle la cartera — es el caso de las referidas viejas del Excel, que
     tienen el nombre escrito a mano y nada mas.
+
+    LAS QUE TIENEN EL LINK PEGADO NO ENTRAN ACA: esas se piden directo por su slug y no hace
+    falta la cartera de nadie. Van en `las_del_link`.
     """
     porColega: dict = {}
     for n in negocios or []:
-        if not n.get("yo_referi"):
-            continue
-        if n.get("estado") in ("cerrado", "caido"):
+        if not _se_sigue(n) or n.get("referido_slug"):
             continue
         agente = n.get("referido_a_agente")
         if not agente:
@@ -62,13 +67,54 @@ def a_quien_seguir(negocios) -> dict:
     return porColega
 
 
+def _se_sigue(n) -> bool:
+    return bool(n.get("yo_referi")) and n.get("estado") not in ("cerrado", "caido")
+
+
+def las_del_link(negocios) -> list:
+    """Las referidas con el link pegado. Ahi no hay nada que adivinar: es esa."""
+    return [n for n in negocios or [] if _se_sigue(n) and n.get("referido_slug")]
+
+
+UUID = 36   # largo de "289eef8c-1a9c-4417-b483-8875104847ac"
+
+
+def _barrio(listing: dict) -> str:
+    """El barrio esta en un lado distinto segun de donde venga la propiedad.
+
+    En la lista de un agente viene como `geoLabel` ("La Blanqueada, La Blanqueada, Montevideo")
+    y al pedirla sola por su slug viene desarmado adentro de `geo`. Y `location` NO es el
+    barrio en ninguno de los dos: son las coordenadas.
+    """
+    geo = listing.get("geo") or {}
+    partes = geo.get("countie") or geo.get("citie") or geo.get("label") or ""
+    if partes:
+        return str(partes).split(",")[0].strip().title()
+    return str(listing.get("geoLabel") or "").split(",")[0].strip()
+
+
+def _entity_id(listing: dict):
+    """Al pedir una propiedad por su slug, `entityId` viene en null y el uuid esta en `id`.
+    En la lista de un agente es al reves. Mismo dato, dos nombres."""
+    directo = listing.get("entityId")
+    if directo:
+        return directo
+    suelto = listing.get("id")
+    return suelto if isinstance(suelto, str) and len(suelto) == UUID else None
+
+
 def _propiedad(listing: dict) -> dict:
     """Lo que hace falta de una propiedad ajena. Ni fotos ni descripciones: es de otro."""
-    location = listing.get("location") or {}
     return {
-        "entity_id": listing.get("entityId"),
+        "entity_id": _entity_id(listing),
+        "slug": listing.get("slug") or "",
+        # EL NUMERO INTERNO NO CAMBIA NUNCA. El slug sale del titulo de la publicacion, asi
+        # que si el colega le cambia el titulo, cambia el slug y el link viejo deja de
+        # funcionar. Con el numero interno se la puede volver a encontrar en la cartera del
+        # colega en vez de darla por desaparecida.
+        "internal_id": listing.get("internalId"),
         "direccion": listing.get("displayAddress") or "",
-        "barrio": location.get("name") or listing.get("geoLabel") or "",
+        "barrio": _barrio(listing),
         "precio": listing.get("price"),
         "moneda": _valor(listing.get("currency")) or "USD",
         "operacion": "alquiler" if _valor(listing.get("operation")) == "rent" else "venta",
@@ -101,16 +147,26 @@ def _aviso(tipo, negocio, fecha, texto, extra=None):
     }
 
 
-def mirar(negocios, previo, hoy, traer) -> tuple:
-    """Mira la cartera de cada colega y devuelve (lo que vio, los avisos).
+def mirar(negocios, previo, hoy, traer, por_slug=lambda _: None) -> tuple:
+    """Mira que paso con lo que referiste y devuelve (lo que vio, los avisos).
 
-    `traer(agente_id)` devuelve la lista de propiedades de ese agente. Se pasa como parametro
-    para poder probar esto sin internet.
+    `traer(agente_id)` devuelve la lista de propiedades de ese agente y `por_slug(slug)` una
+    propiedad sola. Se pasan como parametro para poder probar esto sin internet.
     """
     antes = (previo or {}).get("negocios") or {}
     ahora: dict = {}
     avisos: list = []
     carteras: dict = {}
+
+    """PRIMERO LAS DEL LINK. Una sola llamada por propiedad, sin cartera de nadie de por
+    medio y sin nada que confirmar: Juan pego el link, es esa."""
+    for n in las_del_link(negocios):
+        crudo = por_slug(n["referido_slug"])
+        propiedad = _propiedad(crudo) if crudo else None
+        visto, nuevos = _seguir(n, propiedad, antes.get(n["id"]) or {}, hoy)
+        visto["slug"] = n["referido_slug"]
+        ahora[n["id"]] = visto
+        avisos.extend(nuevos)
 
     for agente, suyos in a_quien_seguir(negocios).items():
         if agente not in carteras:
@@ -127,55 +183,15 @@ def mirar(negocios, previo, hoy, traer) -> tuple:
 
 
 def _mirar_una(negocio, propiedades, antes, hoy) -> tuple:
-    """Que pasa con UNA referida: buscarla, o seguirla si ya se sabe cual es."""
+    """Que pasa con UNA referida sin link: buscarla, o seguirla si ya se sabe cual es."""
     elegida = negocio.get("referido_entity_id")
-    descartadas = set(negocio.get("referido_descartadas") or [])
-    avisos = []
-
-    # ---------------------------------------------------------------- ya sabemos cual es
     if elegida:
-        actual = next((p for p in propiedades if p["entity_id"] == elegida), None)
-        antesProp = antes.get("propiedad") or {}
-
-        if actual is None:
-            """SE FUE DEL PORTAL. Si ya la habiamos visto, hay que preguntar como termino."""
-            if antesProp and antesProp.get("activa") is not False:
-                avisos.append(_aviso(
-                    "referida_se_fue", negocio, hoy,
-                    f"Ya no está publicada en la cartera de tu colega. "
-                    f"Estaba {NOMBRES[antesProp.get('estado', 'publicada')]}. "
-                    f"¿Se vendió o se cayó?"))
-            return ({"propiedad": {**antesProp, "activa": False, "visto_ultima_vez":
-                                   antesProp.get("visto_ultima_vez") or hoy},
-                     "candidatas": []}, avisos)
-
-        guardada = {
-            **actual,
-            "activa": True,
-            "visto_primera_vez": antesProp.get("visto_primera_vez") or hoy,
-            "visto_ultima_vez": hoy,
-        }
-
-        """CUALQUIER CAMBIO DE ESTADO SE AVISA, no una secuencia esperada. Juan: "capaz que el
-        colega nunca puso negociacion una venta y la mando directo a reservado porque es nuevo
-        y no sabe como funciona el sistema"."""
-        estadoAntes = antesProp.get("estado")
-        if estadoAntes and estadoAntes != actual["estado"]:
-            avisos.append(_aviso(
-                "referida_avanzo", negocio, hoy,
-                f"La que le referiste pasó de {NOMBRES[estadoAntes]} a "
-                f"{NOMBRES[actual['estado']]}."))
-
-        precioAntes = antesProp.get("precio")
-        if precioAntes and actual["precio"] and precioAntes != actual["precio"]:
-            avisos.append(_aviso(
-                "referida_cambio_precio", negocio, hoy,
-                f"Tu colega le cambió el precio: {_plata(precioAntes)} → "
-                f"{_plata(actual['precio'])} {actual['moneda']}."))
-
-        return ({"propiedad": guardada, "candidatas": []}, avisos)
+        return _seguir(
+            negocio, next((p for p in propiedades if p["entity_id"] == elegida), None),
+            antes, hoy)
 
     # ---------------------------------------------------------------- todavia hay que ubicarla
+    descartadas = set(negocio.get("referido_descartadas") or [])
     candidatas = [
         c for c in cruce.emparejar(
             negocio.get("direccion"), negocio.get("precio_operacion"),
@@ -183,12 +199,13 @@ def _mirar_una(negocio, propiedades, antes, hoy) -> tuple:
         if c["entity_id"] not in descartadas
     ]
     if not candidatas:
-        return ({"propiedad": None, "candidatas": []}, avisos)
+        return ({"propiedad": None, "candidatas": []}, [])
 
-    """SOLO SE AVISA DE LAS QUE NO SE HABIAN VISTO. Sin esto, la misma candidata volveria a
-    aparecer todos los dias hasta que Juan la conteste, y eso convierte la bandeja en ruido."""
+    # SOLO SE AVISA DE LAS QUE NO SE HABIAN VISTO. Sin esto, la misma candidata volveria a
+    # aparecer todos los dias hasta que Juan la conteste, y eso convierte la bandeja en ruido.
     vistas = {c["entity_id"] for c in (antes.get("candidatas") or [])}
     frescas = [c for c in candidatas if c["entity_id"] not in vistas]
+    avisos = []
     if frescas:
         cual = frescas[0]
         avisos.append(_aviso(
@@ -199,6 +216,65 @@ def _mirar_una(negocio, propiedades, antes, hoy) -> tuple:
             {"entity_id": cual["entity_id"]}))
 
     return ({"propiedad": None, "candidatas": candidatas}, avisos)
+
+
+def _seguir(negocio, actual, antes, hoy) -> tuple:
+    """Que le paso a una propiedad que YA sabemos cual es.
+
+    Da igual como se supo —por el link pegado o porque Juan confirmo una candidata—: de aca
+    en adelante es lo mismo. Se avisa de todo lo que cambio y, cuando deja de estar, se
+    pregunta como termino.
+    """
+    antesProp = antes.get("propiedad") or {}
+    avisos = []
+
+    if actual is None:
+        # SE FUE DEL PORTAL. Si ya la habiamos visto, hay que preguntar como termino. Si nunca
+        # la vimos, no hay nada que decir: el colega todavia no la publico.
+        if antesProp and antesProp.get("activa") is not False:
+            avisos.append(_aviso(
+                "referida_se_fue", negocio, hoy,
+                f"Ya no está publicada en la cartera de tu colega. "
+                f"Estaba {NOMBRES[antesProp.get('estado', 'publicada')]}. "
+                f"¿Se vendió o se cayó?"))
+        sigue = {**antesProp, "activa": False,
+                 "visto_ultima_vez": antesProp.get("visto_ultima_vez") or hoy}
+        return ({"propiedad": sigue if antesProp else None, "candidatas": []}, avisos)
+
+    guardada = {
+        **actual,
+        "activa": True,
+        "visto_primera_vez": antesProp.get("visto_primera_vez") or hoy,
+        "visto_ultima_vez": hoy,
+    }
+
+    # LA PRIMERA VEZ QUE APARECE TAMBIEN SE AVISA. Con el link pegado, Juan lo pega el dia que
+    # se la refiere y el colega la publica dias despues: ese "ya la publico" es la primera
+    # noticia que tiene, y hasta ahora dependia de que el colega se acordara de contarsela.
+    if not antesProp:
+        avisos.append(_aviso(
+            "referida_avanzo", negocio, hoy,
+            f"Tu colega ya la publicó: «{actual['direccion']}»"
+            f" por {_plata(actual['precio'])} {actual['moneda']}."))
+
+    # CUALQUIER CAMBIO DE ESTADO SE AVISA, no una secuencia esperada. Juan: "capaz que el
+    # colega nunca puso negociacion una venta y la mando directo a reservado porque es nuevo
+    # y no sabe como funciona el sistema".
+    estadoAntes = antesProp.get("estado")
+    if estadoAntes and estadoAntes != actual["estado"]:
+        avisos.append(_aviso(
+            "referida_avanzo", negocio, hoy,
+            f"La que le referiste pasó de {NOMBRES[estadoAntes]} a "
+            f"{NOMBRES[actual['estado']]}."))
+
+    precioAntes = antesProp.get("precio")
+    if precioAntes and actual["precio"] and precioAntes != actual["precio"]:
+        avisos.append(_aviso(
+            "referida_cambio_precio", negocio, hoy,
+            f"Tu colega le cambió el precio: {_plata(precioAntes)} → "
+            f"{_plata(actual['precio'])} {actual['moneda']}."))
+
+    return ({"propiedad": guardada, "candidatas": []}, avisos)
 
 
 NOMBRES = {

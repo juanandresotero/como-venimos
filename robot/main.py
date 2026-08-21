@@ -79,7 +79,8 @@ def main() -> int:
         negocios = almacen.leer_json("negocios.json", [])   # de la app: se lee, nunca se escribe
         visto, avisos_referidas = referidas.mirar(
             negocios, almacen.leer_json("referidas.json", {}), hoy,
-            lambda agente: api.traer_listings(api.url_de(agente)))
+            lambda agente: api.traer_listings(api.url_de(agente)),
+            api.traer_por_slug)
         almacen.escribir_json("referidas.json", visto)
         eventos.extend(avisos_referidas)
         for a in avisos_referidas:
