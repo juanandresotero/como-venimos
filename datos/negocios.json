@@ -1224,7 +1224,8 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": false,
+  "puntas_confirmadas": true
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2045,12 +2046,7 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "revisar_puntas",
-    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
-   }
-  ],
+  "avisos": [],
   "barrio": "Pando",
   "base": 4500,
   "categoria_vigente": "RAP",
@@ -2082,15 +2078,13 @@
   "yo_referi": false,
   "ficha_vigente": true,
   "fecha_negociacion": "2026-08-17",
-  "cliente_comprador": {
-   "nombre": "Nicolás Por Zapican",
-   "telefono": "+59898548843"
-  },
+  "cliente_comprador": null,
   "cliente_vendedor": {
    "nombre": "Juanjo 2025",
    "telefono": "+598 92 697 996"
   },
-  "ficha_completa_momento": "en_negociacion"
+  "ficha_completa_momento": "en_negociacion",
+  "puntas_confirmadas": true
  },
  {
   "agente_compra": "Otro REMAX",
@@ -2733,7 +2727,8 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": false,
+  "puntas_confirmadas": true
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -3121,12 +3116,7 @@
   "notas": "",
   "manual": true,
   "atajo": "busqueda",
-  "avisos": [
-   {
-    "tipo": "busqueda_en_curso",
-    "detalle": "Estás del lado del comprador y está en negociación. Cuando se firme, cargale la fecha."
-   }
-  ],
+  "avisos": [],
   "ficha_vigente": false,
   "regimen_comision": "captacion_mia",
   "base": 4020,
