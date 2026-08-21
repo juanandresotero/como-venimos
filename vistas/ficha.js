@@ -528,8 +528,13 @@ function campos(n, falta, estado) {
   );
 
   /* El origen ya dice quién refirió. Lo único que falta saber es quién en concreto, y solo
-     cuando el que refiere es un grupo, una oficina o un cliente. */
-  if (ORIGENES_QUE_LLEVAN_NOMBRE.has(n.origen_captacion)) {
+     cuando el que refiere es un grupo, una oficina o un cliente.
+
+     EN UNA REFERIDA NO SE PREGUNTA. Arriba acabás de contestar de qué oficina es el colega y
+     qué agente es; un "¿quién en concreto?" tres renglones más abajo se lee como si te
+     estuviera volviendo a preguntar lo mismo, aunque hable de otra cosa. Lo pidió Juan
+     mirando esa pantalla. */
+  if (ORIGENES_QUE_LLEVAN_NOMBRE.has(n.origen_captacion) && !esReferidaMia(n)) {
     agregar("origen_quien", "  ↳ ¿Quién en concreto?", "text", n.origen_quien);
   }
   }
