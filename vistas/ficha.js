@@ -73,6 +73,7 @@ export function dibujarFicha(estado) {
 
   if (estaCaido(n)) trozo.append(cartelDeCaido(n, estado));
   if (falta.has("cerrar_negocio")) trozo.append(comoTermino(n, estado));
+  if (falta.has("comision_absurda")) trozo.append(plataAcordada(n, estado));
   if (falta.has("revisar_puntas")) trozo.append(confirmarPuntas(n, estado));
   trozo.append(campos(n, falta, estado));
   trozo.append(propiedadVinculada(n, estado));
@@ -534,6 +535,38 @@ function confirmarPuntas(n, estado) {
 
   seccion.getElementById("puntas-ok").addEventListener("click", () => {
     editarNegocio(estado, n.id, { puntas_confirmadas: true });
+    estado.redibujar();
+  });
+  return seccion;
+}
+
+/* ---------- La plata acordada a mano ---------- */
+
+/* Hay operaciones que no salen de ningún porcentaje: un colega que devuelve un favor con un
+   monto, un arreglo puntual entre dos. Ahí el porcentaje no significa nada y lo único que
+   vale es lo facturado y lo que quedó en el bolsillo.
+
+   Marcarlo hace dos cosas: apaga el aviso de "comisión imposible" —que en ese caso no es un
+   error— y BLOQUEA cualquier recálculo futuro, para que una regla que nunca se aplicó no le
+   pise los números al arreglo que de verdad hubo. */
+function plataAcordada(n, estado) {
+  const seccion = nodo(html`
+    <section class="tarjeta" style="border-color:var(--rojo)">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">Ese porcentaje no cierra</h2>
+      <p class="apunte" style="margin-bottom:12px">
+        ${escapar((n.avisos.find((a) => a.tipo === "comision_absurda") || {}).detalle || "")}
+      </p>
+      <div class="botonera">
+        <button class="boton boton-primario" id="acordada">Lo acordamos así</button>
+      </div>
+      <p class="apunte" style="margin-top:10px">
+        Si fue un arreglo puntual y no sale de ningún porcentaje, marcalo: dejo de avisarte y
+        estos montos no se vuelven a calcular solos.
+      </p>
+    </section>
+  `);
+  seccion.getElementById("acordada").addEventListener("click", () => {
+    editarNegocio(estado, n.id, { plata_acordada: true });
     estado.redibujar();
   });
   return seccion;

@@ -908,3 +908,37 @@ test("y se pide a quién se la referiste, que es el único que sabe cómo va", (
   assert.match(n.avisos.find((a) => a.tipo === "referida_en_curso").detalle,
     /a quién se la referiste/);
 });
+
+/* ---------- La plata acordada a mano ---------- */
+
+/* Hay operaciones que no salen de ningún porcentaje. Juan: "es una excepción porque Martín me
+   hizo un favor por otro favor que le había hecho y me quiso dar ese monto. Respeta únicamente
+   el monto facturado y a mi bolsillo, lo demás dejalo". */
+test("con la plata acordada, el porcentaje imposible deja de avisarse", () => {
+  const n = revisar(negocio({
+    pct_comision_total: 0.25, facturacion: 1200, plata_acordada: true,
+  }), AJUSTES, "2026-08-21");
+  assert.ok(!tipos(n).includes("comision_absurda"));
+});
+
+/* Y lo más importante: esos montos NO se vuelven a calcular. Una regla que nunca se aplicó no
+   puede pisarle los números al arreglo que de verdad hubo. */
+test("un negocio con la plata acordada no se recalcula nunca", () => {
+  const n = revisar(negocio({
+    plata_acordada: true, fecha_fin: "2026-06-10", estado: "cerrado",
+    base: 3000, facturacion: 1200, ganancia: 540,
+    regimen_comision: "captacion_mia",
+  }), AJUSTES, "2026-08-21");
+  assert.equal(n.facturacion, 1200, "el monto acordado se respeta");
+  assert.equal(n.ganancia, 540);
+});
+
+/* Sin la marca, ese mismo negocio SÍ se recalcula: es el comportamiento normal. */
+test("sin la marca, la plata se recalcula como siempre", () => {
+  const n = revisar(negocio({
+    fecha_fin: "2026-06-10", estado: "cerrado",
+    base: 3000, facturacion: 1200, ganancia: 540,
+    regimen_comision: "captacion_mia",
+  }), AJUSTES, "2026-08-21");
+  assert.equal(n.facturacion, 3000, "vuelve a salir de la regla");
+});

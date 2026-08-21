@@ -2157,7 +2157,8 @@
   "es_suplencia": true,
   "yo_referi": false,
   "ficha_vigente": true,
-  "ficha_completa_momento": null
+  "ficha_completa_momento": null,
+  "plata_acordada": true
  },
  {
   "agente_compra": "Otro REMAX",
