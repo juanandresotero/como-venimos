@@ -355,12 +355,17 @@ function campos(n, falta, estado) {
   }
 
 
-  /* El BOLETO es de una venta. En un alquiler se firma el contrato y no hay boleto que
-     valga: nombrarlo ahí es pedirle al usuario que traduzca. */
+  /* UN ALQUILER VA: publicado -> reservado -> se va del portal. Sin negociación.
+
+     La RESERVA sí existe —es un estado del portal— lo que no existe es el BOLETO, que es de
+     una venta. Y la FIRMA es el día que se va del portal: eso es el cierre, no la reserva.
+     Lo corrigió Juan. */
   fecha("fecha_boleto", esAlquiler
-    ? "Cuándo se firmó"
+    ? "Cuándo quedó reservada"
     : "Cuándo quedó reservada (boleto)", n.fecha_boleto);
-  fecha("fecha_fin", "Cuándo cerró y cobraste", n.fecha_fin);
+  fecha("fecha_fin", esAlquiler
+    ? "Cuándo se firmó y cobraste"
+    : "Cuándo cerró y cobraste", n.fecha_fin);
   agregar("direccion", "Dirección", "text", n.direccion);
   agregar("barrio", "Barrio", "text", n.barrio);
   agregar("precio_operacion", "Precio de la operación (USD)", "moneda", n.precio_operacion);
