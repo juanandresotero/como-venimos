@@ -15,6 +15,7 @@ import {
   mandadas, vueltas, ordenarParaElHistorial, devolverAlTablero,
 } from "../lib/carta-transito.js";
 import { deBytes } from "../lib/firma.js";
+import { telefonoPropio } from "../lib/contacto-propio.js";
 import { dibujarEn, tintaDePantalla } from "../lib/firma-dibujo.js";
 import { pedirFirma } from "./firma-panel.js";
 import { mirarCarta } from "./carta-mirada.js";
@@ -461,7 +462,7 @@ function pintarPrevia(donde, agente) {
 }
 
 function dibujarBotones(estado, agente) {
-  const telefono = ((estado.datos.ajustes || {}).agente || {}).telefono || "";
+  const telefono = telefonoPropio(estado.datos.ajustes);
   const marca = nodo(html`
     <section class="tarjeta">
       <h2 class="titulo" style="font-size:16px">Mandarla</h2>
@@ -622,7 +623,7 @@ function barraDeCartas(estado) {
   const mirar = (guardada) => {
     mirarCarta(guardada, {
       agente: nombrePropio(estado.datos.ajustes),
-      telefono: ((estado.datos.ajustes || {}).agente || {}).telefono || "",
+      telefono: telefonoPropio(estado.datos.ajustes),
       hoy: estado.hoy,
       alAbrir: () => abrir(guardada),
       /* Mandarla otra vez desde acá deja la carta anotada igual que si se mandara desde la

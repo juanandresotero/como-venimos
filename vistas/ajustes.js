@@ -9,6 +9,7 @@ import {
   plata, pct, fechaRazonable, numeroDesde, formatearMientrasEscribe, escapar,
 } from "../lib/formato.js";
 import * as cuentas from "../lib/cuentas.js";
+import * as contacto from "../lib/contacto-propio.js";
 import { negociosACsv, carteraACsv, nombrePlanilla } from "../lib/planilla.js";
 import { leerFirmaPropia, guardarFirmaPropia, olvidarFirmaPropia }
   from "../lib/carta-guardado.js";
@@ -228,6 +229,7 @@ export function dibujarAjustes(estado) {
     });
   }
 
+  trozo.append(tuTelefono(estado));
   trozo.append(laCopia(estado));
   return trozo;
 }
@@ -513,6 +515,46 @@ function tuNegocio(estado) {
    que falta para hacerse pasar por el agente y mandarle a un cliente "cambio mi cuenta,
    transferi aca". Por eso se guardan en el telefono, como las preferencias de pantalla, y
    hay que cargarlas una vez en cada aparato. Para un dato bancario, es barato. */
+/* El teléfono que va en la ficha del cliente y en la carta oferta.
+
+   Vivía en `datos/ajustes.json`, que es público. Su teléfono solo no es un secreto —es el de
+   trabajo— pero publicado JUNTO A sus cierres, sus comisiones y sus fechas es el material
+   exacto para una estafa dirigida: alguien que lo llama sabiendo que cerró tal propiedad y
+   por cuánto tiene la mitad del trabajo hecho. */
+function tuTelefono(estado) {
+  const puesto = contacto.leer();
+  const deAntes = ((estado.datos.ajustes || {}).agente || {}).telefono || "";
+
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2 class="titulo" style="font-size:17px">Tu teléfono</h2>
+        <span class="apunte">solo en este aparato</span>
+      </div>
+      <p class="apunte" style="margin-bottom:14px">
+        El que sale en la ficha que le mandás a un cliente y al pie de la carta oferta.
+        <strong>No se sube a GitHub</strong>: el repositorio es público, y tu teléfono ahí
+        adentro junto a tus cierres y tus comisiones es lo que le falta a alguien para llamarte
+        haciéndose pasar por el banco.
+      </p>
+      <div class="campo-fila" style="padding:0">
+        <label for="mi-telefono">Teléfono</label>
+        <input class="campo" id="mi-telefono" type="tel" inputmode="tel"
+               placeholder="+598 99 616 633" value="${escapar(puesto.telefono || deAntes)}">
+      </div>
+      <p class="apunte" id="telefono-aviso" style="margin-top:10px"></p>
+    </section>
+  `);
+
+  const campo = seccion.getElementById("mi-telefono");
+  const aviso = seccion.getElementById("telefono-aviso");
+  campo.addEventListener("change", () => {
+    contacto.guardar({ telefono: campo.value.trim() });
+    aviso.textContent = campo.value.trim() ? "Guardado en este teléfono." : "Sin teléfono.";
+  });
+  return seccion;
+}
+
 function cuentasParaCobrar(estado) {
   const guardadas = cuentas.leer();
 

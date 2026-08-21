@@ -1,74 +1,73 @@
 {
- "categorias": [
-  {
-   "categoria": "RAP",
-   "split_pct": 0.45,
-   "fee_mensual_usd": 70,
-   "desde": "2026-01-01",
-   "hasta": null
-  }
- ],
- "escalones": [
-  {
-   "categoria": "RAP",
-   "split_pct": 0.45,
-   "fee_mensual_usd": 70
+  "categorias": [
+    {
+      "categoria": "RAP",
+      "split_pct": 0.45,
+      "fee_mensual_usd": 70,
+      "desde": "2026-01-01",
+      "hasta": null
+    }
+  ],
+  "escalones": [
+    {
+      "categoria": "RAP",
+      "split_pct": 0.45,
+      "fee_mensual_usd": 70
+    },
+    {
+      "categoria": "ALTO",
+      "split_pct": 0.6,
+      "fee_mensual_usd": 425
+    },
+    {
+      "categoria": "PURO",
+      "split_pct": 0.8,
+      "fee_mensual_usd": 975
+    }
+  ],
+  "defaults_comision": {
+    "venta": {
+      "1": 0.03,
+      "2": 0.06
+    },
+    "alquiler": {
+      "1": 1,
+      "2": 2
+    }
   },
-  {
-   "categoria": "ALTO",
-   "split_pct": 0.6,
-   "fee_mensual_usd": 425
+  "regla_martin": {
+    "facturacion": 0.5,
+    "ganancia": 0.35
   },
-  {
-   "categoria": "PURO",
-   "split_pct": 0.8,
-   "fee_mensual_usd": 975
-  }
- ],
- "defaults_comision": {
-  "venta": {
-   "1": 0.03,
-   "2": 0.06
+  "pct_suplencia": 0.125,
+  "pct_referido_saliente": 0.25,
+  "pct_referido_entrante_otro": 0.75,
+  "niveles_remax": {
+    "Rokie": 30000,
+    "Executive": 65000,
+    "Club 100%": 100000,
+    "Platinum": 150000,
+    "Chairman's Club": 225000,
+    "Titan": 300000,
+    "Diamond": 400000
   },
-  "alquiler": {
-   "1": 1,
-   "2": 2
+  "objetivo_personal": {
+    "2025": 65000,
+    "2026": 65000,
+    "2027": 100000
+  },
+  "probabilidades_cierre": {
+    "reservada": 0.9,
+    "en_negociacion": 0.6,
+    "publicada": 0.25
+  },
+  "tipo_cambio": {
+    "usd_uyu": 40.134841,
+    "fecha": "20 Aug 2026",
+    "buscada_el": "2026-08-20"
+  },
+  "agente": {
+    "nombre": "Juan Andrés Otero",
+    "oficina": "Remax Único"
   }
- },
- "regla_martin": {
-  "facturacion": 0.5,
-  "ganancia": 0.35
- },
- "pct_suplencia": 0.125,
- "pct_referido_saliente": 0.25,
- "pct_referido_entrante_otro": 0.75,
- "niveles_remax": {
-  "Rokie": 30000,
-  "Executive": 65000,
-  "Club 100%": 100000,
-  "Platinum": 150000,
-  "Chairman's Club": 225000,
-  "Titan": 300000,
-  "Diamond": 400000
- },
- "objetivo_personal": {
-  "2025": 65000,
-  "2026": 65000,
-  "2027": 100000
- },
- "probabilidades_cierre": {
-  "reservada": 0.9,
-  "en_negociacion": 0.6,
-  "publicada": 0.25
- },
- "tipo_cambio": {
-  "usd_uyu": 40.134841,
-  "fecha": "20 Aug 2026",
-  "buscada_el": "2026-08-20"
- },
- "agente": {
-  "nombre": "Juan Andrés Otero",
-  "oficina": "Remax Único",
-  "telefono": "+59899616633"
- }
 }

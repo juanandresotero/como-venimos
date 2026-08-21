@@ -809,3 +809,29 @@ test("y si le falta algo, se pide eso y sólo eso", () => {
   assert.match(texto, /a qué precio se cierra/);
   assert.doesNotMatch(texto, /quién tiene el aviso/, "ese sí está cargado");
 });
+
+/* ---------- Una comisión imposible en una venta ---------- */
+
+/* Salió de la auditoría del 2026-08-21: `excel-62` dice precio 4.800 con 25% de comisión.
+   Los 1.200 facturados cuadran con 48.000 al 2,5%, así que lo que falta es un cero en el
+   precio. No cambia la plata ya cobrada, pero ensucia el precio promedio y el ticket. */
+test("una venta con 25% de comisión se avisa: no existe", () => {
+  const n = revisar(negocio({ pct_comision_total: 0.25, facturacion: 1200 }),
+    AJUSTES, "2026-08-21");
+  const av = n.avisos.find((a) => a.tipo === "comision_absurda");
+  assert.ok(av);
+  assert.match(av.detalle, /le falta un cero/, "dice qué revisar, no sólo que está mal");
+});
+
+/* EN LOS ALQUILERES NO APLICA: ahí el "porcentaje" son MESES de comisión, y 1,5 quiere decir
+   mes y medio. Sin esta distinción, 46 alquileres de Juan saltarían como error. */
+test("en un alquiler, 1,5 son meses y no se avisa nada", () => {
+  const n = revisar(negocio({ tipo_negocio: "alquiler", pct_comision_total: 1.5 }),
+    AJUSTES, "2026-08-21");
+  assert.ok(!tipos(n).includes("comision_absurda"));
+});
+
+test("una venta con una comisión normal no dispara nada", () => {
+  assert.ok(!tipos(revisar(negocio({ pct_comision_total: 0.03 }), AJUSTES, "2026-08-21"))
+    .includes("comision_absurda"));
+});

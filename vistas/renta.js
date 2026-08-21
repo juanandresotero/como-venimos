@@ -16,6 +16,7 @@ import {
 import { traerCotizacion, cotizacionVigente, estaVencida, comoSeDice } from "../lib/cambio.js";
 import { guardarCalculo, borrarCalculo, editarAjustes } from "../lib/guardado.js";
 import { dibujar as dibujarFicha, nombreImagen, RENTAS } from "../lib/ficha-imagen.js";
+import { telefonoPropio } from "../lib/contacto-propio.js";
 import {
   plata, plataUSD, pct, escapar, numeroDesde, formatearMientrasEscribe,
 } from "../lib/formato.js";
@@ -539,7 +540,13 @@ function inverso(e, estado) {
 async function mandarFicha(estado, cual, cotizacion) {
   const r = calcular(entradas);
   const lienzo = document.createElement("canvas");
-  await dibujarFicha(lienzo, entradas, r, estado.datos.ajustes.agente, {
+  /* El telefono ya no vive en `ajustes`: ese archivo es publico. Se resuelve aca y se le
+     pasa junto con el resto, para que la ficha no tenga que saber de donde sale. */
+  const agente = {
+    ...estado.datos.ajustes.agente,
+    telefono: telefonoPropio(estado.datos.ajustes),
+  };
+  await dibujarFicha(lienzo, entradas, r, agente, {
     mostrar: cual,
     // Que quede escrito a cuanto se tomo el dolar, si es que se uso.
     cotizacion: alquilerEnPesos() ? comoSeDice(cotizacion) : null,
