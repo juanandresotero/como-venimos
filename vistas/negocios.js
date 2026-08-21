@@ -255,13 +255,16 @@ function barraDeFiltros(estado, todos, anios) {
    todos los demas casos. */
 const OPCIONES = [
   { clave: "busqueda", nombre: "Búsqueda", abre: ["busqueda", "busqueda_alquiler"] },
-  { clave: "suplencia", nombre: "Suplencia" },
+  { clave: "suplencia", nombre: "Suplencia", abre: ["suplencia", "suplencia_alquiler"] },
   { clave: "yo_referi", nombre: "Propiedad referida" },
   { clave: "venta", nombre: "Venta" },
   { clave: "alquiler", nombre: "Alquiler" },
 ];
 
-const COMO_SE_LLAMA = { busqueda: "De venta", busqueda_alquiler: "De alquiler" };
+const COMO_SE_LLAMA = {
+  busqueda: "De venta", busqueda_alquiler: "De alquiler",
+  suplencia: "De venta", suplencia_alquiler: "De alquiler",
+};
 
 function llenarMenuDeAlta(caja, estado) {
   caja.replaceChildren();

@@ -76,7 +76,9 @@ export function dibujarFicha(estado) {
   if (falta.has("comision_absurda")) trozo.append(plataAcordada(n, estado));
   if (falta.has("revisar_puntas")) trozo.append(confirmarPuntas(n, estado));
   trozo.append(campos(n, falta, estado));
-  trozo.append(propiedadVinculada(n, estado));
+  /* 10) EN UNA SUPLENCIA NO SE BUSCA LA PROPIEDAD EN TU CARTERA: si estás cubriendo a
+     alguien, esa propiedad justamente NO es tuya. */
+  if (!esSuplencia(n)) trozo.append(propiedadVinculada(n, estado));
   trozo.append(gente(n, estado));
   trozo.append(avisos(n));
   if (!estaCaido(n)) trozo.append(fichaCompleta(n, estado));
@@ -168,7 +170,21 @@ function gente(n, estado) {
   `);
   const contenedor = seccion.getElementById("roles");
 
-  for (const [clave, etiqueta] of ROLES) {
+  /* CADA TIPO DE NEGOCIO TIENE SUS CLIENTES, y los demás no existen.
+
+     En una SUPLENCIA sólo hay uno: el que fue a ver la propiedad. El que vende es cliente del
+     colega al que cubriste, y no referiste a nadie.
+     En una REFERIDA, el que te llamó a vos: ni el vendedor ni el comprador son tuyos.
+     En una BÚSQUEDA, el comprador. */
+  const soloEstos = esSuplencia(n)
+    ? ["cliente_comprador"]
+    : n.yo_referi
+      ? ["cliente_referido"]
+      : esBusqueda(n, estado.datos.ajustes)
+        ? ["cliente_comprador"]
+        : ["cliente_vendedor", "cliente_comprador"];
+
+  for (const [clave, etiqueta] of ROLES.filter(([c]) => soloEstos.includes(c))) {
     const persona = n[clave] || {};
     const url = enlaceWhatsapp(persona.telefono);
     const bloque = document.createElement("div");
@@ -234,6 +250,13 @@ function borrar(n, estado) {
   return seccion;
 }
 
+/* Cada tipo de negocio necesita cosas distintas, y mostrar todo siempre llenaba la ficha de
+   preguntas sin respuesta posible. Juan lo vio mirando UNA suplencia: le pedia cuando se
+   publico (no importa), como llego (no llego a el), si era una suplencia (ya lo habia
+   elegido), la propiedad de su cartera (si cubre, no es suya) y el cliente que referio (no
+   referio nada). */
+const esSuplencia = (n) => Boolean((n || {}).es_suplencia);
+
 function campos(n, falta, estado) {
   const seccion = nodo(html`
     <section class="tarjeta" style="padding:0;overflow:hidden">
@@ -297,6 +320,7 @@ function campos(n, falta, estado) {
      apareció tu comprador — la app ya la puso sola. Los campos siguen apareciendo si
      tienen algo cargado, para poder verlo y corregirlo, pero no se piden en blanco. */
   const busqueda = esBusqueda(n, estado.datos.ajustes);
+  const suplencia = esSuplencia(n);
   let paso = 0;
   const fecha = (clave, nombre, valor, saltear) => {
     if (saltear && !valor) return;
@@ -304,33 +328,37 @@ function campos(n, falta, estado) {
     agregar(clave, `${paso} · ${nombre}`, "date", valor);
   };
 
-  // La de publicacion se esconde solo si esta vacia: un negocio viejo que la trae del
-  // Excel tiene que seguir viendose y pudiendose corregir.
-  fecha("fecha_inicio", "Cuándo se publicó", n.fecha_inicio, busqueda);
+  /* CUANDO SE PUBLICO no se pide en una busqueda ni en una suplencia: el aviso era de otro y
+     esa propiedad ni es tuya. Se sigue mostrando si el negocio YA la trae —uno viejo del
+     Excel— para poder corregirla. */
+  fecha("fecha_inicio", "Cuándo se publicó", n.fecha_inicio, busqueda || suplencia);
 
   /* En una busqueda la fecha de negociacion viene puesta con el dia de la carga, pero
      queda EDITABLE. Estaba como un texto fijo y era un error: si la cargas tarde — te
      acordaste recien cuando quedo reservada — esa fecha esta mal y tenes que poder
      corregirla. Que venga contestada no es lo mismo que no poder cambiarla. */
-  fecha("fecha_negociacion",
-    busqueda
-      ? "Cuándo pasó a negociación"
-      : `Cuándo pasó a negociación${esAlquiler ? " (los alquileres casi nunca pasan por acá)" : ""}`,
-    n.fecha_negociacion);
-
-  if (busqueda) {
-    contenedor.append(nodo(html`
-      <p class="apunte" style="margin:-6px 0 0;padding:0 16px 12px">
-        Viene puesta con el día que cargaste el negocio, que es cuando apareció tu
-        comprador. Si la cargaste tarde, corregila.
-      </p>`));
+  /* EN UN ALQUILER NO HAY NEGOCIACION: se firma y listo. En una suplencia de alquiler ese
+     renglon era una pregunta sin respuesta posible, así que directamente no está. */
+  if (!(suplencia && esAlquiler)) {
+    fecha("fecha_negociacion",
+      busqueda || suplencia
+        ? "Cuándo pasó a negociación"
+        : `Cuándo pasó a negociación${esAlquiler ? " (los alquileres casi nunca pasan por acá)" : ""}`,
+      n.fecha_negociacion);
   }
-  fecha("fecha_boleto", "Cuándo quedó reservada (boleto)", n.fecha_boleto);
+
+
+  fecha("fecha_boleto", suplencia && esAlquiler
+    ? "Cuándo quedó reservada"
+    : "Cuándo quedó reservada (boleto)", n.fecha_boleto);
   fecha("fecha_fin", "Cuándo cerró y cobraste", n.fecha_fin);
   agregar("direccion", "Dirección", "text", n.direccion);
   agregar("barrio", "Barrio", "text", n.barrio);
   agregar("precio_operacion", "Precio de la operación (USD)", "moneda", n.precio_operacion);
   agregar("pct_comision_total", "% de comisión (0,03 = 3%)", "number", n.pct_comision_total);
+
+  /* En una SUPLENCIA no se pregunta como llego el negocio ni si es una suplencia: lo primero
+     no llego a vos —cubriste una visita de otro— y lo segundo ya se eligio al crearla. */
 
   agregarAgentes(contenedor, n, falta, estado, agregar);
 
@@ -344,6 +372,9 @@ function campos(n, falta, estado) {
       opcionesCon([[1, "1 punta"], [2, "2 puntas"]], n.puntas));
   }
 
+  /* EN UNA SUPLENCIA NO SE PREGUNTA COMO LLEGO: no llegó a vos. Cubriste la visita de un
+     colega sobre una propiedad que no es tuya y con un cliente que no es tuyo. */
+  if (!suplencia) {
   // En una búsqueda no hubo captación: lo que salió de algún lado es el COMPRADOR.
   agregar(
     "origen_captacion",
@@ -363,8 +394,12 @@ function campos(n, falta, estado) {
   if (ORIGENES_QUE_LLEVAN_NOMBRE.has(n.origen_captacion)) {
     agregar("origen_quien", "  ↳ ¿Quién en concreto?", "text", n.origen_quien);
   }
+  }
 
-  agregarMarcas(contenedor, n, estado);
+  /* 9) LAS MARCAS TAMPOCO: "¿es una suplencia o la referiste?" ya se contestó al tocar
+     "+ Nuevo". Volver a preguntarlo adentro es preguntar dos veces lo mismo, y encima deja
+     abierta la puerta a que las dos respuestas no coincidan. */
+  if (!suplencia && !n.yo_referi) agregarMarcas(contenedor, n, estado);
 
   agregar("tipo_negocio", "Tipo", "text", n.tipo_negocio, opcionesCon(TIPOS_NEGOCIO, n.tipo_negocio));
   agregar("notas", "Notas", "text", n.notas);
@@ -377,6 +412,16 @@ function campos(n, falta, estado) {
 
    Es información interna: no lleva teléfono. Los que sí lo llevan son los clientes, que
    van más abajo con su botón de WhatsApp. */
+/* A quién le podés cubrir una visita. Nunca a un dueño que vende solo —ahí no hay agente a
+   quién cubrir— ni a vos mismo. Lo acotó Juan mirando su primera suplencia. */
+const A_QUIEN_SE_CUBRE = [
+  "Martin Sedes",
+  "Team",
+  "Ofi Único",
+  "Otra Oficina",
+  "Otros",
+];
+
 function agregarAgentes(contenedor, n, falta, estado, agregar) {
   const faltanAgentes = falta.has("faltan_agentes");
 
@@ -409,6 +454,20 @@ function agregarAgentes(contenedor, n, falta, estado, agregar) {
       agregar(`${clave}_nombre`, "  ↳ ¿Quién en concreto?", "text", n[`${clave}_nombre`]);
     }
   };
+
+  /* EN UNA SUPLENCIA la pregunta es OTRA: no es "quién tenía el aviso" sino "a quién
+     cubriste". Y la lista es más corta — nunca cubrís a un dueño que vende solo, ni a vos
+     mismo. */
+  if (esSuplencia(n)) {
+    agregar("agente_vende", "¿A quién cubriste?", "text", n.agente_vende,
+      opcionesCon([["", "sin cargar"], ...A_QUIEN_SE_CUBRE], n.agente_vende),
+      false,
+      (valor) => (AGENTES_QUE_LLEVAN_NOMBRE.has(valor) ? {} : { agente_vende_nombre: null }));
+    if (AGENTES_QUE_LLEVAN_NOMBRE.has(n.agente_vende)) {
+      agregar("agente_vende_nombre", "  ↳ ¿Quién en concreto?", "text", n.agente_vende_nombre);
+    }
+    return;
+  }
 
   lado("agente_vende", "Quién tenía el aviso", true);
   /* "Quién trajo al comprador" sólo se muestra una vez confirmadas las puntas: mientras

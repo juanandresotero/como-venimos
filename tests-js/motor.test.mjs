@@ -521,12 +521,35 @@ test("una busqueda arranca sin fecha de publicacion y con la negociacion de hoy"
   }
 });
 
-test("los demas atajos siguen arrancando con la fecha de inicio de hoy", () => {
-  for (const atajo of ["suplencia", "yo_referi"]) {
+/* UNA SUPLENCIA SE ANOTA CUANDO YA PASO. Juan: "si la estoy ingresando es porque se cerró la
+   negociación". Así que la fecha viene puesta con el día de la carga —y queda editable, por
+   si la anotó tarde. Y "cuándo se publicó" no se pide: esa propiedad ni es suya. */
+test("una suplencia de venta nace con la fecha de negociación de hoy", () => {
+  const p = plantillaNegocio("suplencia", AJUSTES, "2026-08-18");
+  assert.equal(p.fecha_negociacion, "2026-08-18");
+  assert.equal(p.fecha_inicio, null, "cuándo se publicó no importa: no es tu propiedad");
+});
+
+/* EN UN ALQUILER NO HAY NEGOCIACIÓN: se firma y listo. Ahí la que se pone es la reserva. */
+test("una suplencia de alquiler nace con la reserva de hoy, sin negociación", () => {
+  const p = plantillaNegocio("suplencia_alquiler", AJUSTES, "2026-08-18");
+  assert.equal(p.fecha_boleto, "2026-08-18");
+  assert.equal(p.fecha_negociacion, null, "un alquiler no pasa por negociación");
+  assert.equal(p.tipo_negocio, "alquiler");
+});
+
+test("las dos suplencias cobran igual: el 12,5% y no facturan", () => {
+  for (const atajo of ["suplencia", "suplencia_alquiler"]) {
     const p = plantillaNegocio(atajo, AJUSTES, "2026-08-18");
-    assert.equal(p.fecha_inicio, "2026-08-18");
-    assert.equal(p.fecha_negociacion, null);
+    assert.equal(p.es_suplencia, true);
+    assert.equal(p.puntas, 0);
   }
+});
+
+test("un referido que das sigue arrancando con la fecha de publicación", () => {
+  const p = plantillaNegocio("yo_referi", AJUSTES, "2026-08-18");
+  assert.equal(p.fecha_inicio, "2026-08-18");
+  assert.equal(p.fecha_negociacion, null);
 });
 
 test("a una busqueda no se le reclama la fecha de publicacion", () => {

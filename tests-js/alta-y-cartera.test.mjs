@@ -39,17 +39,19 @@ test("el id nuevo no pisa ninguno de los que ya hay", () => {
   assert.equal(nuevoId([]), "manual-1");
 });
 
-test("los seis atajos existen, agrupados, y cada uno trae su regla de plata", () => {
-  assert.deepEqual(Object.keys(ATAJOS).sort(),
-    ["alquiler", "busqueda", "busqueda_alquiler", "suplencia", "venta", "yo_referi"]);
+test("los atajos existen y cada uno trae su regla de plata", () => {
+  assert.deepEqual(Object.keys(ATAJOS).sort(), [
+    "alquiler", "busqueda", "busqueda_alquiler",
+    "suplencia", "suplencia_alquiler", "venta", "yo_referi",
+  ]);
   // La regla de comision ya no se elige a mano: sale del origen mas estas dos marcas.
   assert.equal(ATAJOS.suplencia.marca, "es_suplencia");
+  assert.equal(ATAJOS.suplencia_alquiler.marca, "es_suplencia");
   assert.equal(ATAJOS.yo_referi.marca, "yo_referi");
-  // Todo atajo tiene que caer en alguno de los grupos que se dibujan, o queda invisible.
+  // Todo atajo tiene que caer en alguno de los grupos, aunque el menu ya no los dibuje.
   const grupos = new Set(GRUPOS_ATAJOS.map((g) => g.clave));
   for (const [clave, molde] of Object.entries(ATAJOS)) {
-    assert.ok(grupos.has(molde.grupo), `el atajo ${clave} está en un grupo que no se dibuja`);
-    assert.ok(molde.explicacion, `al atajo ${clave} le falta la explicación`);
+    assert.ok(grupos.has(molde.grupo), `el atajo ${clave} está en un grupo que no existe`);
   }
 });
 
