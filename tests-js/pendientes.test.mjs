@@ -469,3 +469,15 @@ test("un duplicado ofrece las dos respuestas y ninguna otra", () => {
   assert.equal(acciones[1].tipo, "no-cuenta");
   assert.equal(acciones[0].destino, "p2", "la que se toca es la duplicada, no la original");
 });
+
+/* Juan: "sacala de hoy y dejala solo en cartera". Una suplencia sin cobrar tiene su lugar en
+   Cartera, debajo de las busquedas y las referidas. En la bandeja de Hoy va lo que hay que
+   hacer HOY, y una suplencia se cobra el dia que el colega paga. */
+test("una suplencia sin cobrar no llega a la bandeja de Hoy", () => {
+  const grupos = derivar([{
+    id: "sup", es_suplencia: true, estado: "en_curso", direccion: "Rivera 2500",
+    avisos: [{ tipo: "suplencia_sin_cobrar", detalle: "Ponele la fecha de cierre." }],
+  }], [], "2026-08-21");
+  assert.ok(!grupos.some((g) => g.clave === "suplencia_sin_cobrar"),
+    "vive en Cartera, no en Hoy");
+});
