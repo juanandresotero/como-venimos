@@ -539,3 +539,36 @@ test("lo que se agrega sobrevive a guardar y volver a leer", () => {
   guardar(agregarCategoria(sanear({ arranque: ARRANQUE }), "Mascotas"), d);
   assert.ok(categoriasDe(leer(d)).includes("Mascotas"));
 });
+
+/* ============================================ LA PLATA ENTRA EN LA MONEDA EN QUE LA COBRASTE
+
+   Juan: "si cobro en pesos luego en la cara personal me ingresa como moneda pesos o al revez".
+
+   El negocio cuenta en dolares —asi lo mide RE/MAX— pero a la cuenta entro lo que entro. El
+   tipo de cambio es el que quedo guardado EN EL NEGOCIO: un alquiler cobrado en marzo entro
+   al dolar de marzo, y que se moviera solo cada dia seria mentir sobre lo que entro. */
+
+const EN_PESOS = [{
+  id: "alq", estado: "cerrado", fecha_fin: "2026-08-25", ganancia: 500,
+  moneda: "UYU", tipo_cambio: 40, direccion: "Vidal 3100",
+}];
+
+test("un alquiler cobrado en pesos cae en la caja de pesos", () => {
+  const s = saldos(conDatos(), EN_PESOS, "2026-08-31");
+  assert.equal(s.UYU, 3800 + 20000, "500 dólares a 40 son 20.000 pesos");
+  assert.equal(s.USD, 750, "en dólares no entró nada");
+});
+
+test("sin moneda cargada la plata sigue siendo dólares", () => {
+  const s = saldos(conDatos(), [{
+    id: "viejo", estado: "cerrado", fecha_fin: "2026-08-25", ganancia: 500,
+  }], "2026-08-31");
+  assert.equal(s.USD, 750 + 500, "los negocios viejos no tienen moneda y todos eran dólares");
+  assert.equal(s.UYU, 3800);
+});
+
+test("el cobro dice en qué moneda entró", () => {
+  const [c] = cobrosDeNegocios(EN_PESOS, "2026-08-20");
+  assert.equal(c.moneda, "UYU");
+  assert.equal(c.monto, 20000);
+});

@@ -16,6 +16,7 @@ const AJUSTES = {
   defaults_comision: { venta: { 1: 0.03, 2: 0.06 }, alquiler: { 1: 1.0, 2: 2.0 } },
   regla_martin: { facturacion: 0.5, ganancia: 0.35 },
   pct_suplencia: 0.125, pct_referido_saliente: 0.25, pct_referido_entrante_otro: 0.75,
+  tipo_cambio: { usd_uyu: 40 },
 };
 
 function estado() {
@@ -136,10 +137,31 @@ test("un negocio creado desde una propiedad queda enganchado a ella", () => {
   const e = estado();
   const nuevo = crearNegocio(e, "alquiler", {
     entity_id_cartera: "aaa", direccion: "Vidal 3100", precio_operacion: 900,
+    moneda: "USD",
   });
   assert.equal(nuevo.entity_id_cartera, "aaa");
   assert.equal(nuevo.precio_operacion, 900);
   assert.equal(nuevo.base, 1800, "el aviso es tuyo: arranca con las dos puntas, dos meses");
+});
+
+/* UN ALQUILER NACE EN PESOS, que es como se cobran casi todos acá. La cuenta se hace en
+   pesos y recién ahí se pasa a dólares, porque `base`, `facturacion` y `ganancia` son
+   dólares en toda la app. */
+test("un alquiler nace en pesos y su comisión se cuenta en dólares", () => {
+  const e = estado();
+  const nuevo = crearNegocio(e, "alquiler", { precio_operacion: 40000 });
+  assert.equal(nuevo.moneda, "UYU");
+  assert.equal(nuevo.tipo_cambio, 40, "se guarda a cuánto estaba el dólar, no se mira el de hoy");
+  assert.equal(nuevo.base, 2000, "dos meses de 40.000 pesos, a 40 = 2.000 dólares");
+});
+
+/* Y UNA VENTA NACE EN DOLARES SIEMPRE: "excepto venta que no existe la opción pesos". */
+test("una venta nace en dólares y no arrastra tipo de cambio", () => {
+  const e = estado();
+  const nuevo = crearNegocio(e, "venta", { precio_operacion: 100000 });
+  assert.equal(nuevo.moneda, "USD");
+  assert.equal(nuevo.tipo_cambio, null);
+  assert.equal(nuevo.base, 6000);
 });
 
 test("una búsqueda cargada sobre una propiedad ajena factura la mitad", () => {

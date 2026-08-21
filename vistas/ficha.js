@@ -18,6 +18,13 @@ import {
 } from "../lib/catalogos.js";
 import { ROLES, enlaceWhatsapp, hayPicker, elegirContacto } from "../lib/contactos.js";
 import { sugerencias } from "../lib/cruce.js";
+import { cotizacionVigente } from "../lib/cambio.js";
+
+const redondear = (x) => (x ? Math.round(x * 100) / 100 : null);
+
+/* Un negocio cobrado en pesos: la app lo cuenta en dólares y hay que decirlo, si no el
+   "a tu bolsillo USD 897" de un alquiler de 40.000 pesos se lee como un error. */
+const enPesosEsto = (n) => n.moneda === "UYU" && Number(n.tipo_cambio) > 0 && Number(n.ganancia) > 0;
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -68,6 +75,14 @@ export function dibujarFicha(estado) {
         <div class="dato"><span class="dato-nombre">Facturación RE/MAX</span><span class="dato-valor">${plataUSD(n.facturacion)}</span></div>
         <div class="dato"><span class="dato-nombre">A tu bolsillo</span><span class="dato-valor">${plataUSD(n.ganancia)}</span></div>
       </div>
+      ${enPesosEsto(n)
+        ? html`<p class="apunte" style="margin-top:10px">
+            Cobrado en pesos: a tu bolsillo entran <strong>$ ${escapar(
+              Math.round(n.ganancia * n.tipo_cambio).toLocaleString("es-UY"))}</strong>.
+            Acá se cuenta en dólares porque así te mide RE/MAX, al cambio de
+            ${escapar(String(n.tipo_cambio).replace(".", ","))}.
+          </p>`
+        : ""}
       <p class="apunte" style="margin-top:12px">${escapar(explicarRegimen(n))}</p>
     </section>
   `));
@@ -133,13 +148,24 @@ function propiedadVinculada(n, estado) {
     </section>
   `);
 
+  /* AL ENGANCHAR UNA PROPIEDAD, LA MONEDA SALE DEL PORTAL. Es la regla de siempre: si RE/MAX
+     dice en qué moneda está publicada, la app no tiene por qué adivinarlo ni preguntarlo. */
+  const conLaMonedaDelPortal = (entityId) => {
+    const p = (estado.datos.cartera || {})[entityId] || {};
+    return p.moneda === "UYU" || p.moneda === "USD"
+      ? { entity_id_cartera: entityId, moneda: p.moneda }
+      : { entity_id_cartera: entityId };
+  };
+
   marca.getElementById("campo-propiedad").addEventListener("change", (evento) => {
-    editarNegocio(estado, n.id, { entity_id_cartera: evento.target.value || null });
+    editarNegocio(estado, n.id, evento.target.value
+      ? conLaMonedaDelPortal(evento.target.value)
+      : { entity_id_cartera: null });
     estado.redibujar();
   });
   for (const boton of marca.querySelectorAll("[data-enganchar]")) {
     boton.addEventListener("click", () => {
-      editarNegocio(estado, n.id, { entity_id_cartera: boton.dataset.enganchar });
+      editarNegocio(estado, n.id, conLaMonedaDelPortal(boton.dataset.enganchar));
       estado.redibujar();
     });
   }
@@ -376,6 +402,24 @@ function campos(n, falta, estado) {
     : "Cuándo cerró y cobraste", n.fecha_fin);
   agregar("direccion", "Dirección", "text", n.direccion);
   agregar("barrio", "Barrio", "text", n.barrio);
+  /* LA MONEDA. Un alquiler en Uruguay casi siempre se cobra en pesos; una VENTA es siempre
+     en dólares y ahí ni se pregunta —"excepto venta que no existe la opción pesos", Juan—.
+
+     No es un detalle de presentación: de esto depende en qué caja entra la plata en la cara
+     personal. El negocio igual se cuenta en dólares, con el tipo de cambio de abajo. */
+  const enPesos = n.moneda === "UYU";
+  if (esAlquiler) {
+    agregar("moneda", "En qué moneda se cobra", "text", n.moneda || "UYU",
+      [["UYU", "Pesos"], ["USD", "Dólares"]],
+      false,
+      // Al pasar a pesos hay que saber a cuánto está el dólar; al volver, ese dato sobra.
+      (valor) => (valor === "UYU"
+        // Redondeado: el servicio devuelve 40,134841 y ese sexto decimal en pantalla no
+        // agrega nada, sólo hace ilegible el renglón.
+        ? { tipo_cambio: n.tipo_cambio || redondear(cotizacionVigente(estado.datos.ajustes).valor) }
+        : { tipo_cambio: null }));
+  }
+
   /* EN UNA SUPLENCIA LO UNICO QUE IMPORTA ES CUANTO COBRASTE.
 
      Cubriste la visita de un colega: no facturás nada por RE/MAX y lo que entra es lo que
@@ -386,7 +430,8 @@ function campos(n, falta, estado) {
      El precio y el % siguen a la vista si el negocio YA los trae, que es como vinieron las
      suplencias del Excel: ahí el monto sale del 12,5% mientras no escriba uno. */
   if (suplencia) {
-    agregar("cobrado_suplencia", "Cuánto cobraste (USD)", "moneda", n.cobrado_suplencia);
+    agregar("cobrado_suplencia", `Cuánto cobraste (${enPesos ? "$" : "USD"})`,
+      "moneda", n.cobrado_suplencia);
   }
   /* En una suplencia el precio y el % SOLO se muestran si hay un precio cargado, que es como
      vinieron las del Excel: ahí el monto sale del 12,5% mientras no escriba uno.
@@ -395,8 +440,25 @@ function campos(n, falta, estado) {
      decidir dejaría el renglón puesto siempre. */
   const laPlataVieja = !suplencia || Boolean(n.precio_operacion);
   if (laPlataVieja) {
-    agregar("precio_operacion", "Precio de la operación (USD)", "moneda", n.precio_operacion);
-    agregar("pct_comision_total", "% de comisión (0,03 = 3%)", "number", n.pct_comision_total);
+    /* En un alquiler el "precio" es EL ALQUILER POR MES: el % de comisión son meses (1,5 = un
+       mes y medio), no un porcentaje del precio. Llamarlo "precio de la operación" obligaba a
+       traducir. */
+    agregar("precio_operacion",
+      esAlquiler
+        ? `Alquiler por mes (${enPesos ? "$" : "USD"})`
+        : "Precio de la operación (USD)",
+      "moneda", n.precio_operacion);
+    agregar("pct_comision_total",
+      esAlquiler ? "Comisión en meses (1,5 = mes y medio)" : "% de comisión (0,03 = 3%)",
+      "number", n.pct_comision_total);
+  }
+
+  /* EL TIPO DE CAMBIO SE GUARDA EN EL NEGOCIO, no se mira el de hoy cada vez: un alquiler
+     cobrado en marzo se cobró al dólar de marzo, y que su ganancia en dólares se moviera sola
+     todos los días sería mentir sobre lo que entró. Viene puesto con el del día y es
+     editable. */
+  if (enPesos) {
+    agregar("tipo_cambio", "A cuánto estaba el dólar", "number", n.tipo_cambio);
   }
 
   /* En una SUPLENCIA no se pregunta como llego el negocio ni si es una suplencia: lo primero
