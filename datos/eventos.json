@@ -237,5 +237,33 @@
   "internal_id": "940041154-219",
   "tipo": "alta",
   "titulo": "Venta Apto 1 dormitorio con cochera la Blanqueda"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "ahora": "publicada",
+   "antes": "en_negociacion"
+  },
+  "direccion": "Juana de Ibarbourou 200",
+  "entity_id": "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea",
+  "fecha": "2026-08-25",
+  "id": "2026-08-25|bbc202e6-4ad7-49f3-9b7c-e667810aa8ea|cambio_estado",
+  "internal_id": "940041154-147",
+  "tipo": "cambio_estado",
+  "titulo": "Venta terreno y gran Casa 4 dorm. Barros Blancos"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "ahora": "reservada",
+   "antes": "en_negociacion"
+  },
+  "direccion": "Estanislao Vega 3900",
+  "entity_id": "d8d7855f-b0bb-4122-bc7e-74c987f50396",
+  "fecha": "2026-08-25",
+  "id": "2026-08-25|d8d7855f-b0bb-4122-bc7e-74c987f50396|cambio_estado",
+  "internal_id": "940041154-205",
+  "tipo": "cambio_estado",
+  "titulo": "Casa 1 Dormitorio cochera Cerrito ideal negocio"
  }
 ]
