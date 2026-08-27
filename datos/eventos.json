@@ -265,5 +265,34 @@
   "internal_id": "940041154-205",
   "tipo": "cambio_estado",
   "titulo": "Casa 1 Dormitorio cochera Cerrito ideal negocio"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 175000.0
+  },
+  "direccion": "Libertad 0",
+  "entity_id": "7cfcdb33-d348-4c4a-90d9-406dce54d149",
+  "fecha": "2026-08-27",
+  "id": "2026-08-27|7cfcdb33-d348-4c4a-90d9-406dce54d149|alta",
+  "internal_id": "940041154-220",
+  "tipo": "alta",
+  "titulo": "Venta Apartamento 3 dormitorios en Lagomar cochera"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "ahora": "en_negociacion",
+   "antes": "publicada"
+  },
+  "direccion": "Eusebio Vidal 3100",
+  "entity_id": "29b0df7e-7d40-4283-99b0-f88c2f168377",
+  "fecha": "2026-08-27",
+  "id": "2026-08-27|29b0df7e-7d40-4283-99b0-f88c2f168377|cambio_estado",
+  "internal_id": "940041154-210",
+  "tipo": "cambio_estado",
+  "titulo": "Venta 2 casas mismo padron flor de Maroñas cochera"
  }
 ]
