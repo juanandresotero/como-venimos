@@ -3394,17 +3394,12 @@
   "origen_captacion": "Ref. Remax",
   "estado": "en_curso",
   "ficha_completa": false,
-  "puntas_confirmadas": false,
+  "puntas_confirmadas": true,
   "notas": "",
   "manual": true,
   "atajo": "venta",
   "nacio_solo": true,
-  "avisos": [
-   {
-    "tipo": "revisar_puntas",
-    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
-   }
-  ],
+  "avisos": [],
   "precio_publicado": 94000,
   "baja_sobre_publicado": 0,
   "ficha_vigente": false,
