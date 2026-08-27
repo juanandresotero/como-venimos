@@ -43,14 +43,21 @@ function elPrecioPublicado(n, estado) {
   const publicado = (propiedad || {}).precio;
   if (!publicado) return document.createDocumentFragment();
 
-  const cierre = Number(n.precio_operacion) || 0;
-  const bajo = cierre && cierre < publicado ? publicado - cierre : 0;
   const moneda = propiedad.moneda === "UYU" ? "$" : "USD";
+  /* El numero ya viene calculado y guardado en el negocio: es un dato, no una cuenta de
+     pantalla. Asi el mismo numero que se ve aca es el que sale en la planilla. */
+  const baja = n.baja_sobre_publicado;
+  /* Los pesos salen de los PRECIOS, no del porcentaje: el porcentaje está redondeado a cuatro
+     decimales y multiplicarlo de vuelta daba "14.999 abajo" donde son 15.000 redondos. */
+  const cuanto = baja ? Math.abs(Math.round(publicado - Number(n.precio_operacion))) : 0;
   return nodo(html`
     <p class="apunte" style="margin:-6px 0 0;padding:0 16px 12px">
       Publicada en <strong>${moneda} ${escapar(Math.round(publicado).toLocaleString("es-UY"))}</strong>${
-        bajo
-          ? html` · cerrás <strong>${escapar(Math.round(bajo).toLocaleString("es-UY"))}</strong> abajo`
+        baja
+          ? html` · ${baja > 0 ? "cerrás" : "cerrás"}
+            <strong>${escapar(cuanto.toLocaleString("es-UY"))}</strong>
+            ${baja > 0 ? "abajo" : "arriba"}, un
+            <strong>${escapar(String(Math.abs(baja * 100).toFixed(1)).replace(".", ","))}%</strong>`
           : ""}. Ese lo escribe el robot leyendo RE/MAX.
     </p>`);
 }

@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   base, splitVigente, calcular, pctPorDefecto, revisar, REGIMENES,
-  plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando, estaCaido, CAIDO, hayAlgoEnMarcha, volvioAlMercado, esReferidaMia } from "../lib/motor.js";
+  plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando, estaCaido, CAIDO, hayAlgoEnMarcha, volvioAlMercado, esReferidaMia,
+  bajaSobrePublicado, precioPublicadoAl } from "../lib/motor.js";
 
 const AJUSTES = {
   agente: { nombre: "Juan Andrés Otero" },
@@ -1192,4 +1193,80 @@ test("si lo revivió a mano, no se le borra nada", () => {
   assert.equal(n.estado, "en_curso");
   assert.equal(n.puntas, 2);
   assert.equal(n.precio_operacion, 76000);
+});
+
+/* ============================ CUANTO BAJASTE DEL PUBLICADO PARA CERRAR
+
+   Lo pidió Juan: "que también guarde en los datos el % de diferencia entre publicado y precio
+   de cierre".
+
+   Se guarda EN EL NEGOCIO y no se calcula al mirarlo, por dos razones: la propiedad puede
+   haber tenido tres negociaciones y cada una haber bajado distinto, y el día que la propiedad
+   se va del portal ese número ya no se podría reconstruir. */
+
+test("bajaSobrePublicado es la parte que bajaste, en tanto por uno", () => {
+  assert.equal(bajaSobrePublicado(150000, 165000), 0.0909);
+  assert.equal(bajaSobrePublicado(165000, 165000), 0, "cerrar al precio de lista es bajar 0");
+});
+
+/* NEGATIVO SI CERRASTE POR ENCIMA. Pasa —una propiedad con dos ofertas— y esconderlo sería
+   mentir sobre lo que hiciste. */
+test("cerrar por encima del publicado da negativo, no cero", () => {
+  assert.equal(bajaSobrePublicado(170000, 165000), -0.0303);
+});
+
+test("sin alguno de los dos precios no se inventa un número", () => {
+  assert.equal(bajaSobrePublicado(150000, null), null);
+  assert.equal(bajaSobrePublicado(null, 165000), null);
+  assert.equal(bajaSobrePublicado(150000, 0), null);
+});
+
+/* EL PUBLICADO QUE VALE ES EL DE CUANDO ARRANCO LA NEGOCIACION. Si la propiedad estuvo seis
+   meses y le bajaste el precio dos veces, lo que el comprador negoció fue el precio que VEÍA
+   ese día. Comparar contra el de hoy diría que bajaste menos de lo que bajaste. */
+const CON_HISTORIAL = {
+  entity_id: "p9", activa: true, estado: "en_negociacion", precio: 140000,
+  historial_precio: [
+    { fecha: "2026-01-10", precio: 180000, moneda: "USD" },
+    { fecha: "2026-05-02", precio: 165000, moneda: "USD" },
+    { fecha: "2026-08-01", precio: 140000, moneda: "USD" },
+  ],
+};
+
+test("el precio publicado que vale es el que estaba ese día", () => {
+  assert.equal(precioPublicadoAl(CON_HISTORIAL, "2026-06-15"), 165000);
+  assert.equal(precioPublicadoAl(CON_HISTORIAL, "2026-01-20"), 180000);
+  assert.equal(precioPublicadoAl(CON_HISTORIAL, "2026-08-20"), 140000);
+});
+
+test("antes del primer precio conocido vale el de hoy, que es lo único que hay", () => {
+  assert.equal(precioPublicadoAl(CON_HISTORIAL, "2025-12-01"), 140000);
+  assert.equal(precioPublicadoAl(CON_HISTORIAL, null), 140000);
+  assert.equal(precioPublicadoAl(null, "2026-06-15"), null);
+});
+
+test("el negocio se guarda con los dos precios y la baja", () => {
+  const n = revisar({
+    id: "b1", entity_id_cartera: "p9", tipo_negocio: "venta", estado: "en_curso",
+    fecha_negociacion: "2026-06-15", precio_operacion: 150000, pct_comision_total: 0.06,
+  }, AJUSTES, "2026-08-27", { p9: CON_HISTORIAL });
+  assert.equal(n.precio_publicado, 165000, "el de junio, no el de hoy");
+  assert.equal(n.baja_sobre_publicado, 0.0909);
+});
+
+/* UN NEGOCIO YA CERRADO CUYA PROPIEDAD SE FUE DEL PORTAL no se queda sin el dato: se calculó
+   cuando se podía y ahí quedó. */
+test("si hoy no se puede calcular, no se borra lo que ya estaba", () => {
+  const n = revisar({
+    id: "b2", tipo_negocio: "venta", estado: "cerrado", fecha_fin: "2026-06-01",
+    precio_operacion: 150000, precio_publicado: 165000, baja_sobre_publicado: 0.0909,
+  }, AJUSTES, "2026-08-27", {});
+  assert.equal(n.baja_sobre_publicado, 0.0909);
+});
+
+/* PERO SI EL NEGOCIO SE CAE, SÍ SE VA: era de esa negociación, igual que el precio. */
+test("un negocio caído pierde también cuánto había bajado", () => {
+  const n = seCayoSolo({ precio_publicado: 165000, baja_sobre_publicado: 0.0909 });
+  assert.equal(n.precio_publicado, null);
+  assert.equal(n.baja_sobre_publicado, null);
 });
