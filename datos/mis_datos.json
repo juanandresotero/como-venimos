@@ -66,9 +66,10 @@
    "fecha_captacion_estimada": false
   },
   "29b0df7e-7d40-4283-99b0-f88c2f168377": {
-   "origen_captacion": "Ref. Martin",
+   "origen_captacion": "Ref. Remax",
    "fecha_captacion_real": "2026-06-08",
-   "fecha_captacion_estimada": false
+   "fecha_captacion_estimada": false,
+   "precio_negociacion": 89000
   },
   "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea": {
    "precio_negociacion": 75000
