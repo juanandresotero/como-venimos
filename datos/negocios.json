@@ -2052,25 +2052,25 @@
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Pando",
-  "base": 0,
+  "base": 2400,
   "categoria_vigente": "RAP",
   "direccion": "juana de ibarburu y Picardía ",
   "entity_id_cartera": "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea",
   "estado": "en_curso",
   "excel_facturado": 4620,
   "excel_importe": 2079,
-  "facturacion": 0,
+  "facturacion": 2400,
   "fecha_boleto": null,
   "fecha_fin": null,
   "fecha_fin_estimada": false,
   "fecha_inicio": "2025-02-03",
   "ficha_completa": true,
-  "ganancia": 0,
+  "ganancia": 1080,
   "id": "excel-60",
   "moneda": "USD",
   "notas": "Mucho tiempo porque el negocio se callo alguna vez antes de cerrarlo real",
   "origen_captacion": "Ref. B.d.r.",
-  "pct_comision_total": null,
+  "pct_comision_total": 0.03,
   "precio_operacion": 80000,
   "puntas": 1,
   "recalculado": true,
@@ -2091,7 +2091,9 @@
   "puntas_confirmadas": true,
   "se_cayo_solo": false,
   "agente_compra_nombre": null,
-  "estado_a_mano": true
+  "estado_a_mano": true,
+  "precio_publicado": 80000,
+  "baja_sobre_publicado": 0
  },
  {
   "agente_compra": "Otro REMAX",
@@ -2311,7 +2313,9 @@
   "yo_referi": false,
   "fecha_negociacion": "2026-08-17",
   "ficha_vigente": false,
-  "puntas_confirmadas": true
+  "puntas_confirmadas": true,
+  "precio_publicado": 60000,
+  "baja_sobre_publicado": 0
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2884,7 +2888,9 @@
   "ficha_vigente": true,
   "fecha_negociacion": "2026-02-26",
   "ficha_completa_momento": "reservada",
-  "puntas_confirmadas": true
+  "puntas_confirmadas": true,
+  "precio_publicado": 89900,
+  "baja_sobre_publicado": 0
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -3056,7 +3062,9 @@
    "telefono": "+59899601877"
   },
   "ficha_completa_momento": "reservada",
-  "puntas_confirmadas": true
+  "puntas_confirmadas": true,
+  "precio_publicado": 43000,
+  "baja_sobre_publicado": 0.0698
  },
  {
   "id": "manual-1",
@@ -3099,7 +3107,9 @@
   "ficha_completa_momento": "en_negociacion",
   "categoria_vigente": "RAP",
   "recalculado": true,
-  "puntas_confirmadas": true
+  "puntas_confirmadas": true,
+  "precio_publicado": 165000,
+  "baja_sobre_publicado": 0.0909
  },
  {
   "id": "manual-2",
@@ -3219,7 +3229,9 @@
   "categoria_vigente": "RAP",
   "recalculado": true,
   "fecha_fin_estimada": false,
-  "ficha_completa_momento": "reservada"
+  "ficha_completa_momento": "reservada",
+  "precio_publicado": 56000,
+  "baja_sobre_publicado": 0.0393
  },
  {
   "id": "manual-5",
@@ -3258,7 +3270,9 @@
   "categoria_vigente": "RAP",
   "recalculado": true,
   "fecha_fin_estimada": false,
-  "ficha_completa_momento": "en_negociacion"
+  "ficha_completa_momento": "en_negociacion",
+  "precio_publicado": 54000,
+  "baja_sobre_publicado": 0.037
  },
  {
   "id": "manual-6",
@@ -3309,5 +3323,52 @@
   "categoria_vigente": "RAP",
   "recalculado": true,
   "fecha_fin_estimada": false
+ },
+ {
+  "id": "manual-7",
+  "tipo_negocio": "venta",
+  "es_suplencia": false,
+  "yo_referi": false,
+  "puntas": 1,
+  "agente_vende": "Martin Sedes",
+  "agente_compra": "Juan Andrés Otero",
+  "pct_comision_total": 0.03,
+  "fecha_inicio": null,
+  "fecha_negociacion": "2026-08-27",
+  "fecha_boleto": null,
+  "fecha_fin": null,
+  "entity_id_cartera": null,
+  "direccion": "",
+  "barrio": "Parque batlle",
+  "tipo_propiedad": null,
+  "precio_operacion": 97000,
+  "moneda": "USD",
+  "tipo_cambio": null,
+  "origen_captacion": "Redes sociales Campaña",
+  "estado": "en_curso",
+  "ficha_completa": false,
+  "puntas_confirmadas": true,
+  "notas": "",
+  "manual": true,
+  "atajo": "busqueda",
+  "avisos": [
+   {
+    "tipo": "falta_direccion",
+    "detalle": "Falta la dirección"
+   }
+  ],
+  "ficha_vigente": false,
+  "regimen_comision": "captacion_mia",
+  "base": 2910,
+  "facturacion": 2910,
+  "ganancia": 1309.5,
+  "categoria_vigente": "RAP",
+  "recalculado": true,
+  "fecha_fin_estimada": false,
+  "agente_vende_nombre": null,
+  "cliente_comprador": {
+   "nombre": "Rodrigo",
+   "telefono": "+59897132356"
+  }
  }
 ]
