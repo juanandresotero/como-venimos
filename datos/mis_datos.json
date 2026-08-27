@@ -87,6 +87,11 @@
    "origen_captacion": "Ref. Martin",
    "fecha_captacion_real": "2026-08-18",
    "fecha_captacion_estimada": false
+  },
+  "7cfcdb33-d348-4c4a-90d9-406dce54d149": {
+   "origen_captacion": "Ref. B.d.r.",
+   "fecha_captacion_real": "2026-08-26",
+   "fecha_captacion_estimada": false
   }
  }
 }
