@@ -3288,7 +3288,7 @@
   "fecha_boleto": null,
   "fecha_fin": null,
   "entity_id_cartera": null,
-  "direccion": "",
+  "direccion": "Blanca del Tabaré 2903",
   "barrio": "Parque batlle",
   "tipo_propiedad": null,
   "precio_operacion": 97000,
@@ -3301,12 +3301,7 @@
   "notas": "",
   "manual": true,
   "atajo": "busqueda",
-  "avisos": [
-   {
-    "tipo": "falta_direccion",
-    "detalle": "Falta la dirección"
-   }
-  ],
+  "avisos": [],
   "ficha_vigente": false,
   "regimen_comision": "captacion_mia",
   "base": 2910,
