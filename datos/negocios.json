@@ -2050,12 +2050,7 @@
  {
   "agente_compra": null,
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "ficha_reabierta",
-    "detalle": "La propiedad pasó a publicada: hay datos nuevos para cargar."
-   }
-  ],
+  "avisos": [],
   "barrio": "Pando",
   "base": 0,
   "categoria_vigente": "RAP",
@@ -2085,14 +2080,14 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false,
+  "ficha_vigente": true,
   "fecha_negociacion": "2026-08-17",
   "cliente_comprador": null,
   "cliente_vendedor": {
    "nombre": "Juanjo 2025",
    "telefono": "+598 92 697 996"
   },
-  "ficha_completa_momento": "en_negociacion",
+  "ficha_completa_momento": "publicada",
   "puntas_confirmadas": true,
   "se_cayo_solo": false,
   "agente_compra_nombre": null,
