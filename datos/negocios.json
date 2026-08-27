@@ -2048,31 +2048,36 @@
   "ficha_completa_momento": null
  },
  {
-  "agente_compra": "Juan Andrés Otero",
+  "agente_compra": null,
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "ficha_reabierta",
+    "detalle": "La propiedad pasó a publicada: hay datos nuevos para cargar."
+   }
+  ],
   "barrio": "Pando",
-  "base": 4500,
+  "base": 0,
   "categoria_vigente": "RAP",
   "direccion": "juana de ibarburu y Picardía ",
   "entity_id_cartera": "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea",
   "estado": "en_curso",
   "excel_facturado": 4620,
   "excel_importe": 2079,
-  "facturacion": 4500,
+  "facturacion": 0,
   "fecha_boleto": null,
   "fecha_fin": null,
   "fecha_fin_estimada": false,
   "fecha_inicio": "2025-02-03",
   "ficha_completa": true,
-  "ganancia": 2025,
+  "ganancia": 0,
   "id": "excel-60",
   "moneda": "USD",
   "notas": "Mucho tiempo porque el negocio se callo alguna vez antes de cerrarlo real",
   "origen_captacion": "Ref. B.d.r.",
-  "pct_comision_total": 0.06,
-  "precio_operacion": 75000,
-  "puntas": 2,
+  "pct_comision_total": null,
+  "precio_operacion": 80000,
+  "puntas": 1,
   "recalculado": true,
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
@@ -2080,7 +2085,7 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": true,
+  "ficha_vigente": false,
   "fecha_negociacion": "2026-08-17",
   "cliente_comprador": null,
   "cliente_vendedor": {
@@ -2088,7 +2093,10 @@
    "telefono": "+598 92 697 996"
   },
   "ficha_completa_momento": "en_negociacion",
-  "puntas_confirmadas": true
+  "puntas_confirmadas": true,
+  "se_cayo_solo": false,
+  "agente_compra_nombre": null,
+  "estado_a_mano": true
  },
  {
   "agente_compra": "Otro REMAX",
@@ -3008,7 +3016,12 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "ficha_reabierta",
+    "detalle": "La propiedad pasó a reservada: hay datos nuevos para cargar."
+   }
+  ],
   "barrio": "Cerrito",
   "base": 2400,
   "categoria_vigente": "RAP",
@@ -3018,7 +3031,7 @@
   "excel_facturado": 2400,
   "excel_importe": 840,
   "facturacion": 1200,
-  "fecha_boleto": null,
+  "fecha_boleto": "2026-08-25",
   "fecha_fin": null,
   "fecha_fin_estimada": false,
   "fecha_inicio": "2026-05-14",
@@ -3039,7 +3052,7 @@
   "es_suplencia": false,
   "yo_referi": false,
   "fecha_negociacion": "2026-08-17",
-  "ficha_vigente": true,
+  "ficha_vigente": false,
   "agente_vende_nombre": null,
   "agente_compra_nombre": null,
   "referidor": null,
