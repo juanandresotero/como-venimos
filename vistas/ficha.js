@@ -33,6 +33,28 @@ const redondear = (x) => (x ? Math.round(x * 100) / 100 : null);
 const montoEscrito = (n) =>
   n.es_suplencia && n.cobrado_suplencia !== null && n.cobrado_suplencia !== undefined;
 
+/* El precio al que la propiedad está publicada, al lado del de cierre. Es sólo para mirar: lo
+   escribe el robot leyendo el portal y no se toca a mano.
+
+   Sirve para dos cosas: entender de un vistazo cuál es cuál, y ver cuánto bajaste para
+   cerrar. */
+function elPrecioPublicado(n, estado) {
+  const propiedad = (estado.datos.cartera || {})[n.entity_id_cartera];
+  const publicado = (propiedad || {}).precio;
+  if (!publicado) return document.createDocumentFragment();
+
+  const cierre = Number(n.precio_operacion) || 0;
+  const bajo = cierre && cierre < publicado ? publicado - cierre : 0;
+  const moneda = propiedad.moneda === "UYU" ? "$" : "USD";
+  return nodo(html`
+    <p class="apunte" style="margin:-6px 0 0;padding:0 16px 12px">
+      Publicada en <strong>${moneda} ${escapar(Math.round(publicado).toLocaleString("es-UY"))}</strong>${
+        bajo
+          ? html` · cerrás <strong>${escapar(Math.round(bajo).toLocaleString("es-UY"))}</strong> abajo`
+          : ""}. Ese lo escribe el robot leyendo RE/MAX.
+    </p>`);
+}
+
 const enPesosEsto = (n) => n.moneda === "UYU" && Number(n.tipo_cambio) > 0 && Number(n.ganancia) > 0;
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -460,11 +482,22 @@ function campos(n, falta, estado) {
     /* En un alquiler el "precio" es EL ALQUILER POR MES: el % de comisión son meses (1,5 = un
        mes y medio), no un porcentaje del precio. Llamarlo "precio de la operación" obligaba a
        traducir. */
+    /* PRECIO DE PUBLICACION Y PRECIO DE CIERRE SON DOS COSAS. Juan: "acá hay algo que no
+       entiendo, deberíamos de tener el precio de publicación y el precio de cierre".
+
+       Y las dos ya estaban, pero mal nombradas: el de PUBLICACION lo trae el robot del portal
+       y vive en la propiedad; el de CIERRE es este, el que se usa para la comisión, y decía
+       "precio de la operación" — que no dice cuál de los dos es.
+
+       Una oferta aceptada casi nunca es por el precio de la vidriera, así que la diferencia
+       entre los dos es plata de verdad: en una venta de 80.000 al 6%, mil dólares menos de
+       precio son sesenta menos de comisión. */
     agregar("precio_operacion",
       esAlquiler
         ? `Alquiler por mes (${enPesos ? "$" : "USD"})`
-        : "Precio de la operación (USD)",
+        : "Precio de cierre (USD)",
       "moneda", n.precio_operacion);
+    contenedor.append(elPrecioPublicado(n, estado));
     agregar("pct_comision_total",
       esAlquiler ? "Comisión en meses (1,5 = mes y medio)" : "% de comisión (0,03 = 3%)",
       "number", n.pct_comision_total);

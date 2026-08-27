@@ -1100,3 +1100,96 @@ test("una suplencia ya cobrada deja de reclamar nada", () => {
   const n = unaSuplencia({ fecha_fin: "2026-08-21" });
   assert.ok(!tiposDe(n).includes("suplencia_sin_cobrar"));
 });
+
+/* ==================================== CUANDO SE CAE, SE BORRA LO DE ESA NEGOCIACION
+
+   Juan: "si está publicada ese dato ya no tiene sentido que esté" — y sobre Juana de
+   Ibarbourou: "tuve que borrarlo cuando era obvio que ya no debería estar cargado".
+
+   Si la propiedad volvió a estar publicada, todo lo que se había cargado de esa negociación
+   es de una negociación que no existe más. Y no es sólo prolijidad: mientras esos números
+   estén puestos, la proyección sigue contando una plata que ya no va a entrar. */
+
+const CARTERA_PUBLICADA = {
+  p1: {
+    entity_id: "p1", activa: true, estado: "publicada", direccion: "Juana de Ibarbourou 200",
+    barrio: "Pando", precio: 80000, moneda: "USD", operacion: "venta",
+    // Estuvo en negociación: por eso se sabe que VOLVIÓ para atrás.
+    fecha_negociacion: "2026-07-01",
+  },
+};
+
+const seCayoSolo = (extra = {}) => revisar({
+  id: "v1", entity_id_cartera: "p1", tipo_negocio: "venta", estado: "en_curso",
+  direccion: "Juana de Ibarbourou 200", barrio: "Pando",
+  fecha_negociacion: "2026-07-01", fecha_boleto: "2026-07-20",
+  precio_operacion: 76000, pct_comision_total: 0.06, puntas: 2, puntas_confirmadas: true,
+  agente_vende: "Juan Andrés Otero", agente_compra: "Otra Oficina",
+  origen_captacion: "Ref. Martin", ...extra,
+}, AJUSTES, "2026-08-27", CARTERA_PUBLICADA);
+
+test("una propiedad que volvió a publicada da el negocio por caído", () => {
+  const n = seCayoSolo();
+  assert.equal(n.estado, CAIDO);
+  assert.equal(n.se_cayo_solo, true);
+  assert.equal(n.fecha_caida, "2026-08-27", "queda anotado cuándo, para poder contarlo");
+});
+
+test("se borra todo lo que era de esa negociación", () => {
+  const n = seCayoSolo();
+  assert.equal(n.puntas, null, "si está publicada, una punta o dos no tiene sentido");
+  assert.equal(n.puntas_confirmadas, false);
+  assert.equal(n.agente_compra, null, "el comprador era el de ESA negociación");
+  assert.equal(n.pct_comision_total, null);
+  assert.equal(n.precio_operacion, null, "ese era el precio al que se estaba cerrando");
+  assert.equal(n.fecha_negociacion, null);
+  assert.equal(n.fecha_boleto, null);
+});
+
+/* LA PLATA TAMBIÉN SE VA. Es la mitad del punto: mientras la ganancia siga puesta, la
+   proyección cuenta un cobro que no va a pasar. */
+test("la plata proyectada de un negocio caído desaparece", () => {
+  const n = seCayoSolo();
+  assert.equal(n.facturacion, null);
+  assert.equal(n.ganancia, null);
+});
+
+/* LO QUE ES DE LA PROPIEDAD SE QUEDA: dirección, barrio, de dónde salió y quién tiene el
+   aviso siguen siendo verdad. Si mañana entra otro comprador, se arranca de nuevo pero sobre
+   la misma propiedad, y volver a cargar eso sería cargar dos veces lo mismo. */
+test("no se borra lo que es de la propiedad, no de la negociación", () => {
+  const n = seCayoSolo();
+  assert.equal(n.direccion, "Juana de Ibarbourou 200");
+  assert.equal(n.barrio, "Pando");
+  assert.equal(n.origen_captacion, "Ref. Martin");
+  assert.equal(n.agente_vende, "Juan Andrés Otero", "el aviso sigue siendo tuyo");
+});
+
+/* EN UNA BÚSQUEDA EL COMPRADOR ES TUYO POR DEFINICIÓN, no por esa negociación: le
+   encontraste vos la propiedad. Borrarlo sería borrar lo que hace que sea una búsqueda. */
+test("en una búsqueda no se borra al comprador", () => {
+  const n = seCayoSolo({ atajo: "busqueda", agente_vende: "Otra Oficina",
+    agente_compra: "Juan Andrés Otero" });
+  assert.equal(n.agente_compra, "Juan Andrés Otero");
+});
+
+/* Y AL REVIVIR, EL % VUELVE AL DE SIEMPRE. Sin esto el negocio nuevo arrancaría sin comisión
+   y no proyectaría un peso. */
+test("si la propiedad vuelve a negociación, el negocio revive con su comisión", () => {
+  const caido = seCayoSolo();
+  const enNegociacion = {
+    p1: { ...CARTERA_PUBLICADA.p1, estado: "en_negociacion" },
+  };
+  const n = revisar(caido, AJUSTES, "2026-09-01", enNegociacion);
+  assert.equal(n.estado, "en_curso");
+  assert.equal(n.pct_comision_total, 0.03, "el de una punta, que es como nace cualquiera");
+});
+
+/* UNA CORRECCIÓN A MANO LE GANA AL PORTAL. Puede haber republicado la propiedad para buscar
+   otro comprador mientras el primero define, y eso el portal no lo sabe. */
+test("si lo revivió a mano, no se le borra nada", () => {
+  const n = seCayoSolo({ estado_a_mano: true });
+  assert.equal(n.estado, "en_curso");
+  assert.equal(n.puntas, 2);
+  assert.equal(n.precio_operacion, 76000);
+});

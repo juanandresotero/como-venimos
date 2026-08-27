@@ -525,3 +525,56 @@ test("con la forma del año, un abril flojo deja de ser 'atrasado'", () => {
   assert.equal(conForma.aRitmo, true, "su historia pide 20% a esa altura");
   assert.equal(conForma.aniosDeHistoria, 2);
 });
+
+/* ============================================ LAS NEGOCIACIONES QUE SE CAYERON
+
+   Juan: cuando una propiedad vuelve de negociación o reserva a publicada, ese negocio se cayó
+   y "ahí debería de contarlo para estadísticas".
+
+   Es un número que no tenía dónde mirarse: dos agentes con la misma facturación no son
+   iguales si uno cierra ocho de cada diez negociaciones y el otro cinco. */
+
+const yaCerro = (id, fecha) => ({
+  id, estado: "cerrado", fecha_fin: fecha, tipo_negocio: "venta", puntas: 1,
+});
+const seCayo = (id, fecha) => ({ id, estado: "caido", fecha_caida: fecha });
+
+test("cuenta cuántas se cayeron y qué parte del total son", () => {
+  const m = metricas([
+    yaCerro("a", "2026-03-01"), yaCerro("b", "2026-05-01"), yaCerro("c", "2026-07-01"),
+    seCayo("d", "2026-04-01"),
+  ], "2026");
+  assert.equal(m.caidos, 1);
+  assert.equal(m.terminados, 4);
+  assert.equal(m.pctCaidos, 0.25);
+});
+
+/* EL DENOMINADOR SON LOS QUE TERMINARON, no todos. Los que siguen en curso todavía no se sabe
+   cómo van a terminar, y meterlos abajo haría que el porcentaje mejorara solo por tener más
+   trabajo abierto — que es justo al revés de lo que el número quiere decir. */
+test("los que siguen en curso no entran en la cuenta", () => {
+  const m = metricas([
+    yaCerro("a", "2026-03-01"), seCayo("b", "2026-04-01"),
+    { id: "c", estado: "en_curso", fecha_negociacion: "2026-06-01" },
+  ], "2026");
+  assert.equal(m.terminados, 2);
+  assert.equal(m.pctCaidos, 0.5);
+});
+
+test("los de otros años no se mezclan", () => {
+  const m = metricas([seCayo("a", "2025-04-01"), yaCerro("b", "2026-03-01")], "2026");
+  assert.equal(m.caidos, 0);
+  assert.equal(m.terminados, 1);
+});
+
+/* Un caído viejo del Excel no tiene fecha_caida: se usa la de negociación, que es lo más
+   cerca que hay de cuándo pasó. */
+test("un caído sin fecha de caída se ubica por la de negociación", () => {
+  const m = metricas([{ id: "a", estado: "caido", fecha_negociacion: "2026-02-01" }], "2026");
+  assert.equal(m.caidos, 1);
+});
+
+test("sin nada terminado no inventa un porcentaje", () => {
+  const m = metricas([{ id: "a", estado: "en_curso" }], "2026");
+  assert.equal(m.pctCaidos, null, "0 de 0 no es 0%");
+});
