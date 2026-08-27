@@ -3370,5 +3370,50 @@
    "nombre": "Rodrigo",
    "telefono": "+59897132356"
   }
+ },
+ {
+  "id": "manual-8",
+  "tipo_negocio": "venta",
+  "es_suplencia": false,
+  "yo_referi": false,
+  "puntas": 2,
+  "agente_vende": "Juan Andrés Otero",
+  "agente_compra": "Juan Andrés Otero",
+  "pct_comision_total": 0.06,
+  "fecha_inicio": "2026-06-08",
+  "fecha_negociacion": "2026-08-27",
+  "fecha_boleto": null,
+  "fecha_fin": null,
+  "entity_id_cartera": "29b0df7e-7d40-4283-99b0-f88c2f168377",
+  "direccion": "Eusebio Vidal 3100",
+  "barrio": "Maroñas",
+  "tipo_propiedad": "casa",
+  "precio_operacion": 94000,
+  "moneda": "USD",
+  "tipo_cambio": null,
+  "origen_captacion": "Ref. Remax",
+  "estado": "en_curso",
+  "ficha_completa": false,
+  "puntas_confirmadas": false,
+  "notas": "",
+  "manual": true,
+  "atajo": "venta",
+  "nacio_solo": true,
+  "avisos": [
+   {
+    "tipo": "revisar_puntas",
+    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
+   }
+  ],
+  "precio_publicado": 94000,
+  "baja_sobre_publicado": 0,
+  "ficha_vigente": false,
+  "regimen_comision": "ref_otro_colega",
+  "base": 5640,
+  "facturacion": 5640,
+  "ganancia": 1903.5,
+  "categoria_vigente": "RAP",
+  "recalculado": true,
+  "fecha_fin_estimada": false
  }
 ]
