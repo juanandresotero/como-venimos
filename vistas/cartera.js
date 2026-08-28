@@ -5,7 +5,7 @@
 
 import { listar, estadoVisible, nombreEstado, diasEnCartera, rendimiento } from "../lib/cartera.js";
 import { plata, plataUSD, fechaCorta, escapar } from "../lib/formato.js";
-import { esBusqueda, esReferidaMia, estaCaido } from "../lib/motor.js";
+import { esBusqueda, esReferidaMia, estaCaido, momentoDelNegocio } from "../lib/motor.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -126,16 +126,13 @@ function lasReferidas(estado, lista) {
   for (const n of lista) {
     /* El estado real de una referida es "todavía no negoció" o "en negociación": no hay
        reservada ni publicada, porque de eso se entera el colega y no siempre lo cuenta. */
-    const negociando = Boolean(n.fecha_negociacion);
     const aQuien = n.referido_a_nombre || n.referido_a || "sin cargar a quién";
     const fila = nodo(html`
       <button class="fila" data-negocio="${escapar(n.id)}">
         <span class="fila-cuerpo">
           <span class="fila-titulo">${escapar(n.direccion || "Sin dirección")}</span>
           <span class="fila-marca">
-            ${negociando
-              ? html`<span class="chip-estado chip-negociacion">${nombreEstado("en_negociacion")}</span>`
-              : html`<span class="chip-apagado">sin negociar</span>`}
+            ${chipDelNegocio(n, "sin negociar")}
             <span class="fila-sub">${escapar(aQuien)}</span>
           </span>
         </span>
@@ -193,7 +190,7 @@ function lasSuplencias(estado, lista) {
         <span class="fila-cuerpo">
           <span class="fila-titulo">${escapar(n.direccion || "Sin dirección")}</span>
           <span class="fila-marca">
-            <span class="chip-estado chip-reservada">${nombreEstado("reservada")}</span>
+            ${chipDelNegocio(n, "sin fecha")}
             <span class="fila-sub">${escapar(aQuien)}</span>
           </span>
         </span>
@@ -210,6 +207,19 @@ function lasSuplencias(estado, lista) {
     caja.append(fila);
   }
   return trozo;
+}
+
+/* EL CARTELITO DE ESTADO DE UN NEGOCIO SIN PROPIEDAD, sacado de sus fechas.
+
+   Estaba escrito a mano en dos lugares y en los dos decia siempre lo mismo: una busqueda
+   figuraba "en negociacion" para siempre, aunque le cargaras la fecha de la reserva. */
+function chipDelNegocio(negocio, sinNada) {
+  const momento = momentoDelNegocio(negocio);
+  if (!momento) {
+    return `<span class="chip-apagado">${escapar(sinNada)}</span>`;
+  }
+  return `<span class="chip-estado ${CLASE_ESTADO[momento] || "chip-negociacion"}">${
+    escapar(nombreEstado(momento))}</span>`;
 }
 
 function busquedasAbiertas(estado, lasAbiertas) {
@@ -237,7 +247,7 @@ function busquedasAbiertas(estado, lasAbiertas) {
         <span class="fila-cuerpo">
           <span class="fila-titulo">${escapar(n.direccion || "Sin dirección")}</span>
           <span class="fila-marca">
-            <span class="chip-estado chip-negociacion">${nombreEstado("en_negociacion")}</span>
+            ${chipDelNegocio(n, "sin arrancar")}
             <span class="fila-sub">${escapar(n.barrio || "sin barrio")} · ${operacion}</span>
           </span>
         </span>

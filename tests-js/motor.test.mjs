@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   base, splitVigente, calcular, pctPorDefecto, revisar, REGIMENES,
   plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando, estaCaido, CAIDO, hayAlgoEnMarcha, volvioAlMercado, esReferidaMia,
-  bajaSobrePublicado, precioPublicadoAl } from "../lib/motor.js";
+  bajaSobrePublicado, precioPublicadoAl, momentoDelNegocio } from "../lib/motor.js";
 
 const AJUSTES = {
   agente: { nombre: "Juan Andrés Otero" },
@@ -1269,4 +1269,33 @@ test("un negocio caído pierde también cuánto había bajado", () => {
   const n = seCayoSolo({ precio_publicado: 165000, baja_sobre_publicado: 0.0909 });
   assert.equal(n.precio_publicado, null);
   assert.equal(n.baja_sobre_publicado, null);
+});
+
+/* ================== EN QUE MOMENTO ESTA UN NEGOCIO QUE NO CUELGA DE NINGUNA PROPIEDAD
+
+   Juan: "tengo una búsqueda que recién le cargué la fecha de cuando quedó reservada (boleto)
+   y ahora la miro y sigue diciendo en negociación".
+
+   Y tenía razón: el cartelito estaba ESCRITO A MANO en la pantalla de Cartera. Una búsqueda,
+   una suplencia o una referida no están en el portal, así que su estado no puede salir de la
+   cartera: sale de sus propias fechas, que es lo único que hay. */
+
+test("el momento sale de las fechas, de la última para atrás", () => {
+  assert.equal(momentoDelNegocio({}), null, "sin ninguna fecha todavía no arrancó");
+  assert.equal(momentoDelNegocio({ fecha_negociacion: "2026-08-01" }), "en_negociacion");
+  assert.equal(momentoDelNegocio({
+    fecha_negociacion: "2026-08-01", fecha_boleto: "2026-08-20",
+  }), "reservada", "es el caso de Juan: con boleto ya no está en negociación");
+  assert.equal(momentoDelNegocio({
+    fecha_negociacion: "2026-08-01", fecha_boleto: "2026-08-20", fecha_fin: "2026-09-01",
+  }), "cerrado", "si ya cerró no importa cuándo negoció");
+});
+
+test("un negocio caído está caído, tenga las fechas que tenga", () => {
+  assert.equal(momentoDelNegocio({ estado: CAIDO, fecha_boleto: "2026-08-20" }), CAIDO);
+});
+
+test("no se rompe con cualquier cosa", () => {
+  assert.equal(momentoDelNegocio(null), null);
+  assert.equal(momentoDelNegocio(undefined), null);
 });
