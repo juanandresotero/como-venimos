@@ -6,30 +6,43 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  comoSeLlamaLaCarpeta, subirInventario, laCarpeta, PERMISO, comoSeExplica,
+  comoSeLlamaLaCarpeta, fechaCorta, subirInventario, laCarpeta, PERMISO, comoSeExplica,
 } from "../lib/drive.js";
 
 /* ---------- Cómo se llaman las carpetas ---------- */
 
-/* LA DIRECCION Y NADA MAS. Le tenía la fecha adelante y Juan la sacó: "google drive ya guarda
-   ese dato". Lo que sí queda igual siempre es la FORMA: hoy en su Drive conviven
-   "Humaita 2750", "Humaita 2750 - 2025" y "Leyenda patria 2914 /1001 - Fecha 1/6/2025", tres
-   maneras de escribir lo mismo. */
-test("la carpeta se llama como la propiedad, sin la fecha", () => {
+/* LA DIRECCION PRIMERO Y LA FECHA CORTA ATRAS. La dirección adelante es lo que se busca con
+   el ojo en una lista de cincuenta carpetas; la fecha atrás es lo que las separa cuando la
+   dirección se repite. */
+test("la carpeta se llama como la propiedad, con la fecha corta atrás", () => {
   assert.equal(
     comoSeLlamaLaCarpeta({ fecha: "2026-05-30", direccion: "Leyenda Patria 2914", unidad: "1001" }),
-    "Leyenda Patria 2914 apto 1001");
+    "Leyenda Patria 2914 apto 1001 (30.5.2026)");
   assert.equal(
     comoSeLlamaLaCarpeta({ fecha: "2025-08-07", direccion: "Gregorio Camino 828" }),
-    "Gregorio Camino 828");
+    "Gregorio Camino 828 (7.8.2025)");
 });
 
-/* LA CONSECUENCIA, dicha a propósito: dos inventarios de la misma dirección van a la MISMA
-   carpeta. Es lo que Juan eligió; para que sean dos, hay que escribir la dirección distinta. */
-test("dos inventarios de la misma dirección van a la misma carpeta", () => {
-  assert.equal(
+/* SIN LA FECHA, el mismo apartamento alquilado dos veces caía en la misma carpeta y las fotos
+   se mezclaban. Lo vio Juan solo. */
+test("el mismo apartamento en dos fechas son dos carpetas", () => {
+  assert.notEqual(
     comoSeLlamaLaCarpeta({ fecha: "2024-10-17", direccion: "Humaita 2750" }),
     comoSeLlamaLaCarpeta({ fecha: "2025-11-27", direccion: "Humaita 2750" }));
+});
+
+/* "2026-08-28" -> "28.8.2026". Sin ceros adelante: es como se escribe una fecha a mano. */
+test("la fecha va corta, sin ceros adelante", () => {
+  assert.equal(fechaCorta("2026-08-28"), "28.8.2026");
+  assert.equal(fechaCorta("2026-01-05"), "5.1.2026");
+  assert.equal(fechaCorta("2026-12-31"), "31.12.2026");
+});
+
+test("una fecha que no está no rompe el nombre", () => {
+  assert.equal(fechaCorta(""), "");
+  assert.equal(fechaCorta(null), "");
+  assert.equal(fechaCorta("no es una fecha"), "");
+  assert.equal(comoSeLlamaLaCarpeta({ direccion: "Humaita 2750" }), "Humaita 2750");
 });
 
 /* La barra y los dos puntos rompen los nombres de carpeta al bajarlos en Windows. */
@@ -41,7 +54,7 @@ test("los caracteres que rompen un nombre de carpeta se sacan", () => {
 });
 
 test("sin dirección igual sale un nombre usable", () => {
-  assert.equal(comoSeLlamaLaCarpeta({ fecha: "2026-05-30" }), "Sin dirección");
+  assert.equal(comoSeLlamaLaCarpeta({ fecha: "2026-05-30" }), "Sin dirección (30.5.2026)");
   assert.equal(comoSeLlamaLaCarpeta({}), "Sin dirección");
   assert.equal(comoSeLlamaLaCarpeta(null), "Sin dirección");
 });
@@ -112,7 +125,7 @@ test("arma la misma estructura que él arma a mano", async () => {
 
     const nombres = [...falso.carpetas.keys()].map((k) => k.split("|")[0]);
     assert.ok(nombres.includes("INVENTARIOS"));
-    assert.ok(nombres.includes("Gregorio Camino 828"));
+    assert.ok(nombres.includes("Gregorio Camino 828 (7.8.2025)"));
     assert.ok(nombres.includes("Baño"));
     assert.ok(nombres.includes("Dormitorio 1"));
     assert.equal(falso.archivos.length, 4, "tres fotos y el PDF");
