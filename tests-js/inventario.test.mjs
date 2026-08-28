@@ -257,3 +257,29 @@ test("una cochera trae lo poco que hay que mirar en una cochera", () => {
   assert.ok(nombres.includes("Portón"));
   assert.ok(nombres.length < 8, "en un garaje no hay veinte cosas que mirar");
 });
+
+/* ---------- Se puede escribir en cualquier estado ---------- */
+
+/* Juan: "capaz que el estado es bueno y tiene una rayita y quiero escribir eso". El renglón
+   para escribir está siempre a un toque, en los siete estados. */
+test("se puede escribir aunque el estado sea bueno", () => {
+  assert.equal(
+    comoSeLee({ nombre: "Puerta", estado: "bien", detalle: "tiene una rayita abajo" }),
+    "Buen estado · tiene una rayita abajo");
+});
+
+/* SI HAY ALGO ESCRITO, EL ESTADO NO PUEDE DECIR "SIN DETALLES". Quedaba "Buen estado – sin
+   detalles · tiene una rayita abajo", que se contradice solo en un documento que se firma. */
+test("con algo escrito, el estado deja de decir «sin detalles»", () => {
+  for (const clave of ["bien", "excelente"]) {
+    const con = comoSeLee({ nombre: "Puerta", estado: clave, detalle: "una rayita" });
+    assert.ok(!con.includes("sin detalles"), `${clave}: ${con}`);
+    assert.ok(con.includes("una rayita"));
+  }
+});
+
+test("sin nada escrito sigue diciendo «sin detalles», que es lo que él escribe", () => {
+  assert.equal(comoSeLee({ nombre: "Puerta", estado: "bien" }), "Buen estado – sin detalles");
+  assert.equal(comoSeLee({ nombre: "Puerta", estado: "excelente" }),
+    "Excelente estado – sin detalles");
+});

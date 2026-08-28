@@ -34,6 +34,9 @@ function nodo(marca) {
    perder el inventario abierto en cada tecla no sería usable. */
 let abierto = null;
 let cabeceraAbierta = false;
+/* Las cosas a las que se les abrio el renglon de escribir con el lapiz. Vive afuera porque la
+   pantalla se redibuja entera en cada cambio: adentro, el renglon se cerraria solo. */
+const escribiendo = new Set();
 
 const guardarYRedibujar = (estado) => {
   guardado.guardar(abierto);
@@ -253,49 +256,64 @@ function elAmbiente(estado, ambiente) {
 
 /* UNA FILA POR COSA, y lo más corta posible: son 165.
 
-   El campo de detalle SOLO aparece cuando el estado lo pide. Un cuadro de texto vacío al lado
-   de cada una de las 165 filas hace una pantalla que no se puede leer, y encima invita a
-   escribir donde no hace falta. */
+   El campo de detalle está SIEMPRE a un toque, con el lápiz, pero no siempre abierto: un
+   cuadro de texto vacío al lado de cada una de las 165 filas hace una pantalla que no se
+   puede leer, y encima invita a escribir donde no hace falta. */
 function elItem(estado, item) {
-  /* El renglon para escribir QUE tiene aparece con los estados que lo piden, y con cualquiera
-     si ya hay algo escrito: si no, cambiar el estado escondería un detalle ya cargado. */
-  const pideDetalle = PIDEN_DETALLE.has(item.estado) || Boolean((item.detalle || "").trim());
-
   const vacia = !(item.nombre || "").trim();
+  const cantidad = Number(item.cantidad) || 1;
+  /* EL RENGLON PARA ESCRIBIR ESTA SIEMPRE A UN TOQUE. Juan: "capaz que el estado es bueno y
+     tiene una rayita y quiero escribir eso".
 
-  /* UNA FILA, UN RENGLON. Son 165: cada renglon de mas son ciento sesenta y cinco renglones
-     de mas, y el dedo tiene que recorrerlos todos parado en el medio de un apartamento.
+     Se abre solo con los estados que no se explican solos, y con el lapiz en los que sí. Y no
+     se cierra nunca si ya hay algo escrito o una cantidad puesta: cambiar el estado no puede
+     esconder un dato cargado. */
+  const abierto = PIDEN_DETALLE.has(item.estado)
+    || Boolean((item.detalle || "").trim())
+    || cantidad > 1
+    || escribiendo.has(item.id);
 
-     Con el nombre arriba y el estado abajo el inventario media dieciocho mil pixeles de
-     scroll. Asi mide menos de la mitad. Se vio sacandole una foto a la pantalla: en las
-     pruebas no aparece, porque las pruebas no miden.
-
-     El detalle SI va abajo, en su propio renglon, pero solo cuando hay algo que escribir. */
+  /* LA CANTIDAD BAJO AL RENGLON DE ESCRIBIR. Es tan excepcion como el detalle —en todo el
+     inventario de Leyenda patria no la usó ni una vez— y arriba le comía cuarenta pixeles al
+     nombre, que es lo único que hay que poder leer de un vistazo. */
   const fila = nodo(html`
     <div class="campo-fila${item.estado === "roto" || vacia ? " falta" : ""}"
          style="padding:6px 0">
       <div style="display:flex;gap:6px;align-items:center">
-        <input class="campo" id="nom-${escapar(item.id)}" type="text" style="flex:1;min-width:0;font-size:14px;padding-left:9px;padding-right:4px"
+        <input class="campo" id="nom-${escapar(item.id)}" type="text"
+               style="flex:1;min-width:0;font-size:14px;padding-left:9px;padding-right:4px"
                placeholder="¿Qué cosa?" value="${escapar(item.nombre)}">
         <select class="campo" id="est-${escapar(item.id)}" style="flex:0 0 124px;font-size:13px">
           ${ESTADOS.map((e) => `<option value="${e.clave}"${
             e.clave === item.estado ? " selected" : ""}>${escapar(e.nombre)}</option>`).join("")}
         </select>
-        <input class="campo" id="cant-${escapar(item.id)}" type="number" min="1" step="1"
-               value="${escapar(String(item.cantidad || 1))}"
-               style="flex:0 0 42px;padding-left:6px;padding-right:2px" title="Cuántos hay">
+        <button class="filtro" data-escribir="${escapar(item.id)}"
+                style="flex:0 0 auto;padding:8px 9px"
+                title="Escribir algo de esta cosa">✎</button>
         <button class="filtro" data-sacar="${escapar(item.id)}"
-                style="flex:0 0 auto;padding:8px 10px" title="Sacar esta fila">✕</button>
+                style="flex:0 0 auto;padding:8px 9px" title="Sacar esta fila">✕</button>
       </div>
-      ${pideDetalle ? html`
-        <input class="campo" id="det-${escapar(item.id)}" type="text" style="margin-top:6px"
-               placeholder="¿Qué tiene? Escribilo como se lo contarías al inquilino"
-               value="${escapar(item.detalle || "")}">` : ""}
+      ${abierto ? html`
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <input class="campo" id="det-${escapar(item.id)}" type="text"
+                 style="flex:1;min-width:0;font-size:14px"
+                 placeholder="¿Qué tiene? Una rayita, un golpe, lo que sea"
+                 value="${escapar(item.detalle || "")}">
+          <input class="campo" id="cant-${escapar(item.id)}" type="number" min="1" step="1"
+                 value="${escapar(String(cantidad))}"
+                 style="flex:0 0 56px;padding-left:8px;padding-right:2px" title="Cuántos hay">
+        </div>` : ""}
       ${vacia ? html`
         <p class="apunte" style="margin:4px 0 0">Sin nombre no sale en el documento.
           Escribilo, o sacalo con la ✕.</p>` : ""}
     </div>
   `);
+
+  fila.querySelector("[data-escribir]").addEventListener("click", () => {
+    if (escribiendo.has(item.id)) escribiendo.delete(item.id);
+    else escribiendo.add(item.id);
+    estado.redibujar();
+  });
 
   const cuando = (id, hacer) => {
     const campo = fila.getElementById(id);
