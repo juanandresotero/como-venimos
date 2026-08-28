@@ -302,6 +302,18 @@ function elAmbiente(estado, ambiente) {
    El campo de detalle está SIEMPRE a un toque, con el lápiz, pero no siempre abierto: un
    cuadro de texto vacío al lado de cada una de las 165 filas hace una pantalla que no se
    puede leer, y encima invita a escribir donde no hace falta. */
+/* QUE DICE EL RENGLON DE ABAJO. Juan: "cuando toco el lápiz abre abajo algo, pero no parece
+   que fuera correspondiente de lo que está arriba y confunde por el diseño".
+
+   Dos cosas lo arreglan: que se vea colgado de la fila —la flecha y la sangría, en el CSS— y
+   que el texto de adentro NOMBRE la cosa de la que habla. "¿Qué tiene la puerta de entrada?"
+   no se puede confundir con otra fila. */
+function quePasaCon(item) {
+  const cosa = (item.nombre || "").trim();
+  return cosa ? `¿Qué tiene ${cosa.toLowerCase()}? Una rayita, un golpe, lo que sea`
+    : "¿Qué tiene? Una rayita, un golpe, lo que sea";
+}
+
 function elItem(estado, item) {
   const vacia = !(item.nombre || "").trim();
   const cantidad = Number(item.cantidad) || 1;
@@ -311,7 +323,10 @@ function elItem(estado, item) {
      Se abre solo con los estados que no se explican solos, y con el lapiz en los que sí. Y no
      se cierra nunca si ya hay algo escrito o una cantidad puesta: cambiar el estado no puede
      esconder un dato cargado. */
-  const abierto = PIDEN_DETALLE.has(item.estado)
+  /* OJO CON EL NOMBRE: `abierto` es el inventario que se está editando, y ponerle lo mismo a
+     esta bandera la tapaba adentro de esta función. La ✕ le pedía los ambientes a un `true` y
+     no borraba nada, sin decir una palabra. Lo encontró Juan probando. */
+  const conRenglonDeEscribir = PIDEN_DETALLE.has(item.estado)
     || Boolean((item.detalle || "").trim())
     || cantidad > 1
     || escribiendo.has(item.id);
@@ -336,15 +351,16 @@ function elItem(estado, item) {
         <button class="filtro" data-sacar="${escapar(item.id)}"
                 style="flex:0 0 auto;padding:8px 9px" title="Sacar esta fila">✕</button>
       </div>
-      ${abierto ? html`
-        <div style="display:flex;gap:6px;margin-top:6px">
+      ${conRenglonDeEscribir ? html`
+        <div class="renglon-detalle">
+          <span class="renglon-detalle-flecha">↳</span>
           <input class="campo" id="det-${escapar(item.id)}" type="text"
                  style="flex:1;min-width:0;font-size:14px"
-                 placeholder="¿Qué tiene? Una rayita, un golpe, lo que sea"
+                 placeholder="${escapar(quePasaCon(item))}"
                  value="${escapar(item.detalle || "")}">
           <input class="campo" id="cant-${escapar(item.id)}" type="number" min="1" step="1"
                  value="${escapar(String(cantidad))}"
-                 style="flex:0 0 56px;padding-left:8px;padding-right:2px" title="Cuántos hay">
+                 style="flex:0 0 52px;padding-left:8px;padding-right:2px" title="Cuántos hay">
         </div>` : ""}
       ${vacia ? html`
         <p class="apunte" style="margin:4px 0 0">Sin nombre no sale en el documento.

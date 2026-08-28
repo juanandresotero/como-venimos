@@ -1774,3 +1774,33 @@ body {
   color: var(--tinta-2);
 }
 .aviso-nueva .campo { margin-top: 6px; }
+
+
+/* ---------- El renglon de escribir de un inventario ----------
+
+   Cuelga de la fila de arriba y tiene que VERSE colgado: sin eso parece un campo suelto y no
+   se entiende de que cosa habla. Lo dijo Juan: "abre abajo algo pero no parece que fuera
+   correspondiente de lo que esta arriba y confunde por el diseno".
+
+   La flecha y la sangria hacen el trabajo; el borde de la izquierda lo ata a la fila. */
+.renglon-detalle {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 6px 0 2px 14px;
+  padding-left: 10px;
+  border-left: 2px solid var(--linea);
+}
+
+.renglon-detalle-flecha {
+  color: var(--tinta-2);
+  font-size: 15px;
+  line-height: 1;
+  margin-left: -20px;
+  width: 14px;
+  flex: 0 0 14px;
+}
+
+/* Cuando la fila esta marcada en rojo —algo roto, o sin nombre— el renglon de abajo se ata
+   con el mismo rojo: si no, la parte que explica el problema se ve como si fuera de otra. */
+.campo-fila.falta .renglon-detalle { border-left-color: var(--rojo); }
