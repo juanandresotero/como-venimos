@@ -16,6 +16,7 @@
 import {
   ESTADOS, PIDEN_DETALLE, TIPOS_DE_AMBIENTE, AVISO_RECLAMO, CLAUSULAS, comoSeLee, conCantidad,
   nuevoInventario, nuevoAmbiente, nuevoItem, numerar, comoSeLlama, comoVa, cuenta,
+  moverClausula,
 } from "../lib/inventario.js";
 import * as guardado from "../lib/inventario-guardado.js";
 import { armarPDF, nombreArchivo } from "../lib/inventario-pdf.js";
@@ -605,8 +606,12 @@ function elPie(estado) {
       const fila = nodo(html`
         <div class="campo-fila">
           <div class="tarjeta-titulo" style="margin-bottom:4px">
-            <label for="cla-${i}" style="margin:0">${i + 1})${
+            <label for="cla-${i}" style="margin:0;flex:1">${i + 1})${
               conHojas ? " — la app le pone la cantidad de hojas" : ""}</label>
+            <button class="filtro" data-mover-cla="-1" style="padding:6px 9px"
+                    title="Subirla" ${i === 0 ? "disabled" : ""}>▲</button>
+            <button class="filtro" data-mover-cla="1" style="padding:6px 9px"
+                    title="Bajarla" ${i === lasClausulas().length - 1 ? "disabled" : ""}>▼</button>
             <button class="filtro" data-quitar-cla="${i}"
                     style="padding:6px 10px">Quitar</button>
           </div>
@@ -620,6 +625,15 @@ function elPie(estado) {
         abierto.clausulas = lista;
         guardado.guardar(abierto);
       });
+
+      /* SUBIR Y BAJAR. En un teléfono, arrastrar una caja de texto de cuatro renglones es
+         imposible: el dedo la toca para escribir adentro. Dos flechas hacen lo mismo y no
+         compiten con el teclado. */
+      for (const boton of fila.querySelectorAll("[data-mover-cla]")) {
+        boton.addEventListener("click", () => {
+          guardarClausulas(moverClausula(lasClausulas(), i, Number(boton.dataset.moverCla)));
+        });
+      }
 
       fila.querySelector("[data-quitar-cla]").addEventListener("click", (e) => {
         /* Se pregunta una vez: sacar una cláusula de un documento que se firma no es lo mismo

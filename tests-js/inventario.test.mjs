@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import {
   ESTADOS, POR_DEFECTO, TIPOS_DE_AMBIENTE, CLAUSULAS, comoSeLee, conCantidad,
   nuevoAmbiente, nuevoItem, nuevoInventario, numerar, comoSeLlama, comoVa,
-  cuenta, loQueSeImprime, PIDEN_DETALLE,
+  cuenta, loQueSeImprime, PIDEN_DETALLE, moverClausula,
 } from "../lib/inventario.js";
 import { pareceValido } from "../lib/google-id.js";
 
@@ -304,4 +304,44 @@ test("un ID de cliente de Google se reconoce, y un secret no", () => {
   assert.equal(pareceValido("GOCSPX-algo-que-parece-un-secret"), false);
   assert.equal(pareceValido(""), false);
   assert.equal(pareceValido(null), false);
+});
+
+/* ---------- Mover una cláusula de lugar ---------- */
+
+/* Juan: "capaz quisiera que la que es número 4 quede como número 1, o la nueva que agregué".
+   El orden importa: son las que le dan valor legal al documento y se leen de arriba abajo, así
+   que la que manda va primero. */
+
+const ABC = ["a", "b", "c", "d"];
+
+test("una cláusula sube y baja de a un lugar", () => {
+  assert.deepEqual(moverClausula(ABC, 3, -1), ["a", "b", "d", "c"]);
+  assert.deepEqual(moverClausula(ABC, 0, 1), ["b", "a", "c", "d"]);
+});
+
+test("la cuarta puede llegar hasta arriba", () => {
+  let lista = ABC;
+  for (let i = 3; i > 0; i -= 1) lista = moverClausula(lista, i, -1);
+  assert.deepEqual(lista, ["d", "a", "b", "c"]);
+});
+
+/* Subir la primera o bajar la última no puede romper nada ni perder una cláusula. */
+test("no se puede mover más allá de los bordes", () => {
+  assert.deepEqual(moverClausula(ABC, 0, -1), ABC);
+  assert.deepEqual(moverClausula(ABC, 3, 1), ABC);
+  assert.deepEqual(moverClausula(ABC, 9, -1), ABC);
+  assert.deepEqual(moverClausula(ABC, -1, 1), ABC);
+});
+
+/* La lista de adentro del inventario no se toca hasta que quien llama decide guardarla. */
+test("devuelve una lista nueva, no cambia la de adentro", () => {
+  const original = [...ABC];
+  moverClausula(original, 0, 1);
+  assert.deepEqual(original, ABC);
+});
+
+test("con una sola cláusula, o ninguna, no pasa nada raro", () => {
+  assert.deepEqual(moverClausula(["única"], 0, -1), ["única"]);
+  assert.deepEqual(moverClausula([], 0, 1), []);
+  assert.deepEqual(moverClausula(null, 0, 1), []);
 });
