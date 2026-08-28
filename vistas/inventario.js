@@ -533,9 +533,31 @@ function agregarAmbiente(estado) {
 function elPie(estado) {
   const seccion = nodo(html`
     <section class="tarjeta">
-      <h2 class="titulo" style="font-size:17px;margin-bottom:8px">Observaciones</h2>
-      <textarea class="campo" id="observaciones" rows="4"
+      <h2 class="titulo" style="font-size:17px;margin-bottom:4px">Observaciones</h2>
+      <p class="apunte" style="margin-bottom:8px">
+        El estado general de la propiedad. Va en la última hoja, arriba de las firmas.
+        Escribí lo que corresponda a esta propiedad.
+      </p>
+      <textarea class="campo" id="observaciones" rows="5"
                 style="resize:vertical">${escapar(abierto.observaciones || "")}</textarea>
+
+      <h2 class="titulo" style="font-size:17px;margin:18px 0 4px">Las firmas</h2>
+      <p class="apunte" style="margin-bottom:8px">
+        Cuántas rayas dejar de cada lado. Si el alquiler lo firman tres propietarios y tres
+        inquilinos, poné 3 y 3.
+      </p>
+      <div style="display:flex;gap:10px">
+        <div class="campo-fila" style="padding:0;flex:1">
+          <label for="firmas-dor">Arrendador/a</label>
+          <input class="campo" id="firmas-dor" type="number" min="1" max="12" step="1"
+                 value="${escapar(String(abierto.firmas_arrendador || 1))}">
+        </div>
+        <div class="campo-fila" style="padding:0;flex:1">
+          <label for="firmas-tario">Arrendatario/a</label>
+          <input class="campo" id="firmas-tario" type="number" min="1" max="12" step="1"
+                 value="${escapar(String(abierto.firmas_arrendatario || 1))}">
+        </div>
+      </div>
       <div class="tarjeta-titulo" style="margin-top:18px">
         <h2 class="titulo" style="font-size:17px">Las cláusulas del pie</h2>
         <button class="filtro" id="ver-clausulas">${clausulasAbiertas ? "Ocultar" : "Editar"}</button>
@@ -590,6 +612,15 @@ function elPie(estado) {
     abierto.observaciones = e.target.value;
     guardado.guardar(abierto);
   });
+
+  const cuantasFirmas = (id, clave) => {
+    seccion.getElementById(id).addEventListener("change", (e) => {
+      abierto[clave] = Math.min(12, Math.max(1, Math.round(Number(e.target.value) || 1)));
+      guardarYRedibujar(estado);
+    });
+  };
+  cuantasFirmas("firmas-dor", "firmas_arrendador");
+  cuantasFirmas("firmas-tario", "firmas_arrendatario");
 
   const aviso = seccion.getElementById("resultado");
 

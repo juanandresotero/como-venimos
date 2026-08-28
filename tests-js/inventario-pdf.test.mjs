@@ -4,7 +4,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { armarPDF, nombreArchivo, enRenglones } from "../lib/inventario-pdf.js";
+import { armarPDF, nombreArchivo, enRenglones, cuantasFirmas } from "../lib/inventario-pdf.js";
 import { nuevoInventario, nuevoAmbiente, AVISO_RECLAMO } from "../lib/inventario.js";
 
 const texto = (bytes) => Buffer.from(bytes).toString("latin1");
@@ -175,4 +175,121 @@ test("las dos franjas se incrustan una sola vez y se repiten en cada hoja", () =
   const crudo = Buffer.from(doc.bytes()).toString("latin1");
   assert.equal((crudo.match(/\/DCTDecode/g) || []).length, 2,
     "dos imágenes en el archivo, por más hojas que tenga");
+});
+
+/* ---------- La última hoja ---------- */
+
+/* Juan: "las observaciones y las firmas van en una hoja final juntas... tiene que haber una
+   hoja dedicada a observaciones y firmas... la idea es que no queden las firmas en una hoja
+   separada completamente".
+
+   Una hoja que dice sólo "Firma Arrendador ____" no se entiende sola, y es la hoja que queda
+   arriba de todo el día que hay que discutir algo. */
+
+const conFotos = (cuantas, ancho, alto) => {
+  const salida = [];
+  for (let k = 1; k <= cuantas; k += 1) {
+    salida.push({ ambiente: "Living comedor", orden: k,
+      papel: { bytes: jpegFalso(ancho, alto), ancho, alto } });
+  }
+  return salida;
+};
+
+/* Saca las posiciones de las imágenes: "ancho 0 0 alto x y cm ... /ImN Do". */
+function comoQuedaronLasFotos(bytes) {
+  const crudo = Buffer.from(bytes).toString("latin1");
+  return [...crudo.matchAll(/([\d.]+) 0 0 ([\d.]+) ([\d.]+) ([\d.]+) cm[\s\S]*?\/Im\d+ Do/g)]
+    .map((m) => ({ ancho: Number(m[1]), alto: Number(m[2]), x: Number(m[3]), y: Number(m[4]) }));
+}
+
+test("la última hoja lleva observaciones, cláusulas y firmas juntas", () => {
+  const inv = conAmbientes("living", "cocina", "dormitorio");
+  inv.observaciones = "Todo en perfecto estado.";
+  const { doc } = armarPDF(inv, { fotos: conFotos(8, 1600, 1200) });
+  const hojas = Buffer.from(doc.bytes()).toString("latin1").split("/Type /Page")
+    .filter((x) => !x.startsWith("s"));
+  const t = Buffer.from(doc.bytes()).toString("latin1");
+  assert.ok(t.includes("Observaciones"));
+  assert.ok(t.includes("Arrendador/a"));
+  assert.ok(t.includes("Arrendatario/a"));
+  assert.ok(hojas.length >= 2);
+});
+
+/* CUANTAS FIRMAS DE CADA LADO. Un alquiler lo pueden firmar tres propietarios y tres
+   inquilinos: con una sola raya por parte, los otros firman en el margen. */
+test("se dejan tantas rayas de firma como haga falta", () => {
+  const contar = (n) => {
+    const inv = conAmbientes("living");
+    inv.firmas_arrendador = n;
+    inv.firmas_arrendatario = n;
+    const t = Buffer.from(armarPDF(inv).doc.bytes()).toString("latin1");
+    return (t.match(/Firma y aclaraci/g) || []).length;
+  };
+  assert.equal(contar(1), 2, "una de cada lado");
+  assert.equal(contar(3), 6);
+  assert.equal(contar(6), 12);
+});
+
+test("sin decir cuántas, va una de cada lado", () => {
+  const t = Buffer.from(armarPDF(conAmbientes("living")).doc.bytes()).toString("latin1");
+  assert.equal((t.match(/Firma y aclaraci/g) || []).length, 2);
+});
+
+test("una cantidad absurda no llena el documento de rayas", () => {
+  assert.equal(cuantasFirmas(999), 12);
+  assert.equal(cuantasFirmas(0), 1);
+  assert.equal(cuantasFirmas(-3), 1);
+  assert.equal(cuantasFirmas("dos"), 1);
+  assert.equal(cuantasFirmas(undefined), 1);
+});
+
+/* ---------- Las fotos paradas y las acostadas ---------- */
+
+/* Juan: "las fotos paradas tienen diferente tamaño que las acostadas, pierde relación y queda
+   desprolijo". Antes cada una guardaba su proporción con el ancho fijo, así que una parada
+   quedaba un tercio más alta y las filas salían de alturas distintas.
+
+   Ahora van en casilleros del mismo tamaño, centradas y sin deformarse. Con las medidas de un
+   celular —4:3 acostada, 3:4 parada— ocupan exactamente lo mismo. */
+test("una foto parada y una acostada ocupan lo mismo", () => {
+  const inv = conAmbientes("living");
+  const mezcla = [
+    { ambiente: "Living comedor", orden: 1,
+      papel: { bytes: jpegFalso(1600, 1200), ancho: 1600, alto: 1200 } },
+    { ambiente: "Living comedor", orden: 2,
+      papel: { bytes: jpegFalso(1200, 1600), ancho: 1200, alto: 1600 } },
+  ];
+  const [acostada, parada] = comoQuedaronLasFotos(armarPDF(inv, { fotos: mezcla }).doc.bytes())
+    .filter((f) => f.ancho < 200);   // las del membrete ocupan la hoja entera
+  assert.ok(acostada.ancho > acostada.alto, "la primera es acostada");
+  assert.ok(parada.alto > parada.ancho, "la segunda es parada");
+  const area = (f) => f.ancho * f.alto;
+  assert.ok(Math.abs(area(acostada) - area(parada)) < 1, "tienen que ocupar lo mismo");
+});
+
+/* NO SE RECORTAN. Recortar una foto de una pared en un documento que se firma es tirar la
+   mitad de la prueba: se centran adentro de su casillero y listo. */
+test("ninguna foto se deforma para llenar el casillero", () => {
+  const inv = conAmbientes("living");
+  const rara = [{ ambiente: "Living comedor", orden: 1,
+    papel: { bytes: jpegFalso(2000, 500), ancho: 2000, alto: 500 } }];
+  const [foto] = comoQuedaronLasFotos(armarPDF(inv, { fotos: rara }).doc.bytes())
+    .filter((f) => f.ancho < 200);
+  assert.ok(Math.abs(foto.ancho / foto.alto - 4) < 0.01, "mantiene su proporción 2000/500");
+});
+
+test("todas las filas de fotos miden lo mismo", () => {
+  const inv = conAmbientes("living");
+  const mezcla = [];
+  for (let k = 1; k <= 10; k += 1) {
+    mezcla.push({ ambiente: "Living comedor", orden: k,
+      papel: { bytes: jpegFalso(k % 2 ? 1600 : 1200, k % 2 ? 1200 : 1600),
+      ancho: k % 2 ? 1600 : 1200, alto: k % 2 ? 1200 : 1600 } });
+  }
+  const puestas = comoQuedaronLasFotos(armarPDF(inv, { fotos: mezcla }).doc.bytes())
+    .filter((f) => f.ancho < 200);
+  /* Cinco por fila: las dos filas tienen que arrancar separadas por el mismo alto. */
+  const alturas = [...new Set(puestas.map((f) => Math.round(f.y + f.alto / 2)))].sort((a, b) => a - b);
+  assert.equal(alturas.length, 2, "diez fotos son dos filas");
+  assert.ok(Math.abs(alturas[1] - alturas[0] - 103) < 6, "las filas van parejas");
 });
