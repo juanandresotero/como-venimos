@@ -83,8 +83,16 @@ test("entra lo que vive sólo en el teléfono y no es una puerta", () => {
 
 /* Lo que queda afuera se dice en pantalla: que falte tiene que ser una decisión visible, no
    una sorpresa el día que se restaura. */
+/* Las tres primeras son PUERTAS, no datos: con la llave se escribe en su repo, con la firma
+   se firma en su nombre y con las cuentas se cobra. Las fotos son la cuarta y por otro motivo:
+   viven en IndexedDB y esto sólo lee localStorage. Su respaldo es el Drive. */
 test("se puede decir en criollo qué NO entra", () => {
-  assert.deepEqual(NO_ENTRA, ["La llave de GitHub", "Tu firma", "Las cuentas bancarias"]);
+  assert.deepEqual(NO_ENTRA, [
+    "La llave de GitHub",
+    "Tu firma",
+    "Las cuentas bancarias",
+    "Las fotos de los inventarios (esas van al Drive)",
+  ]);
 });
 
 test("no se mete con lo de otras apps del navegador", () => {

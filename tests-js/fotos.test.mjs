@@ -86,3 +86,28 @@ test("los megas se dicen como los diría una persona", () => {
   assert.equal(enMegas(1024 * 1024), "1.0 MB");
   assert.equal(enMegas(45 * 1024 * 1024), "45.0 MB");
 });
+
+/* ---------- El número de cada foto ---------- */
+
+/* SE SIGUE DESDE EL NUMERO MAS ALTO, no desde la cantidad.
+
+   Con la cantidad pasaba esto: si tenías las fotos 1, 2 y 3 y borrabas la 2, la próxima se
+   numeraba 3 —porque quedaban dos— y PISABA a la que ya era la 3. Una foto de una pared
+   desaparecía sin que nada avisara, en un documento que se usa para discutir un depósito.
+
+   Salió auditando la herramienta. */
+test("el número sigue desde el más alto, aunque se borre una del medio", () => {
+  const proximo = (fotos) =>
+    fotos.reduce((mayor, f) => Math.max(mayor, Number(f.orden) || 0), 0) + 1;
+
+  assert.equal(proximo([]), 1);
+  assert.equal(proximo([{ orden: 1 }, { orden: 2 }, { orden: 3 }]), 4);
+  assert.equal(proximo([{ orden: 1 }, { orden: 3 }]), 4, "borré la 2: la próxima es 4, no 3");
+  assert.equal(proximo([{ orden: 5 }]), 6, "borré las cuatro primeras");
+});
+
+test("una foto sin número no baja la cuenta", () => {
+  const proximo = (fotos) =>
+    fotos.reduce((mayor, f) => Math.max(mayor, Number(f.orden) || 0), 0) + 1;
+  assert.equal(proximo([{ orden: 3 }, {}, { orden: null }]), 4);
+});

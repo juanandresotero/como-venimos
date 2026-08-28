@@ -103,7 +103,9 @@ function cabecera(r) {
             <div class="renta-caja principal">
               <p class="renta-nombre">Le queda al vendedor</p>
               <p class="cifra cifra-grande renta-cifra" style="color:var(--azul)">${plata(r.vendedor.queda)}</p>
-              <p class="renta-pie">de ${plataUSD(r.precio)}</p>
+              <p class="renta-pie">${r.irpf.falta && r.forma === "ganancia"
+                ? "sin el IRPF: falta a cuánto la compró"
+                : `de ${plataUSD(r.precio)}`}</p>
             </div>
             <div class="renta-caja">
               <p class="renta-nombre">El comprador pone</p>
