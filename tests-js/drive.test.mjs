@@ -11,24 +11,25 @@ import {
 
 /* ---------- Cómo se llaman las carpetas ---------- */
 
-/* HOY EN SU DRIVE CONVIVEN "Humaita 2750", "Humaita 2750 - 2025" y
-   "Leyenda patria 2914 /1001 - Fecha 1/6/2025": tres formas de escribir lo mismo, y ninguna
-   se ordena con la otra. La fecha adelante en año-mes-día las ordena solas. */
-test("todas las carpetas se llaman igual, con la fecha adelante", () => {
+/* LA DIRECCION Y NADA MAS. Le tenía la fecha adelante y Juan la sacó: "google drive ya guarda
+   ese dato". Lo que sí queda igual siempre es la FORMA: hoy en su Drive conviven
+   "Humaita 2750", "Humaita 2750 - 2025" y "Leyenda patria 2914 /1001 - Fecha 1/6/2025", tres
+   maneras de escribir lo mismo. */
+test("la carpeta se llama como la propiedad, sin la fecha", () => {
   assert.equal(
     comoSeLlamaLaCarpeta({ fecha: "2026-05-30", direccion: "Leyenda Patria 2914", unidad: "1001" }),
-    "2026-05-30 · Leyenda Patria 2914 apto 1001");
+    "Leyenda Patria 2914 apto 1001");
   assert.equal(
     comoSeLlamaLaCarpeta({ fecha: "2025-08-07", direccion: "Gregorio Camino 828" }),
-    "2025-08-07 · Gregorio Camino 828");
+    "Gregorio Camino 828");
 });
 
-/* La misma propiedad alquilada dos veces son dos carpetas distintas, no una pisada. */
-test("la misma propiedad en dos años son dos carpetas", () => {
-  const uno = comoSeLlamaLaCarpeta({ fecha: "2024-10-17", direccion: "Humaita 2750" });
-  const dos = comoSeLlamaLaCarpeta({ fecha: "2025-11-27", direccion: "Humaita 2750" });
-  assert.notEqual(uno, dos);
-  assert.ok(uno < dos, "se ordenan solas por fecha");
+/* LA CONSECUENCIA, dicha a propósito: dos inventarios de la misma dirección van a la MISMA
+   carpeta. Es lo que Juan eligió; para que sean dos, hay que escribir la dirección distinta. */
+test("dos inventarios de la misma dirección van a la misma carpeta", () => {
+  assert.equal(
+    comoSeLlamaLaCarpeta({ fecha: "2024-10-17", direccion: "Humaita 2750" }),
+    comoSeLlamaLaCarpeta({ fecha: "2025-11-27", direccion: "Humaita 2750" }));
 });
 
 /* La barra y los dos puntos rompen los nombres de carpeta al bajarlos en Windows. */
@@ -40,7 +41,7 @@ test("los caracteres que rompen un nombre de carpeta se sacan", () => {
 });
 
 test("sin dirección igual sale un nombre usable", () => {
-  assert.equal(comoSeLlamaLaCarpeta({ fecha: "2026-05-30" }), "2026-05-30 · Sin dirección");
+  assert.equal(comoSeLlamaLaCarpeta({ fecha: "2026-05-30" }), "Sin dirección");
   assert.equal(comoSeLlamaLaCarpeta({}), "Sin dirección");
   assert.equal(comoSeLlamaLaCarpeta(null), "Sin dirección");
 });
@@ -111,7 +112,7 @@ test("arma la misma estructura que él arma a mano", async () => {
 
     const nombres = [...falso.carpetas.keys()].map((k) => k.split("|")[0]);
     assert.ok(nombres.includes("INVENTARIOS"));
-    assert.ok(nombres.includes("2025-08-07 · Gregorio Camino 828"));
+    assert.ok(nombres.includes("Gregorio Camino 828"));
     assert.ok(nombres.includes("Baño"));
     assert.ok(nombres.includes("Dormitorio 1"));
     assert.equal(falso.archivos.length, 4, "tres fotos y el PDF");
@@ -136,11 +137,31 @@ test("la carpeta queda abierta para el que tenga el link", async () => {
 test("lo que ya se subió no se vuelve a subir", async () => {
   const falso = driveDeMentira();
   try {
+    const inv = { fecha: "2026-01-01", direccion: "X 1" };
     const fotos = [laFoto("Cocina", 1), laFoto("Cocina", 2), laFoto("Cocina", 3)];
-    const salida = await subirInventario("tok", { fecha: "2026-01-01", direccion: "X 1" }, fotos,
-      { yaSubida: (f) => f.orden <= 2 });
+    /* Primero se sube todo, para que la carpeta EXISTA. */
+    await subirInventario("tok", inv, fotos);
+    falso.archivos.length = 0;
+    const salida = await subirInventario("tok", inv, fotos, { yaSubida: (f) => f.orden <= 2 });
     assert.equal(salida.subidas, 1, "sólo la que faltaba");
     assert.equal(falso.archivos.length, 1);
+  } finally { falso.devolver(); }
+});
+
+/* SI BORRA LA CARPETA DEL DRIVE, SE SUBE TODO DE NUEVO. Adentro de una carpeta recién creada
+   no hay nada, por más que la app tenga anotado que esas fotos ya subieron. Sin esto quedaba
+   una carpeta vacía y un cartel diciendo "ya estaba todo subido".
+
+   Lo encontró Juan preguntando si podía borrarla. */
+test("si borrás la carpeta del Drive, se sube todo de nuevo", async () => {
+  const falso = driveDeMentira();
+  try {
+    const inv = { fecha: "2026-01-01", direccion: "Humaita 2750" };
+    const fotos = [laFoto("Cocina", 1), laFoto("Cocina", 2)];
+    /* La carpeta no existe: es como si la hubiera borrado del Drive. */
+    const salida = await subirInventario("tok", inv, fotos, { yaSubida: () => true });
+    assert.equal(salida.desdeCero, true);
+    assert.equal(salida.subidas, 2, "las dos de nuevo, aunque figuraran subidas");
   } finally { falso.devolver(); }
 });
 
@@ -150,17 +171,20 @@ test("una carpeta que ya existe se reusa, no se duplica", async () => {
     const inv = { fecha: "2026-01-01", direccion: "X 1" };
     await subirInventario("tok", inv, [laFoto("Cocina", 1)]);
     const antes = falso.carpetas.size;
+
     await subirInventario("tok", inv, [laFoto("Cocina", 2)]);
     assert.equal(falso.carpetas.size, antes, "las tres carpetas ya estaban");
   } finally { falso.devolver(); }
 });
 
-test("laCarpeta devuelve la que hay antes de crear otra", async () => {
+test("laCarpeta devuelve la que hay antes de crear otra, y dice si la creó", async () => {
   const falso = driveDeMentira();
   try {
     const uno = await laCarpeta("tok", "INVENTARIOS", null);
     const dos = await laCarpeta("tok", "INVENTARIOS", null);
-    assert.equal(uno, dos);
+    assert.equal(uno.id, dos.id);
+    assert.equal(uno.recienCreada, true, "la primera vez no estaba");
+    assert.equal(dos.recienCreada, false, "la segunda ya estaba");
   } finally { falso.devolver(); }
 });
 

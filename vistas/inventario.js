@@ -784,8 +784,11 @@ function elPie(estado) {
       abierto.link_fotos = salida.link;
       guardado.guardar(abierto);
       await releerFotos(estado);
+      /* SI LA CARPETA NO ESTABA SE DICE, porque explica por qué subió todo de nuevo: la
+         borraste del Drive, o le cambiaste el nombre. */
       const cuantos = salida.subidas
-        ? `Listo: ${salida.subidas} ${salida.subidas === 1 ? "archivo" : "archivos"} en tu Drive.`
+        ? `${salida.desdeCero ? "La carpeta no estaba, así que subí todo de nuevo: " : "Listo: "}`
+          + `${salida.subidas} ${salida.subidas === 1 ? "archivo" : "archivos"} en tu Drive.`
         : "Ya estaba todo subido.";
       aviso.textContent = salida.abierta
         ? `${cuantos} El link quedó pegado abajo.`
