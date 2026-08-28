@@ -391,6 +391,12 @@
    "slug": "christian-yic"
   },
   {
+   "id": "249bad07-891f-4400-aa4a-fcb02286dc7d",
+   "nombre": "Claudia  Sosa",
+   "oficina_id": "dcabe4e3-7e63-4451-b26f-2a60d581a08f",
+   "slug": "claudia-sosa"
+  },
+  {
    "id": "b5cfc773-41e3-4e9d-9c82-087145dee0d0",
    "nombre": "Claudia  Viera",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -1339,6 +1345,12 @@
    "slug": "maria-elvina-cabrera"
   },
   {
+   "id": "098c6039-86af-49ac-aca1-55f107903a97",
+   "nombre": "Maria Emilia Coppola Marr",
+   "oficina_id": "54a7281c-ebdf-4667-90ed-235c67a12340",
+   "slug": "maria-emilia-coppola-marr"
+  },
+  {
    "id": "8cad935b-6d8d-4bc8-81ea-e5ce8a2ddf27",
    "nombre": "Maria Emilia Portela Facal",
    "oficina_id": "b8587180-e38e-474a-b16e-1e411d1a100f",
@@ -1373,12 +1385,6 @@
    "nombre": "Maria Soledad Dodero De León",
    "oficina_id": "54a7281c-ebdf-4667-90ed-235c67a12340",
    "slug": "maria-soledad-dodero-de-leon"
-  },
-  {
-   "id": "b03c9aaa-4768-48ec-85c4-547c473da019",
-   "nombre": "Marian Mira",
-   "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
-   "slug": "marian-mira"
   },
   {
    "id": "0df5deea-4bfc-4023-b09c-a75e1b3583d1",
@@ -1769,6 +1775,12 @@
    "nombre": "Pablo Sburlati",
    "oficina_id": "dd5bf580-a7c5-4729-ae8d-9745934a6ba8",
    "slug": "pablo-sburlati"
+  },
+  {
+   "id": "a458bdd3-2cd5-48ce-925e-f05e4ef6184c",
+   "nombre": "Pablo Silva",
+   "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
+   "slug": "pablo-silva"
   },
   {
    "id": "fb77ebd6-4747-4db3-9fea-221d8e2c6483",
@@ -2257,7 +2269,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-08-25",
+ "bajada_el": "2026-08-28",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
