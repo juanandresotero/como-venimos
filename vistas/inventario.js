@@ -15,7 +15,7 @@
 
 import {
   ESTADOS, TIPOS_DE_AMBIENTE, AVISO_RECLAMO, comoSeLee, conCantidad,
-  nuevoInventario, nuevoAmbiente, nuevoItem, numerar, comoSeLlama, comoVa,
+  nuevoInventario, nuevoAmbiente, nuevoItem, numerar, comoSeLlama, comoVa, cuenta,
 } from "../lib/inventario.js";
 import * as guardado from "../lib/inventario-guardado.js";
 import { armarPDF, nombreArchivo } from "../lib/inventario-pdf.js";
@@ -184,17 +184,33 @@ function cabecera(estado) {
 /* ---------- Un ambiente ---------- */
 
 function elAmbiente(estado, ambiente) {
-  const usados = ambiente.items.filter((i) => i.estado !== "no_tiene").length;
+  const usados = ambiente.items.filter(cuenta).length;
 
+  /* EL NOMBRE DEL AMBIENTE SE ESCRIBE. Es lo que pidió Juan para poder poner "Cochera",
+     "Depósito" o lo que tenga esa propiedad, y de paso sirve para renombrar: "Dormitorio 1"
+     puede ser "Dormitorio del fondo". */
   const seccion = nodo(html`
     <section class="tarjeta">
       <div class="tarjeta-titulo">
-        <h2 class="titulo" style="font-size:17px">${escapar(ambiente.nombre)}</h2>
-        <span class="apunte">${usados} ${usados === 1 ? "cosa" : "cosas"}</span>
+        <input class="campo" id="amb-${escapar(ambiente.id)}" type="text"
+               value="${escapar(ambiente.nombre)}" placeholder="¿Qué ambiente es?"
+               style="font-size:17px;font-weight:700;flex:1">
+        <span class="apunte" style="white-space:nowrap;margin-left:10px">
+          ${usados} ${usados === 1 ? "cosa" : "cosas"}</span>
       </div>
       <div id="items-${escapar(ambiente.id)}"></div>
-      <div class="botonera" style="margin-top:10px">
-        <button class="filtro" data-sumar-item="${escapar(ambiente.id)}">+ Agregar algo</button>
+
+      <div class="campo-fila" style="padding:10px 0 0">
+        <label for="sumar-${escapar(ambiente.id)}">Agregar algo a este ambiente</label>
+        <div style="display:flex;gap:8px">
+          <input class="campo" id="sumar-${escapar(ambiente.id)}" type="text" style="flex:1"
+                 placeholder="Estufa, calefón, mosquitero...">
+          <button class="boton boton-chico boton-primario"
+                  data-sumar-item="${escapar(ambiente.id)}">Sumar</button>
+        </div>
+      </div>
+
+      <div class="botonera" style="margin-top:12px">
         <button class="filtro" data-borrar-amb="${escapar(ambiente.id)}">Sacar el ambiente</button>
       </div>
     </section>
@@ -203,10 +219,25 @@ function elAmbiente(estado, ambiente) {
   const caja = seccion.getElementById(`items-${ambiente.id}`);
   for (const item of ambiente.items) caja.append(elItem(estado, item));
 
-  seccion.querySelector("[data-sumar-item]").addEventListener("click", () => {
-    ambiente.items.push(nuevoItem(""));
+  seccion.getElementById(`amb-${ambiente.id}`).addEventListener("change", (e) => {
+    ambiente.nombre = e.target.value;
     guardarYRedibujar(estado);
   });
+
+  /* SE ESCRIBE EL NOMBRE Y SE SUMA. Antes aparecía una fila en blanco que después había que
+     encontrar entre las otras veinte para escribirle adentro. */
+  const comoSeLlamaLoNuevo = seccion.getElementById(`sumar-${ambiente.id}`);
+  const sumar = () => {
+    const nombre = comoSeLlamaLoNuevo.value.trim();
+    if (!nombre) return;
+    ambiente.items.push(nuevoItem(nombre));
+    guardarYRedibujar(estado);
+  };
+  comoSeLlamaLoNuevo.addEventListener("keydown", (e) => {
+    // Enter suma: escribís, Enter, escribís, Enter. Sin sacar la vista del teclado.
+    if (e.key === "Enter") { e.preventDefault(); sumar(); }
+  });
+  seccion.querySelector("[data-sumar-item]").addEventListener("click", sumar);
   seccion.querySelector("[data-borrar-amb]").addEventListener("click", (e) => {
     const boton = e.currentTarget;
     if (boton.dataset.seguro !== "si") {
@@ -229,25 +260,39 @@ function elItem(estado, item) {
   const pideDetalle = item.estado === "detalles" || item.estado === "malo"
     || Boolean((item.detalle || "").trim());
 
+  const vacia = !(item.nombre || "").trim();
+
+  /* UNA FILA, UN RENGLON. Son 165: cada renglon de mas son ciento sesenta y cinco renglones
+     de mas, y el dedo tiene que recorrerlos todos parado en el medio de un apartamento.
+
+     Con el nombre arriba y el estado abajo el inventario media dieciocho mil pixeles de
+     scroll. Asi mide menos de la mitad. Se vio sacandole una foto a la pantalla: en las
+     pruebas no aparece, porque las pruebas no miden.
+
+     El detalle SI va abajo, en su propio renglon, pero solo cuando hay algo que escribir. */
   const fila = nodo(html`
-    <div class="campo-fila${item.estado === "malo" ? " falta" : ""}" style="padding:8px 0">
-      <input class="campo" id="nom-${escapar(item.id)}" type="text"
-             placeholder="¿Qué cosa?" value="${escapar(item.nombre)}"
-             style="font-weight:600">
-      <div style="display:flex;gap:8px;margin-top:6px">
-        <select class="campo" id="est-${escapar(item.id)}" style="flex:1">
+    <div class="campo-fila${item.estado === "malo" || vacia ? " falta" : ""}"
+         style="padding:6px 0">
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="campo" id="nom-${escapar(item.id)}" type="text" style="flex:1;min-width:0;font-size:14px"
+               placeholder="¿Qué cosa?" value="${escapar(item.nombre)}">
+        <select class="campo" id="est-${escapar(item.id)}" style="flex:0 0 112px">
           ${ESTADOS.map((e) => `<option value="${e.clave}"${
             e.clave === item.estado ? " selected" : ""}>${escapar(e.nombre)}</option>`).join("")}
         </select>
         <input class="campo" id="cant-${escapar(item.id)}" type="number" min="1" step="1"
                value="${escapar(String(item.cantidad || 1))}"
-               style="width:72px" title="Cuántos hay">
-        <button class="filtro" data-sacar="${escapar(item.id)}" title="Sacar esta fila">✕</button>
+               style="flex:0 0 42px;padding-left:6px;padding-right:2px" title="Cuántos hay">
+        <button class="filtro" data-sacar="${escapar(item.id)}"
+                style="flex:0 0 auto;padding:8px 10px" title="Sacar esta fila">✕</button>
       </div>
       ${pideDetalle ? html`
         <input class="campo" id="det-${escapar(item.id)}" type="text" style="margin-top:6px"
                placeholder="¿Qué tiene? Escribilo como se lo contarías al inquilino"
                value="${escapar(item.detalle || "")}">` : ""}
+      ${vacia ? html`
+        <p class="apunte" style="margin:4px 0 0">Sin nombre no sale en el documento.
+          Escribilo, o sacalo con la ✕.</p>` : ""}
     </div>
   `);
 
@@ -280,6 +325,10 @@ function agregarAmbiente(estado) {
             `<option value="${t.clave}">${escapar(t.nombre)}</option>`).join("")}
         </select>
       </div>
+      <div class="campo-fila" style="padding:8px 0 0">
+        <input class="campo" id="nombre-ambiente" type="text"
+               placeholder="Cómo se llama (opcional: Cochera 2, Cuarto de máquinas...)">
+      </div>
       <div class="botonera" style="margin-top:10px">
         <button class="boton boton-primario boton-chico" id="sumar-amb">Agregarlo</button>
       </div>
@@ -292,8 +341,11 @@ function agregarAmbiente(estado) {
      hace nada — que es exactamente lo que pasaba. La referencia al nodo, en cambio, sigue
      valiendo después de la mudanza. */
   const cual = seccion.getElementById("que-ambiente");
+  const comoSeLlamara = seccion.getElementById("nombre-ambiente");
   seccion.getElementById("sumar-amb").addEventListener("click", () => {
-    abierto.ambientes.push(nuevoAmbiente(cual.value));
+    /* El nombre escrito manda sobre el del tipo: es lo que deja poner "Cochera 2" o
+       "Cuarto de máquinas" sin tener que renombrarlo después. */
+    abierto.ambientes.push(nuevoAmbiente(cual.value, comoSeLlamara.value.trim()));
     guardarYRedibujar(estado);
   });
   return seccion;

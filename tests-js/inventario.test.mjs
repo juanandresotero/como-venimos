@@ -10,6 +10,7 @@ import assert from "node:assert/strict";
 import {
   ESTADOS, POR_DEFECTO, TIPOS_DE_AMBIENTE, CLAUSULAS, comoSeLee, conCantidad,
   nuevoAmbiente, nuevoItem, nuevoInventario, numerar, comoSeLlama, comoVa,
+  cuenta, loQueSeImprime,
 } from "../lib/inventario.js";
 
 /* ---------- Cómo se lee un renglón ---------- */
@@ -32,20 +33,20 @@ test("el texto que sale impreso es el que él escribe hoy", () => {
 });
 
 test("el detalle se suma al estado", () => {
-  assert.equal(comoSeLee({ estado: "detalles", detalle: "una rajadura interior en uno" }),
+  assert.equal(comoSeLee({ nombre: "Placar", estado: "detalles", detalle: "una rajadura interior en uno" }),
     "Buen estado – con detalles · una rajadura interior en uno");
 });
 
 /* "CON PROBLEMAS" SIN EXPLICAR QUE PROBLEMA no sirve de nada el día que hay que discutir un
    depósito. El detalle es lo único que se lee. */
 test("con problemas, manda el detalle", () => {
-  assert.equal(comoSeLee({ estado: "malo", detalle: "Con hongos, mecanismo roto" }),
+  assert.equal(comoSeLee({ nombre: "Toldos", estado: "malo", detalle: "Con hongos, mecanismo roto" }),
     "Con hongos, mecanismo roto");
-  assert.equal(comoSeLee({ estado: "malo", detalle: "" }), "Con problemas");
+  assert.equal(comoSeLee({ nombre: "Toldos", estado: "malo", detalle: "" }), "Con problemas");
 });
 
 test("lo que no tiene no se escribe", () => {
-  assert.equal(comoSeLee({ estado: "no_tiene", detalle: "algo" }), "");
+  assert.equal(comoSeLee({ nombre: "Bidet", estado: "no_tiene", detalle: "algo" }), "");
 });
 
 /* LA CANTIDAD SOLO SE ESCRIBE CUANDO ES MAS DE UNA. Poner "x1" en las otras ciento sesenta
@@ -159,4 +160,57 @@ test("comoVa cuenta lo que hay y lo que tiene detalle", () => {
 test("los estados son pocos a propósito: son 165 filas", () => {
   assert.ok(ESTADOS.length <= 5, "con más opciones hay que pensar en cada fila");
   assert.ok(TIPOS_DE_AMBIENTE.length >= 8);
+});
+
+/* ---------- Lo vacío no existe ---------- */
+
+/* Juan: "si borro algo o dejo algo vacío que entienda que ahí no se tiene que poner nada y se
+   ajuste". Pasa todo el tiempo: tocás "agregar algo", te distraés, y queda una fila en
+   blanco. En la pantalla se ve y se entiende; impresa en el documento que se firma es un
+   renglón vacío que nadie sabe qué quiso decir. */
+
+test("una cosa sin nombre no cuenta ni se imprime", () => {
+  assert.equal(cuenta({ nombre: "", estado: "bien" }), false);
+  assert.equal(cuenta({ nombre: "   ", estado: "bien" }), false);
+  assert.equal(cuenta({ nombre: "Paredes", estado: "bien" }), true);
+  assert.equal(comoSeLee({ nombre: "", estado: "bien" }), "");
+});
+
+test("las filas en blanco no llegan al documento", () => {
+  const inv = nuevoInventario("2026-08-28");
+  inv.ambientes = [nuevoAmbiente("cochera")];
+  inv.ambientes[0].items.push(nuevoItem(""));
+  inv.ambientes[0].items.push(nuevoItem("   "));
+  const [amb] = loQueSeImprime(inv);
+  assert.equal(amb.items.length, nuevoAmbiente("cochera").items.length);
+});
+
+/* UN AMBIENTE ENTERO VACIO TAMPOCO: un título solo, sin nada abajo, se lee como un error. */
+test("un ambiente sin nada adentro no se imprime", () => {
+  const inv = nuevoInventario("2026-08-28");
+  inv.ambientes = [nuevoAmbiente("living"), nuevoAmbiente("vacio", "Altillo")];
+  assert.deepEqual(loQueSeImprime(inv).map((a) => a.nombre), ["Living comedor"]);
+});
+
+test("un ambiente sin nombre tampoco, por más cosas que tenga", () => {
+  const inv = nuevoInventario("2026-08-28");
+  inv.ambientes = [nuevoAmbiente("cocina", "  ")];
+  assert.deepEqual(loQueSeImprime(inv), []);
+});
+
+/* ---------- Los ambientes que pidió después ---------- */
+
+test("hay cochera y depósito, y se pueden escribir a mano", () => {
+  const claves = TIPOS_DE_AMBIENTE.map((t) => t.clave);
+  for (const debe of ["cochera", "deposito", "balcon", "azotea", "vacio"]) {
+    assert.ok(claves.includes(debe), `falta ${debe}`);
+  }
+  const mia = nuevoAmbiente("vacio", "Cuarto de máquinas");
+  assert.equal(mia.nombre, "Cuarto de máquinas");
+});
+
+test("una cochera trae lo poco que hay que mirar en una cochera", () => {
+  const nombres = nuevoAmbiente("cochera").items.map((i) => i.nombre);
+  assert.ok(nombres.includes("Portón"));
+  assert.ok(nombres.length < 8, "en un garaje no hay veinte cosas que mirar");
 });
