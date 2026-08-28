@@ -20,6 +20,7 @@ import {
 import * as guardado from "../lib/inventario-guardado.js";
 import { armarPDF, nombreArchivo } from "../lib/inventario-pdf.js";
 import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
+import { cargarMembrete } from "../lib/membrete.js";
 import { escapar } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -483,10 +484,13 @@ function elPie(estado) {
 
      "Mandar" abre la bandeja del telefono —ahi adentro esta WhatsApp— con el archivo listo.
      "Bajarlo" es para la computadora, que es de donde se imprime. */
-  const elPDF = () => {
+  const elPDF = async () => {
     const oficina = ((estado.datos.ajustes || {}).agente || {}).oficina
       || "RE/MAX Único · Avda. Brasil 2986, Montevideo";
-    return armarPDF({ ...abierto, aviso_reclamo: AVISO_RECLAMO }, { oficina });
+    /* El membrete se pide, pero si no está —sin señal y sin caché— el documento sale igual.
+       Un inventario no puede depender de que haya internet. */
+    return armarPDF({ ...abierto, aviso_reclamo: AVISO_RECLAMO },
+      { oficina, membrete: await cargarMembrete() });
   };
 
   const contar = (hojas) => `${hojas} ${hojas === 1 ? "hoja" : "hojas"}`;
@@ -501,7 +505,7 @@ function elPie(estado) {
   };
 
   seccion.getElementById("mandar").addEventListener("click", async () => {
-    const { doc, hojas } = elPDF();
+    const { doc, hojas } = await elPDF();
     aviso.textContent = "Armando el PDF...";
     const como = await mandarArchivo(
       doc.aBlob(), nombreArchivo(abierto),
@@ -510,7 +514,7 @@ function elPie(estado) {
   });
 
   seccion.getElementById("bajar").addEventListener("click", async () => {
-    const { doc, hojas } = elPDF();
+    const { doc, hojas } = await elPDF();
     const como = await bajarArchivo(doc.aBlob(), nombreArchivo(abierto));
     aviso.textContent = (COMO_SALIO[como] || COMO_SALIO.bajado)(hojas);
   });

@@ -116,3 +116,63 @@ test("uno vacío no rompe: sale igual, con lo que haya", () => {
   assert.equal(hojas, 1);
   assert.ok(texto(doc.bytes()).includes("Inventario del inmueble"));
 });
+
+/* ---------- El membrete de RE/MAX ---------- */
+
+/* Juan: "tenés que sumarle la identidad de RE/MAX con su logo y colores". Son las mismas dos
+   franjas del Word de la oficina, que la carta oferta ya usaba.
+
+   LO QUE HAY QUE CUIDAR ES QUE EL TEXTO NO LAS PISE. Escribirle encima al logo de la oficina
+   es lo primero que se ve mal en un documento que se imprime y se firma. Pasó: el número de
+   hoja caía justo adentro de la franja de abajo. */
+
+const jpegFalso = (ancho, alto) => {
+  /* Un JPEG mínimo: sólo hace falta que `medirJpeg` le saque las medidas. */
+  const cabecera = [0xFF, 0xD8, 0xFF, 0xC0, 0x00, 0x11, 0x08,
+    (alto >> 8) & 255, alto & 255, (ancho >> 8) & 255, ancho & 255];
+  return new Uint8Array([...cabecera, ...new Array(20).fill(0)]);
+};
+
+const MEMBRETE = { arriba: jpegFalso(1600, 210), abajo: jpegFalso(1600, 172) };
+
+/* En la hoja A4 de 595 puntos de ancho, esas imágenes ocupan 78 y 64 puntos de alto. */
+const ARRIBA_OCUPA = 78;
+const ABAJO_EMPIEZA = 842 - 64;
+
+/* Saca la altura de cada texto del PDF. El PDF mide desde abajo; acá se da vuelta para poder
+   compararlo con lo que uno ve. */
+function alturasDelTexto(bytes) {
+  const crudo = Buffer.from(bytes).toString("latin1");
+  return [...crudo.matchAll(/([\d.]+)\s+([\d.]+)\s+Td/g)]
+    .map((m) => 842 - Number(m[2]));
+}
+
+test("con membrete, el texto no pisa ninguna de las dos franjas", () => {
+  const { doc } = armarPDF(
+    conAmbientes("living", "cocina", "dormitorio", "dormitorio", "bano"),
+    { oficina: "RE/MAX Único", membrete: MEMBRETE });
+  const alturas = alturasDelTexto(doc.bytes());
+  assert.ok(alturas.length > 20, "tiene que haber texto para medir");
+  assert.ok(Math.min(...alturas) >= ARRIBA_OCUPA,
+    `algo arranca en ${Math.min(...alturas)}, encima de la franja de arriba`);
+  assert.ok(Math.max(...alturas) <= ABAJO_EMPIEZA,
+    `algo baja hasta ${Math.max(...alturas)}, encima de la franja de abajo`);
+});
+
+/* SIN MEMBRETE EL DOCUMENTO SALE IGUAL. Si el teléfono está sin señal y no lo tiene en caché,
+   se usa toda la hoja. Un inventario no puede depender de que haya internet. */
+test("sin membrete sale igual, usando toda la hoja", () => {
+  const { doc, hojas } = armarPDF(conAmbientes("living"));
+  assert.ok(hojas >= 1);
+  assert.ok(Buffer.from(doc.bytes()).toString("latin1").includes("Inventario del inmueble"));
+});
+
+test("las dos franjas se incrustan una sola vez y se repiten en cada hoja", () => {
+  const { doc, hojas } = armarPDF(
+    conAmbientes("living", "cocina", "dormitorio", "bano"),
+    { membrete: MEMBRETE });
+  assert.ok(hojas >= 3);
+  const crudo = Buffer.from(doc.bytes()).toString("latin1");
+  assert.equal((crudo.match(/\/DCTDecode/g) || []).length, 2,
+    "dos imágenes en el archivo, por más hojas que tenga");
+});
