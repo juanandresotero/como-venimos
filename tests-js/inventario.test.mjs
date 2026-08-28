@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import {
   ESTADOS, POR_DEFECTO, TIPOS_DE_AMBIENTE, CLAUSULAS, comoSeLee, conCantidad,
   nuevoAmbiente, nuevoItem, nuevoInventario, numerar, comoSeLlama, comoVa,
-  cuenta, loQueSeImprime,
+  cuenta, loQueSeImprime, PIDEN_DETALLE,
 } from "../lib/inventario.js";
 
 /* ---------- Cómo se lee un renglón ---------- */
@@ -27,9 +27,41 @@ test("por defecto todo arranca en buen estado", () => {
 test("el texto que sale impreso es el que él escribe hoy", () => {
   const dice = (estado, detalle = "") =>
     comoSeLee({ ...nuevoItem("x"), estado, detalle });
+  assert.equal(dice("excelente"), "Excelente estado – sin detalles");
   assert.equal(dice("bien"), "Buen estado – sin detalles");
-  assert.equal(dice("perfecto"), "Perfecto – sin detalles");
   assert.equal(dice("detalles"), "Buen estado – con detalles");
+  assert.equal(dice("viejo"), "Viejo, pero funciona bien");
+  assert.equal(dice("sin_mant"), "Sin mantenimiento");
+  assert.equal(dice("roto"), "Roto / no funciona");
+});
+
+/* "ROTO" ES LA QUE MAS IMPORTA de todas. "Viejo" y "sin mantenimiento" dicen que algo está
+   gastado, no que no anda. Si al entrar el toldo tiene el mecanismo roto y eso no queda
+   escrito con todas las letras, el día que el inquilino se va se lo cobran a Juan. En su
+   propio inventario tuvo que escribirlo a mano: "Con hongos, mecanismo roto". */
+test("«roto» dice que no funciona, no que está gastado", () => {
+  assert.match(comoSeLee({ nombre: "Toldos", estado: "roto" }), /no funciona/);
+  assert.doesNotMatch(comoSeLee({ nombre: "Duchero", estado: "viejo" }), /no funciona/);
+});
+
+/* LOS INVENTARIOS YA GUARDADOS NO SE QUEDAN MUDOS. "perfecto" y "malo" existieron antes de
+   que Juan eligiera estas palabras, y alguno puede estar en el teléfono. */
+test("el vocabulario viejo se sigue entendiendo", () => {
+  assert.equal(comoSeLee({ nombre: "Paredes", estado: "perfecto" }),
+    "Excelente estado – sin detalles");
+  assert.equal(comoSeLee({ nombre: "Toldos", estado: "malo" }), "Roto / no funciona");
+  assert.equal(comoSeLee({ nombre: "Piso", estado: "un estado que no existe" }),
+    "Buen estado – sin detalles", "lo desconocido cae en el default, no en el vacío");
+});
+
+/* LOS QUE PIDEN EXPLICAR QUE TIENEN. Un "con detalles" o un "roto" sin decir cuál es el
+   detalle no sirve de nada el día que hay que discutir un depósito. */
+test("los estados que no se explican solos piden el detalle", () => {
+  for (const clave of ["detalles", "viejo", "sin_mant", "roto"]) {
+    assert.ok(PIDEN_DETALLE.has(clave), clave);
+  }
+  assert.ok(!PIDEN_DETALLE.has("bien"), "el default no tiene nada que explicar");
+  assert.ok(!PIDEN_DETALLE.has("excelente"));
 });
 
 test("el detalle se suma al estado", () => {
@@ -39,10 +71,12 @@ test("el detalle se suma al estado", () => {
 
 /* "CON PROBLEMAS" SIN EXPLICAR QUE PROBLEMA no sirve de nada el día que hay que discutir un
    depósito. El detalle es lo único que se lee. */
-test("con problemas, manda el detalle", () => {
-  assert.equal(comoSeLee({ nombre: "Toldos", estado: "malo", detalle: "Con hongos, mecanismo roto" }),
-    "Con hongos, mecanismo roto");
-  assert.equal(comoSeLee({ nombre: "Toldos", estado: "malo", detalle: "" }), "Con problemas");
+test("el detalle se suma al estado, no lo reemplaza", () => {
+  assert.equal(
+    comoSeLee({ nombre: "Toldos", estado: "roto", detalle: "Con hongos, mecanismo roto" }),
+    "Roto / no funciona · Con hongos, mecanismo roto");
+  assert.equal(comoSeLee({ nombre: "Toldos", estado: "roto", detalle: "" }),
+    "Roto / no funciona", "el estado ya dice algo por sí solo");
 });
 
 test("lo que no tiene no se escribe", () => {
@@ -157,8 +191,17 @@ test("comoVa cuenta lo que hay y lo que tiene detalle", () => {
   assert.equal(ahora.items, antes.items - 1, "lo que no tiene no cuenta");
 });
 
+/* EL ORDEN IMPORTA: de mejor a peor. Un desplegable desordenado obliga a leerlo entero cada
+   vez, y son 165 veces. "No tiene" va al final porque no es un estado: es la forma de sacar
+   del documento algo que la plantilla trae y esta propiedad no tiene. */
+test("los estados van de mejor a peor, y «no tiene» al final", () => {
+  assert.deepEqual(ESTADOS.map((e) => e.clave),
+    ["excelente", "bien", "detalles", "viejo", "sin_mant", "roto", "no_tiene"]);
+  assert.equal(POR_DEFECTO, "bien", "arranca en buen estado: es lo que pasa en tres de cada cuatro");
+});
+
 test("los estados son pocos a propósito: son 165 filas", () => {
-  assert.ok(ESTADOS.length <= 5, "con más opciones hay que pensar en cada fila");
+  assert.ok(ESTADOS.length <= 8, "con más opciones hay que pensar en cada fila");
   assert.ok(TIPOS_DE_AMBIENTE.length >= 8);
 });
 

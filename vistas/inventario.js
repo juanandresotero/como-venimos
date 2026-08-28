@@ -14,7 +14,7 @@
    repositorio: es la casa de un cliente. */
 
 import {
-  ESTADOS, TIPOS_DE_AMBIENTE, AVISO_RECLAMO, comoSeLee, conCantidad,
+  ESTADOS, PIDEN_DETALLE, TIPOS_DE_AMBIENTE, AVISO_RECLAMO, comoSeLee, conCantidad,
   nuevoInventario, nuevoAmbiente, nuevoItem, numerar, comoSeLlama, comoVa, cuenta,
 } from "../lib/inventario.js";
 import * as guardado from "../lib/inventario-guardado.js";
@@ -257,8 +257,9 @@ function elAmbiente(estado, ambiente) {
    de cada una de las 165 filas hace una pantalla que no se puede leer, y encima invita a
    escribir donde no hace falta. */
 function elItem(estado, item) {
-  const pideDetalle = item.estado === "detalles" || item.estado === "malo"
-    || Boolean((item.detalle || "").trim());
+  /* El renglon para escribir QUE tiene aparece con los estados que lo piden, y con cualquiera
+     si ya hay algo escrito: si no, cambiar el estado escondería un detalle ya cargado. */
+  const pideDetalle = PIDEN_DETALLE.has(item.estado) || Boolean((item.detalle || "").trim());
 
   const vacia = !(item.nombre || "").trim();
 
@@ -271,12 +272,12 @@ function elItem(estado, item) {
 
      El detalle SI va abajo, en su propio renglon, pero solo cuando hay algo que escribir. */
   const fila = nodo(html`
-    <div class="campo-fila${item.estado === "malo" || vacia ? " falta" : ""}"
+    <div class="campo-fila${item.estado === "roto" || vacia ? " falta" : ""}"
          style="padding:6px 0">
       <div style="display:flex;gap:6px;align-items:center">
-        <input class="campo" id="nom-${escapar(item.id)}" type="text" style="flex:1;min-width:0;font-size:14px"
+        <input class="campo" id="nom-${escapar(item.id)}" type="text" style="flex:1;min-width:0;font-size:14px;padding-left:9px;padding-right:4px"
                placeholder="¿Qué cosa?" value="${escapar(item.nombre)}">
-        <select class="campo" id="est-${escapar(item.id)}" style="flex:0 0 112px">
+        <select class="campo" id="est-${escapar(item.id)}" style="flex:0 0 124px;font-size:13px">
           ${ESTADOS.map((e) => `<option value="${e.clave}"${
             e.clave === item.estado ? " selected" : ""}>${escapar(e.nombre)}</option>`).join("")}
         </select>
