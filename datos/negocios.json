@@ -3121,7 +3121,7 @@
   "agente_compra": "Juan Andrés Otero",
   "pct_comision_total": 0.03,
   "fecha_inicio": null,
-  "fecha_boleto": null,
+  "fecha_boleto": "2026-08-27",
   "fecha_fin": null,
   "entity_id_cartera": null,
   "direccion": "Calle 6 interseccion calle 5",
@@ -3131,12 +3131,12 @@
   "moneda": "USD",
   "origen_captacion": "B.d.r.",
   "estado": "en_curso",
-  "ficha_completa": false,
+  "ficha_completa": true,
   "notas": "",
   "manual": true,
   "atajo": "busqueda",
   "avisos": [],
-  "ficha_vigente": false,
+  "ficha_vigente": true,
   "regimen_comision": "captacion_mia",
   "base": 4020,
   "facturacion": 4020,
@@ -3150,7 +3150,8 @@
    "nombre": "Majo García por interbalnearia",
    "telefono": "+59898199800"
   },
-  "puntas_confirmadas": true
+  "puntas_confirmadas": true,
+  "ficha_completa_momento": null
  },
  {
   "id": "manual-4",
