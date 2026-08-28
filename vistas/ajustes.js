@@ -655,19 +655,32 @@ function elDrive() {
         <span class="apunte">solo en este aparato</span>
       </div>
       <p class="apunte" style="margin-bottom:14px">
-        Para que los inventarios suban solos a tu carpeta <strong>INVENTARIOS</strong>. Hace
-        falta el <strong>ID de cliente</strong> del proyecto de Google — el mismo que ya usa tu
-        bot de debida diligencia sirve, pero antes hay que agregarle este sitio como origen
-        permitido.
+        Para que los inventarios suban solos a tu carpeta <strong>INVENTARIOS</strong>, hay que
+        crear un permiso una sola vez. Son diez minutos y no se paga nada.
       </p>
       <ol class="pasos">
-        <li>Entrá a <strong>console.cloud.google.com</strong> con
-            <code>jaotero@remax.com.uy</code>.</li>
-        <li>Elegí el proyecto del bot → <strong>APIs y servicios → Credenciales</strong>.</li>
-        <li>Abrí el <strong>ID de cliente de OAuth</strong> que ya tenés.</li>
-        <li>En <strong>Orígenes autorizados de JavaScript</strong> agregá:<br>
-            <code>https://juanandresotero.github.io</code></li>
-        <li>Guardá, copiá el <strong>ID de cliente</strong> y pegalo acá abajo.</li>
+        <li>Entrá a <strong>console.cloud.google.com</strong> con tu cuenta
+            <code>jaotero@remax.com.uy</code>. Si te ofrece una prueba gratis de US$ 300,
+            <strong>descartala</strong>: no hace falta.</li>
+        <li>Arriba a la izquierda, donde dice el nombre del proyecto, tocá y elegí
+            <strong>Proyecto nuevo</strong>. Ponele <strong>Como venimos</strong> y creá.</li>
+        <li>En el buscador de arriba escribí <strong>Google Drive API</strong>, entrá y tocá
+            <strong>Habilitar</strong>.</li>
+        <li>En el menú de la izquierda: <strong>APIs y servicios → Pantalla de
+            consentimiento</strong>. Nombre de la app: <strong>Cómo venimos</strong>. En
+            correo de asistencia y de contacto poné el tuyo. En
+            <strong>Público / Audiencia</strong> elegí <strong>Interno</strong> — eso es lo
+            que evita que Google te muestre carteles de "app no verificada".</li>
+        <li><strong>APIs y servicios → Credenciales → Crear credenciales → ID de cliente de
+            OAuth</strong>. Tipo de aplicación: <strong>Aplicación web</strong>.</li>
+        <li>En <strong>Orígenes autorizados de JavaScript</strong> tocá
+            <strong>Agregar URI</strong> y pegá exactamente esto:<br>
+            <code>https://juanandresotero.github.io</code><br>
+            <strong>No</strong> hace falta llenar "URI de redireccionamiento".</li>
+        <li>Tocá <strong>Crear</strong>. Te muestra un <strong>ID de cliente</strong> y un
+            <strong>secreto</strong>. <strong>Copiá sólo el ID</strong> —el que termina en
+            <code>.apps.googleusercontent.com</code>— y pegalo acá abajo. El secreto no lo
+            necesitás y no lo pegues en ningún lado.</li>
       </ol>
       <div class="campo-fila" style="padding:0">
         <label for="google-cliente">ID de cliente</label>
@@ -681,9 +694,13 @@ function elDrive() {
           : ""}</p>
       <p class="apunte" style="margin-top:12px">
         La app pide el permiso <strong>más chico que existe</strong>: sólo puede ver y tocar
-        los archivos que ella misma crea. No puede leer el resto de tu Drive.
-        <strong>El «client secret» no va acá</strong> — no hace falta, y en un repositorio
-        público sería la llave de tu Drive a la vista de cualquiera.
+        los archivos que ella misma crea. No puede ver el resto de tu Drive — ni los
+        contratos, ni las carpetas de otros clientes.
+      </p>
+      <p class="apunte" style="margin-top:8px">
+        La primera vez que subas algo, Google te va a preguntar si le das permiso a
+        <strong>Cómo venimos</strong>. Decile que sí. El permiso dura una hora y se vuelve a
+        pedir solo; no queda ninguna llave guardada en ningún lado.
       </p>
     </section>
   `);

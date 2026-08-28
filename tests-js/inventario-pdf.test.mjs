@@ -293,3 +293,65 @@ test("todas las filas de fotos miden lo mismo", () => {
   assert.equal(alturas.length, 2, "diez fotos son dos filas");
   assert.ok(Math.abs(alturas[1] - alturas[0] - 103) < 6, "las filas van parejas");
 });
+
+/* ---------- Las cláusulas se pueden cambiar ---------- */
+
+/* LO QUE EL DOCUMENTO DICE DE VERDAD, renglón por renglón.
+
+   Buscar un texto suelto adentro del PDF crudo engaña: "4)" aparece por casualidad en
+   coordenadas y tablas internas, y una prueba que lo buscaba así pasaba en verde diciendo lo
+   contrario de lo que pasaba. Acá se sacan los textos DIBUJADOS y se compara con esos. */
+function loQueDice(bytes) {
+  const crudo = Buffer.from(bytes).toString("latin1");
+  return [...crudo.matchAll(/\((.*?)\)\s*Tj/g)]
+    .map((m) => m[1].split("\\(").join("(").split("\\)").join(")"));
+}
+
+const tieneLaClausula = (bytes, n) => loQueDice(bytes).includes(`${n})`);
+
+/* Juan: "quiero que se pueda sacar alguna cláusula y agregar nuevas". No son las mismas en
+   todos los casos: un alquiler con muebles, una propiedad con un toldo a reparar, un arreglo
+   puntual con el propietario. */
+
+test("una cláusula sacada no sale en el documento", () => {
+  const inv = conAmbientes("living");
+  inv.clausulas = inv.clausulas.filter((c) => !c.includes("PROHIBICIONES"));
+  const t = Buffer.from(armarPDF(inv).doc.bytes()).toString("latin1");
+  assert.ok(!t.includes("PROHIBICIONES"));
+  assert.ok(t.includes("INVENTARIO hecho"), "las otras siguen");
+});
+
+test("una cláusula agregada sale numerada al final", () => {
+  const inv = conAmbientes("living");
+  inv.clausulas = [...inv.clausulas, "El toldo se repara a cargo del propietario."];
+  const bytes = armarPDF(inv).doc.bytes();
+  assert.ok(loQueDice(bytes).some((x) => x.includes("El toldo se repara")));
+  assert.ok(tieneLaClausula(bytes, 7), "queda séptima");
+});
+
+/* SE RENUMERAN SOLAS. Si saca la primera, la que era segunda pasa a ser "1)": dejar un
+   documento que empieza en "2)" se lee como si faltara una hoja. */
+test("al sacar una, las que quedan se renumeran", () => {
+  const inv = conAmbientes("living");
+  inv.clausulas = ["Primera cláusula.", "Segunda cláusula.", "Tercera cláusula."];
+  const bytes = armarPDF(inv).doc.bytes();
+  for (const n of [1, 2, 3]) assert.ok(tieneLaClausula(bytes, n), String(n));
+  assert.ok(!tieneLaClausula(bytes, 4));
+});
+
+/* Una cláusula vacía —recién agregada y sin escribir— no ocupa un número en el documento. */
+test("una cláusula vacía no ocupa un número", () => {
+  const inv = conAmbientes("living");
+  inv.clausulas = ["Una que dice algo.", "", "   ", "Otra que dice algo."];
+  const bytes = armarPDF(inv).doc.bytes();
+  assert.ok(tieneLaClausula(bytes, 2));
+  assert.ok(!tieneLaClausula(bytes, 3), "las dos vacías no cuentan");
+});
+
+test("sin ninguna cláusula el documento sale igual", () => {
+  const inv = conAmbientes("living");
+  inv.clausulas = [];
+  const { doc, hojas } = armarPDF(inv);
+  assert.ok(hojas >= 1);
+  assert.ok(Buffer.from(doc.bytes()).toString("latin1").includes("Arrendador/a"));
+});

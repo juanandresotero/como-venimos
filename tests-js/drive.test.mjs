@@ -6,7 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  comoSeLlamaLaCarpeta, subirInventario, laCarpeta, PERMISO,
+  comoSeLlamaLaCarpeta, subirInventario, laCarpeta, PERMISO, comoSeExplica,
 } from "../lib/drive.js";
 
 /* ---------- Cómo se llaman las carpetas ---------- */
@@ -173,4 +173,56 @@ test("sin fotos igual deja la carpeta y el link", async () => {
     assert.equal(salida.subidas, 0);
     assert.ok(salida.link);
   } finally { falso.devolver(); }
+});
+
+/* ---------- Qué hacer cuando Google dice que no ---------- */
+
+/* Los errores de Google vienen en inglés y con nombre de código: "idpiframe_initialization_
+   failed", "403", "access_denied". A alguien que no programa eso no le dice nada, y lo único
+   que puede hacer es volver a tocar el botón. Cada uno tiene UNA cosa que hacer. */
+
+test("«no reconozco este sitio» se traduce a qué agregar y dónde", () => {
+  for (const crudo of ["redirect_uri_mismatch", "Not a valid origin", "idpiframe_init_failed"]) {
+    const dice = comoSeExplica(new Error(crudo));
+    assert.match(dice, /Orígenes autorizados/);
+    assert.match(dice, /juanandresotero\.github\.io/);
+  }
+});
+
+test("si no dio el permiso, se lo dice sin vueltas", () => {
+  assert.match(comoSeExplica(new Error("access_denied")), /No diste el permiso/);
+  assert.match(comoSeExplica(new Error("popup_closed_by_user")), /No diste el permiso/);
+});
+
+/* RE/MAX puede bloquear las apps de terceros desde el administrador de Workspace. Sin esto,
+   Juan vería un código y no sabría que el problema no es suyo. */
+test("si lo bloquea el administrador, se nombra al administrador", () => {
+  const dice = comoSeExplica(new Error("Request is disallowed by admin policy"));
+  assert.match(dice, /administrador/);
+  assert.match(dice, /Gmail personal/, "y se ofrece la salida");
+});
+
+test("pegar el secreto en vez del ID se detecta", () => {
+  assert.match(comoSeExplica(new Error("invalid_client")), /apps\.googleusercontent\.com/);
+});
+
+test("falta habilitar la API se explica como tal", () => {
+  assert.match(comoSeExplica(new Error("Drive contestó 403: insufficient")), /Drive API/);
+});
+
+/* Si se corta internet en el medio de cien fotos, lo importante es que sepa que puede tocar
+   de nuevo sin repetir nada. */
+test("un corte de internet dice que se puede seguir", () => {
+  assert.match(comoSeExplica(new Error("Failed to fetch")), /sigue de donde quedó/);
+});
+
+test("un error que no conozco se muestra, no se esconde", () => {
+  const dice = comoSeExplica(new Error("algo rarísimo que nunca vi"));
+  assert.match(dice, /algo rarísimo/);
+});
+
+test("no se rompe con cualquier cosa", () => {
+  assert.ok(comoSeExplica(null));
+  assert.ok(comoSeExplica(undefined));
+  assert.ok(comoSeExplica("un texto suelto"));
 });

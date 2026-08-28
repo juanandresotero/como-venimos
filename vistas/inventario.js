@@ -564,8 +564,10 @@ function elPie(estado) {
       </div>
       ${clausulasAbiertas
         ? html`<div id="las-clausulas"></div>`
-        : html`<p class="apunte">Las ${(abierto.clausulas || CLAUSULAS).length} de siempre.
-            La cantidad de hojas la cuenta el documento solo.</p>`}
+        : html`<p class="apunte">${(abierto.clausulas || CLAUSULAS).length}
+            ${(abierto.clausulas || CLAUSULAS).length === 1 ? "cláusula" : "cláusulas"}.
+            Se pueden sacar, cambiar y agregar. La cantidad de hojas la cuenta el documento
+            solo.</p>`}
       <div class="botonera" style="margin-top:14px">
         <button class="boton boton-primario" id="mandar">Mandar el PDF</button>
         <button class="boton" id="bajar">Bajarlo</button>
@@ -580,29 +582,90 @@ function elPie(estado) {
     </section>
   `);
 
-  /* LAS CLAUSULAS SE PUEDEN EDITAR. Juan lo pidió el primer día: "que en esta herramienta
-     pueda editar los textos que ves". Son las que le dan valor legal al documento, y viven
-     guardadas DENTRO de cada inventario: si mañana su escribano le cambia una, los que ya
-     firmó siguen diciendo lo que decían ese día. */
+  /* LAS CLAUSULAS: UNA CAJA CADA UNA, CON QUITAR, Y UNA MAS AL FINAL.
+
+     Juan: "quiero que se pueda sacar alguna cláusula y agregar nuevas... que las que vienen
+     por defecto tengan algo como quitar, y abajo de la última diga + nueva cláusula".
+
+     Son las que le dan valor legal al documento, y no son las mismas en todos los casos: un
+     alquiler con muebles, una propiedad con toldo a reparar, un arreglo puntual con el
+     propietario. Cada inventario lleva las suyas GUARDADAS ADENTRO, así que si mañana su
+     escribano le cambia una, los que ya firmó siguen diciendo lo que decían ese día. */
+  const lasClausulas = () => (abierto.clausulas || [...CLAUSULAS]);
+
+  const guardarClausulas = (lista) => {
+    abierto.clausulas = lista;
+    guardarYRedibujar(estado);
+  };
+
   const cajaClausulas = seccion.getElementById("las-clausulas");
   if (cajaClausulas) {
-    (abierto.clausulas || CLAUSULAS).forEach((clausula, i) => {
+    lasClausulas().forEach((clausula, i) => {
+      const conHojas = clausula.includes("{HOJAS}");
       const fila = nodo(html`
         <div class="campo-fila">
-          <label for="cla-${i}">${i + 1})${
-            clausula.includes("{HOJAS}") ? " — {HOJAS} se cambia por el número real" : ""}</label>
+          <div class="tarjeta-titulo" style="margin-bottom:4px">
+            <label for="cla-${i}" style="margin:0">${i + 1})${
+              conHojas ? " — la app le pone la cantidad de hojas" : ""}</label>
+            <button class="filtro" data-quitar-cla="${i}"
+                    style="padding:6px 10px">Quitar</button>
+          </div>
           <textarea class="campo" id="cla-${i}" rows="4"
                     style="resize:vertical;font-size:13px">${escapar(clausula)}</textarea>
         </div>`);
+
       fila.querySelector("textarea").addEventListener("change", (e) => {
-        const lista = [...(abierto.clausulas || CLAUSULAS)];
+        const lista = [...lasClausulas()];
         lista[i] = e.target.value;
         abierto.clausulas = lista;
         guardado.guardar(abierto);
       });
+
+      fila.querySelector("[data-quitar-cla]").addEventListener("click", (e) => {
+        /* Se pregunta una vez: sacar una cláusula de un documento que se firma no es lo mismo
+           que sacar una fila de un inventario. */
+        const boton = e.currentTarget;
+        if (boton.dataset.seguro !== "si") {
+          boton.dataset.seguro = "si";
+          boton.textContent = "¿Seguro?";
+          return;
+        }
+        guardarClausulas(lasClausulas().filter((_, n) => n !== i));
+      });
+
       cajaClausulas.append(fila);
     });
+
+    const sumar = nodo(html`
+      <div class="botonera" style="margin-top:10px">
+        <button class="filtro" id="sumar-clausula">+ Nueva cláusula</button>
+        ${lasClausulas().length !== CLAUSULAS.length
+          || lasClausulas().some((c, i) => c !== CLAUSULAS[i])
+          ? html`<button class="filtro" id="clausulas-de-fabrica">Volver a las de siempre</button>`
+          : ""}
+      </div>`);
+
+    sumar.getElementById("sumar-clausula").addEventListener("click", () => {
+      guardarClausulas([...lasClausulas(), ""]);
+    });
+
+    /* VOLVER ATRAS. Sacar una cláusula por error en un documento legal y no poder recuperarla
+       sería peor que no poder sacarla. */
+    const dePlanta = sumar.getElementById("clausulas-de-fabrica");
+    if (dePlanta) {
+      dePlanta.addEventListener("click", (e) => {
+        const boton = e.currentTarget;
+        if (boton.dataset.seguro !== "si") {
+          boton.dataset.seguro = "si";
+          boton.textContent = "¿Seguro? Se pierde lo escrito";
+          return;
+        }
+        guardarClausulas([...CLAUSULAS]);
+      });
+    }
+    cajaClausulas.append(sumar);
   }
+
   seccion.getElementById("ver-clausulas").addEventListener("click", () => {
     clausulasAbiertas = !clausulasAbiertas;
     estado.redibujar();
@@ -712,9 +775,9 @@ function elPie(estado) {
           + "en tu Drive, y el link quedó pegado abajo."
         : "Ya estaba todo subido. El link quedó pegado abajo.";
     } catch (error) {
-      /* Se dice qué pasó. Un fallo silencioso acá se descubre el día que abrís el Drive y no
-         está nada. */
-      aviso.textContent = `No se pudo subir: ${error.message}`;
+      /* Se dice qué HACER, no el código de error. Un fallo silencioso acá se descubre el día
+         que abrís el Drive y no está nada. */
+      aviso.textContent = drive.comoSeExplica(error);
     }
   });
 
