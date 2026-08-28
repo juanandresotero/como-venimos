@@ -226,3 +226,23 @@ test("no se rompe con cualquier cosa", () => {
   assert.ok(comoSeExplica(undefined));
   assert.ok(comoSeExplica("un texto suelto"));
 });
+
+/* SI NO SE PUEDE ABRIR LA CARPETA, LA SUBIDA IGUAL VALE. Un Workspace puede tener prohibido
+   compartir con "cualquiera que tenga el link". Si eso reventara, se perdería el aviso de que
+   las cien fotos YA subieron — y volver a tocar el botón sería empezar de cero a los ojos de
+   quien lo mira. */
+test("aunque no se pueda compartir, las fotos ya están subidas", async () => {
+  const falso = driveDeMentira();
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url, opciones) => {
+    if (String(url).includes("/permissions")) throw new Error("disallowed by admin policy");
+    return original(url, opciones);
+  };
+  try {
+    const salida = await subirInventario("tok", { fecha: "2026-01-01", direccion: "X 1" },
+      [laFoto("Cocina", 1), laFoto("Cocina", 2)]);
+    assert.equal(salida.subidas, 2, "las dos subieron igual");
+    assert.equal(salida.abierta, false, "y se sabe que no se pudo compartir");
+    assert.match(salida.link, /^https:\/\/drive\.google\.com\/drive\/folders\//);
+  } finally { falso.devolver(); }
+});

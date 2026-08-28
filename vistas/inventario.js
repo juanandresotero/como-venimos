@@ -784,10 +784,13 @@ function elPie(estado) {
       abierto.link_fotos = salida.link;
       guardado.guardar(abierto);
       await releerFotos(estado);
-      aviso.textContent = salida.subidas
-        ? `Listo: ${salida.subidas} ${salida.subidas === 1 ? "archivo" : "archivos"} `
-          + "en tu Drive, y el link quedó pegado abajo."
-        : "Ya estaba todo subido. El link quedó pegado abajo.";
+      const cuantos = salida.subidas
+        ? `Listo: ${salida.subidas} ${salida.subidas === 1 ? "archivo" : "archivos"} en tu Drive.`
+        : "Ya estaba todo subido.";
+      aviso.textContent = salida.abierta
+        ? `${cuantos} El link quedó pegado abajo.`
+        : `${cuantos} El link quedó pegado abajo, pero RE/MAX no deja abrir la carpeta a `
+          + "cualquiera: entrá al Drive y compartila a mano para que el inquilino la vea.";
     } catch (error) {
       /* Se dice qué HACER, no el código de error. Un fallo silencioso acá se descubre el día
          que abrís el Drive y no está nada. */
