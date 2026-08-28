@@ -12,6 +12,7 @@ import {
   nuevoAmbiente, nuevoItem, nuevoInventario, numerar, comoSeLlama, comoVa,
   cuenta, loQueSeImprime, PIDEN_DETALLE,
 } from "../lib/inventario.js";
+import { pareceValido } from "../lib/google-id.js";
 
 /* ---------- Cómo se lee un renglón ---------- */
 
@@ -287,4 +288,20 @@ test("sin nada escrito sigue diciendo «sin detalles», que es lo que él escrib
   assert.equal(comoSeLee({ nombre: "Puerta", estado: "bien" }), "Buen estado – sin detalles");
   assert.equal(comoSeLee({ nombre: "Puerta", estado: "excelente" }),
     "Excelente estado – sin detalles");
+});
+
+/* ---------- El ID de cliente de Google ---------- */
+
+/* VIVE EN EL TELEFONO Y NO EN EL CODIGO. No es un secreto —el ID de cliente de cualquier app
+   web viaja a la vista en su HTML— pero es el número del proyecto de Google de Juan y este
+   repositorio es público. */
+test("un ID de cliente de Google se reconoce, y un secret no", () => {
+  assert.equal(pareceValido("798533575115-nppfnokpvgrbglu9k34h8rfu140qsn19.apps.googleusercontent.com"),
+    true);
+  /* El error más común es pegar el refresh token o el secret en vez del ID. Los dos empiezan
+     distinto y no terminan en .apps.googleusercontent.com. */
+  assert.equal(pareceValido("1//04l1h8KAXLaMmCgYIARAAGAQSNwF"), false);
+  assert.equal(pareceValido("GOCSPX-algo-que-parece-un-secret"), false);
+  assert.equal(pareceValido(""), false);
+  assert.equal(pareceValido(null), false);
 });

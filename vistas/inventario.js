@@ -22,6 +22,8 @@ import { armarPDF, nombreArchivo } from "../lib/inventario-pdf.js";
 import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
 import { cargarMembrete } from "../lib/membrete.js";
 import * as fotos from "../lib/fotos.js";
+import * as drive from "../lib/drive.js";
+import * as googleId from "../lib/google-id.js";
 import { escapar } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -547,6 +549,9 @@ function elPie(estado) {
         <button class="boton" id="bajar">Bajarlo</button>
       </div>
       <div class="botonera" style="margin-top:10px">
+        <button class="boton" id="al-drive">Subir todo al Drive</button>
+      </div>
+      <div class="botonera" style="margin-top:10px">
         <button class="boton boton-borrar" id="borrar-inv">Borrar este inventario</button>
       </div>
       <p class="apunte" id="resultado" style="margin-top:10px"></p>
@@ -627,6 +632,59 @@ function elPie(estado) {
     const { doc, hojas } = await elPDF();
     const como = await bajarArchivo(doc.aBlob(), nombreArchivo(abierto));
     aviso.textContent = (COMO_SALIO[como] || COMO_SALIO.bajado)(hojas);
+  });
+
+  /* SUBIR TODO AL DRIVE: arma en el Drive lo mismo que Juan arma a mano —una carpeta por
+     propiedad adentro de INVENTARIOS, una subcarpeta por ambiente, y el PDF terminado— y deja
+     el link pegado en el inventario, que es el punto 6 de sus cláusulas.
+
+     LO QUE YA SE SUBIO NO SE VUELVE A SUBIR: si se corta el internet a la mitad, se toca de
+     nuevo y sigue de donde quedó. Cien fotos por datos móviles se cortan. */
+  seccion.getElementById("al-drive").addEventListener("click", async () => {
+    const cliente = googleId.leer();
+    if (!cliente) {
+      aviso.textContent = "Falta el ID de cliente de Google. Está en Ajustes → Subir al Drive.";
+      return;
+    }
+    try {
+      aviso.textContent = "Pidiendo permiso a Google...";
+      await drive.cargarGoogle();
+      const token = await drive.pedirPermiso(cliente);
+
+      aviso.textContent = "Armando el PDF...";
+      const { doc } = await elPDF();
+      const pdf = {
+        nombre: nombreArchivo(abierto),
+        bytes: new Uint8Array(await doc.aBlob().arrayBuffer()),
+      };
+
+      const salida = await drive.subirInventario(token, abierto, lasFotos, {
+        pdf,
+        avisar: (hechas, total, que) => {
+          aviso.textContent = `Subiendo... ${hechas} de ${total} (${que})`;
+        },
+        /* Una foto ya subida tiene anotado su id del Drive. Sin esto, cada intento repetiría
+           las cien de la vez anterior. */
+        yaSubida: (f) => Boolean(f.subida),
+        anotar: async (foto, id) => {
+          await fotos.guardarFoto({ ...foto, subida: id });
+        },
+      });
+
+      /* El link queda pegado en el inventario: es el punto 6 de las cláusulas y hoy lo copia
+         a mano del navegador. */
+      abierto.link_fotos = salida.link;
+      guardado.guardar(abierto);
+      await releerFotos(estado);
+      aviso.textContent = salida.subidas
+        ? `Listo: ${salida.subidas} ${salida.subidas === 1 ? "archivo" : "archivos"} `
+          + "en tu Drive, y el link quedó pegado abajo."
+        : "Ya estaba todo subido. El link quedó pegado abajo.";
+    } catch (error) {
+      /* Se dice qué pasó. Un fallo silencioso acá se descubre el día que abrís el Drive y no
+         está nada. */
+      aviso.textContent = `No se pudo subir: ${error.message}`;
+    }
   });
 
   const borrar = seccion.getElementById("borrar-inv");

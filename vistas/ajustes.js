@@ -10,6 +10,7 @@ import {
 } from "../lib/formato.js";
 import * as cuentas from "../lib/cuentas.js";
 import * as contacto from "../lib/contacto-propio.js";
+import * as googleId from "../lib/google-id.js";
 import { negociosACsv, carteraACsv, nombrePlanilla } from "../lib/planilla.js";
 import { leerFirmaPropia, guardarFirmaPropia, olvidarFirmaPropia }
   from "../lib/carta-guardado.js";
@@ -234,6 +235,7 @@ export function dibujarAjustes(estado) {
   }
 
   trozo.append(tuTelefono(estado));
+  trozo.append(elDrive());
   trozo.append(laCopia(estado));
   return trozo;
 }
@@ -634,6 +636,67 @@ function miTeam(estado) {
     guardar([...slugsDelTeam(ajustes), slug], `${nombre} entró al team.`);
   });
 
+  return seccion;
+}
+
+/* EL PERMISO PARA SUBIR AL DRIVE. Hace falta para que los inventarios suban solos a
+   INVENTARIOS, como los sube a mano hoy.
+
+   Se guarda EN EL TELEFONO, no en el repositorio: no es un secreto —el ID de cliente de
+   cualquier app web viaja a la vista en su HTML— pero es el número del proyecto de Google de
+   Juan y este repositorio es público. */
+function elDrive() {
+  const puesto = googleId.leer();
+
+  const seccion = nodo(html`
+    <section class="tarjeta">
+      <div class="tarjeta-titulo">
+        <h2 class="titulo" style="font-size:17px">Subir al Drive</h2>
+        <span class="apunte">solo en este aparato</span>
+      </div>
+      <p class="apunte" style="margin-bottom:14px">
+        Para que los inventarios suban solos a tu carpeta <strong>INVENTARIOS</strong>. Hace
+        falta el <strong>ID de cliente</strong> del proyecto de Google — el mismo que ya usa tu
+        bot de debida diligencia sirve, pero antes hay que agregarle este sitio como origen
+        permitido.
+      </p>
+      <ol class="pasos">
+        <li>Entrá a <strong>console.cloud.google.com</strong> con
+            <code>jaotero@remax.com.uy</code>.</li>
+        <li>Elegí el proyecto del bot → <strong>APIs y servicios → Credenciales</strong>.</li>
+        <li>Abrí el <strong>ID de cliente de OAuth</strong> que ya tenés.</li>
+        <li>En <strong>Orígenes autorizados de JavaScript</strong> agregá:<br>
+            <code>https://juanandresotero.github.io</code></li>
+        <li>Guardá, copiá el <strong>ID de cliente</strong> y pegalo acá abajo.</li>
+      </ol>
+      <div class="campo-fila" style="padding:0">
+        <label for="google-cliente">ID de cliente</label>
+        <input class="campo" id="google-cliente" type="text" spellcheck="false"
+               placeholder="123456789-abc.apps.googleusercontent.com"
+               value="${escapar(puesto)}">
+      </div>
+      <p class="apunte" id="google-aviso" style="margin-top:10px">${
+        puesto
+          ? (googleId.pareceValido(puesto) ? "Listo." : "Eso no parece un ID de cliente.")
+          : ""}</p>
+      <p class="apunte" style="margin-top:12px">
+        La app pide el permiso <strong>más chico que existe</strong>: sólo puede ver y tocar
+        los archivos que ella misma crea. No puede leer el resto de tu Drive.
+        <strong>El «client secret» no va acá</strong> — no hace falta, y en un repositorio
+        público sería la llave de tu Drive a la vista de cualquiera.
+      </p>
+    </section>
+  `);
+
+  const campo = seccion.getElementById("google-cliente");
+  const aviso = seccion.getElementById("google-aviso");
+  campo.addEventListener("change", () => {
+    const guardado = googleId.guardar(campo.value);
+    if (!guardado) { aviso.textContent = "Sin ID: los inventarios no van a subir solos."; return; }
+    aviso.textContent = googleId.pareceValido(guardado)
+      ? "Listo. Probalo desde Herramientas → Inventarios."
+      : "Eso no parece un ID de cliente. Tiene que terminar en .apps.googleusercontent.com";
+  });
   return seccion;
 }
 

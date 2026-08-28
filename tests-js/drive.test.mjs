@@ -1,0 +1,176 @@
+/* Subir un inventario al Drive.
+
+   Juan lo hace a mano: una carpeta con la dirección adentro de INVENTARIOS, adentro una
+   subcarpeta por ambiente con sus fotos, y al final el PDF terminado. Esto hace lo mismo. */
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import {
+  comoSeLlamaLaCarpeta, subirInventario, laCarpeta, PERMISO,
+} from "../lib/drive.js";
+
+/* ---------- Cómo se llaman las carpetas ---------- */
+
+/* HOY EN SU DRIVE CONVIVEN "Humaita 2750", "Humaita 2750 - 2025" y
+   "Leyenda patria 2914 /1001 - Fecha 1/6/2025": tres formas de escribir lo mismo, y ninguna
+   se ordena con la otra. La fecha adelante en año-mes-día las ordena solas. */
+test("todas las carpetas se llaman igual, con la fecha adelante", () => {
+  assert.equal(
+    comoSeLlamaLaCarpeta({ fecha: "2026-05-30", direccion: "Leyenda Patria 2914", unidad: "1001" }),
+    "2026-05-30 · Leyenda Patria 2914 apto 1001");
+  assert.equal(
+    comoSeLlamaLaCarpeta({ fecha: "2025-08-07", direccion: "Gregorio Camino 828" }),
+    "2025-08-07 · Gregorio Camino 828");
+});
+
+/* La misma propiedad alquilada dos veces son dos carpetas distintas, no una pisada. */
+test("la misma propiedad en dos años son dos carpetas", () => {
+  const uno = comoSeLlamaLaCarpeta({ fecha: "2024-10-17", direccion: "Humaita 2750" });
+  const dos = comoSeLlamaLaCarpeta({ fecha: "2025-11-27", direccion: "Humaita 2750" });
+  assert.notEqual(uno, dos);
+  assert.ok(uno < dos, "se ordenan solas por fecha");
+});
+
+/* La barra y los dos puntos rompen los nombres de carpeta al bajarlos en Windows. */
+test("los caracteres que rompen un nombre de carpeta se sacan", () => {
+  const nombre = comoSeLlamaLaCarpeta({
+    fecha: "2026-05-30", direccion: "Leyenda patria 2914 /1001", unidad: "A:B",
+  });
+  assert.ok(!/[\/:*?"<>|]/.test(nombre.replace(/·/g, "")));
+});
+
+test("sin dirección igual sale un nombre usable", () => {
+  assert.equal(comoSeLlamaLaCarpeta({ fecha: "2026-05-30" }), "2026-05-30 · Sin dirección");
+  assert.equal(comoSeLlamaLaCarpeta({}), "Sin dirección");
+  assert.equal(comoSeLlamaLaCarpeta(null), "Sin dirección");
+});
+
+/* ---------- El permiso ---------- */
+
+/* `drive.file` deja ver y tocar SOLO los archivos que esta app crea. No puede leer el resto de
+   su Drive: ni los contratos, ni las carpetas de otros clientes. Es el único permiso de Drive
+   que Google considera no sensible. */
+test("se pide el permiso más chico que existe", () => {
+  assert.equal(PERMISO, "https://www.googleapis.com/auth/drive.file");
+  assert.ok(!PERMISO.endsWith("/drive"), "el permiso entero vería todo su Drive");
+});
+
+/* ---------- Subir un inventario ---------- */
+
+/* Un Drive de mentira, para poder probar el armado sin internet ni cuenta de Google. */
+function driveDeMentira() {
+  const carpetas = new Map();       // nombre|padre -> id
+  const archivos = [];
+  const abiertas = [];
+  let proximo = 0;
+
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url, opciones = {}) => {
+    const dir = String(url);
+    const ok = (datos) => ({ ok: true, json: async () => datos, text: async () => "" });
+
+    if (dir.includes("/files?q=")) {
+      const consulta = decodeURIComponent(dir.split("q=")[1].split("&")[0]);
+      const nombre = (consulta.match(/name='([^']*)'/) || [])[1];
+      const padre = (consulta.match(/'([^']*)' in parents/) || [])[1] || "";
+      const id = carpetas.get(`${nombre}|${padre}`);
+      return ok({ files: id ? [{ id, name: nombre }] : [] });
+    }
+    if (dir.includes("/permissions")) {
+      abiertas.push(dir.split("/files/")[1].split("/")[0]);
+      return ok({ id: "p" });
+    }
+    if (dir.includes("/upload/")) {
+      archivos.push({ cuerpo: opciones.body });
+      return ok({ id: `a${archivos.length}` });
+    }
+    // Crear carpeta.
+    const cuerpo = JSON.parse(opciones.body);
+    proximo += 1;
+    const id = `c${proximo}`;
+    carpetas.set(`${cuerpo.name}|${(cuerpo.parents || [])[0] || ""}`, id);
+    return ok({ id });
+  };
+  return {
+    carpetas, archivos, abiertas,
+    devolver: () => { globalThis.fetch = original; },
+  };
+}
+
+const laFoto = (ambiente, orden) => ({
+  ambiente, orden, drive: { bytes: new Uint8Array([1, 2, 3]) },
+});
+
+test("arma la misma estructura que él arma a mano", async () => {
+  const falso = driveDeMentira();
+  try {
+    const salida = await subirInventario("tok",
+      { fecha: "2025-08-07", direccion: "Gregorio Camino 828" },
+      [laFoto("Baño", 1), laFoto("Baño", 2), laFoto("Dormitorio 1", 1)],
+      { pdf: { nombre: "INVENTARIO.pdf", bytes: new Uint8Array([9]) } });
+
+    const nombres = [...falso.carpetas.keys()].map((k) => k.split("|")[0]);
+    assert.ok(nombres.includes("INVENTARIOS"));
+    assert.ok(nombres.includes("2025-08-07 · Gregorio Camino 828"));
+    assert.ok(nombres.includes("Baño"));
+    assert.ok(nombres.includes("Dormitorio 1"));
+    assert.equal(falso.archivos.length, 4, "tres fotos y el PDF");
+    assert.equal(salida.subidas, 4);
+    assert.match(salida.link, /^https:\/\/drive\.google\.com\/drive\/folders\//);
+  } finally { falso.devolver(); }
+});
+
+/* EL LINK TIENE QUE ABRIR PARA CUALQUIERA QUE LO TENGA. No es un descuido: es el punto 6 de
+   sus cláusulas — "tendrá acceso todas las personas que pueda encontrar este enlace". */
+test("la carpeta queda abierta para el que tenga el link", async () => {
+  const falso = driveDeMentira();
+  try {
+    await subirInventario("tok", { fecha: "2026-01-01", direccion: "X 1" },
+      [laFoto("Cocina", 1)]);
+    assert.equal(falso.abiertas.length, 1);
+  } finally { falso.devolver(); }
+});
+
+/* SI SE CORTA EL INTERNET A LA MITAD, se toca de nuevo y sigue de donde quedó: no empieza de
+   cero ni deja cien fotos repetidas. */
+test("lo que ya se subió no se vuelve a subir", async () => {
+  const falso = driveDeMentira();
+  try {
+    const fotos = [laFoto("Cocina", 1), laFoto("Cocina", 2), laFoto("Cocina", 3)];
+    const salida = await subirInventario("tok", { fecha: "2026-01-01", direccion: "X 1" }, fotos,
+      { yaSubida: (f) => f.orden <= 2 });
+    assert.equal(salida.subidas, 1, "sólo la que faltaba");
+    assert.equal(falso.archivos.length, 1);
+  } finally { falso.devolver(); }
+});
+
+test("una carpeta que ya existe se reusa, no se duplica", async () => {
+  const falso = driveDeMentira();
+  try {
+    const inv = { fecha: "2026-01-01", direccion: "X 1" };
+    await subirInventario("tok", inv, [laFoto("Cocina", 1)]);
+    const antes = falso.carpetas.size;
+    await subirInventario("tok", inv, [laFoto("Cocina", 2)]);
+    assert.equal(falso.carpetas.size, antes, "las tres carpetas ya estaban");
+  } finally { falso.devolver(); }
+});
+
+test("laCarpeta devuelve la que hay antes de crear otra", async () => {
+  const falso = driveDeMentira();
+  try {
+    const uno = await laCarpeta("tok", "INVENTARIOS", null);
+    const dos = await laCarpeta("tok", "INVENTARIOS", null);
+    assert.equal(uno, dos);
+  } finally { falso.devolver(); }
+});
+
+/* Sin fotos nuevas no hay nada que subir, pero la carpeta y el link se arman igual: es lo que
+   deja pegar el link en el inventario antes de sacar la primera foto. */
+test("sin fotos igual deja la carpeta y el link", async () => {
+  const falso = driveDeMentira();
+  try {
+    const salida = await subirInventario("tok", { fecha: "2026-01-01", direccion: "X 1" }, []);
+    assert.equal(salida.subidas, 0);
+    assert.ok(salida.link);
+  } finally { falso.devolver(); }
+});
