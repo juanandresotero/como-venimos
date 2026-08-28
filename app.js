@@ -26,6 +26,7 @@ import { dibujarCostosCierre } from "./vistas/costos-cierre.js";
 import { dibujarPersonalResumen } from "./vistas/personal-resumen.js";
 import { dibujarPersonalFijos } from "./vistas/personal-fijos.js";
 import { dibujarPersonalVariables } from "./vistas/personal-variables.js";
+import { dibujarInventario } from "./vistas/inventario.js";
 
 const ARCHIVOS = [
   "cartera", "negocios", "ajustes", "eventos", "estado_robot", "mis_datos", "calculos_renta",
@@ -219,6 +220,7 @@ const VISTAS = {
   ajustes: dibujarAjustes,
   homogeneizacion: dibujarHomogeneizacion,
   costos_cierre: dibujarCostosCierre,
+  inventario: dibujarInventario,
   indicador: dibujarIndicador,
   personal_resumen: dibujarPersonalResumen,
   personal_fijos: dibujarPersonalFijos,
@@ -248,7 +250,8 @@ let cara = "negocios";
 const PADRE = { ficha: "negocios", propiedad: "cartera", indicador: "salud",
   renta: "herramientas", comisiones: "herramientas", reajuste: "herramientas",
   carta_oferta: "herramientas", padron: "herramientas",
-  homogeneizacion: "herramientas", costos_cierre: "herramientas" };
+  homogeneizacion: "herramientas", costos_cierre: "herramientas",
+  inventario: "herramientas" };
 
 /* Cambiar de pantalla sube arriba de todo. Corregir un dato NO: hay que quedarse donde
    estaba y con el cursor en el mismo campo.

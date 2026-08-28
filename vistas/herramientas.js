@@ -54,6 +54,10 @@ const REGLA = `<path d="M3.2 15.6 15.6 3.2l5.2 5.2L8.4 20.8z"/>`
    la moneda—, y ademas todas las herramientas hablan de casas: el dibujo no distinguiria
    nada. Lo que esta parada dice de verdad es "de lo que sale la venta, esto se va", y eso
    es una porcion separada del resto. Dos formas cerradas, ninguna pieza chica. */
+/* Una planilla con renglones: es lo que es un inventario, una lista de cosas y su estado. */
+const PLANILLA = `<path d="M5.5 2.6h13v18.8h-13z"/>`
+  + `<path d="M8.4 7.4h7.2M8.4 11.2h7.2M8.4 15h4.6"/>`;
+
 const TAJADA = `<path d="M10.8 6.4A6.8 6.8 0 1 0 17.6 13.2L10.8 13.2Z"/>`
   + `<path d="M13 11L13 4.2A6.8 6.8 0 0 1 19.8 11Z"/>`;
 
@@ -70,6 +74,7 @@ export const HERRAMIENTAS = [
   { vista: "homogeneizacion", nombre: "Homogeneizar los m²", dibujo: REGLA },
   /* La ultima de todas, lo pidio Juan asi. */
   { vista: "costos_cierre", nombre: "Cuánto cuesta cerrar", dibujo: TAJADA },
+  { vista: "inventario", nombre: "Inventarios", dibujo: PLANILLA },
 ];
 
 export function dibujarHerramientas(estado) {
