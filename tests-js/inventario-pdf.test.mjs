@@ -355,3 +355,56 @@ test("sin ninguna cláusula el documento sale igual", () => {
   assert.ok(hojas >= 1);
   assert.ok(Buffer.from(doc.bytes()).toString("latin1").includes("Arrendador/a"));
 });
+
+/* ---------- El aire entre las firmas ---------- */
+
+/* Juan: "que tengan un poco más de espacio entre cada una, siempre y cuando entren todas en el
+   espacio que queda y no se vaya a otra hoja".
+
+   Firmar arriba de una raya con dos centímetros de aire es incómodo, y dejar media hoja en
+   blanco abajo es feo. Se mide lo que queda y se reparte. */
+
+/* Dónde quedó cada renglón de firmas, medido desde arriba de la hoja. */
+function renglonesDeFirma(bytes) {
+  const crudo = Buffer.from(bytes).toString("latin1");
+  const ys = [...crudo.matchAll(/([\d.]+) ([\d.]+) Td[^]{0,60}?\(Firma y aclaraci/g)]
+    .map((m) => Math.round(842 - Number(m[2])));
+  return [...new Set(ys)].sort((a, b) => a - b);
+}
+
+const conFirmas = (n) => {
+  const inv = conAmbientes("living", "cocina");
+  inv.firmas_arrendador = n;
+  inv.firmas_arrendatario = n;
+  inv.link_fotos = "https://drive.google.com/drive/folders/x";
+  return armarPDF(inv, { membrete: MEMBRETE });
+};
+
+test("con pocas firmas quedan más separadas que con muchas", () => {
+  const separacion = (n) => {
+    const filas = renglonesDeFirma(conFirmas(n).doc.bytes());
+    return filas[1] - filas[0];
+  };
+  const pocas = separacion(1);
+  const varias = separacion(3);
+  const muchas = separacion(6);
+  assert.ok(pocas > varias, `con 1 y 1 tienen que estar más sueltas (${pocas} vs ${varias})`);
+  assert.ok(varias > muchas, `con 3 y 3 más que con 6 y 6 (${varias} vs ${muchas})`);
+  assert.ok(muchas >= 44, "pero nunca tan juntas que una firma pise a la de abajo");
+});
+
+/* LO QUE NO PUEDE PASAR NUNCA: que estirar las firmas empuje algo a otra hoja. */
+test("por más aire que se les dé, no se pasan de la hoja", () => {
+  const ABAJO_DEL_TODO = 842 - 64;   // donde arranca la franja del membrete
+  for (const n of [1, 2, 3, 6, 12]) {
+    const filas = renglonesDeFirma(conFirmas(n).doc.bytes());
+    assert.ok(filas.length > 0, `con ${n} tiene que haber firmas`);
+    assert.ok(Math.max(...filas) < ABAJO_DEL_TODO,
+      `con ${n} la última cae en ${Math.max(...filas)}, encima del membrete`);
+  }
+});
+
+test("darle más firmas no agrega hojas", () => {
+  const hojas = (n) => conFirmas(n).hojas;
+  assert.equal(hojas(1), hojas(6), "de una a seis por parte, la misma cantidad de hojas");
+});
