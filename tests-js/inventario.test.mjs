@@ -148,11 +148,15 @@ test("un nombre puesto a mano le gana a la numeración", () => {
 
 /* ---------- El inventario entero ---------- */
 
-test("uno nuevo arranca con los ambientes de un apartamento típico", () => {
+/* UNO NUEVO ARRANCA VACIO. Lo pidió Juan después de verlo andando: "que no haya nada agregado
+   y que aparezcan como de entrada agregar un ambiente". Cada propiedad tiene los ambientes que
+   tiene, y arrancar con cinco puestos obliga a mirar cinco tarjetas para descubrir cuáles
+   sacar: sumar lo que hay es una decisión por ambiente, sacar lo que sobra es revisar todo. */
+test("uno nuevo arranca vacío", () => {
   const inv = nuevoInventario("2026-08-28");
   assert.equal(inv.fecha, "2026-08-28");
-  assert.ok(inv.ambientes.length >= 4, "sacar lo que sobra es más rápido que sumar");
-  assert.ok(inv.ambientes.some((a) => a.tipo === "cocina"));
+  assert.deepEqual(inv.ambientes, []);
+  assert.equal(comoVa(inv).items, 0);
 });
 
 /* LAS CLAUSULAS SE GUARDAN CON EL INVENTARIO, no en el código: si algún día su escribano le
@@ -181,6 +185,7 @@ test("el título de la propiedad se arma con lo que haya", () => {
    Ese número es el que dice si el inventario está pronto. */
 test("comoVa cuenta lo que hay y lo que tiene detalle", () => {
   const inv = nuevoInventario("2026-08-28");
+  inv.ambientes = [nuevoAmbiente("living")];
   const antes = comoVa(inv);
   inv.ambientes[0].items[0].estado = "malo";
   inv.ambientes[0].items[0].detalle = "Con hongos";

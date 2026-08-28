@@ -14,7 +14,7 @@
    repositorio: es la casa de un cliente. */
 
 import {
-  ESTADOS, PIDEN_DETALLE, TIPOS_DE_AMBIENTE, AVISO_RECLAMO, comoSeLee, conCantidad,
+  ESTADOS, PIDEN_DETALLE, TIPOS_DE_AMBIENTE, AVISO_RECLAMO, CLAUSULAS, comoSeLee, conCantidad,
   nuevoInventario, nuevoAmbiente, nuevoItem, numerar, comoSeLlama, comoVa, cuenta,
 } from "../lib/inventario.js";
 import * as guardado from "../lib/inventario-guardado.js";
@@ -34,9 +34,15 @@ function nodo(marca) {
    perder el inventario abierto en cada tecla no sería usable. */
 let abierto = null;
 let cabeceraAbierta = false;
+let clausulasAbiertas = false;
 /* Las cosas a las que se les abrio el renglon de escribir con el lapiz. Vive afuera porque la
    pantalla se redibuja entera en cada cambio: adentro, el renglon se cerraria solo. */
 const escribiendo = new Set();
+/* Los ambientes plegados. Juan: "que cada ambiente se pueda minimizar en una lista desplegable
+   así no hay que bajar tanto para poner uno y otro, y que si están todos minimizados se vean
+   los títulos de cada uno". Con ocho ambientes y ciento sesenta cosas, la única forma de
+   moverse es poder cerrar lo que ya está hecho. */
+const plegados = new Set();
 
 const guardarYRedibujar = (estado) => {
   guardado.guardar(abierto);
@@ -128,12 +134,29 @@ function editor(estado, trozo) {
   `));
 
   trozo.append(cabecera(estado));
+  if (abierto.ambientes.length > 1) trozo.append(plegarTodos(estado));
   for (const ambiente of abierto.ambientes) trozo.append(elAmbiente(estado, ambiente));
   trozo.append(agregarAmbiente(estado));
   trozo.append(elPie(estado));
 
   trozo.querySelector("#volver").addEventListener("click", () => {
     abierto = null;
+    estado.redibujar();
+  });
+  return trozo;
+}
+
+/* Abrir y cerrar todo de una. Con ocho ambientes, plegarlos de a uno son ocho toques. */
+function plegarTodos(estado) {
+  const todosPlegados = abierto.ambientes.every((a) => plegados.has(a.id));
+  const trozo = nodo(html`
+    <div class="botonera" style="margin:-4px 0 12px">
+      <button class="filtro" id="plegar-todos">
+        ${todosPlegados ? "Abrir todos" : "Plegar todos"}</button>
+    </div>`);
+  trozo.getElementById("plegar-todos").addEventListener("click", () => {
+    if (todosPlegados) plegados.clear();
+    else for (const a of abierto.ambientes) plegados.add(a.id);
     estado.redibujar();
   });
   return trozo;
@@ -192,40 +215,59 @@ function elAmbiente(estado, ambiente) {
   /* EL NOMBRE DEL AMBIENTE SE ESCRIBE. Es lo que pidió Juan para poder poner "Cochera",
      "Depósito" o lo que tenga esa propiedad, y de paso sirve para renombrar: "Dormitorio 1"
      puede ser "Dormitorio del fondo". */
+  const plegado = plegados.has(ambiente.id);
+  /* Cuántas tienen algo escrito: es lo único que hace falta saber de un ambiente cerrado. */
+  const conAlgo = ambiente.items.filter(
+    (i) => cuenta(i) && (PIDEN_DETALLE.has(i.estado) || (i.detalle || "").trim())).length;
+
   const seccion = nodo(html`
     <section class="tarjeta">
       <div class="tarjeta-titulo">
         <input class="campo" id="amb-${escapar(ambiente.id)}" type="text"
                value="${escapar(ambiente.nombre)}" placeholder="¿Qué ambiente es?"
                style="font-size:17px;font-weight:700;flex:1">
-        <span class="apunte" style="white-space:nowrap;margin-left:10px">
-          ${usados} ${usados === 1 ? "cosa" : "cosas"}</span>
+        <button class="filtro" data-plegar="${escapar(ambiente.id)}"
+                style="flex:0 0 auto;margin-left:8px;padding:8px 11px"
+                title="${plegado ? "Abrirlo" : "Plegarlo"}">${plegado ? "▾" : "▴"}</button>
       </div>
-      <div id="items-${escapar(ambiente.id)}"></div>
+      <p class="apunte" style="margin:6px 0 0">
+        ${usados} ${usados === 1 ? "cosa" : "cosas"}${
+          conAlgo ? ` · <strong>${conAlgo} con algo escrito</strong>` : ""}</p>
 
-      <div class="campo-fila" style="padding:10px 0 0">
-        <label for="sumar-${escapar(ambiente.id)}">Agregar algo a este ambiente</label>
-        <div style="display:flex;gap:8px">
-          <input class="campo" id="sumar-${escapar(ambiente.id)}" type="text" style="flex:1"
-                 placeholder="Estufa, calefón, mosquitero...">
-          <button class="boton boton-chico boton-primario"
-                  data-sumar-item="${escapar(ambiente.id)}">Sumar</button>
+      ${plegado ? "" : html`
+        <div id="items-${escapar(ambiente.id)}" style="margin-top:8px"></div>
+
+        <div class="campo-fila" style="padding:10px 0 0">
+          <label for="sumar-${escapar(ambiente.id)}">Agregar algo a este ambiente</label>
+          <div style="display:flex;gap:8px">
+            <input class="campo" id="sumar-${escapar(ambiente.id)}" type="text" style="flex:1"
+                   placeholder="Estufa, calefón, mosquitero...">
+            <button class="boton boton-chico boton-primario"
+                    data-sumar-item="${escapar(ambiente.id)}">Sumar</button>
+          </div>
         </div>
-      </div>
 
-      <div class="botonera" style="margin-top:12px">
-        <button class="filtro" data-borrar-amb="${escapar(ambiente.id)}">Sacar el ambiente</button>
-      </div>
+        <div class="botonera" style="margin-top:12px">
+          <button class="filtro" data-borrar-amb="${escapar(ambiente.id)}">Sacar el ambiente</button>
+        </div>`}
     </section>
   `);
 
-  const caja = seccion.getElementById(`items-${ambiente.id}`);
-  for (const item of ambiente.items) caja.append(elItem(estado, item));
+  seccion.querySelector("[data-plegar]").addEventListener("click", () => {
+    if (plegado) plegados.delete(ambiente.id);
+    else plegados.add(ambiente.id);
+    estado.redibujar();
+  });
 
   seccion.getElementById(`amb-${ambiente.id}`).addEventListener("change", (e) => {
     ambiente.nombre = e.target.value;
     guardarYRedibujar(estado);
   });
+
+  if (plegado) return seccion;
+
+  const caja = seccion.getElementById(`items-${ambiente.id}`);
+  for (const item of ambiente.items) caja.append(elItem(estado, item));
 
   /* SE ESCRIBE EL NOMBRE Y SE SUMA. Antes aparecía una fila en blanco que después había que
      encontrar entre las otras veinte para escribirle adentro. */
@@ -364,7 +406,10 @@ function agregarAmbiente(estado) {
   seccion.getElementById("sumar-amb").addEventListener("click", () => {
     /* El nombre escrito manda sobre el del tipo: es lo que deja poner "Cochera 2" o
        "Cuarto de máquinas" sin tener que renombrarlo después. */
-    abierto.ambientes.push(nuevoAmbiente(cual.value, comoSeLlamara.value.trim()));
+    const nuevo = nuevoAmbiente(cual.value, comoSeLlamara.value.trim());
+    /* El nuevo entra abierto y los otros se pliegan: lo que vas a llenar es este. */
+    for (const a of abierto.ambientes) plegados.add(a.id);
+    abierto.ambientes.push(nuevo);
     guardarYRedibujar(estado);
   });
   return seccion;
@@ -378,10 +423,14 @@ function elPie(estado) {
       <h2 class="titulo" style="font-size:17px;margin-bottom:8px">Observaciones</h2>
       <textarea class="campo" id="observaciones" rows="4"
                 style="resize:vertical">${escapar(abierto.observaciones || "")}</textarea>
-      <p class="apunte" style="margin-top:10px">
-        Las siete cláusulas del pie van tal cual las usás hoy. La cantidad de hojas la cuenta
-        el documento solo.
-      </p>
+      <div class="tarjeta-titulo" style="margin-top:18px">
+        <h2 class="titulo" style="font-size:17px">Las cláusulas del pie</h2>
+        <button class="filtro" id="ver-clausulas">${clausulasAbiertas ? "Ocultar" : "Editar"}</button>
+      </div>
+      ${clausulasAbiertas
+        ? html`<div id="las-clausulas"></div>`
+        : html`<p class="apunte">Las ${(abierto.clausulas || CLAUSULAS).length} de siempre.
+            La cantidad de hojas la cuenta el documento solo.</p>`}
       <div class="botonera" style="margin-top:14px">
         <button class="boton boton-primario" id="mandar">Mandar el PDF</button>
         <button class="boton" id="bajar">Bajarlo</button>
@@ -392,6 +441,34 @@ function elPie(estado) {
       <p class="apunte" id="resultado" style="margin-top:10px"></p>
     </section>
   `);
+
+  /* LAS CLAUSULAS SE PUEDEN EDITAR. Juan lo pidió el primer día: "que en esta herramienta
+     pueda editar los textos que ves". Son las que le dan valor legal al documento, y viven
+     guardadas DENTRO de cada inventario: si mañana su escribano le cambia una, los que ya
+     firmó siguen diciendo lo que decían ese día. */
+  const cajaClausulas = seccion.getElementById("las-clausulas");
+  if (cajaClausulas) {
+    (abierto.clausulas || CLAUSULAS).forEach((clausula, i) => {
+      const fila = nodo(html`
+        <div class="campo-fila">
+          <label for="cla-${i}">${i + 1})${
+            clausula.includes("{HOJAS}") ? " — {HOJAS} se cambia por el número real" : ""}</label>
+          <textarea class="campo" id="cla-${i}" rows="4"
+                    style="resize:vertical;font-size:13px">${escapar(clausula)}</textarea>
+        </div>`);
+      fila.querySelector("textarea").addEventListener("change", (e) => {
+        const lista = [...(abierto.clausulas || CLAUSULAS)];
+        lista[i] = e.target.value;
+        abierto.clausulas = lista;
+        guardado.guardar(abierto);
+      });
+      cajaClausulas.append(fila);
+    });
+  }
+  seccion.getElementById("ver-clausulas").addEventListener("click", () => {
+    clausulasAbiertas = !clausulasAbiertas;
+    estado.redibujar();
+  });
 
   seccion.getElementById("observaciones").addEventListener("change", (e) => {
     abierto.observaciones = e.target.value;
