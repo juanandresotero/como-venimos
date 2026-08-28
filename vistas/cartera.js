@@ -5,7 +5,9 @@
 
 import { listar, estadoVisible, nombreEstado, diasEnCartera, rendimiento } from "../lib/cartera.js";
 import { plata, plataUSD, fechaCorta, escapar } from "../lib/formato.js";
-import { esBusqueda, esReferidaMia, estaCaido, momentoDelNegocio } from "../lib/motor.js";
+import {
+  esBusqueda, esReferidaMia, estaCaido, momentoDelNegocio, desdeCuandoElNegocio,
+} from "../lib/motor.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
 
@@ -138,9 +140,9 @@ function lasReferidas(estado, lista) {
         </span>
         <span class="fila-derecha fila-plata">
           <span class="cifra cifra-media">${plata(n.ganancia)}</span>
-          <span class="fila-sub">${n.fecha_negociacion
-            ? `desde ${fechaCorta(n.fecha_negociacion, anio)}`
-            : "te toca el 25%"}</span>
+          ${desdeCuandoElNegocio(n)
+            ? desdeCuando(n, anio)
+            : html`<span class="fila-sub">te toca el 25%</span>`}
         </span>
       </button>
     `);
@@ -196,9 +198,9 @@ function lasSuplencias(estado, lista) {
         </span>
         <span class="fila-derecha fila-plata">
           <span class="cifra cifra-media">${monto}</span>
-          <span class="fila-sub">${n.fecha_boleto
-            ? `desde ${fechaCorta(n.fecha_boleto, anio)}`
-            : "sin cobrar"}</span>
+          ${desdeCuandoElNegocio(n)
+            ? desdeCuando(n, anio)
+            : html`<span class="fila-sub">sin cobrar</span>`}
         </span>
       </button>
     `);
@@ -213,6 +215,15 @@ function lasSuplencias(estado, lista) {
 
    Estaba escrito a mano en dos lugares y en los dos decia siempre lo mismo: una busqueda
    figuraba "en negociacion" para siempre, aunque le cargaras la fecha de la reserva. */
+/* La fecha que va abajo del cartel es la DE ESE cartel. Si dice "Reservada" y al lado "desde
+   18 ago", se lee "reservada desde el 18" — y el 18 lo que paso fue que entro en negociacion. */
+function desdeCuando(negocio, anio) {
+  const cuando = desdeCuandoElNegocio(negocio);
+  return cuando
+    ? `<span class="fila-sub">desde ${escapar(fechaCorta(cuando, anio))}</span>`
+    : "";
+}
+
 function chipDelNegocio(negocio, sinNada) {
   const momento = momentoDelNegocio(negocio);
   if (!momento) {
@@ -253,9 +264,7 @@ function busquedasAbiertas(estado, lasAbiertas) {
         </span>
         <span class="fila-derecha fila-plata">
           <span class="cifra cifra-media">${plata(n.precio_operacion)}</span>
-          ${n.fecha_negociacion
-            ? html`<span class="fila-sub">desde ${fechaCorta(n.fecha_negociacion, anio)}</span>`
-            : ""}
+          ${desdeCuando(n, anio)}
         </span>
       </button>
     `);

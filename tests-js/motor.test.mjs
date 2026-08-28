@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   base, splitVigente, calcular, pctPorDefecto, revisar, REGIMENES,
   plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando, estaCaido, CAIDO, hayAlgoEnMarcha, volvioAlMercado, esReferidaMia,
-  bajaSobrePublicado, precioPublicadoAl, momentoDelNegocio } from "../lib/motor.js";
+  bajaSobrePublicado, precioPublicadoAl, momentoDelNegocio, desdeCuandoElNegocio } from "../lib/motor.js";
 
 const AJUSTES = {
   agente: { nombre: "Juan Andrés Otero" },
@@ -1298,4 +1298,21 @@ test("un negocio caído está caído, tenga las fechas que tenga", () => {
 test("no se rompe con cualquier cosa", () => {
   assert.equal(momentoDelNegocio(null), null);
   assert.equal(momentoDelNegocio(undefined), null);
+});
+
+/* LA FECHA QUE SE MUESTRA ES LA DEL ESTADO QUE SE MUESTRA. Juan: "desde el 18 de agosto está
+   en negociación y el 27 de agosto se pasó a reservada, que no se confunda eso".
+
+   Si el cartel dice "Reservada" y al lado "desde 18 ago", se lee "reservada desde el 18" — y
+   el 18 lo que pasó fue que entró en negociación. */
+test("la fecha acompaña al estado, no se queda en la primera", () => {
+  const n = { fecha_negociacion: "2026-08-18", fecha_boleto: "2026-08-27" };
+  assert.equal(momentoDelNegocio(n), "reservada");
+  assert.equal(desdeCuandoElNegocio(n), "2026-08-27", "la del boleto, no la de la negociación");
+
+  assert.equal(desdeCuandoElNegocio({ fecha_negociacion: "2026-08-18" }), "2026-08-18");
+  assert.equal(desdeCuandoElNegocio({ ...n, fecha_fin: "2026-09-10" }), "2026-09-10");
+  assert.equal(desdeCuandoElNegocio({}), null);
+  assert.equal(desdeCuandoElNegocio({ estado: CAIDO, fecha_boleto: "2026-08-27" }), null,
+    "un caído no está «desde» ningún lado");
 });

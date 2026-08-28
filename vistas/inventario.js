@@ -19,7 +19,7 @@ import {
 } from "../lib/inventario.js";
 import * as guardado from "../lib/inventario-guardado.js";
 import { armarPDF, nombreArchivo } from "../lib/inventario-pdf.js";
-import { bajarArchivo } from "../lib/compartir.js";
+import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
 import { escapar } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -383,7 +383,10 @@ function elPie(estado) {
         el documento solo.
       </p>
       <div class="botonera" style="margin-top:14px">
-        <button class="boton boton-primario" id="bajar">Bajar el PDF</button>
+        <button class="boton boton-primario" id="mandar">Mandar el PDF</button>
+        <button class="boton" id="bajar">Bajarlo</button>
+      </div>
+      <div class="botonera" style="margin-top:10px">
         <button class="boton boton-borrar" id="borrar-inv">Borrar este inventario</button>
       </div>
       <p class="apunte" id="resultado" style="margin-top:10px"></p>
@@ -396,13 +399,43 @@ function elPie(estado) {
   });
 
   const aviso = seccion.getElementById("resultado");
-  seccion.getElementById("bajar").addEventListener("click", () => {
+
+  /* EL PDF SE MANDA Y SE BAJA. Juan: "cuando termine debe poder descargarse y enviarse al
+     whatsapp en formato pdf porque esto luego yo lo imprimo y lo hago firmar el dia de la
+     firma del alquiler o venta".
+
+     "Mandar" abre la bandeja del telefono —ahi adentro esta WhatsApp— con el archivo listo.
+     "Bajarlo" es para la computadora, que es de donde se imprime. */
+  const elPDF = () => {
     const oficina = ((estado.datos.ajustes || {}).agente || {}).oficina
       || "RE/MAX Único · Avda. Brasil 2986, Montevideo";
-    const { doc, hojas } = armarPDF(
-      { ...abierto, aviso_reclamo: AVISO_RECLAMO }, { oficina });
-    bajarArchivo(doc.aBlob(), nombreArchivo(abierto));
-    aviso.textContent = `Listo: ${hojas} ${hojas === 1 ? "hoja" : "hojas"}.`;
+    return armarPDF({ ...abierto, aviso_reclamo: AVISO_RECLAMO }, { oficina });
+  };
+
+  const contar = (hojas) => `${hojas} ${hojas === 1 ? "hoja" : "hojas"}`;
+
+  const COMO_SALIO = {
+    compartido: (h) => `Mandado: ${contar(h)}.`,
+    bajado: (h) => `Bajado: ${contar(h)}. Está en tus descargas.`,
+    cancelado: () => "No lo mandaste.",
+    /* Adentro del navegador de otra app la descarga no pasa nunca, y hay que decirlo en vez
+       de dejarlo tocando un boton muerto. */
+    bloqueado: () => "Abrilo con Chrome para poder mandarlo: desde acá adentro no se puede.",
+  };
+
+  seccion.getElementById("mandar").addEventListener("click", async () => {
+    const { doc, hojas } = elPDF();
+    aviso.textContent = "Armando el PDF...";
+    const como = await mandarArchivo(
+      doc.aBlob(), nombreArchivo(abierto),
+      `Inventario de ${comoSeLlama(abierto)} · ${abierto.fecha || ""}`.trim());
+    aviso.textContent = (COMO_SALIO[como] || COMO_SALIO.bajado)(hojas);
+  });
+
+  seccion.getElementById("bajar").addEventListener("click", async () => {
+    const { doc, hojas } = elPDF();
+    const como = await bajarArchivo(doc.aBlob(), nombreArchivo(abierto));
+    aviso.textContent = (COMO_SALIO[como] || COMO_SALIO.bajado)(hojas);
   });
 
   const borrar = seccion.getElementById("borrar-inv");
