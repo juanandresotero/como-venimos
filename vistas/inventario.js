@@ -21,6 +21,7 @@ import * as guardado from "../lib/inventario-guardado.js";
 import { armarPDF, nombreArchivo } from "../lib/inventario-pdf.js";
 import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
 import { cargarMembrete } from "../lib/membrete.js";
+import * as fotos from "../lib/fotos.js";
 import { escapar } from "../lib/formato.js";
 
 const html = (c, ...v) => c.reduce((t, x, i) => t + x + (v[i] ?? ""), "");
@@ -44,6 +45,20 @@ const escribiendo = new Set();
    los títulos de cada uno". Con ocho ambientes y ciento sesenta cosas, la única forma de
    moverse es poder cerrar lo que ya está hecho. */
 const plegados = new Set();
+
+/* Las fotos del inventario abierto, leidas una vez del deposito y guardadas acá mientras se
+   trabaja. Se leen de IndexedDB, que es asincrónico, y la pantalla se dibuja de una: sin esta
+   copia habría que esperar al depósito en cada redibujado, que son decenas por minuto. */
+let lasFotos = [];
+let subiendo = "";
+
+const fotosDelAmbiente = (ambiente) =>
+  lasFotos.filter((f) => f.ambiente === ambiente.nombre);
+
+async function releerFotos(estado) {
+  lasFotos = abierto ? await fotos.fotosDelInventario(abierto.id) : [];
+  estado.redibujar();
+}
 
 const guardarYRedibujar = (estado) => {
   guardado.guardar(abierto);
@@ -103,13 +118,15 @@ function lista(estado, trozo) {
     `);
     fila.querySelector("[data-abrir]").addEventListener("click", () => {
       abierto = inv;
-      estado.redibujar();
+      lasFotos = [];
+      releerFotos(estado);
     });
     trozo.append(fila);
   }
 
   trozo.querySelector("#nuevo").addEventListener("click", () => {
     abierto = nuevoInventario(estado.hoy);
+    lasFotos = [];
     cabeceraAbierta = true;
     guardarYRedibujar(estado);
   });
@@ -217,6 +234,7 @@ function elAmbiente(estado, ambiente) {
      "Depósito" o lo que tenga esa propiedad, y de paso sirve para renombrar: "Dormitorio 1"
      puede ser "Dormitorio del fondo". */
   const plegado = plegados.has(ambiente.id);
+  const suyas = fotosDelAmbiente(ambiente);
   /* Cuántas tienen algo escrito: es lo único que hace falta saber de un ambiente cerrado. */
   const conAlgo = ambiente.items.filter(
     (i) => cuenta(i) && (PIDEN_DETALLE.has(i.estado) || (i.detalle || "").trim())).length;
@@ -233,10 +251,12 @@ function elAmbiente(estado, ambiente) {
       </div>
       <p class="apunte" style="margin:6px 0 0">
         ${usados} ${usados === 1 ? "cosa" : "cosas"}${
-          conAlgo ? ` · <strong>${conAlgo} con algo escrito</strong>` : ""}</p>
+          conAlgo ? ` · <strong>${conAlgo} con algo escrito</strong>` : ""}${
+          suyas.length ? ` · ${suyas.length} ${suyas.length === 1 ? "foto" : "fotos"}` : ""}</p>
 
       ${plegado ? "" : html`
         <div id="items-${escapar(ambiente.id)}" style="margin-top:8px"></div>
+        <div id="fotos-${escapar(ambiente.id)}"></div>
 
         <div class="campo-fila" style="padding:10px 0 0">
           <label for="sumar-${escapar(ambiente.id)}">Agregar algo a este ambiente</label>
@@ -269,6 +289,7 @@ function elAmbiente(estado, ambiente) {
 
   const caja = seccion.getElementById(`items-${ambiente.id}`);
   for (const item of ambiente.items) caja.append(elItem(estado, item));
+  seccion.getElementById(`fotos-${ambiente.id}`).append(lasFotosDe(estado, ambiente, suyas));
 
   /* SE ESCRIBE EL NOMBRE Y SE SUMA. Antes aparecía una fila en blanco que después había que
      encontrar entre las otras veinte para escribirle adentro. */
@@ -393,6 +414,79 @@ function elItem(estado, item) {
   return fila;
 }
 
+/* LAS FOTOS DE UN AMBIENTE. Se eligen de la galeria del telefono —el <input type=file> con
+   `multiple` abre el selector de Android y deja marcar todas las de ese cuarto de una— y se
+   guardan achicadas en dos medidas: una para el papel y otra para el Drive.
+
+   Achicar veinte fotos de celular tarda unos segundos y la pantalla se queda quieta: por eso
+   avisa por donde va. Una pantalla quieta parece colgada, y lo primero que hace uno es tocar
+   el boton otra vez. */
+function lasFotosDe(estado, ambiente, suyas) {
+  const pesan = fotos.cuantoPesan(suyas);
+  const trozo = nodo(html`
+    <div style="margin-top:14px">
+      <div class="tarjeta-titulo" style="margin-bottom:8px">
+        <span class="etiqueta">Fotos${suyas.length ? ` · ${suyas.length}` : ""}</span>
+        ${pesan ? html`<span class="apunte">${escapar(fotos.enMegas(pesan))}</span>` : ""}
+      </div>
+      <div class="tira-fotos" id="tira-${escapar(ambiente.id)}"></div>
+      <label class="boton boton-chico" style="display:inline-block;margin-top:8px">
+        + Elegir de la galería
+        <input type="file" accept="image/*" multiple id="elegir-${escapar(ambiente.id)}"
+               style="display:none">
+      </label>
+      ${subiendo === ambiente.id
+        ? html`<p class="apunte" id="yendo-${escapar(ambiente.id)}"
+                  style="margin-top:8px">Achicando las fotos...</p>`
+        : ""}
+      ${fotos.queSalioMal()
+        ? html`<p class="apunte" style="margin-top:8px;color:var(--rojo)">
+            No se pudieron guardar las fotos: ${escapar(fotos.queSalioMal())}.
+            Probá con menos de una vez, o liberá lugar en el teléfono.</p>`
+        : ""}
+    </div>
+  `);
+
+  const tira = trozo.getElementById(`tira-${ambiente.id}`);
+  for (const foto of suyas) {
+    const cuadro = document.createElement("div");
+    cuadro.className = "foto-chica";
+    const img = document.createElement("img");
+    /* Se dibuja desde el JPEG del papel, que es el chico: cargar el grande para una miniatura
+       de 70 pixeles es pedirle al telefono treinta veces mas de lo que hace falta. */
+    img.src = URL.createObjectURL(new Blob([foto.papel.bytes], { type: "image/jpeg" }));
+    img.alt = `Foto ${foto.orden} de ${ambiente.nombre}`;
+    img.loading = "lazy";
+    const sacar = document.createElement("button");
+    sacar.className = "foto-sacar";
+    sacar.textContent = "✕";
+    sacar.title = "Sacar esta foto";
+    sacar.addEventListener("click", async () => {
+      await fotos.borrarFoto(foto.id);
+      await releerFotos(estado);
+    });
+    cuadro.append(img, sacar);
+    tira.append(cuadro);
+  }
+
+  const elegir = trozo.getElementById(`elegir-${ambiente.id}`);
+  elegir.addEventListener("change", async () => {
+    const archivos = [...(elegir.files || [])];
+    if (!archivos.length) return;
+    subiendo = ambiente.id;
+    fotos.olvidarElProblema();
+    estado.redibujar();
+    const cartel = document.getElementById(`yendo-${ambiente.id}`);
+    await fotos.sumarFotos(abierto.id, ambiente.nombre, archivos, (hechas, total) => {
+      if (cartel) cartel.textContent = `Achicando las fotos... ${hechas} de ${total}`;
+    });
+    subiendo = "";
+    await releerFotos(estado);
+  });
+
+  return trozo;
+}
+
 function agregarAmbiente(estado) {
   const seccion = nodo(html`
     <section class="tarjeta">
@@ -506,7 +600,7 @@ function elPie(estado) {
     /* El membrete se pide, pero si no está —sin señal y sin caché— el documento sale igual.
        Un inventario no puede depender de que haya internet. */
     return armarPDF({ ...abierto, aviso_reclamo: AVISO_RECLAMO },
-      { oficina, membrete: await cargarMembrete() });
+      { oficina, membrete: await cargarMembrete(), fotos: lasFotos });
   };
 
   const contar = (hojas) => `${hojas} ${hojas === 1 ? "hoja" : "hojas"}`;
@@ -542,8 +636,12 @@ function elPie(estado) {
       borrar.textContent = "¿Seguro? Tocá de nuevo";
       return;
     }
+    /* Las fotos se van con él: si no, quedan cientos de megas de una casa que ya no existe
+       en la app, y nadie las va a ir a buscar. */
+    fotos.borrarFotosDe(abierto.id);
     guardado.borrar(abierto.id);
     abierto = null;
+    lasFotos = [];
     estado.redibujar();
   });
   return seccion;

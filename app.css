@@ -1804,3 +1804,48 @@ body {
 /* Cuando la fila esta marcada en rojo —algo roto, o sin nombre— el renglon de abajo se ata
    con el mismo rojo: si no, la parte que explica el problema se ve como si fuera de otra. */
 .campo-fila.falta .renglon-detalle { border-left-color: var(--rojo); }
+
+
+/* ---------- Las fotos de un inventario ----------
+
+   Una tira que se desliza al costado, no una grilla que empuja todo para abajo: con veinte
+   fotos por ambiente y ocho ambientes, una grilla haria la pantalla imposible de recorrer. */
+.tira-fotos {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.foto-chica {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.foto-chica img {
+  display: block;
+  width: 76px;
+  height: 76px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--linea);
+}
+
+/* La cruz para sacarla, arriba a la derecha de la foto. Chica pero tocable: el dedo necesita
+   sus buenos treinta pixeles o se termina borrando la de al lado. */
+.foto-sacar {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--rojo);
+  color: #fff;
+  font-size: 13px;
+  line-height: 24px;
+  cursor: pointer;
+}
