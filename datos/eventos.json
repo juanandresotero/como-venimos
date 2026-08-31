@@ -294,5 +294,19 @@
   "internal_id": "940041154-210",
   "tipo": "cambio_estado",
   "titulo": "Venta 2 casas mismo padron flor de Maroñas cochera"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "ahora": "reservada",
+   "antes": "en_negociacion"
+  },
+  "direccion": "Eusebio Vidal 3100",
+  "entity_id": "29b0df7e-7d40-4283-99b0-f88c2f168377",
+  "fecha": "2026-08-31",
+  "id": "2026-08-31|29b0df7e-7d40-4283-99b0-f88c2f168377|cambio_estado",
+  "internal_id": "940041154-210",
+  "tipo": "cambio_estado",
+  "titulo": "Venta 2 casas mismo padron flor de Maroñas cochera"
  }
 ]
