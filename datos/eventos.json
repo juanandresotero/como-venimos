@@ -308,5 +308,35 @@
   "internal_id": "940041154-210",
   "tipo": "cambio_estado",
   "titulo": "Venta 2 casas mismo padron flor de Maroñas cochera"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "ahora": "publicada",
+   "antes": "en_negociacion"
+  },
+  "direccion": "Minas 1600",
+  "entity_id": "c9e235a6-5bb0-47a6-b9aa-62b2283bb94a",
+  "fecha": "2026-09-02",
+  "id": "2026-09-02|c9e235a6-5bb0-47a6-b9aa-62b2283bb94a|cambio_estado",
+  "internal_id": "940041154-204",
+  "tipo": "cambio_estado",
+  "titulo": "Venta Apartamento 2 dormitorios Cordon con jacuzzi"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "desenlace_propuesto": "vendida",
+   "estado_al_desaparecer": "reservada",
+   "moneda": "USD",
+   "precio": 89900.0
+  },
+  "direccion": "San Fructuoso 1200",
+  "entity_id": "5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6",
+  "fecha": "2026-09-02",
+  "id": "2026-09-02|5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6|baja",
+  "internal_id": "940041154-196",
+  "tipo": "baja",
+  "titulo": "Venta apartamento 2 dormitiros Reducto con cochera"
  }
 ]
