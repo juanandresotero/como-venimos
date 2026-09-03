@@ -338,5 +338,20 @@
   "internal_id": "940041154-196",
   "tipo": "baja",
   "titulo": "Venta apartamento 2 dormitiros Reducto con cochera"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "UYU",
+   "precio": 20000.0
+  },
+  "direccion": "Cufre 2900",
+  "entity_id": "38987f80-3eb7-4653-93df-da695a27575b",
+  "fecha": "2026-09-03",
+  "id": "2026-09-03|38987f80-3eb7-4653-93df-da695a27575b|alta",
+  "internal_id": "940041154-221",
+  "tipo": "alta",
+  "titulo": "Alquila Apartamento 1 Dormitorio en Jacinto Vera"
  }
 ]

@@ -583,6 +583,12 @@
    "slug": "fabian-beramendi"
   },
   {
+   "id": "8180990c-544b-43c6-8187-0f2c8603c1e4",
+   "nombre": "Fabian Sosa",
+   "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
+   "slug": "fabian-sosa"
+  },
+  {
    "id": "934c10b5-309e-4218-9079-3179fce6b506",
    "nombre": "Fabiana Steinberg",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -1115,12 +1121,6 @@
    "nombre": "Leonardo Perez",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
    "slug": "leonardo-perez"
-  },
-  {
-   "id": "f540b798-bf20-40e8-ab23-5f299e7c3acd",
-   "nombre": "Leonardo Saldías",
-   "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
-   "slug": "leonardo-saldias"
   },
   {
    "id": "b47b868b-f98f-4d7a-a7ae-c8bed12ca797",
@@ -1657,12 +1657,6 @@
    "slug": "natalia-artigas"
   },
   {
-   "id": "8af65f0b-3955-484e-9f17-65a6fe980aa8",
-   "nombre": "Natalia Benincasa ",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "natalia-benincasa"
-  },
-  {
    "id": "85a57b7b-bdfa-406f-8eb1-202ddc7206d3",
    "nombre": "Natalia Briano ",
    "oficina_id": "3815a3ab-c6c8-47ae-aa15-fe403005c965",
@@ -2167,12 +2161,6 @@
    "slug": "veronica-d-atri"
   },
   {
-   "id": "0c270e68-ad66-4d10-90f3-e5348084a730",
-   "nombre": "Verónica Pérez Mirenda",
-   "oficina_id": "dcabe4e3-7e63-4451-b26f-2a60d581a08f",
-   "slug": "veronica-perez-mirenda"
-  },
-  {
    "id": "7adc460a-851e-4649-b344-4a43300e2b55",
    "nombre": "Victoria Escobal Dutra",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -2269,7 +2257,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-08-31",
+ "bajada_el": "2026-09-03",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
