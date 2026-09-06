@@ -7,12 +7,6 @@
    "slug": "adrian-barrios"
   },
   {
-   "id": "90555093-fc20-4454-86eb-6ba1ac1a7950",
-   "nombre": "Adrian Delgado",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "adrian-delgado"
-  },
-  {
    "id": "d592fb65-64f9-4850-a98d-4d01d73d1ee0",
    "nombre": "Adrian Delgado Gomez",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -541,6 +535,12 @@
    "slug": "erik-pinero"
   },
   {
+   "id": "2a161989-de67-4bd3-9169-6b9bbaba5b8a",
+   "nombre": "Erika Borges",
+   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
+   "slug": "erika-borges"
+  },
+  {
    "id": "2f562b24-cd40-43dd-9051-5a3c97094f15",
    "nombre": "Erika Esteche",
    "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
@@ -679,6 +679,12 @@
    "slug": "francisca-silva"
   },
   {
+   "id": "266038ab-d3f8-4262-a655-d23447e27285",
+   "nombre": "Gabriel Eleazar",
+   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
+   "slug": "gabriel-eleazar"
+  },
+  {
    "id": "db35d057-bc5c-4e0c-882d-2376aeaccd55",
    "nombre": "Gabriela Barretto",
    "oficina_id": "3815a3ab-c6c8-47ae-aa15-fe403005c965",
@@ -707,12 +713,6 @@
    "nombre": "Gabriela Ortiz",
    "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
    "slug": "gabriela-ortiz"
-  },
-  {
-   "id": "5ef22fd5-b59c-4c5f-84da-7aef4fd669b1",
-   "nombre": "Gabriela Perdomo",
-   "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
-   "slug": "gabriela-perdomo"
   },
   {
    "id": "9f1e3711-2247-469f-8b55-c26b9495e77e",
@@ -869,6 +869,12 @@
    "nombre": "Ismael  Mattos",
    "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
    "slug": "ismael-mattos"
+  },
+  {
+   "id": "4e0081c4-f336-4f88-b82d-0a7bc5c4d4e7",
+   "nombre": "Ismael Luján",
+   "oficina_id": "d342d53d-cf32-4ee7-b422-d965e3c860c9",
+   "slug": "ismael-lujan"
   },
   {
    "id": "543ab1bb-c3d7-490d-84a6-e99937d554d2",
@@ -1223,12 +1229,6 @@
    "nombre": "Luciana Giovannini Mezzetta",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
    "slug": "luciana-giovannini-mezzetta"
-  },
-  {
-   "id": "bc784da0-51a8-4ae1-afa9-525da33d5748",
-   "nombre": "Luciana Gomez Boero",
-   "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
-   "slug": "luciana-gomez-boero"
   },
   {
    "id": "fa069f62-0205-421f-999b-4f5bb4c747a0",
@@ -2257,7 +2257,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-09-03",
+ "bajada_el": "2026-09-06",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
