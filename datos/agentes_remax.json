@@ -13,6 +13,12 @@
    "slug": "adrian-delgado-gomez"
   },
   {
+   "id": "a8ee52f9-ef6e-4146-a40a-6a8e4f398c8d",
+   "nombre": "Adrian Pintos",
+   "oficina_id": "dd5bf580-a7c5-4729-ae8d-9745934a6ba8",
+   "slug": "adrian-pintos"
+  },
+  {
    "id": "360c33cd-2bf5-469e-910f-21d02d4e8a5c",
    "nombre": "Adriana Falabella",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -47,6 +53,12 @@
    "nombre": "Agustin Pereira",
    "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
    "slug": "agustin-pereira"
+  },
+  {
+   "id": "45bcaad4-9efd-4d7b-987d-2e42136df907",
+   "nombre": "Agustina Marquez",
+   "oficina_id": "dd5bf580-a7c5-4729-ae8d-9745934a6ba8",
+   "slug": "agustina-marquez"
   },
   {
    "id": "d372a1ce-daca-4069-86cf-15a64e2a742b",
@@ -431,12 +443,6 @@
    "nombre": "César Pérez",
    "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
    "slug": "cesar-perez"
-  },
-  {
-   "id": "372e62e0-33bf-4b72-b675-7cd31ff287c9",
-   "nombre": "Daniel Blanco",
-   "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
-   "slug": "daniel-blanco"
   },
   {
    "id": "d00b16fc-32f0-4002-8a00-185b15789649",
@@ -859,12 +865,6 @@
    "slug": "ines-manfredi"
   },
   {
-   "id": "8adb5a6f-a41d-4e4a-934d-fafd20a9801b",
-   "nombre": "Isaura Cabrera ",
-   "oficina_id": "dcabe4e3-7e63-4451-b26f-2a60d581a08f",
-   "slug": "isaura-cabrera"
-  },
-  {
    "id": "8ee24237-85d6-4375-9215-a79fcf9c5bd5",
    "nombre": "Ismael  Mattos",
    "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
@@ -1007,12 +1007,6 @@
    "nombre": "Julia Bobroff",
    "oficina_id": "dd5bf580-a7c5-4729-ae8d-9745934a6ba8",
    "slug": "julia-bobroff"
-  },
-  {
-   "id": "9901d079-5959-4296-93dd-1f057b480935",
-   "nombre": "Julia De Carli",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "julia-de-carli"
   },
   {
    "id": "2d53e0e8-9b70-46ff-87c6-77b63ecfee60",
@@ -1463,6 +1457,12 @@
    "nombre": "Martin Lopez",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
    "slug": "martin-lopez"
+  },
+  {
+   "id": "4ce654a9-ea49-4bcd-896f-87b28c8de4ea",
+   "nombre": "Martin Plada",
+   "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
+   "slug": "martin-plada"
   },
   {
    "id": "4dce5a57-99c0-44e6-a28d-be29a73fbfbe",
@@ -2257,7 +2257,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-09-06",
+ "bajada_el": "2026-09-09",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",

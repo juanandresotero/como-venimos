@@ -1,5 +1,5 @@
 {
- "actualizado": "2026-09-08",
+ "actualizado": "2026-09-09",
  "meses": {
   "2025-03": {
    "avisos": [
@@ -134,17 +134,19 @@
    "verificado": true
   },
   "2026-07": {
-   "avisos": [],
+   "avisos": [
+    "el coeficiente publicado (1.0425) no coincide con la cuenta del articulo 15 (0.0092)"
+   ],
    "coeficiente": 1.0425,
    "ipc": 1.0425,
-   "ura": null,
-   "verificado": true
+   "ura": 1.0519,
+   "verificado": false
   },
   "2026-08": {
    "avisos": [],
    "coeficiente": 1.0427,
    "ipc": 1.0427,
-   "ura": null,
+   "ura": 1.0513,
    "verificado": true
   },
   "2026-09": {
