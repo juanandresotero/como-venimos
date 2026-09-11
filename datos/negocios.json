@@ -2861,7 +2861,7 @@
   "categoria_vigente": "RAP",
   "direccion": "San fructuoso 1254",
   "entity_id_cartera": "5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6",
-  "estado": "en_curso",
+  "estado": "cerrado",
   "excel_facturado": 5394,
   "excel_importe": 2427,
   "facturacion": 5394,
@@ -3082,7 +3082,7 @@
   "puntas": null,
   "agente_vende": "Juan Andrés Otero",
   "agente_compra": null,
-  "pct_comision_total": null,
+  "pct_comision_total": 0.03,
   "fecha_inicio": "2026-04-28",
   "fecha_boleto": null,
   "fecha_fin": null,
@@ -3093,27 +3093,27 @@
   "precio_operacion": null,
   "moneda": "USD",
   "origen_captacion": "B.d.r.",
-  "estado": "caido",
+  "estado": "en_curso",
   "ficha_completa": true,
   "notas": "",
   "manual": true,
   "atajo": "venta",
-  "fecha_negociacion": null,
+  "fecha_negociacion": "2026-08-17",
   "avisos": [
    {
     "tipo": "ficha_reabierta",
     "detalle": "La propiedad pasó a publicada: hay datos nuevos para cargar."
    },
    {
-    "tipo": "se_cayo_solo",
-    "detalle": "La propiedad volvió a estar publicada en RE/MAX, así que di este negocio por caído y dejó de sumar. Había entrado en negociación el 2026-08-17. Le borré el precio, la comisión, las puntas y quién trajo al comprador: eran de esa negociación. Si sigue en marcha, abrilo y avisame."
+    "tipo": "revisar_puntas",
+    "detalle": "No dice cuántas puntas son, así que este negocio no está sumando ganancia."
    }
   ],
   "ficha_vigente": false,
   "regimen_comision": "captacion_mia",
   "base": 0,
-  "facturacion": null,
-  "ganancia": null,
+  "facturacion": 0,
+  "ganancia": 0,
   "fecha_fin_estimada": false,
   "agente_compra_nombre": null,
   "origen_quien": null,
@@ -3127,8 +3127,9 @@
   "puntas_confirmadas": false,
   "precio_publicado": null,
   "baja_sobre_publicado": null,
-  "se_cayo_solo": true,
-  "fecha_caida": "2026-09-11"
+  "se_cayo_solo": false,
+  "fecha_caida": "2026-09-11",
+  "estado_a_mano": true
  },
  {
   "id": "manual-2",
