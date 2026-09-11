@@ -2890,7 +2890,15 @@
   "ficha_completa_momento": "fuera_de_cartera",
   "puntas_confirmadas": true,
   "precio_publicado": 89900,
-  "baja_sobre_publicado": 0
+  "baja_sobre_publicado": 0,
+  "cliente_vendedor": {
+   "nombre": "Alfredo Otero Cap. Redes",
+   "telefono": "+59895069274"
+  },
+  "cliente_comprador": {
+   "nombre": "Nicolás Por Zapican",
+   "telefono": "+59898548843"
+  }
  },
  {
   "agente_compra": "Juan Andrés Otero",
