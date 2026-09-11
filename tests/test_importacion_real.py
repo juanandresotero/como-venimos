@@ -49,7 +49,11 @@ class TestImportacionReal(unittest.TestCase):
         tenga mas de dos puntas o menos de cero.
         """
         for n in self.todos:
-            self.assertIn(n.get("puntas"), (0, 1, 2), n["id"])
+            # UN CAIDO NO TIENE PUNTAS. Al caerse se le borra lo de esa negociacion —el
+            # precio, la comision, las puntas—, que es la regla que pidio Juan el 2026-08-28.
+            # Minas 1600 fue el primero en caerse solo, el 2026-09-11.
+            validas = (None, 0, 1, 2) if n.get("estado") == "caido" else (0, 1, 2)
+            self.assertIn(n.get("puntas"), validas, n["id"])
         promedio = sum(n["puntas"] for n in self.negocios) / len(self.negocios)
         self.assertGreater(promedio, 1.0)
         self.assertLessEqual(promedio, 2.0)

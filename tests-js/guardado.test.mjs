@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  editarNegocio, marcarAtendido, hayCambios, resumenCambios, sincronizar, ARCHIVO_NEGOCIOS,
+  editarNegocio, editarPropiedad, marcarAtendido, hayCambios, resumenCambios, sincronizar,
+  ARCHIVO_NEGOCIOS,
 } from "../lib/guardado.js";
 
 const AJUSTES = {
@@ -171,4 +172,69 @@ test("ante un conflicto, relee el sha y reintenta solo", async () => {
   const r = await sincronizar(e, g.api, "tok");
   assert.equal(r.ok, true, "el reintento tiene que salir bien");
   assert.equal(g.escrituras[0].sha, "sha-fresco", "tiene que usar el sha releido");
+});
+
+/* ---------- Contestar qué pasó con una propiedad que se fue ---------- */
+
+function conPropiedadQueSeFue() {
+  return {
+    datos: {
+      negocios: [
+        { id: "manual-9", tipo_negocio: "venta", estado: "en_curso", entity_id_cartera: "sf",
+          fecha_inicio: "2026-01-08", fecha_negociacion: "2026-02-26", fecha_boleto: "2026-05-05",
+          fecha_fin: null, direccion: "San Fructuoso 1200", barrio: "Reducto",
+          precio_operacion: 89900, pct_comision_total: 0.06, puntas: 2, puntas_confirmadas: true,
+          agente_vende: "Juan Andrés Otero", agente_compra: "Juan Andrés Otero",
+          origen_captacion: "B.d.r.", ficha_completa: false, avisos: [] },
+        /* Lo que se hizo sobre la misma propiedad hace dos años: cerrado y cobrado. */
+        { id: "excel-1", tipo_negocio: "venta", estado: "cerrado", entity_id_cartera: "sf",
+          fecha_inicio: "2024-01-10", fecha_boleto: "2024-02-10", fecha_fin: "2024-03-01",
+          direccion: "San Fructuoso 1200", barrio: "Reducto", precio_operacion: 80000,
+          pct_comision_total: 0.03, puntas: 1, agente_vende: "Juan Andrés Otero",
+          agente_compra: "Otro", origen_captacion: "B.d.r.", ficha_completa: true, avisos: [] },
+      ],
+      cartera: {
+        sf: { entity_id: "sf", activa: false, estado: "reservada", direccion: "San Fructuoso 1200",
+          fecha_desaparicion: "2026-09-02", desenlace_propuesto: "vendida",
+          desenlace_confirmado: null },
+      },
+      eventos: [{ id: "2026-09-02|sf|baja", tipo: "baja", entity_id: "sf", fecha: "2026-09-02" }],
+      mis_datos: { eventos_atendidos: [] },
+      ajustes: AJUSTES,
+    },
+    hoy: "2026-09-11",
+    sucios: new Set(),
+  };
+}
+
+/* ES LA MISMA PREGUNTA vista desde dos pantallas, y contestada en un lado tiene que quedar
+   contestada en los dos. Juan dijo en la propiedad que se vendió y el negocio le siguió
+   preguntando "¿se concretó o se cayó?". */
+test("decir en la propiedad que se vendió cierra su negocio abierto", () => {
+  const e = conPropiedadQueSeFue();
+  editarPropiedad(e, "sf", { desenlace_confirmado: "vendida" });
+  const n = e.datos.negocios.find((x) => x.id === "manual-9");
+  assert.equal(n.fecha_fin, "2026-09-02", "firmado el día que se fue del portal");
+  assert.equal(n.estado, "cerrado");
+  assert.ok(e.sucios.has(ARCHIVO_NEGOCIOS));
+});
+
+test("decir que se cayó lo da por caído", () => {
+  const e = conPropiedadQueSeFue();
+  editarPropiedad(e, "sf", { desenlace_confirmado: "caida" });
+  assert.equal(e.datos.negocios.find((x) => x.id === "manual-9").estado, "caido");
+});
+
+test("el negocio viejo, ya cobrado, de la misma propiedad no se toca", () => {
+  const e = conPropiedadQueSeFue();
+  editarPropiedad(e, "sf", { desenlace_confirmado: "vendida" });
+  assert.equal(e.datos.negocios.find((x) => x.id === "excel-1").fecha_fin, "2024-03-01");
+});
+
+/* "Desapareció de RE/MAX, ¿se cayó o se vendió?" es justo lo que se acaba de contestar. Sin
+   esto había que tocar "Ya lo resolví" aparte: Juan lo hizo, dos veces por la misma cosa. */
+test("contestar qué pasó despacha el aviso de que se fue", () => {
+  const e = conPropiedadQueSeFue();
+  editarPropiedad(e, "sf", { desenlace_confirmado: "vendida" });
+  assert.ok(e.datos.mis_datos.eventos_atendidos.includes("2026-09-02|sf|baja"));
 });

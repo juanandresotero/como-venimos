@@ -4,6 +4,7 @@ import {
   base, splitVigente, calcular, pctPorDefecto, revisar, REGIMENES,
   plantillaNegocio, esBusqueda, ATAJOS, comoEstaContando, estaCaido, CAIDO, hayAlgoEnMarcha, volvioAlMercado, esReferidaMia,
   bajaSobrePublicado, precioPublicadoAl, momentoDelNegocio, desdeCuandoElNegocio } from "../lib/motor.js";
+import { capas } from "../lib/salud.js";
 
 const AJUSTES = {
   agente: { nombre: "Juan Andrés Otero" },
@@ -241,13 +242,27 @@ test("revisar: no pide firma ni boleto si la propiedad sigue viva en la cartera"
   assert.ok(!t.includes("falta_fecha_boleto"));
 });
 
-test("revisar: si la propiedad ya no esta en la cartera, si las pide", () => {
+/* Cuando la propiedad se va, lo que se pide es UNA pregunta: ¿se vendió o se cayó? La fecha
+   de firma la pone la respuesta —es el día que se fue del portal—, así que pedirla aparte era
+   decir lo mismo dos veces: fue uno de los tres renglones de San Fructuoso (2026-09-11). */
+test("revisar: si la propiedad ya no esta en la cartera, pregunta cómo terminó", () => {
   const cerrada = { flam: { entity_id: "flam", activa: false } };
   const t = tipos(revisar(
     negocio({ entity_id_cartera: "flam", fecha_fin: null, fecha_boleto: null }),
     AJUSTES, "2026-08-17", cerrada
   ));
-  assert.ok(t.includes("sin_fecha_fin"));
+  assert.ok(t.includes("cerrar_negocio"));
+  assert.ok(!t.includes("sin_fecha_fin"), "la fecha la pone la respuesta");
+});
+
+/* El boleto no lo pone ninguna respuesta: si falta, se pide después, al revisar lo cobrado. */
+test("revisar: contestado que se vendió, el boleto que falta se pide al revisar", () => {
+  const cerrada = { flam: { entity_id: "flam", activa: false } };
+  const t = tipos(revisar(
+    negocio({ entity_id_cartera: "flam", fecha_fin: "2026-08-10", fecha_boleto: null }),
+    AJUSTES, "2026-08-17", cerrada
+  ));
+  assert.ok(t.includes("cierre_por_revisar"));
   assert.ok(t.includes("falta_fecha_boleto"));
 });
 
@@ -350,24 +365,28 @@ test("lo que el usuario cargo a mano no se pisa con lo del robot", () => {
 });
 
 /* Lo mas importante: cuando la propiedad se va de RE/MAX estando reservada, el robot
-   entiende que se vendio. Ahi hay que cargar el cierre, y es plata. */
-test("cuando la propiedad se va de la cartera, el negocio pide el cierre", () => {
-  const n = revisar(completo(), AJUSTES, "2026-09-15", propiedadEn("fuera"));
+   entiende que se vendio. Ahi hay que cargar el cierre, y es plata.
+
+   Y ES UNA SOLA NOTICIA. Antes llegaban tres renglones que decian lo mismo con otras
+   palabras —"¿se concretó o se cayó?", "hay datos nuevos para cargar" y "sin fecha de
+   firma"— y Juan los conto como tres avisos: "tendria que aparecer 1 solo". Los otros dos
+   eran consecuencias de la pregunta: contestandola, se ponen solos. */
+test("cuando la propiedad se va de la cartera, el negocio pregunta UNA cosa y nada más", () => {
+  const n = revisar(completo({ puntas_confirmadas: true }), AJUSTES, "2026-09-15",
+    propiedadEn("fuera"));
   assert.equal(n.ficha_vigente, false, "la marca deja de valer");
-  const t = tipos(n);
-  assert.ok(t.includes("ficha_reabierta"));
-  assert.ok(t.includes("cerrar_negocio"));
-  assert.ok(t.includes("sin_fecha_fin"), "ahora si se puede pedir la fecha de firma");
-  assert.match(n.avisos.find((a) => a.tipo === "cerrar_negocio").detalle, /estando reservada/);
+  assert.deepEqual(tipos(n), ["cerrar_negocio"]);
+  assert.match(n.avisos[0].detalle, /estando reservada/);
 });
 
 /* UNA SOLA PREGUNTA. Lo demás la app lo sabe: la fecha de firma es el día que dejó de
    aparecer y lo cobrado sale del precio de cierre ya cargado. Lo pidió Juan así. */
-test("al irse de la cartera se pregunta UNA cosa: si se concretó o se cayó", () => {
+/* Con sus palabras: "¿se vendió o se cayó?". "Concretar" no lo dice nadie. */
+test("al irse de la cartera se pregunta UNA cosa: si se vendió o se cayó", () => {
   const cartera = propiedadEn("fuera", { desenlace_propuesto: "caida" });
   const n = revisar(completo(), AJUSTES, "2026-09-15", cartera);
   const texto = n.avisos.find((a) => a.tipo === "cerrar_negocio").detalle;
-  assert.match(texto, /¿Se concretó o se cayó\?/);
+  assert.match(texto, /¿Se vendió o se cayó\?/);
   assert.doesNotMatch(texto, /Cargá la fecha/, "la fecha ya no se pide: la pone sola");
   assert.doesNotMatch(texto, /lo que cobraste/, "y lo cobrado sale del precio de cierre");
 });
@@ -1315,4 +1334,103 @@ test("la fecha acompaña al estado, no se queda en la primera", () => {
   assert.equal(desdeCuandoElNegocio({}), null);
   assert.equal(desdeCuandoElNegocio({ estado: CAIDO, fecha_boleto: "2026-08-27" }), null,
     "un caído no está «desde» ningún lado");
+});
+
+/* ---------- Contestar "se vendió" ---------- */
+
+/* EL CASO DE SAN FRUCTUOSO (2026-09-11). Juan contestó que se vendió —la fecha de firma quedó
+   puesta, el día que se fue del portal— y la plata no se movió: "hoy lo llené pero la app no
+   marca la diferencia económica". El negocio seguía "en curso" con la firma puesta, y lo
+   cobrado sólo cuenta los cerrados. En lo reservado tampoco estaba, porque la propiedad ya no
+   estaba en el portal. Esos USD 2.427 no estaban en ningún lado. */
+test("con la fecha de firma puesta, el negocio cuenta como cobrado", () => {
+  const n = revisar(completo({ fecha_fin: "2026-09-10", puntas_confirmadas: true }),
+    AJUSTES, "2026-09-15", propiedadEn("fuera"));
+  assert.equal(n.estado, "cerrado");
+});
+
+test("y la plata aparece en lo cobrado", () => {
+  const cartera = propiedadEn("fuera");
+  const n = revisar(completo({ fecha_fin: "2026-09-10", puntas_confirmadas: true }),
+    AJUSTES, "2026-09-15", cartera);
+  const c = capas([n], cartera, AJUSTES, "2026");
+  assert.equal(c.cobrado.cantidad, 1);
+  assert.ok(c.cobrado.ganancia > 0);
+});
+
+/* La escribió él, en pasado: eso manda aunque RE/MAX tarde unos días en bajar la
+   publicación. Una corrección explícita le gana al portal, como en todo el resto. */
+test("con la firma puesta cuenta aunque la propiedad siga en el portal", () => {
+  const n = revisar(completo({ fecha_fin: "2026-09-10" }), AJUSTES, "2026-09-15",
+    propiedadEn("reservada"));
+  assert.equal(n.estado, "cerrado");
+});
+
+/* Una firma que se escribió cuando todavía era futura es un plan, no un hecho: la escritura
+   se puede correr. Esa sigue esperando a que la propiedad se vaya del portal. */
+test("una firma que se escribió a futuro espera a que la propiedad se vaya", () => {
+  const n = revisar(completo({ fecha_fin: "2026-09-10", fecha_fin_estimada: true }),
+    AJUSTES, "2026-09-15", propiedadEn("reservada"));
+  assert.equal(n.estado, "en_curso");
+});
+
+test("un caído con fecha de firma no revive", () => {
+  const n = revisar(completo({ fecha_fin: "2026-09-10", estado: CAIDO }), AJUSTES, "2026-09-15",
+    propiedadEn("fuera"));
+  assert.equal(n.estado, CAIDO);
+});
+
+/* DESPUÉS DE CONTESTAR, UN PASO MÁS: revisar y dar la ficha por completa. Lo pidió Juan:
+   "cuando esté todo ok poner ficha completa o algo así y ahí terminé". La plata ya cuenta
+   desde que contestó; el aviso sólo espera a que diga que terminó. */
+test("vendido, queda un aviso para revisarlo y darlo por completo", () => {
+  const n = revisar(completo({
+    fecha_fin: "2026-09-10", fecha_boleto: "2026-08-20", puntas_confirmadas: true,
+  }), AJUSTES, "2026-09-15", propiedadEn("fuera"));
+  assert.deepEqual(tipos(n), ["cierre_por_revisar"]);
+  assert.match(n.avisos[0].detalle, /cobrado/);
+});
+
+test("también si la ficha nunca se había dado por completa", () => {
+  const n = revisar(completo({
+    fecha_fin: "2026-09-10", fecha_boleto: "2026-08-20", puntas_confirmadas: true,
+    ficha_completa: false, ficha_completa_momento: null,
+  }), AJUSTES, "2026-09-15", propiedadEn("fuera"));
+  assert.deepEqual(tipos(n), ["cierre_por_revisar"]);
+});
+
+test("con la ficha dada por completa después de vendido, no queda nada", () => {
+  const n = revisar(completo({
+    fecha_fin: "2026-09-10", fecha_boleto: "2026-08-20", puntas_confirmadas: true,
+    ficha_completa_momento: "fuera_de_cartera",
+  }), AJUSTES, "2026-09-15", propiedadEn("fuera"));
+  assert.deepEqual(tipos(n), []);
+});
+
+/* MINAS 1600 (2026-09-11): se dio por caído solo y en Hoy llegaban dos renglones, "di este
+   negocio por caído" y "hay datos nuevos para cargar". A un caído no se le pide nada —su
+   ficha lo dice—, así que el segundo era mentira. */
+test("a un negocio caído no se le dice que hay datos nuevos para cargar", () => {
+  const cartera = propiedadEn("publicada", { fecha_negociacion: "2026-08-07" });
+  const n = revisar(completo({ fecha_negociacion: "2026-08-07" }), AJUSTES, "2026-09-15",
+    cartera);
+  assert.equal(n.estado, CAIDO);
+  assert.ok(!tipos(n).includes("ficha_reabierta"));
+  assert.ok(tipos(n).includes("se_cayo_solo"));
+});
+
+test("un alquiler pregunta si se alquiló", () => {
+  const n = revisar(completo({ tipo_negocio: "alquiler", puntas_confirmadas: true }),
+    AJUSTES, "2026-09-15", propiedadEn("fuera"));
+  assert.match(n.avisos[0].detalle, /¿Se alquiló o se cayó\?/);
+});
+
+/* LA TRAMPA QUE SE VIO PROBANDO (2026-09-11): tocar "Ficha completa" antes de contestar
+   apagaba la pregunta, y esa venta quedaba sin sumar para siempre sin que nada la reclamara. */
+test("dar la ficha por completa sin contestar no apaga la pregunta", () => {
+  const n = revisar(completo({
+    ficha_completa_momento: "fuera_de_cartera", puntas_confirmadas: true,
+  }), AJUSTES, "2026-09-15", propiedadEn("fuera"));
+  assert.equal(n.ficha_vigente, true);
+  assert.deepEqual(tipos(n), ["cerrar_negocio"]);
 });

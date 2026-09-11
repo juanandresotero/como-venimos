@@ -3,7 +3,7 @@
    Los campos que faltan se pintan en rojo, para que se vea de un golpe que hay que
    completar. Cada cambio se aplica al instante y queda en la cola para subir. */
 
-import { editarNegocio, borrarNegocio } from "../lib/guardado.js";
+import { editarNegocio, editarPropiedad, borrarNegocio } from "../lib/guardado.js";
 import {
   plata, plataUSD, escapar, fechaRazonable, numeroDesde, formatearMientrasEscribe,
 } from "../lib/formato.js";
@@ -141,7 +141,9 @@ export function dibujarFicha(estado) {
   trozo.append(gente(n, estado));
   trozo.append(avisos(n));
   if (!estaCaido(n)) trozo.append(fichaCompleta(n, estado));
-  if (n.estado !== "cerrado") trozo.append(seCayo(n, estado));
+  /* Con la pregunta de si se vendió pendiente, el recuadro rojo ya tiene su "Se cayó": un
+     segundo botón igual más abajo era decir lo mismo dos veces. */
+  if (n.estado !== "cerrado" && !falta.has("cerrar_negocio")) trozo.append(seCayo(n, estado));
   if (n.manual) trozo.append(borrar(n, estado));
 
   trozo.getElementById("volver").addEventListener("click", () => estado.irA("negocios"));
@@ -892,22 +894,30 @@ function plataAcordada(n, estado) {
    Todo lo demás lo pone sola. La fecha de firma es el día que dejó de aparecer —Juan lo
    eligió así— y lo cobrado sale del precio de cierre que ya cargó cuando pasó a negociación.
    Las dos quedan editables abajo, en los campos de siempre, por si un cierre importante cayó
-   corrido de mes. */
+   corrido de mes.
+
+   LA RESPUESTA VALE PARA LOS DOS LADOS: queda anotada también en la propiedad ("Qué pasó al
+   final") y la noticia de que se fue queda despachada. Era la misma pregunta en dos
+   pantallas, y contestada en una seguía abierta en la otra.
+
+   Con SUS palabras: "¿se vendió o se cayó?". */
 function comoTermino(n, estado) {
   const propiedad = (estado.datos.cartera || {})[n.entity_id_cartera] || {};
   const cuando = propiedad.fecha_desaparicion || estado.hoy;
   const precio = propiedad.precio_negociacion || n.precio_operacion || null;
+  const alquiler = n.tipo_negocio === "alquiler";
+  const bien = alquiler ? "Se alquiló" : "Se vendió";
 
   const seccion = nodo(html`
     <section class="tarjeta" style="border-color:var(--rojo)">
-      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">¿Se concretó o se cayó?</h2>
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">¿${bien} o se cayó?</h2>
       <p class="apunte" style="margin-bottom:12px">Ya no está en RE/MAX desde el
         ${escapar(cuando)}.${precio
-          ? html` Si se concretó, la doy por firmada ese día por
-            <strong>${plataUSD(precio)}</strong>.`
+          ? html` Si ${bien.toLowerCase()}, la doy por firmada ese día por
+            <strong>${plataUSD(precio)}</strong> y lo tuyo pasa a lo cobrado.`
           : ""}</p>
       <div class="botonera">
-        <button class="boton boton-primario" id="concreto">Se concretó</button>
+        <button class="boton boton-primario" id="concreto">${bien}</button>
         <button class="boton" id="se-cayo-fin">Se cayó</button>
       </div>
     </section>
@@ -916,12 +926,17 @@ function comoTermino(n, estado) {
   seccion.getElementById("concreto").addEventListener("click", () => {
     editarNegocio(estado, n.id, {
       fecha_fin: cuando,
+      fecha_fin_estimada: false,
       precio_operacion: precio || n.precio_operacion,
+    });
+    editarPropiedad(estado, n.entity_id_cartera, {
+      desenlace_confirmado: alquiler ? "alquilada" : "vendida",
     });
     estado.redibujar();
   });
   seccion.getElementById("se-cayo-fin").addEventListener("click", () => {
     editarNegocio(estado, n.id, { estado: CAIDO, estado_a_mano: true, se_cayo_solo: false });
+    editarPropiedad(estado, n.entity_id_cartera, { desenlace_confirmado: "caida" });
     estado.redibujar();
   });
   return seccion;
@@ -981,9 +996,17 @@ function cartelDeCaido(n, estado) {
   `);
 }
 
+/* Los avisos que ya tienen SU tarjeta arriba, con los botones para resolverlos, no se
+   repiten en "Qué falta acá". Con la pregunta de si se vendió pasaba a la vista: el recuadro
+   rojo decía "¿Se vendió o se cayó?" y justo abajo la lista decía lo mismo otra vez. */
+const CON_SU_PROPIA_TARJETA = new Set(["cerrar_negocio", "revisar_puntas", "comision_absurda"]);
+
 function avisos(n) {
-  const lista = n.avisos || [];
+  const todos = n.avisos || [];
+  const lista = todos.filter((a) => !CON_SU_PROPIA_TARJETA.has(a.tipo));
   if (!lista.length) {
+    /* "Sin pendientes ✓" abajo de un recuadro rojo que pregunta algo sería contradecirse. */
+    if (todos.length) return document.createDocumentFragment();
     return nodo(html`<p class="apunte" style="text-align:center;padding:8px">Sin pendientes en este negocio ✓</p>`);
   }
   return nodo(html`

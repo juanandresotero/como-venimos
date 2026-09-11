@@ -542,3 +542,45 @@ test("un aviso ya atendido no vuelve a la bandeja", () => {
     "2026-08-21");
   assert.deepEqual(grupos, []);
 });
+
+/* ---------- Una propiedad que se fue, con su negocio ---------- */
+
+const BAJA = {
+  id: "2026-09-02|sf|baja", tipo: "baja", entity_id: "sf", direccion: "San Fructuoso 1200",
+  fecha: "2026-09-02", detalle: { desenlace_propuesto: "vendida" },
+};
+
+/* SAN FRUCTUOSO: la misma venta llegaba en dos tarjetas, una por el negocio y otra por la
+   propiedad ("Estaba reservada y desapareció"). Es la misma pregunta —¿se vendió o se
+   cayó?— y el negocio ya la hace. */
+test("la baja de una propiedad con un negocio abierto no es una tarjeta aparte", () => {
+  const abierto = negocio(["cerrar_negocio"],
+    { estado: "en_curso", fecha_fin: null, entity_id_cartera: "sf" });
+  const grupos = derivar([abierto], [BAJA], "2026-09-11", {});
+  assert.ok(!grupos.some((g) => g.clave === "baja"));
+  assert.ok(grupos.some((g) => g.clave === "cerrar_negocio"));
+});
+
+test("la baja de una propiedad sin negocio sigue apareciendo", () => {
+  const grupos = derivar([], [BAJA], "2026-09-11", {});
+  assert.ok(grupos.some((g) => g.clave === "baja"));
+});
+
+/* Una propiedad que se alquila todos los años tiene el negocio del año pasado cerrado. Si se
+   vuelve a ir, esa baja es noticia nueva y nadie más la pregunta. */
+test("ni la de una propiedad cuyo único negocio ya está cerrado", () => {
+  const viejo = negocio([], { estado: "cerrado", entity_id_cartera: "sf" });
+  const grupos = derivar([viejo], [BAJA], "2026-09-11", {});
+  assert.ok(grupos.some((g) => g.clave === "baja"));
+});
+
+/* Y llega a Hoy aunque la ficha esté completa, igual que las puntas sin confirmar: no es un
+   dato que falte, es plata que no está contada. */
+test("la pregunta de si se vendió aparece aunque la ficha esté completa", () => {
+  const marcado = negocio(["cerrar_negocio"], {
+    estado: "en_curso", fecha_fin: null, entity_id_cartera: "sf",
+    ficha_completa: true, ficha_vigente: true,
+  });
+  const grupos = derivar([marcado], [], "2026-09-11", {});
+  assert.ok(grupos.some((g) => g.clave === "cerrar_negocio"));
+});
