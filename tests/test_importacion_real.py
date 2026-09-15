@@ -1,4 +1,5 @@
 import collections
+import datetime
 import unittest
 
 from robot import almacen
@@ -49,12 +50,21 @@ class TestImportacionReal(unittest.TestCase):
         tenga mas de dos puntas o menos de cero.
         """
         for n in self.todos:
-            # UN CAIDO NO TIENE PUNTAS. Al caerse se le borra lo de esa negociacion —el
-            # precio, la comision, las puntas—, que es la regla que pidio Juan el 2026-08-28.
-            # Minas 1600 fue el primero en caerse solo, el 2026-09-11.
-            validas = (None, 0, 1, 2) if n.get("estado") == "caido" else (0, 1, 2)
+            # "NO SE SABE TODAVIA" ES UN ESTADO VALIDO en un negocio que no se cobro. Al caerse
+            # se le borran las puntas —la regla que pidio Juan el 2026-08-28—, y "Sigue en
+            # marcha" no se las repone: queda EN CURSO y sin puntas, y la app misma lo avisa
+            # ("no dice cuantas puntas son").
+            #
+            # Paso de verdad: el 2026-09-11 esto aceptaba el vacio solo en los CAIDOS. Juan
+            # toco "Sigue en marcha" en Minas 1600, la prueba fallo en GitHub, y como el robot
+            # no guarda si las pruebas fallan, estuvo CUATRO DIAS sin mirar la cartera (12 al
+            # 15 de septiembre). Lo que no puede pasar nunca es un numero fuera de rango, ni
+            # un negocio COBRADO sin puntas.
+            validas = (0, 1, 2) if n.get("estado") == "cerrado" else (None, 0, 1, 2)
             self.assertIn(n.get("puntas"), validas, n["id"])
-        promedio = sum(n["puntas"] for n in self.negocios) / len(self.negocios)
+        # El promedio, sobre los que tienen el dato: uno del Excel tambien se puede caer.
+        con_puntas = [n["puntas"] for n in self.negocios if n.get("puntas") is not None]
+        promedio = sum(con_puntas) / len(con_puntas)
         self.assertGreater(promedio, 1.0)
         self.assertLessEqual(promedio, 2.0)
 
@@ -108,8 +118,16 @@ class TestImportacionReal(unittest.TestCase):
         )
 
     def test_ninguna_firma_futura_cuenta_como_cobrada(self):
+        """Futura respecto de HOY, no del dia del import.
+
+        Estaba fijo en 2026-08-17, cuando toda firma posterior era un invento del Excel. Pero
+        la vida siguio: San Fructuoso (excel-82) se firmo de verdad el 2026-09-02, la app lo
+        cerro, y esta prueba lo tomo por inventado. Fue una de las dos que dejaron al robot
+        cuatro dias sin guardar la cartera (12 al 15 de septiembre).
+        """
+        hoy = datetime.date.today().isoformat()
         for n in self.negocios:
-            if n["fecha_fin"] and n["fecha_fin"] > "2026-08-17":
+            if n["fecha_fin"] and n["fecha_fin"] > hoy:
                 self.assertEqual(n["estado"], "en_curso", n["id"])
 
     def test_los_negocios_sin_fecha_de_inicio_son_los_que_el_robot_no_puede_saber(self):
