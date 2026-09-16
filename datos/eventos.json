@@ -353,5 +353,20 @@
   "internal_id": "940041154-221",
   "tipo": "alta",
   "titulo": "Alquila Apartamento 1 Dormitorio en Jacinto Vera"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 97000.0
+  },
+  "direccion": "Camino Teniente Galeano 4700",
+  "entity_id": "27061e13-f201-48a1-81ae-7da493e90da4",
+  "fecha": "2026-09-16",
+  "id": "2026-09-16|27061e13-f201-48a1-81ae-7da493e90da4|alta",
+  "internal_id": "940041154-223",
+  "tipo": "alta",
+  "titulo": "Venta casa 3 dormitorios en casavalle con cochera"
  }
 ]

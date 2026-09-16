@@ -271,6 +271,12 @@
    "slug": "andres-tilve"
   },
   {
+   "id": "e0a4b871-f0b9-4ba4-aeb8-45db0cd5108d",
+   "nombre": "Anna Quijano",
+   "oficina_id": "d342d53d-cf32-4ee7-b422-d965e3c860c9",
+   "slug": "anna-quijano"
+  },
+  {
    "id": "c0c00fa0-69ff-456d-bdfe-d7f96a9d418f",
    "nombre": "Antonella Güida",
    "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
@@ -323,6 +329,12 @@
    "nombre": "Carlos Franco",
    "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
    "slug": "carlos-franco"
+  },
+  {
+   "id": "7f22a18d-f483-4c77-aa47-666391b50d8f",
+   "nombre": "Carmenza Garzon",
+   "oficina_id": "b8587180-e38e-474a-b16e-1e411d1a100f",
+   "slug": "carmenza-garzon"
   },
   {
    "id": "c9952f49-74a6-4c4e-9351-877d9caebf44",
@@ -575,6 +587,12 @@
    "nombre": "Eugenia Fernández",
    "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
    "slug": "eugenia-fernandez"
+  },
+  {
+   "id": "73e61803-b0fb-4190-92f3-3969257a204d",
+   "nombre": "Evelyn Sosa Rey",
+   "oficina_id": "b8587180-e38e-474a-b16e-1e411d1a100f",
+   "slug": "evelyn-sosa-rey"
   },
   {
    "id": "ea6638b8-db9b-4f61-9fd2-72c2a1c71086",
@@ -943,12 +961,6 @@
    "slug": "joaquin-sanchez"
   },
   {
-   "id": "18918235-55cd-41bf-8a12-9bcc5d931dee",
-   "nombre": "Joaquín Camejo",
-   "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
-   "slug": "joaquin-camejo"
-  },
-  {
    "id": "8491b8fb-bc85-42e8-b971-df63dd504c01",
    "nombre": "Josefina Andregnette",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -1001,6 +1013,12 @@
    "nombre": "Juan Irala Y Hernández",
    "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
    "slug": "juan-irala-y-hernandez"
+  },
+  {
+   "id": "89ed51e6-1421-4a7b-93c3-f37f2949f970",
+   "nombre": "Juan Pablo Nader",
+   "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+   "slug": "juan-pablo-nader"
   },
   {
    "id": "4f01cc1e-749a-40a7-99c7-2c7857cd7faa",
@@ -1061,6 +1079,12 @@
    "nombre": "Laura  Fleitas",
    "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
    "slug": "laura-fleitas"
+  },
+  {
+   "id": "1815e096-4235-4ded-b4a3-a0a646df7cfd",
+   "nombre": "Laura Gagliardo",
+   "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+   "slug": "laura-gagliardo"
   },
   {
    "id": "5e8846c3-fd11-4e0d-b4c1-d935e71fc8da",
@@ -1273,12 +1297,6 @@
    "slug": "lucia-dellepiane"
   },
   {
-   "id": "13645407-0e45-49f8-94e0-64e55ed9229d",
-   "nombre": "Luis Antonio  Malanchino Patrignani ",
-   "oficina_id": "3815a3ab-c6c8-47ae-aa15-fe403005c965",
-   "slug": "luis-antonio-malanchino-patrignani"
-  },
-  {
    "id": "2a8dcc07-b83a-4402-99d8-d4975ebf6c2e",
    "nombre": "Lusiana López",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -1445,6 +1463,12 @@
    "nombre": "Marisel Aguerre",
    "oficina_id": "d342d53d-cf32-4ee7-b422-d965e3c860c9",
    "slug": "marisel-aguerre"
+  },
+  {
+   "id": "c602d2d3-e9d6-4910-959c-dcf84d8bf956",
+   "nombre": "Maristella Lopez",
+   "oficina_id": "dd5bf580-a7c5-4729-ae8d-9745934a6ba8",
+   "slug": "maristella-lopez"
   },
   {
    "id": "80a020d0-f1c5-4cae-8180-a97ec77c7445",
@@ -2257,7 +2281,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-09-09",
+ "bajada_el": "2026-09-16",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
