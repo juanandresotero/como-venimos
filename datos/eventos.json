@@ -368,5 +368,19 @@
   "internal_id": "940041154-223",
   "tipo": "alta",
   "titulo": "Venta casa 3 dormitorios en casavalle con cochera"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "ahora": "publicada",
+   "antes": "en_negociacion"
+  },
+  "direccion": "Flammarión 5000",
+  "entity_id": "45e27b03-b19a-4654-a163-4d0bf3307fac",
+  "fecha": "2026-09-17",
+  "id": "2026-09-17|45e27b03-b19a-4654-a163-4d0bf3307fac|cambio_estado",
+  "internal_id": "940041154-216",
+  "tipo": "cambio_estado",
+  "titulo": "Venta Apartamento en Malvin Norte de 2 dormitorios"
  }
 ]
