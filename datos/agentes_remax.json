@@ -175,12 +175,6 @@
    "slug": "ana-guerra"
   },
   {
-   "id": "e9ef1172-b21f-4579-b37b-9c4c554b8a0d",
-   "nombre": "Ana Paula  Alcaide",
-   "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
-   "slug": "ana-paula-alcaide"
-  },
-  {
    "id": "2e262515-11df-4aa7-8739-024436b8fd0d",
    "nombre": "Andrea  Mateo",
    "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
@@ -2281,7 +2275,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-09-16",
+ "bajada_el": "2026-09-19",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
