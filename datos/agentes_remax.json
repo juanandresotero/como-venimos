@@ -631,12 +631,6 @@
    "slug": "federico-saralegui"
   },
   {
-   "id": "a786400b-93ab-41ee-afa1-b4b12f566b94",
-   "nombre": "Federico Dorado",
-   "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
-   "slug": "federico-dorado"
-  },
-  {
    "id": "449b6f3a-91eb-4381-b216-66b603388d94",
    "nombre": "Federico Garcilazo",
    "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
@@ -1307,12 +1301,6 @@
    "nombre": "Marcel Sartorio ",
    "oficina_id": "dcabe4e3-7e63-4451-b26f-2a60d581a08f",
    "slug": "marcel-sartorio"
-  },
-  {
-   "id": "9edca590-6b8f-412e-aee9-020e8e9eaf0a",
-   "nombre": "Marcelo Guerrero Abadie",
-   "oficina_id": "dcabe4e3-7e63-4451-b26f-2a60d581a08f",
-   "slug": "marcelo-guerrero-abadie"
   },
   {
    "id": "a85e067e-b7df-4fd5-bba8-17748854ac85",
@@ -2275,7 +2263,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-09-19",
+ "bajada_el": "2026-09-22",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
