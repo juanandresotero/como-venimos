@@ -382,5 +382,20 @@
   "internal_id": "940041154-216",
   "tipo": "cambio_estado",
   "titulo": "Venta Apartamento en Malvin Norte de 2 dormitorios"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "ahora": 230000.0,
+   "antes": 240000.0,
+   "moneda": "USD"
+  },
+  "direccion": "Gobernador Vigodet 2700",
+  "entity_id": "a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f",
+  "fecha": "2026-09-23",
+  "id": "2026-09-23|a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f|cambio_precio",
+  "internal_id": "940041154-217",
+  "tipo": "cambio_precio",
+  "titulo": "Venta 2 casas en Maroñas con cochera y gran salón"
  }
 ]
