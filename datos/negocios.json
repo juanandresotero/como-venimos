@@ -3089,7 +3089,7 @@
   "puntas": null,
   "agente_vende": "Juan Andrés Otero",
   "agente_compra": null,
-  "pct_comision_total": 0.03,
+  "pct_comision_total": null,
   "fecha_inicio": "2026-04-28",
   "fecha_boleto": null,
   "fecha_fin": null,
@@ -3105,7 +3105,7 @@
   "notas": "",
   "manual": true,
   "atajo": "venta",
-  "fecha_negociacion": "2026-08-17",
+  "fecha_negociacion": null,
   "avisos": [],
   "ficha_vigente": false,
   "regimen_comision": "captacion_mia",
@@ -3127,7 +3127,17 @@
   "baja_sobre_publicado": null,
   "se_cayo_solo": false,
   "fecha_caida": "2026-09-11",
-  "estado_a_mano": true
+  "estado_a_mano": true,
+  "lo_borrado_al_caerse": {
+   "fecha_negociacion": "2026-07-16",
+   "precio_operacion": 150000,
+   "pct_comision_total": 0.06,
+   "puntas": 1,
+   "puntas_confirmadas": true,
+   "agente_compra": "Martin Sedes",
+   "precio_publicado": 165000,
+   "baja_sobre_publicado": 0.0909
+  }
  },
  {
   "id": "manual-2",
