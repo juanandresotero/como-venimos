@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   fusionar, estadoVisible, listar, negociosDe, rendimiento, lineaDeTiempo, diasEnCartera,
-  desdeCuando, completarConNegocios,
+  desdeCuando, completarConNegocios, comoVieneLaCartera,
 } from "../lib/cartera.js";
 
 const propiedad = (extra = {}) => ({
@@ -218,4 +218,30 @@ test("si el negocio no tiene origen, se conserva el de la propiedad", () => {
   const cartera = { aaa: propiedad({ origen_captacion: "Cliente antiguo" }) };
   const negocios = [{ entity_id_cartera: "aaa", origen_captacion: null }];
   assert.equal(completarConNegocios(cartera, negocios).aaa.origen_captacion, "Cliente antiguo");
+});
+
+/* ---------- El resumen de arriba ---------- */
+
+/* JUAN CONTABA 5 RESERVADAS Y LA APP LE MOSTRABA 3 (2026-09-24). Las búsquedas sumaban todas
+   a "negociando" aunque ya tuvieran el boleto firmado. El cartelito de cada fila decía
+   "Reservada"; el número de arriba no lo miraba. */
+test("una búsqueda con boleto cuenta como reservada en el resumen", () => {
+  const activas = [
+    propiedad({ entity_id: "a", estado: "en_negociacion", precio: 100000 }),
+    propiedad({ entity_id: "b", estado: "reservada", precio: 50000 }),
+  ];
+  const busquedas = [
+    { id: "m1", estado: "en_curso", fecha_boleto: "2026-08-27", fecha_fin: null },
+    { id: "m2", estado: "en_curso", fecha_negociacion: "2026-09-03", fecha_fin: null },
+  ];
+  const r = comoVieneLaCartera(activas, busquedas);
+  assert.equal(r.negociando, 2, "la propiedad en negociación y la búsqueda sin boleto");
+  assert.equal(r.reservadas, 2, "la propiedad reservada y la búsqueda con boleto");
+  assert.equal(r.volumen, 150000);
+});
+
+test("sin búsquedas, el resumen es el de las propiedades", () => {
+  const r = comoVieneLaCartera([propiedad({ estado: "reservada", precio: 10 })], []);
+  assert.equal(r.reservadas, 1);
+  assert.equal(r.negociando, 0);
 });

@@ -3,7 +3,9 @@
    El orden no es alfabetico ni por precio: primero lo que esta mas cerca de cobrarse.
    Es la misma logica que la bandeja de pendientes — arriba va lo que puede ser plata. */
 
-import { listar, estadoVisible, nombreEstado, diasEnCartera, rendimiento } from "../lib/cartera.js";
+import {
+  listar, estadoVisible, nombreEstado, diasEnCartera, rendimiento, comoVieneLaCartera,
+} from "../lib/cartera.js";
 import { plata, plataUSD, fechaCorta, escapar } from "../lib/formato.js";
 import {
   esBusqueda, esReferidaMia, estaCaido, momentoDelNegocio, desdeCuandoElNegocio,
@@ -24,14 +26,11 @@ export function dibujarCartera(estado) {
   const activas = listar(cartera);
   const lista = filtro.archivo ? listar(cartera, { archivo: true }) : activas;
 
-  const volumen = activas.reduce((t, p) => t + (p.precio || 0), 0);
-  const cuenta = (clave) => activas.filter((p) => p.estado === clave).length;
-
-  /* Una busqueda abierta ESTA en negociacion: hay un comprador y una operacion por
-     cerrar. Que no sea una propiedad tuya no la saca de la cuenta — el usuario las cuenta
-     y le daban una menos que las que tiene de verdad. */
+  /* Las busquedas cuentan con las propiedades: que no sean tuyas no las saca de la cuenta.
+     Cada una suma donde esta —negociando, o reservada si ya tiene boleto— y de eso se ocupa
+     `comoVieneLaCartera`. */
   const busquedas = abiertas(estado);
-  const negociando = cuenta("en_negociacion") + busquedas.length;
+  const { volumen, negociando, reservadas } = comoVieneLaCartera(activas, busquedas);
 
   const trozo = document.createDocumentFragment();
 
@@ -50,8 +49,8 @@ export function dibujarCartera(estado) {
           <span class="resumen-nombre">negociando</span>
         </div>
         <div class="resumen-dato">
-          <span class="resumen-cifra">${cuenta("reservada")}</span>
-          <span class="resumen-nombre">${cuenta("reservada") === 1 ? "reservada" : "reservadas"}</span>
+          <span class="resumen-cifra">${reservadas}</span>
+          <span class="resumen-nombre">${reservadas === 1 ? "reservada" : "reservadas"}</span>
         </div>
       </div>
     </section>
