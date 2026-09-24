@@ -440,6 +440,11 @@ function dibujarGrupo(grupo, estado) {
           // Puede traer varios: un pendiente juntado despacha todos sus avisos de una.
           for (const id of accion.destino) marcarAtendido(estado, id);
           estado.redibujar();
+        } else if (accion.tipo === "visto-bueno") {
+          /* "Está bien": la app hizo un cambio sola y él lo aprueba. No toca nada del
+             negocio — el cambio ya está hecho—, sólo apaga el aviso. */
+          editarNegocio(estado, accion.destino, { visto_bueno: true });
+          estado.redibujar();
         } else if (accion.tipo === "es-la-referida" || accion.tipo === "no-es-la-referida") {
           /* "¿ES LA QUE LE REFERISTE?" — el único que sabe es el colega, así que Juan le
              pregunta y vuelve con la respuesta.

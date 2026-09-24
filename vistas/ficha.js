@@ -130,7 +130,10 @@ export function dibujarFicha(estado) {
     </section>
   `));
 
-  if (estaCaido(n)) trozo.append(cartelDeCaido(n, estado));
+  /* Lo que la app hizo sola va arriba de todo, con el botón para aprobarlo. Si está ese
+     cartel no se pone además el de "está caído": dicen lo mismo y uno ya lo explica. */
+  if (falta.has("lo_hice_solo")) trozo.append(loQueHiceSolo(n, estado));
+  else if (estaCaido(n)) trozo.append(cartelDeCaido(n, estado));
   if (falta.has("cerrar_negocio")) trozo.append(comoTermino(n, estado));
   if (falta.has("comision_absurda")) trozo.append(plataAcordada(n, estado));
   if (falta.has("revisar_puntas")) trozo.append(confirmarPuntas(n, estado));
@@ -1026,6 +1029,25 @@ function seCayo(n, estado) {
   return seccion;
 }
 
+/* LO QUE LA APP HIZO SOLA, con el botón para darle el visto bueno. Juan quiere la app lo más
+   automática posible, pero enterándose: "que quede en avisos para yo darle el check bueno".
+   Se puede aprobar desde acá o desde Hoy, es lo mismo. */
+function loQueHiceSolo(n, estado) {
+  const suyo = (n.avisos || []).find((a) => a.tipo === "lo_hice_solo");
+  const seccion = nodo(html`
+    <section class="tarjeta" style="border-color:var(--azul-claro)">
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">Esto lo hice yo solo</h2>
+      <p class="apunte" style="margin-bottom:12px">${escapar(suyo ? suyo.detalle : "")}</p>
+      <button class="boton boton-primario" id="visto-bueno">Está bien</button>
+    </section>
+  `);
+  seccion.getElementById("visto-bueno").addEventListener("click", () => {
+    editarNegocio(estado, n.id, { visto_bueno: true });
+    estado.redibujar();
+  });
+  return seccion;
+}
+
 /* Arriba de todo, para que no haya dudas de por qué esta ficha no pide nada. */
 function cartelDeCaido(n, estado) {
   /* Distingue quién lo dijo. "Lo di por caído yo porque el portal cambió" y "lo marcaste vos"
@@ -1044,7 +1066,8 @@ function cartelDeCaido(n, estado) {
 /* Los avisos que ya tienen SU tarjeta arriba, con los botones para resolverlos, no se
    repiten en "Qué falta acá". Con la pregunta de si se vendió pasaba a la vista: el recuadro
    rojo decía "¿Se vendió o se cayó?" y justo abajo la lista decía lo mismo otra vez. */
-const CON_SU_PROPIA_TARJETA = new Set(["cerrar_negocio", "revisar_puntas", "comision_absurda"]);
+const CON_SU_PROPIA_TARJETA = new Set(
+  ["cerrar_negocio", "revisar_puntas", "comision_absurda", "lo_hice_solo"]);
 
 function avisos(n) {
   const todos = n.avisos || [];

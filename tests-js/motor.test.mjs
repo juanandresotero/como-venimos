@@ -778,7 +778,7 @@ test("el negocio se da por caído solo cuando la propiedad vuelve al mercado", (
   }), AJUSTES, "2026-08-20", cartera);
   assert.equal(estaCaido(n), true);
   assert.equal(n.se_cayo_solo, true);
-  assert.ok(tipos(n).includes("se_cayo_solo"), "y se avisa: los números cambiaron");
+  assert.ok(tipos(n).includes("lo_hice_solo"), "y se avisa: los números cambiaron");
 });
 
 /* Simétrico: si vuelve a negociación, revive solo. Fiel al portal en las dos direcciones. */
@@ -1428,7 +1428,7 @@ test("a un negocio caído no se le dice que hay datos nuevos para cargar", () =>
     cartera);
   assert.equal(n.estado, CAIDO);
   assert.ok(!tipos(n).includes("ficha_reabierta"));
-  assert.ok(tipos(n).includes("se_cayo_solo"));
+  assert.ok(tipos(n).includes("lo_hice_solo"));
 });
 
 test("un alquiler pregunta si se alquiló", () => {
@@ -1491,4 +1491,67 @@ test("revivir no pisa lo que se haya cargado a mano mientras estaba caído", () 
     AJUSTES, "2026-09-24");
   assert.equal(vivo.precio_operacion, 162000);
   assert.equal(vivo.fecha_negociacion, "2026-07-16", "lo que seguía vacío sí vuelve");
+});
+
+/* ---------- Lo que la app hace sola espera el visto bueno ---------- */
+
+/* Juan: "está bueno que sea todo lo más automático posible... cuando haya un cambio en la
+   cartera que la app haga el cambio, pero que quede —si es un negocio caído o al revés— en
+   avisos para yo darle el check bueno".
+
+   O sea: la app sigue decidiendo sola, pero no a escondidas. El aviso de "lo di por caído" no
+   se apagaba NUNCA porque no había con qué, y el de revivir ni existía: el negocio volvía a
+   contar plata sin que nada lo dijera. */
+test("lo que la app dio por caído queda esperando el visto bueno", () => {
+  const cartera = propiedadEn("publicada", { fecha_negociacion: "2026-08-07" });
+  const n = revisar(negocio({ estado: "en_curso", fecha_fin: null, entity_id_cartera: "flam" }),
+    AJUSTES, "2026-08-20", cartera);
+  assert.equal(n.visto_bueno, false);
+  const suyo = n.avisos.find((a) => a.tipo === "lo_hice_solo");
+  assert.ok(suyo, "avisa");
+  assert.match(suyo.detalle, /caído/);
+});
+
+test("con el visto bueno dado, deja de avisar", () => {
+  const cartera = propiedadEn("publicada", { fecha_negociacion: "2026-08-07" });
+  const caido = revisar(negocio({ estado: "en_curso", fecha_fin: null, entity_id_cartera: "flam" }),
+    AJUSTES, "2026-08-20", cartera);
+  const visto = revisar({ ...caido, visto_bueno: true }, AJUSTES, "2026-08-21", cartera);
+  assert.equal(estaCaido(visto), true, "sigue caído: el visto bueno no lo revive");
+  assert.ok(!tipos(visto).includes("lo_hice_solo"));
+});
+
+/* Y AL REVÉS: si la propiedad vuelve a negociación, la app lo revive sola. Eso mueve plata
+   —el negocio vuelve a sumar— así que también se avisa, aunque el caído ya estuviera visto. */
+test("si la app lo revive sola, vuelve a pedir el visto bueno", () => {
+  const cartera = propiedadEn("publicada", { fecha_negociacion: "2026-08-07" });
+  const caido = revisar(negocio({ estado: "en_curso", fecha_fin: null, entity_id_cartera: "flam" }),
+    AJUSTES, "2026-08-20", cartera);
+  const revivido = revisar({ ...caido, visto_bueno: true }, AJUSTES, "2026-08-21",
+    propiedadEn("en_negociacion", { fecha_negociacion: "2026-08-07" }));
+  assert.equal(revivido.estado, "en_curso");
+  assert.equal(revivido.visto_bueno, false, "es un cambio nuevo");
+  const suyo = revivido.avisos.find((a) => a.tipo === "lo_hice_solo");
+  assert.ok(suyo, "avisa");
+  assert.match(suyo.detalle, /en curso/);
+});
+
+/* Y un negocio que la app abrió sola también: es lo más automático que hace, y Juan tiene que
+   poder decir "está bien" o borrarlo. */
+test("un negocio que la app abrió sola también pide el visto bueno", () => {
+  const n = revisar(negocio({
+    id: "manual-9", nacio_solo: true, estado: "en_curso", fecha_fin: null,
+    puntas_confirmadas: true,
+  }), AJUSTES, "2026-08-20");
+  const suyo = n.avisos.find((a) => a.tipo === "lo_hice_solo");
+  assert.ok(suyo, "avisa");
+  assert.match(suyo.detalle, /abrí/i);
+});
+
+test("y deja de pedirlo cuando se lo dan", () => {
+  const n = revisar(negocio({
+    id: "manual-9", nacio_solo: true, estado: "en_curso", fecha_fin: null,
+    puntas_confirmadas: true, visto_bueno: true,
+  }), AJUSTES, "2026-08-20");
+  assert.ok(!tipos(n).includes("lo_hice_solo"));
 });

@@ -584,3 +584,25 @@ test("la pregunta de si se vendió aparece aunque la ficha esté completa", () =
   const grupos = derivar([marcado], [], "2026-09-11", {});
   assert.ok(grupos.some((g) => g.clave === "cerrar_negocio"));
 });
+
+/* ---------- Lo que la app hizo sola ---------- */
+
+/* Va en un solo grupo, y se contesta con "Está bien": es un cambio que YA ocurrió, no un dato
+   que falte. Por eso el botón que resuelve no abre nada, lo aprueba. */
+test("lo que hice solo se contesta con Está bien", () => {
+  const item = { clave: "lo_hice_solo", negocio_id: "manual-1", titulo: "Minas 1600",
+    detalle: "lo di por caído" };
+  const acciones = accionesDe(item);
+  assert.equal(acciones[0].tipo, "visto-bueno");
+  assert.equal(acciones[0].texto, "Está bien");
+  assert.equal(acciones[0].destino, "manual-1");
+  assert.ok(acciones.some((a) => a.tipo === "ficha"), "y se puede abrir");
+});
+
+/* ATRAVIESA LA FICHA COMPLETA, como las puntas sin confirmar: no es un dato que falte, es la
+   app moviendo plata sola. Marcar la ficha como completa no puede taparlo. */
+test("lo que hice solo se ve aunque la ficha esté completa", () => {
+  const marcado = negocio(["lo_hice_solo"], { ficha_completa: true, ficha_vigente: true });
+  const grupos = derivar([marcado], [], "2026-09-24", {});
+  assert.ok(grupos.some((g) => g.clave === "lo_hice_solo"));
+});
