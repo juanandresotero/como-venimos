@@ -5,6 +5,10 @@ name: Robot de cartera
 on:
   schedule:
     - cron: "0 9 * * *"      # 09:00 UTC = 06:00 en Uruguay
+    # Y de tarde otra vez. Dos motivos: si a la mañana falla algo (la API de RE/MAX, la red),
+    # hay una segunda oportunidad el mismo día; y una propiedad que se mueve a media mañana
+    # queda anotada hoy y no mañana. Lo pidió Juan: "que mire 2 veces al día".
+    - cron: "0 21 * * *"     # 21:00 UTC = 18:00 en Uruguay
   workflow_dispatch: {}
   push:
     paths:
@@ -32,10 +36,28 @@ jobs:
       # OJO: aca NO se instala openpyxl a proposito. Es la unica dependencia que no viene
       # con Python, y solo hace falta para importar el Excel a mano. Correr los tests sin
       # ella es la garantia de que ni el robot ni la app la necesitan.
+      # SOLO LAS DEL CODIGO. Las que miran los datos de verdad corren en otro job y NO frenan
+      # el guardado: un dato raro de Juan no puede dejarlo sin cartera. Paso dos veces —el
+      # 2026-09-12 y el 2026-09-24— y la primera fueron cuatro dias sin mirar el portal.
       - name: Correr los tests de Python
+        env:
+          SIN_DATOS_VIVOS: "1"
         run: python -m unittest discover -s tests -t . -v
       - name: Probar el robot sin escribir nada
         run: DRY_RUN=1 python -m robot.main
+
+  # LAS PRUEBAS QUE MIRAN LOS DATOS DE VERDAD. Corren aparte y NO son requisito para guardar:
+  # si algo de los datos no cierra, la corrida queda en rojo y GitHub manda el mail, pero la
+  # cartera se guarda igual. Antes eran parte del mismo paso y por eso frenaban todo.
+  pruebas-datos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Revisar los datos de verdad
+        run: python -m unittest discover -s tests -t . -v
 
   # Los 53 tests de JavaScript no corrian en ningun lado salvo la maquina del usuario.
   pruebas-js:

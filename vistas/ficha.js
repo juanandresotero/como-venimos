@@ -4,6 +4,7 @@
    completar. Cada cambio se aplica al instante y queda en la cola para subir. */
 
 import { editarNegocio, editarPropiedad, borrarNegocio } from "../lib/guardado.js";
+import { PIDEN_VISTO_BUENO } from "../lib/motor.js";
 import {
   plata, plataUSD, escapar, fechaRazonable, numeroDesde, formatearMientrasEscribe,
 } from "../lib/formato.js";
@@ -130,9 +131,10 @@ export function dibujarFicha(estado) {
     </section>
   `));
 
-  /* Lo que la app hizo sola va arriba de todo, con el botón para aprobarlo. Si está ese
+  /* Lo que espera el visto bueno va arriba de todo, con el botón para darlo. Si está ese
      cartel no se pone además el de "está caído": dicen lo mismo y uno ya lo explica. */
-  if (falta.has("lo_hice_solo")) trozo.append(loQueHiceSolo(n, estado));
+  const pideVisto = [...falta].find((tipo) => PIDEN_VISTO_BUENO[tipo]);
+  if (pideVisto) trozo.append(paraElVistoBueno(n, pideVisto, estado));
   else if (estaCaido(n)) trozo.append(cartelDeCaido(n, estado));
   if (falta.has("cerrar_negocio")) trozo.append(comoTermino(n, estado));
   if (falta.has("comision_absurda")) trozo.append(plataAcordada(n, estado));
@@ -1029,20 +1031,26 @@ function seCayo(n, estado) {
   return seccion;
 }
 
-/* LO QUE LA APP HIZO SOLA, con el botón para darle el visto bueno. Juan quiere la app lo más
-   automática posible, pero enterándose: "que quede en avisos para yo darle el check bueno".
-   Se puede aprobar desde acá o desde Hoy, es lo mismo. */
-function loQueHiceSolo(n, estado) {
-  const suyo = (n.avisos || []).find((a) => a.tipo === "lo_hice_solo");
+/* LO QUE ESPERA EL VISTO BUENO, con el botón para darlo. Juan quiere la app lo más automática
+   posible, pero enterándose: "que quede en avisos para yo darle el check bueno". Se aprueba
+   desde acá o desde Hoy, es lo mismo. */
+const TITULO_DEL_VISTO_BUENO = {
+  lo_hice_solo: "Esto lo hice yo solo",
+  firma_inventada: "¿Seguro que ya se firmó?",
+};
+
+function paraElVistoBueno(n, tipo, estado) {
+  const suyo = (n.avisos || []).find((a) => a.tipo === tipo);
   const seccion = nodo(html`
     <section class="tarjeta" style="border-color:var(--azul-claro)">
-      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">Esto lo hice yo solo</h2>
+      <h2 class="titulo" style="font-size:17px;margin-bottom:6px">
+        ${escapar(TITULO_DEL_VISTO_BUENO[tipo] || "¿Está bien?")}</h2>
       <p class="apunte" style="margin-bottom:12px">${escapar(suyo ? suyo.detalle : "")}</p>
       <button class="boton boton-primario" id="visto-bueno">Está bien</button>
     </section>
   `);
   seccion.getElementById("visto-bueno").addEventListener("click", () => {
-    editarNegocio(estado, n.id, { visto_bueno: true });
+    editarNegocio(estado, n.id, { [PIDEN_VISTO_BUENO[tipo]]: true });
     estado.redibujar();
   });
   return seccion;
@@ -1067,7 +1075,7 @@ function cartelDeCaido(n, estado) {
    repiten en "Qué falta acá". Con la pregunta de si se vendió pasaba a la vista: el recuadro
    rojo decía "¿Se vendió o se cayó?" y justo abajo la lista decía lo mismo otra vez. */
 const CON_SU_PROPIA_TARJETA = new Set(
-  ["cerrar_negocio", "revisar_puntas", "comision_absurda", "lo_hice_solo"]);
+  ["cerrar_negocio", "revisar_puntas", "comision_absurda", "lo_hice_solo", "firma_inventada"]);
 
 function avisos(n) {
   const todos = n.avisos || [];

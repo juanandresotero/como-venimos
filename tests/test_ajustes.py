@@ -1,8 +1,11 @@
+import os
 import unittest
 
 from robot import almacen
 
 
+@unittest.skipIf(os.environ.get("SIN_DATOS_VIVOS") == "1",
+                 "mira los datos de verdad: corre aparte para no frenar al robot")
 class TestAjustes(unittest.TestCase):
     def setUp(self):
         self.a = almacen.leer_json("ajustes.json", None)

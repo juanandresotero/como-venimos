@@ -1555,3 +1555,48 @@ test("y deja de pedirlo cuando se lo dan", () => {
   }), AJUSTES, "2026-08-20");
   assert.ok(!tipos(n).includes("lo_hice_solo"));
 });
+
+/* ---------- Cobrado, con la propiedad todavía en el portal ---------- */
+
+/* ESTANISLAO VEGA (2026-09-24). Juan la dio por firmada el 21 y RE/MAX seguía mostrando la
+   publicación como reservada. Él preguntó por qué eso no le aparecía en avisos: la app se lo
+   había creído sin chistar.
+
+   No se puede dar por MAL —el portal tarda días en bajar un aviso y él firma antes, que es
+   justo lo que hace legítimo el caso— pero tampoco por bien: una fecha de firma puesta por
+   error deja plata contada como cobrada. Así que se pregunta una vez y con el visto bueno se
+   calla. */
+test("dado por cobrado con la propiedad todavía viva, se avisa", () => {
+  const n = revisar(negocio({
+    estado: "cerrado", fecha_fin: "2026-09-10", entity_id_cartera: "flam",
+  }), AJUSTES, "2026-09-15", propiedadEn("reservada"));
+  const suyo = n.avisos.find((a) => a.tipo === "firma_inventada");
+  assert.ok(suyo, "avisa");
+  assert.match(suyo.detalle, /reservada/);
+});
+
+test("con el visto bueno dado, deja de avisarlo", () => {
+  const n = revisar(negocio({
+    estado: "cerrado", fecha_fin: "2026-09-10", entity_id_cartera: "flam",
+    firma_confirmada: true,
+  }), AJUSTES, "2026-09-15", propiedadEn("reservada"));
+  assert.ok(!tipos(n).includes("firma_inventada"));
+});
+
+/* Y ATRAVIESA LA FICHA COMPLETA: Estanislao estaba dada por completa, así que si respetara la
+   marca Juan no la habría visto nunca. Es plata, no un dato que falte. */
+test("se ve aunque la ficha esté dada por completa", () => {
+  const n = revisar(completo({
+    estado: "cerrado", fecha_fin: "2026-09-10", fecha_boleto: "2026-08-25",
+    ficha_completa_momento: "reservada", puntas_confirmadas: true,
+  }), AJUSTES, "2026-09-15", propiedadEn("reservada"));
+  assert.equal(n.ficha_vigente, true);
+  assert.ok(tipos(n).includes("firma_inventada"));
+});
+
+test("si la propiedad ya se fue del portal, no hay nada que preguntar", () => {
+  const n = revisar(negocio({
+    estado: "cerrado", fecha_fin: "2026-09-10", entity_id_cartera: "flam",
+  }), AJUSTES, "2026-09-15", propiedadEn("fuera"));
+  assert.ok(!tipos(n).includes("firma_inventada"));
+});

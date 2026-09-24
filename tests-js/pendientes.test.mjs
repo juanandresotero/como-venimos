@@ -606,3 +606,21 @@ test("lo que hice solo se ve aunque la ficha esté completa", () => {
   const grupos = derivar([marcado], [], "2026-09-24", {});
   assert.ok(grupos.some((g) => g.clave === "lo_hice_solo"));
 });
+
+/* Los dos avisos que se contestan con "Está bien" apagan campos distintos: uno aprueba lo que
+   hizo la app, el otro confirma que esa firma es de verdad. */
+test("un cobrado con la propiedad viva también se contesta con Está bien", () => {
+  const acciones = accionesDe({
+    clave: "firma_inventada", negocio_id: "excel-86", titulo: "Estanislao", detalle: "x",
+  });
+  assert.equal(acciones[0].tipo, "visto-bueno");
+  assert.equal(acciones[0].texto, "Está bien");
+  assert.equal(acciones[0].campo, "firma_confirmada");
+});
+
+test("y lo que hizo la app sola apaga el suyo", () => {
+  const acciones = accionesDe({
+    clave: "lo_hice_solo", negocio_id: "manual-1", titulo: "Minas", detalle: "x",
+  });
+  assert.equal(acciones[0].campo, "visto_bueno");
+});

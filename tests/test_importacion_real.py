@@ -1,10 +1,13 @@
 import collections
 import datetime
+import os
 import unittest
 
 from robot import almacen
 
 
+@unittest.skipIf(os.environ.get("SIN_DATOS_VIVOS") == "1",
+                 "mira los datos de verdad: corre aparte para no frenar al robot")
 class TestImportacionReal(unittest.TestCase):
     """Verifica el resultado guardado en datos/negocios.json contra lo que ya sabemos
     del Excel del usuario (analizado a mano el 2026-08-17).
