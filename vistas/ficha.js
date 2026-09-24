@@ -332,7 +332,25 @@ function borrar(n, estado) {
    referio nada). */
 const esSuplencia = (n) => Boolean((n || {}).es_suplencia);
 
+/* DE DONDE SALE CADA FECHA. Si el robot la ve en el portal, el motor la repone sola en el
+   proximo repaso: borrarla no sirve de nada y el ✕ no tiene que aparecer. Juan ya se habia
+   encontrado con eso —borro la fecha de negociacion de un negocio y la app se la volvio a
+   poner— y un boton que parece borrar y no borra es peor que no tenerlo.
+
+   La de la FIRMA no la repone nadie, y es justo la que importa: es la que decide si el
+   negocio esta cobrado o sigue reservado. */
+const LA_REPONE_EL_PORTAL = {
+  fecha_inicio: (p) => Boolean(p.fecha_captacion_real || p.visto_primera_vez),
+  fecha_negociacion: (p) => Boolean(p.fecha_negociacion),
+  fecha_boleto: (p) => Boolean(p.fecha_reservada),
+};
+
 function campos(n, falta, estado) {
+  const suPropiedad = (estado.datos.cartera || {})[n.entity_id_cartera] || null;
+  const seRepone = (clave) => {
+    const mira = LA_REPONE_EL_PORTAL[clave];
+    return Boolean(mira && suPropiedad && !estaCaido(n) && mira(suPropiedad));
+  };
   const seccion = nodo(html`
     <section class="tarjeta" style="padding:0;overflow:hidden">
       <div class="datos" id="campos"></div>
@@ -368,10 +386,37 @@ function campos(n, falta, estado) {
     const control = fila.querySelector(".campo");
     // Los puntos de miles aparecen mientras se escribe, no al saltar de celda.
     if (esMoneda) formatearMientrasEscribe(control);
+
+    /* UNA FECHA SE TIENE QUE PODER BORRAR. El campo ignora el vacío a propósito —si no,
+       guardaría a medio escribir mientras se tipea el año— y por eso vaciarlo no hacía nada:
+       una fecha puesta por error no salía más. Lo pidió Juan: "que al lado de las fechas se
+       pueda borrar las fechas".
+
+       Va al lado del campo y sólo cuando hay algo que borrar. Importa más de lo que parece:
+       la fecha de firma es la que decide si un negocio está cobrado o sigue reservado. */
+    if (tipo === "date") {
+      const caja = document.createElement("div");
+      caja.className = "campo-con-borrar";
+      control.replaceWith(caja);
+      caja.append(control);
+      const borrar = document.createElement("button");
+      borrar.type = "button";
+      borrar.className = "boton boton-chico";
+      borrar.textContent = "✕";
+      borrar.setAttribute("aria-label", `Borrar ${etiqueta}`);
+      borrar.hidden = !valor || seRepone(clave);
+      borrar.addEventListener("click", () => {
+        editarNegocio(estado, n.id, { [clave]: null, ...(derivar ? derivar(null) : {}) });
+        estado.redibujar();
+      });
+      caja.append(borrar);
+    }
+
     control.addEventListener("change", () => {
       const crudo = control.value;
       // El navegador avisa del cambio mientras se tipea el año: no guardar a medio escribir.
-      if (tipo === "date" && !fechaRazonable(crudo)) return;
+      // Vacío SÍ se guarda: es "borrala".
+      if (tipo === "date" && crudo !== "" && !fechaRazonable(crudo)) return;
       let nuevo;
       if (esMoneda) nuevo = numeroDesde(crudo);
       else if (tipo === "number") nuevo = crudo === "" ? null : Number(crudo);

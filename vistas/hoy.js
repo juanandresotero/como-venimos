@@ -20,6 +20,7 @@ import { mandarAlRobot, comoVaElRobot } from "../lib/github.js";
 import { medir, vale_la_pena_ajustar } from "../lib/seguridad.js";
 import { nivelDe, nivelDelObjetivo } from "../lib/niveles.js";
 import { plata, pct, fechaCorta, escapar } from "../lib/formato.js";
+import { telon } from "./ventana.js";
 
 const html = (cadenas, ...valores) =>
   cadenas.reduce((t, c, i) => t + c + (valores[i] ?? ""), "");
@@ -165,7 +166,7 @@ function cuantoFalta(estado) {
   const descubierto = Math.max(0, objetivo - c.cobrado.facturacion - encaminado);
   const parte = (x) => `${Math.max(0, Math.min(100, (x / objetivo) * 100))}%`;
 
-  return nodo(html`
+  const tarjeta = nodo(html`
     <section class="tarjeta">
       <div class="tarjeta-titulo" style="margin-bottom:2px">
         <h2 class="titulo" style="font-size:17px">Para llegar a ${plata(objetivo)}</h2>
@@ -191,10 +192,10 @@ function cuantoFalta(estado) {
           <span class="camino-punto cobrado"></span>
           <strong>${plata(c.cobrado.facturacion)}</strong> cobrado
         </span>
-        <span class="camino-pie">
+        <button class="camino-pie camino-pie-toca" id="ver-encaminado" type="button">
           <span class="camino-punto encaminado"></span>
           <strong>${plata(encaminado)}</strong> encaminado
-        </span>
+        </button>
         <span class="camino-pie">
           <span class="camino-punto sin-cubrir"></span>
           <strong>${plata(descubierto)}</strong> sin cubrir
@@ -205,6 +206,64 @@ function cuantoFalta(estado) {
         <strong>${plata(c.cobrado.ganancia)}</strong></p>
     </section>
   `);
+
+  tarjeta.getElementById("ver-encaminado")
+    .addEventListener("click", () => ventanaEncaminado(estado, c));
+  return tarjeta;
+}
+
+/* QUÉ ESTÁ CONTANDO LA APP EN "ENCAMINADO". Lo pidió Juan: "que aparezca un pop up simple
+   marcando cuáles negocios está contando la app, así me permite saber que está haciendo bien
+   las cosas". Es la única forma de que un número grande se pueda auditar de un vistazo.
+
+   Cada renglón abre su negocio, y de paso resuelve lo otro que dijo —"algunos negocios de
+   estos no estaban en avisos para modificar"—: un negocio sin nada que reclamar no aparece
+   en la bandeja de Hoy, así que ésta es la puerta para llegar a él. */
+function ventanaEncaminado(estado, c) {
+  const filas = [...c.reservado.detalle, ...c.negociacion.detalle];
+  const cuerpo = nodo(html`
+    <div class="panel-firma">
+      <h2 class="titulo" style="font-size:19px;margin-bottom:2px">Lo encaminado</h2>
+      <p class="apunte" style="margin-bottom:12px">
+        ${filas.length} ${filas.length === 1 ? "negocio" : "negocios"} reservados o en
+        negociación: <strong>${plata(c.avanzado.facturacion)}</strong> de facturación y
+        <strong>${plata(c.avanzado.ganancia)}</strong> a tu bolsillo.
+        Tocá cualquiera para abrirlo.
+      </p>
+      <div class="tarjeta" style="padding:0;overflow:hidden" data-lista></div>
+      <div class="botonera" style="margin-top:14px">
+        <button class="boton" data-cerrar>Cerrar</button>
+      </div>
+    </div>
+  `);
+  const lista = cuerpo.querySelector("[data-lista]");
+  const { caja, cerrar } = telon(cuerpo);
+
+  for (const d of filas) {
+    const fila = document.createElement("button");
+    fila.type = "button";
+    fila.className = "renglon-toca";
+    fila.innerHTML = html`
+      <span class="renglon-nombre">${escapar(d.direccion || "Sin dirección")}</span>
+      <span class="apunte">${d.estado === "reservada" ? "Reservado" : "En negociación"}${
+        /* Sin negocio cargado, el número sale de tus promedios: decirlo es lo que deja
+           entender por qué una propiedad recién reservada ya suma plata. */
+        d.estimado ? " · estimado con tus promedios" : ""}</span>
+      <span class="apunte"><strong>${plata(d.facturacion)}</strong> de facturación ·
+        <strong>${plata(d.ganancia)}</strong> a tu bolsillo</span>
+    `;
+    fila.addEventListener("click", () => {
+      cerrar();
+      if (d.negocio_id) estado.irA("ficha", d.negocio_id);
+      else if (d.entity_id) estado.irA("propiedad", d.entity_id);
+    });
+    lista.append(fila);
+  }
+  if (!filas.length) {
+    lista.innerHTML = html`<p class="apunte" style="padding:12px 14px;margin:0">
+      Nada reservado ni en negociación todavía.</p>`;
+  }
+  caja.querySelector("[data-cerrar]").addEventListener("click", cerrar);
 }
 
 /* En qué escalón estás, en una frase, y recién después los números.

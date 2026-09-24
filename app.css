@@ -486,6 +486,26 @@ body {
 .campo-fila .campo { margin-top: 2px; }
 .campo-fila.falta { background: var(--rojo-suave); }
 .campo-fila.falta > label { color: var(--rojo-tinta); font-weight: 700; }
+/* El campo y su ✕ de borrar, en la misma línea. */
+.campo-con-borrar { display: flex; gap: 8px; align-items: center; }
+.campo-con-borrar .campo { flex: 1; min-width: 0; }
+
+/* Un renglón de lista que se toca y lleva a otra pantalla. */
+.renglon-toca {
+  display: grid; gap: 2px; width: 100%; text-align: left;
+  padding: 12px 14px;
+  border: 0; border-top: 1px solid var(--linea);
+  background: var(--lienzo); font: inherit; color: var(--tinta); cursor: pointer;
+}
+.renglon-toca:first-child { border-top: 0; }
+.renglon-nombre { font-weight: 700; }
+
+/* Lo encaminado se toca: abre la lista de los negocios que está contando. El subrayado
+   punteado es lo que avisa que ahí hay algo para tocar. */
+.camino-pie-toca {
+  background: none; border: 0; padding: 0; font: inherit; color: inherit;
+  cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px;
+}
 
 /* ---------- Barra de guardado ---------- */
 
