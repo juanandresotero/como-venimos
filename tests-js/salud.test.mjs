@@ -578,3 +578,73 @@ test("sin nada terminado no inventa un porcentaje", () => {
   const m = metricas([{ id: "a", estado: "en_curso" }], "2026");
   assert.equal(m.pctCaidos, null, "0 de 0 no es 0%");
 });
+
+/* ---------- Cada negocio en la capa que de verdad le toca ---------- */
+
+/* UNA BÚSQUEDA CON BOLETO ES UNA RESERVA. Juan: "dice que tengo 3 en negociación y 3
+   reservadas (hay 5 reservadas y una en negociación hoy)". Dos de las que contaba como
+   negociación —Calle 6 y Blanca del Tabaré— son búsquedas con el boleto ya firmado. Como esa
+   propiedad no es suya, la app no tenía dónde mirar el estado y las mandaba a todas a
+   negociación. Pero el negocio sabe en qué momento está: tiene la fecha del boleto. */
+test("una búsqueda con boleto cuenta como reservada, no como negociación", () => {
+  const conBoleto = negocio({
+    estado: "en_curso", fecha_fin: null, fecha_boleto: "2026-08-27",
+    entity_id_cartera: null, facturacion: 4000, ganancia: 1800,
+  });
+  const c = capas([conBoleto], {}, AJUSTES, "2026");
+  assert.equal(c.reservado.cantidad, 1);
+  assert.equal(c.reservado.ganancia, 1800);
+  assert.equal(c.negociacion.cantidad, 0);
+});
+
+test("y sin boleto sigue contando como negociación", () => {
+  const sinBoleto = negocio({
+    estado: "en_curso", fecha_fin: null, entity_id_cartera: null,
+    facturacion: 4000, ganancia: 1800,
+  });
+  const c = capas([sinBoleto], {}, AJUSTES, "2026");
+  assert.equal(c.negociacion.cantidad, 1);
+  assert.equal(c.reservado.cantidad, 0);
+});
+
+/* LA MISMA VENTA, CONTADA DOS VECES. Estanislao Vega 3900: Juan la firmó el 21 de septiembre
+   y RE/MAX todavía mostraba la publicación como reservada. La plata estaba en lo cobrado —la
+   de verdad— y otra vez en lo reservado, estimada. */
+test("una propiedad cuya venta ya se cobró no se vuelve a contar", () => {
+  const cerrado = negocio({
+    id: "n9", estado: "cerrado", fecha_fin: "2026-09-21", entity_id_cartera: "p1",
+    facturacion: 2000, ganancia: 900,
+  });
+  const cartera = { p1: propiedad({ estado: "reservada", fecha_reservada: "2026-08-25" }) };
+  const c = capas([cerrado], cartera, AJUSTES, "2026");
+  assert.equal(c.cobrado.cantidad, 1);
+  assert.equal(c.reservado.cantidad, 0, "ya está contada en lo cobrado");
+});
+
+/* Un alquiler que rota: el del año pasado está cobrado y el nuevo está en marcha. Ese sí
+   cuenta, y con el número del negocio nuevo. */
+test("pero con un negocio abierto encima, la propiedad sigue contando", () => {
+  const viejo = negocio({
+    id: "v", estado: "cerrado", fecha_fin: "2026-01-10", entity_id_cartera: "p1",
+    facturacion: 800, ganancia: 360,
+  });
+  const nuevo = negocio({
+    id: "n", estado: "en_curso", fecha_fin: null, entity_id_cartera: "p1",
+    facturacion: 900, ganancia: 400,
+  });
+  const cartera = { p1: propiedad({ estado: "reservada", fecha_reservada: "2026-09-01" }) };
+  const c = capas([viejo, nuevo], cartera, AJUSTES, "2026");
+  assert.equal(c.reservado.cantidad, 1);
+  assert.equal(c.reservado.ganancia, 400);
+});
+
+/* Y una que volvió al mercado arranca otra vuelta: lo cobrado de la vuelta anterior no la
+   saca de lo publicado. */
+test("una publicada con una venta vieja cobrada sigue contando como publicada", () => {
+  const viejo = negocio({
+    id: "v", estado: "cerrado", fecha_fin: "2026-01-10", entity_id_cartera: "p1",
+    facturacion: 800, ganancia: 360,
+  });
+  const c = capas([viejo], { p1: propiedad({ estado: "publicada" }) }, AJUSTES, "2026");
+  assert.equal(c.publicado.cantidad, 1);
+});

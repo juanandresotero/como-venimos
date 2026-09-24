@@ -1205,6 +1205,18 @@ test("si la propiedad vuelve a negociación, el negocio revive con su comisión"
   assert.equal(n.pct_comision_total, 0.03, "el de una punta, que es como nace cualquiera");
 });
 
+/* Y ARRANCA LIMPIO: si la propiedad volvió a negociación, el que entró es OTRO comprador, así
+   que el precio y las puntas de la negociación anterior no son los de esta. Lo que se había
+   guardado al caerse se tira sin usar — sólo vuelve cuando el que revive el negocio es él. */
+test("si revive porque el portal volvió a negociación, no vuelve lo de la negociación vieja", () => {
+  const caido = seCayoSolo();
+  const enNegociacion = { p1: { ...CARTERA_PUBLICADA.p1, estado: "en_negociacion" } };
+  const n = revisar(caido, AJUSTES, "2026-09-01", enNegociacion);
+  assert.equal(n.estado, "en_curso");
+  assert.equal(n.precio_operacion, null);
+  assert.equal(n.lo_borrado_al_caerse, null, "la copia se tira");
+});
+
 /* UNA CORRECCIÓN A MANO LE GANA AL PORTAL. Puede haber republicado la propiedad para buscar
    otro comprador mientras el primero define, y eso el portal no lo sabe. */
 test("si lo revivió a mano, no se le borra nada", () => {
@@ -1433,4 +1445,50 @@ test("dar la ficha por completa sin contestar no apaga la pregunta", () => {
   }), AJUSTES, "2026-09-15", propiedadEn("fuera"));
   assert.equal(n.ficha_vigente, true);
   assert.deepEqual(tipos(n), ["cerrar_negocio"]);
+});
+
+/* ---------- Caerse a mano limpia lo mismo que caerse solo ---------- */
+
+/* JUANA DE IBARBOUROU (2026-09-24). Juan la marcó caída a mano y se encontró con que la
+   ficha seguía teniendo la fecha de negociación, el precio y las puntas: "en la app no se
+   hicieron todos los cambios correspondientes". Cuando la app lo detectaba sola sí limpiaba.
+   Es la misma cosa dicha de dos maneras, así que ahora limpia igual. */
+test("un caído marcado a mano queda sin lo de la negociación", () => {
+  const n = revisar(negocio({
+    estado: CAIDO, estado_a_mano: true, fecha_fin: null,
+    fecha_negociacion: "2026-08-17", precio_operacion: 80000, puntas: 1,
+  }), AJUSTES, "2026-09-24");
+  assert.equal(n.fecha_negociacion, null);
+  assert.equal(n.precio_operacion, null);
+  assert.equal(n.ganancia, null);
+});
+
+/* Y LO BORRADO VUELVE SI EL NEGOCIO REVIVE. Minas 1600: tocó "Sigue en marcha" y no volvió
+   nada —el precio, la comisión, las puntas y quién trajo al comprador había que cargarlos de
+   nuevo a mano—. Ahora se guarda una copia al caerse. */
+test("lo que se borró al caerse vuelve solo si el negocio revive", () => {
+  const caido = revisar(negocio({
+    estado: CAIDO, estado_a_mano: true, fecha_fin: null,
+    fecha_negociacion: "2026-07-16", precio_operacion: 150000, puntas: 1,
+    agente_compra: "Martin Sedes",
+  }), AJUSTES, "2026-09-24");
+  assert.equal(caido.precio_operacion, null, "primero se limpia");
+
+  const vivo = revisar({ ...caido, estado: "en_curso" }, AJUSTES, "2026-09-24");
+  assert.equal(vivo.fecha_negociacion, "2026-07-16");
+  assert.equal(vivo.precio_operacion, 150000);
+  assert.equal(vivo.agente_compra, "Martin Sedes");
+  assert.equal(vivo.puntas, 1);
+  assert.equal(vivo.lo_borrado_al_caerse, null, "la copia se usa una vez y se tira");
+});
+
+test("revivir no pisa lo que se haya cargado a mano mientras estaba caído", () => {
+  const caido = revisar(negocio({
+    estado: CAIDO, estado_a_mano: true, fecha_fin: null,
+    fecha_negociacion: "2026-07-16", precio_operacion: 150000,
+  }), AJUSTES, "2026-09-24");
+  const vivo = revisar({ ...caido, estado: "en_curso", precio_operacion: 162000 },
+    AJUSTES, "2026-09-24");
+  assert.equal(vivo.precio_operacion, 162000);
+  assert.equal(vivo.fecha_negociacion, "2026-07-16", "lo que seguía vacío sí vuelve");
 });
