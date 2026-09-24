@@ -3100,27 +3100,18 @@
   "precio_operacion": null,
   "moneda": "USD",
   "origen_captacion": "B.d.r.",
-  "estado": "en_curso",
+  "estado": "caido",
   "ficha_completa": true,
   "notas": "",
   "manual": true,
   "atajo": "venta",
   "fecha_negociacion": "2026-08-17",
-  "avisos": [
-   {
-    "tipo": "ficha_reabierta",
-    "detalle": "La propiedad pasó a publicada: hay datos nuevos para cargar."
-   },
-   {
-    "tipo": "revisar_puntas",
-    "detalle": "No dice cuántas puntas son, así que este negocio no está sumando ganancia."
-   }
-  ],
+  "avisos": [],
   "ficha_vigente": false,
   "regimen_comision": "captacion_mia",
   "base": 0,
-  "facturacion": 0,
-  "ganancia": 0,
+  "facturacion": null,
+  "ganancia": null,
   "fecha_fin_estimada": false,
   "agente_compra_nombre": null,
   "origen_quien": null,
