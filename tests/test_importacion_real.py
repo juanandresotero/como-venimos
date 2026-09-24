@@ -86,17 +86,28 @@ class TestImportacionReal(unittest.TestCase):
         for n in viejos:
             self.assertFalse(n["recalculado"], f"{n['id']} se recalculo y no debia")
 
-    def test_ningun_negocio_con_la_propiedad_viva_figura_cobrado(self):
-        """Si la propiedad sigue publicada en RE/MAX, el negocio no puede estar cerrado.
+    def test_ningun_cierre_inventado_figura_cobrado(self):
+        """Un cierre con la propiedad todavia viva tiene que tener una firma de verdad.
 
-        Es la regla que cazo las firmas inventadas del Excel. No se fija en un negocio
-        concreto porque el usuario los esta corrigiendo uno por uno.
+        Antes esto decia que con la propiedad viva el negocio NO PODIA estar cerrado. Era la
+        regla que cazo las firmas inventadas del Excel, pero dejo de ser cierta: RE/MAX tarda
+        dias en bajar el aviso y Juan firma antes. Paso de verdad con Estanislao Vega 3900
+        —firmada el 2026-09-21, publicacion todavia arriba— y dejo al robot sin guardar la
+        cartera el 2026-09-24.
+
+        Lo que sigue sin poder pasar es que ese cierre sea inventado: una firma ESTIMADA (la
+        pone la app, no el) o una del futuro. Y la plata de esa propiedad tiene que estar
+        contada UNA sola vez: eso lo cuida `capas()` en lib/salud.js.
         """
+        hoy = datetime.date.today().isoformat()
         cartera = almacen.leer_json("cartera.json", {})
         for n in self.todos:
             propiedad = cartera.get(n.get("entity_id_cartera") or "")
-            if propiedad and propiedad.get("activa"):
-                self.assertNotEqual(n["estado"], "cerrado", n["id"])
+            if not (propiedad and propiedad.get("activa") and n["estado"] == "cerrado"):
+                continue
+            self.assertFalse(n.get("fecha_fin_estimada"), f"{n['id']}: firma estimada")
+            self.assertTrue(n.get("fecha_fin"), f"{n['id']}: cobrado sin fecha de firma")
+            self.assertLessEqual(n["fecha_fin"], hoy, f"{n['id']}: firma en el futuro")
 
     # Los avisos del importador ("tu Excel dice X pero la cuenta da Y") se dejaron de
     # mostrar: ese Excel quedo viejo y la app pasa a ser la fuente de verdad. Lo que se
