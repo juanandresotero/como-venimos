@@ -2052,7 +2052,7 @@
   "agente_vende": "Juan Andrés Otero",
   "avisos": [],
   "barrio": "Pando",
-  "base": 2400,
+  "base": 0,
   "categoria_vigente": "RAP",
   "direccion": "juana de ibarburu y Picardía ",
   "entity_id_cartera": "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea",
@@ -2070,9 +2070,9 @@
   "moneda": "USD",
   "notas": "Mucho tiempo porque el negocio se callo alguna vez antes de cerrarlo real",
   "origen_captacion": "Ref. B.d.r.",
-  "pct_comision_total": 0.03,
-  "precio_operacion": 80000,
-  "puntas": 1,
+  "pct_comision_total": null,
+  "precio_operacion": null,
+  "puntas": null,
   "recalculado": true,
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
@@ -2081,19 +2081,28 @@
   "es_suplencia": false,
   "yo_referi": false,
   "ficha_vigente": true,
-  "fecha_negociacion": "2026-08-17",
+  "fecha_negociacion": null,
   "cliente_comprador": null,
   "cliente_vendedor": {
    "nombre": "Juanjo 2025",
    "telefono": "+598 92 697 996"
   },
   "ficha_completa_momento": "publicada",
-  "puntas_confirmadas": true,
+  "puntas_confirmadas": false,
   "se_cayo_solo": false,
   "agente_compra_nombre": null,
   "estado_a_mano": true,
-  "precio_publicado": 80000,
-  "baja_sobre_publicado": 0
+  "precio_publicado": null,
+  "baja_sobre_publicado": null,
+  "lo_borrado_al_caerse": {
+   "fecha_negociacion": "2026-08-17",
+   "precio_operacion": 80000,
+   "pct_comision_total": 0.03,
+   "puntas": 1,
+   "puntas_confirmadas": true,
+   "precio_publicado": 80000,
+   "baja_sobre_publicado": 0
+  }
  },
  {
   "agente_compra": "Otro REMAX",
@@ -2283,8 +2292,12 @@
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "tipo": "se_cayo_solo",
-    "detalle": "La propiedad volvió a estar publicada en RE/MAX, así que di este negocio por caído y dejó de sumar. Había entrado en negociación el 2026-08-17. Le borré el precio, la comisión, las puntas y quién trajo al comprador: eran de esa negociación. Si sigue en marcha, abrilo y avisame."
+    "tipo": "lo_hice_solo",
+    "detalle": "La propiedad volvió a estar en negociación en RE/MAX, así que puse este negocio otra vez en curso y vuelve a sumar. Lo de la negociación anterior no volvió: ese comprador ya no es el de ahora."
+   },
+   {
+    "tipo": "revisar_puntas",
+    "detalle": "No dice cuántas puntas son, así que este negocio no está sumando ganancia."
    }
   ],
   "barrio": "Malvin norte",
@@ -2292,21 +2305,21 @@
   "categoria_vigente": "RAP",
   "direccion": "flamarrion 5046",
   "entity_id_cartera": "45e27b03-b19a-4654-a163-4d0bf3307fac",
-  "estado": "caido",
+  "estado": "en_curso",
   "excel_facturado": 3510,
   "excel_importe": 1580,
-  "facturacion": null,
+  "facturacion": 0,
   "fecha_boleto": null,
   "fecha_fin": null,
   "fecha_fin_estimada": false,
   "fecha_inicio": "2026-07-30",
   "ficha_completa": false,
-  "ganancia": null,
+  "ganancia": 0,
   "id": "excel-66",
   "moneda": "USD",
   "notas": "",
   "origen_captacion": "Ref. B.d.r.",
-  "pct_comision_total": null,
+  "pct_comision_total": 0.03,
   "precio_operacion": null,
   "puntas": null,
   "recalculado": true,
@@ -2316,13 +2329,16 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "fecha_negociacion": null,
+  "fecha_negociacion": "2026-08-17",
   "ficha_vigente": false,
   "puntas_confirmadas": false,
   "precio_publicado": null,
   "baja_sobre_publicado": null,
-  "se_cayo_solo": true,
-  "fecha_caida": "2026-09-23"
+  "se_cayo_solo": false,
+  "fecha_caida": "2026-09-23",
+  "revivio_solo": true,
+  "visto_bueno": false,
+  "lo_borrado_al_caerse": null
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -3076,7 +3092,7 @@
    "nombre": "claudio Pagani Dueño Estanislao",
    "telefono": "+59899601877"
   },
-  "ficha_completa_momento": "reservada",
+  "ficha_completa_momento": "fuera_de_cartera",
   "puntas_confirmadas": true,
   "precio_publicado": 43000,
   "baja_sobre_publicado": 0.0698
@@ -3249,7 +3265,12 @@
   "manual": true,
   "atajo": "venta",
   "nacio_solo": true,
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "lo_hice_solo",
+    "detalle": "Este negocio lo abrí yo, porque la propiedad quedó reservada en RE/MAX. Revisá que esté bien."
+   }
+  ],
   "ficha_vigente": true,
   "regimen_comision": "ref_martin",
   "base": 3228,
@@ -3290,7 +3311,12 @@
   "manual": true,
   "atajo": "venta",
   "nacio_solo": true,
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "lo_hice_solo",
+    "detalle": "Este negocio lo abrí yo, porque la propiedad pasó a negociación en RE/MAX. Revisá que esté bien."
+   }
+  ],
   "ficha_vigente": true,
   "regimen_comision": "ref_martin",
   "base": 3120,
@@ -3373,7 +3399,12 @@
   "manual": true,
   "atajo": "venta",
   "nacio_solo": true,
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "lo_hice_solo",
+    "detalle": "Este negocio lo abrí yo, porque la propiedad quedó reservada en RE/MAX. Revisá que esté bien."
+   }
+  ],
   "precio_publicado": 94000,
   "baja_sobre_publicado": 0,
   "ficha_vigente": false,
