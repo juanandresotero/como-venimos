@@ -20,7 +20,9 @@ import {
 } from "../lib/inventario.js";
 import * as guardado from "../lib/inventario-guardado.js";
 import { armarPDF, nombreArchivo } from "../lib/inventario-pdf.js";
-import { mandarArchivo, bajarArchivo } from "../lib/compartir.js";
+import {
+  mandarArchivo, bajarArchivo, copiarAlToque, copiarTexto,
+} from "../lib/compartir.js";
 import { cargarMembrete } from "../lib/membrete.js";
 import * as fotos from "../lib/fotos.js";
 import * as drive from "../lib/drive.js";
@@ -624,6 +626,9 @@ function elPie(estado) {
       </div>
       <div class="botonera" style="margin-top:10px">
         <button class="boton" id="al-drive">Subir todo al Drive</button>
+        ${(abierto.link_fotos || "").trim()
+          ? html`<button class="boton" id="copiar-link">Copiar el link del Drive</button>`
+          : ""}
       </div>
       <div class="botonera" style="margin-top:10px">
         <button class="boton boton-borrar" id="borrar-inv">Borrar este inventario</button>
@@ -849,6 +854,28 @@ function elPie(estado) {
       aviso.textContent = drive.comoSeExplica(error);
     }
   });
+
+  /* COPIAR EL LINK, PARA PEGARLO DONDE SEA. Juan: "que copie el link del drive así me queda a
+     mano pasarlo... luego puedo ir a whatsapp, correo o donde sea y pegarlo para que el otro lo
+     pueda ver". Copiar es lo único que ningún navegador bloquea —no habla con el resto del
+     teléfono— así que sirve igual para WhatsApp, para un mail o para un mensaje.
+
+     El intento SINCRONO va primero: después de un `await` el navegador ya no ve el gesto del
+     dedo atrás y varios se niegan a copiar. Y si aun así no se pudo, el link queda escrito
+     abajo para agarrarlo a mano: un botón que no hace nada es peor que no tenerlo.
+
+     El botón sólo está si hay link, que es después de subir al Drive. */
+  const copiar = seccion.getElementById("copiar-link");
+  if (copiar) {
+    copiar.addEventListener("click", async () => {
+      const link = (abierto.link_fotos || "").trim();
+      const listo = copiarAlToque(link) || await copiarTexto(link);
+      copiar.textContent = listo ? "¡Copiado!" : "Copiar el link del Drive";
+      aviso.textContent = listo
+        ? "Link copiado. Pegalo en WhatsApp, en un mail o donde quieras."
+        : `No pude copiarlo solo. Es este, copialo de acá: ${link}`;
+    });
+  }
 
   const borrar = seccion.getElementById("borrar-inv");
   borrar.addEventListener("click", () => {
