@@ -39,7 +39,11 @@ function nodo(marca) {
    perder el inventario abierto en cada tecla no sería usable. */
 let abierto = null;
 let cabeceraAbierta = false;
-let clausulasAbiertas = false;
+/* LAS CLAUSULAS, ABIERTAS DE ENTRADA. Estaban plegadas detras de un boton "Editar" y se veia
+   solo "6 clausulas": Juan pidio verlas "por separado, si hay 5 clausulas tener 5 boxes con la
+   clausula escrita para poder editar o borrar", sin saber que eso ya existia — porque no se
+   veia. Se puede volver a plegar con "Ocultar". */
+let clausulasAbiertas = true;
 /* Las cosas a las que se les abrio el renglon de escribir con el lapiz. Vive afuera porque la
    pantalla se redibuja entera en cada cambio: adentro, el renglon se cerraria solo. */
 const escribiendo = new Set();
@@ -77,7 +81,7 @@ export function dibujarInventario(estado) {
 /* ---------- La lista ---------- */
 
 function lista(estado, trozo) {
-  const hechos = guardado.leer();
+  const hechos = guardado.lista();
 
   trozo.append(nodo(html`
     <section style="margin-bottom:16px">
@@ -125,6 +129,51 @@ function lista(estado, trozo) {
       releerFotos(estado);
     });
     trozo.append(fila);
+  }
+
+  /* LA PAPELERA. Solo aparece si hay algo adentro: una seccion vacia en una pantalla que se
+     usa parado en el medio de un apartamento es ruido. */
+  const borrados = guardado.papelera();
+  if (borrados.length) {
+    const caja = nodo(html`
+      <div class="separador-indicadores" style="margin-top:22px">
+        <span class="separador-nombre">Borrados</span>
+      </div>
+      <p class="apunte" style="margin-bottom:10px">Quedan acá por si los borraste sin querer.
+        Un inventario que ya se firmó no se puede volver a hacer.</p>
+      <div class="lista" id="lista-papelera"></div>
+    `);
+    const dentro = caja.getElementById("lista-papelera");
+    for (const inv of borrados) {
+      const fila = nodo(html`
+        <div class="campo-fila">
+          <div class="tarjeta-titulo" style="margin-bottom:0">
+            <label style="margin:0;flex:1">${escapar(comoSeLlama(inv) || "Sin dirección")}
+              <span class="fila-sub">· borrado el ${escapar(inv.papelera)}</span></label>
+            <button class="filtro" data-recuperar>Recuperar</button>
+            <button class="filtro" data-del-todo>Borrar del todo</button>
+          </div>
+        </div>
+      `);
+      fila.querySelector("[data-recuperar]").addEventListener("click", () => {
+        guardado.recuperar(inv.id);
+        estado.redibujar();
+      });
+      fila.querySelector("[data-del-todo]").addEventListener("click", (e) => {
+        const boton = e.currentTarget;
+        if (boton.dataset.seguro !== "si") {
+          boton.dataset.seguro = "si";
+          boton.textContent = "¿Seguro? No vuelve";
+          return;
+        }
+        /* Recién acá se van las fotos: son cientos de megas y ya están en el Drive. */
+        fotos.borrarFotosDe(inv.id);
+        guardado.borrarDeVerdad(inv.id);
+        estado.redibujar();
+      });
+      dentro.append(fila);
+    }
+    trozo.append(caja);
   }
 
   trozo.querySelector("#nuevo").addEventListener("click", () => {
@@ -805,13 +854,13 @@ function elPie(estado) {
   borrar.addEventListener("click", () => {
     if (borrar.dataset.seguro !== "si") {
       borrar.dataset.seguro = "si";
-      borrar.textContent = "¿Seguro? Tocá de nuevo";
+      borrar.textContent = "¿Seguro? Va a Borrados";
       return;
     }
-    /* Las fotos se van con él: si no, quedan cientos de megas de una casa que ya no existe
-       en la app, y nadie las va a ir a buscar. */
-    fotos.borrarFotosDe(abierto.id);
-    guardado.borrar(abierto.id);
+    /* VA A LA PAPELERA, con sus fotos. Un inventario firmado no se puede volver a hacer, así
+       que de acá no se pierde nada: se saca de la lista y se puede recuperar. Vaciarlo del
+       todo es otro botón, en la lista. */
+    guardado.borrar(abierto.id, estado.hoy);
     abierto = null;
     lasFotos = [];
     estado.redibujar();
