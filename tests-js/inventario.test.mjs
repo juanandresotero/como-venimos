@@ -345,3 +345,29 @@ test("con una sola cláusula, o ninguna, no pasa nada raro", () => {
   assert.deepEqual(moverClausula([], 0, 1), []);
   assert.deepEqual(moverClausula(null, 0, 1), []);
 });
+
+/* ---------- Los objetos que deja el propietario ---------- */
+
+/* Juan: "que en agregar ambientes aparezca predefinido la opción de Objetos... son objetos
+   que quedan en la propiedad que la dueña deja. funciona todo igual, con fotos, detalles,
+   cantidades y demás". Es un ambiente más, con su nombre ya puesto para no tener que
+   escribirlo cada vez. */
+test("los objetos que deja el propietario están en el desplegable y arrancan vacíos", () => {
+  const tipo = TIPOS_DE_AMBIENTE.find((t) => t.clave === "objetos");
+  assert.ok(tipo, "está entre los que se pueden agregar");
+  assert.match(tipo.nombre, /Objetos/);
+  const amb = nuevoAmbiente("objetos");
+  assert.deepEqual(amb.items, [], "sin nada puesto: cada propiedad deja lo suyo");
+  assert.equal(amb.nombre, tipo.nombre);
+});
+
+test("y una vez cargados funcionan igual que cualquier cosa del inventario", () => {
+  const amb = nuevoAmbiente("objetos");
+  amb.items = [
+    { ...nuevoItem("Heladera"), estado: "viejo", detalle: "funciona bien" },
+    { ...nuevoItem("Sillas"), cantidad: 4 },
+  ];
+  assert.match(comoSeLee(amb.items[0]), /Viejo/);
+  assert.match(comoSeLee(amb.items[0]), /funciona bien/);
+  assert.equal(conCantidad(amb.items[1]), "Sillas x4");
+});
