@@ -2290,12 +2290,7 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [
-   {
-    "tipo": "revisar_puntas",
-    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
-   }
-  ],
+  "avisos": [],
   "barrio": "Malvin norte",
   "base": 1800,
   "categoria_vigente": "RAP",
@@ -2327,7 +2322,7 @@
   "yo_referi": false,
   "fecha_negociacion": "2026-08-17",
   "ficha_vigente": true,
-  "puntas_confirmadas": false,
+  "puntas_confirmadas": true,
   "precio_publicado": 60000,
   "baja_sobre_publicado": 0,
   "se_cayo_solo": false,
