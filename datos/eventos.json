@@ -443,5 +443,20 @@
   "internal_id": "940041154-205",
   "tipo": "baja",
   "titulo": "Casa 1 Dormitorio cochera Cerrito ideal negocio"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 195000.0
+  },
+  "direccion": "Carlos Giucci 2000",
+  "entity_id": "99be19a0-068d-4258-8719-3bac251cee0e",
+  "fecha": "2026-09-25",
+  "id": "2026-09-25|99be19a0-068d-4258-8719-3bac251cee0e|alta",
+  "internal_id": "940041154-224",
+  "tipo": "alta",
+  "titulo": "VENTA DE COCHERAS CON CASA EN COLON"
  }
 ]
