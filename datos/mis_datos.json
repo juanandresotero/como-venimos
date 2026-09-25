@@ -15,7 +15,8 @@
   "2026-08-17|a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f|carga_inicial",
   "2026-08-19|ef3b2daf-c46d-4f0b-901b-2686f89b915e|alta",
   "2026-08-19|a4b43687-a487-485c-82ae-62118b687ec1|cambio_estado",
-  "2026-09-02|5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6|baja"
+  "2026-09-02|5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6|baja",
+  "2026-09-24|38987f80-3eb7-4653-93df-da695a27575b|baja"
  ],
  "cartera": {
   "45e27b03-b19a-4654-a163-4d0bf3307fac": {
@@ -98,7 +99,8 @@
   "38987f80-3eb7-4653-93df-da695a27575b": {
    "origen_captacion": "Ref. Martin",
    "fecha_captacion_real": "2026-09-02",
-   "fecha_captacion_estimada": false
+   "fecha_captacion_estimada": false,
+   "desenlace_confirmado": "retirada"
   }
  }
 }
