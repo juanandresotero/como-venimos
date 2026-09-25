@@ -2288,40 +2288,36 @@
   "ficha_completa_momento": null
  },
  {
-  "agente_compra": null,
+  "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
   "avisos": [
    {
-    "tipo": "lo_hice_solo",
-    "detalle": "La propiedad volvió a estar en negociación en RE/MAX, así que puse este negocio otra vez en curso y vuelve a sumar. Lo de la negociación anterior no volvió: ese comprador ya no es el de ahora."
-   },
-   {
     "tipo": "revisar_puntas",
-    "detalle": "No dice cuántas puntas son, así que este negocio no está sumando ganancia."
+    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
    }
   ],
   "barrio": "Malvin norte",
-  "base": 0,
+  "base": 1800,
   "categoria_vigente": "RAP",
   "direccion": "flamarrion 5046",
   "entity_id_cartera": "45e27b03-b19a-4654-a163-4d0bf3307fac",
   "estado": "en_curso",
   "excel_facturado": 3510,
   "excel_importe": 1580,
-  "facturacion": 0,
+  "facturacion": 1800,
   "fecha_boleto": null,
   "fecha_fin": null,
   "fecha_fin_estimada": false,
   "fecha_inicio": "2026-07-30",
-  "ficha_completa": false,
-  "ganancia": 0,
+  "ficha_completa": true,
+  "ganancia": 810,
   "id": "excel-66",
   "moneda": "USD",
   "notas": "",
   "origen_captacion": "Ref. B.d.r.",
   "pct_comision_total": 0.03,
-  "precio_operacion": null,
-  "puntas": null,
+  "precio_operacion": 60000,
+  "puntas": 2,
   "recalculado": true,
   "regimen_comision": "captacion_mia",
   "split_aplicado": 0.45,
@@ -2330,15 +2326,24 @@
   "es_suplencia": false,
   "yo_referi": false,
   "fecha_negociacion": "2026-08-17",
-  "ficha_vigente": false,
+  "ficha_vigente": true,
   "puntas_confirmadas": false,
-  "precio_publicado": null,
-  "baja_sobre_publicado": null,
+  "precio_publicado": 60000,
+  "baja_sobre_publicado": 0,
   "se_cayo_solo": false,
   "fecha_caida": "2026-09-23",
   "revivio_solo": true,
-  "visto_bueno": false,
-  "lo_borrado_al_caerse": null
+  "visto_bueno": true,
+  "lo_borrado_al_caerse": null,
+  "cliente_vendedor": {
+   "nombre": "Rodolfo Cap. Bdr",
+   "telefono": "+59898870023"
+  },
+  "cliente_comprador": {
+   "nombre": "Ruben Haskowec Por Flamarion",
+   "telefono": "+59899780985"
+  },
+  "ficha_completa_momento": "en_negociacion"
  },
  {
   "agente_compra": "Juan Andrés Otero",
