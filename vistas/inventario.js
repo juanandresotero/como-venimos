@@ -624,8 +624,9 @@ function elPie(estado) {
         <button class="boton boton-primario" id="mandar">Mandar el PDF</button>
         <button class="boton" id="bajar">Bajarlo</button>
       </div>
-      <div class="botonera" style="margin-top:10px">
-        <button class="boton" id="al-drive">Subir todo al Drive</button>
+      <div class="botonera" style="margin-top:10px" id="caja-drive">
+        <button class="boton" id="al-drive">${(abierto.link_fotos || "").trim()
+          ? "Actualizar el Drive" : "Subir todo al Drive"}</button>
         ${(abierto.link_fotos || "").trim()
           ? html`<button class="boton" id="copiar-link">Copiar el link del Drive</button>`
           : ""}
@@ -802,7 +803,7 @@ function elPie(estado) {
 
      LO QUE YA SE SUBIO NO SE VUELVE A SUBIR: si se corta el internet a la mitad, se toca de
      nuevo y sigue de donde quedó. Cien fotos por datos móviles se cortan. */
-  seccion.getElementById("al-drive").addEventListener("click", async () => {
+  const subirAlDrive = async (que) => {
     const cliente = googleId.leer();
     if (!cliente) {
       aviso.textContent = "Falta el ID de cliente de Google. Está en Ajustes → Subir al Drive.";
@@ -813,14 +814,19 @@ function elPie(estado) {
       await drive.cargarGoogle();
       const token = await drive.pedirPermiso(cliente);
 
-      aviso.textContent = "Armando el PDF...";
-      const { doc } = await elPDF();
-      const pdf = {
-        nombre: nombreArchivo(abierto),
-        bytes: new Uint8Array(await doc.aBlob().arrayBuffer()),
-      };
+      /* Si sólo van las fotos, no hace falta armar el documento. */
+      let pdf = null;
+      if (que !== "fotos") {
+        aviso.textContent = "Armando el PDF...";
+        const { doc } = await elPDF();
+        pdf = {
+          nombre: nombreArchivo(abierto),
+          bytes: new Uint8Array(await doc.aBlob().arrayBuffer()),
+        };
+      }
 
       const salida = await drive.subirInventario(token, abierto, lasFotos, {
+        que,
         pdf,
         avisar: (hechas, total, que) => {
           aviso.textContent = `Subiendo... ${hechas} de ${total} (${que})`;
@@ -840,10 +846,19 @@ function elPie(estado) {
       await releerFotos(estado);
       /* SI LA CARPETA NO ESTABA SE DICE, porque explica por qué subió todo de nuevo: la
          borraste del Drive, o le cambiaste el nombre. */
-      const cuantos = salida.subidas
-        ? `${salida.desdeCero ? "La carpeta no estaba, así que subí todo de nuevo: " : "Listo: "}`
-          + `${salida.subidas} ${salida.subidas === 1 ? "archivo" : "archivos"} en tu Drive.`
-        : "Ya estaba todo subido.";
+      const cuantos = (() => {
+        if (que === "pdf") {
+          return salida.pdfReemplazado
+            ? "Listo: reemplacé el PDF del Drive por el nuevo."
+            : "Listo: subí el PDF al Drive.";
+        }
+        if (!salida.subidas) return "No había nada nuevo para subir: ya estaba todo.";
+        const arriba = `${salida.subidas} ${salida.subidas === 1 ? "archivo" : "archivos"}`;
+        const porque = salida.desdeCero
+          ? "La carpeta no estaba, así que subí todo de nuevo: " : "Listo: ";
+        return `${porque}${arriba} en tu Drive${
+          salida.pdfReemplazado ? ", y el PDF quedó reemplazado" : ""}.`;
+      })();
       aviso.textContent = salida.abierta
         ? `${cuantos} El link quedó pegado abajo.`
         : `${cuantos} El link quedó pegado abajo, pero RE/MAX no deja abrir la carpeta a `
@@ -852,6 +867,41 @@ function elPie(estado) {
       /* Se dice qué HACER, no el código de error. Un fallo silencioso acá se descubre el día
          que abrís el Drive y no está nada. */
       aviso.textContent = drive.comoSeExplica(error);
+    }
+  };
+
+  /* ACTUALIZAR EL DRIVE. Juan: "si toco ese botón reemplaza el pdf viejo con el nuevo, porque
+     si toco ese botón es porque le hice cambios... que pregunte si es todo, las fotos o el
+     pdf".
+
+     La PRIMERA vez no hay nada que preguntar —no hay nada arriba todavía— así que va todo de
+     una. Después, el botón pregunta: puede ser que haya cambiado una línea del documento y no
+     tenga sentido revisar trescientas fotos, o al revés.
+
+     La caja se agarra ANTES de insertar la tarjeta: `nodo()` devuelve un fragmento y un
+     fragmento se vacía al insertarlo. */
+  const cajaDrive = seccion.getElementById("caja-drive");
+  seccion.getElementById("al-drive").addEventListener("click", () => {
+    if (!(abierto.link_fotos || "").trim()) {
+      subirAlDrive("todo");
+      return;
+    }
+    aviso.textContent = "¿Qué actualizo en el Drive?";
+    cajaDrive.innerHTML = html`
+      <button class="boton boton-primario" data-que="todo">Todo</button>
+      <button class="boton" data-que="fotos">Las fotos</button>
+      <button class="boton" data-que="pdf">El PDF</button>
+      <button class="boton" data-que="">Cancelar</button>
+    `;
+    for (const boton of cajaDrive.querySelectorAll("[data-que]")) {
+      boton.addEventListener("click", () => {
+        if (!boton.dataset.que) {
+          /* Cancelar: la pantalla se vuelve a dibujar y quedan los botones de siempre. */
+          estado.redibujar();
+          return;
+        }
+        subirAlDrive(boton.dataset.que);
+      });
     }
   });
 

@@ -87,6 +87,11 @@ function driveDeMentira() {
       const consulta = decodeURIComponent(dir.split("q=")[1].split("&")[0]);
       const nombre = (consulta.match(/name='([^']*)'/) || [])[1];
       const padre = (consulta.match(/'([^']*)' in parents/) || [])[1] || "";
+      /* Buscar un ARCHIVO (la consulta pide que NO sea carpeta) o buscar una carpeta. */
+      if (consulta.includes("mimeType!=")) {
+        const suyo = archivos.find((a) => a.nombre === nombre && a.padre === padre);
+        return ok({ files: suyo ? [{ id: suyo.id, name: nombre }] : [] });
+      }
       const id = carpetas.get(`${nombre}|${padre}`);
       return ok({ files: id ? [{ id, name: nombre }] : [] });
     }
@@ -95,8 +100,26 @@ function driveDeMentira() {
       return ok({ id: "p" });
     }
     if (dir.includes("/upload/")) {
-      archivos.push({ cuerpo: opciones.body });
-      return ok({ id: `a${archivos.length}` });
+      /* PATCH es cambiarle el contenido a uno que ya existe: el id y el link no se mueven. */
+      if (String(opciones.method || "POST").toUpperCase() === "PATCH") {
+        const id = dir.split("/files/")[1].split("?")[0];
+        const suyo = archivos.find((a) => a.id === id);
+        if (suyo) {
+          suyo.cuerpo = opciones.body;
+          suyo.reemplazado = (suyo.reemplazado || 0) + 1;
+        }
+        return ok({ id });
+      }
+      const texto = opciones.body && opciones.body.text
+        ? await opciones.body.text() : String(opciones.body || "");
+      const desde = texto.indexOf('{"name"');
+      let meta = {};
+      try { meta = JSON.parse(texto.slice(desde, texto.indexOf("}", desde) + 1)); } catch { meta = {}; }
+      const id = `a${archivos.length + 1}`;
+      archivos.push({
+        id, nombre: meta.name || "", padre: (meta.parents || [])[0] || "", cuerpo: opciones.body,
+      });
+      return ok({ id });
     }
     // Crear carpeta.
     const cuerpo = JSON.parse(opciones.body);
@@ -281,5 +304,73 @@ test("aunque no se pueda compartir, las fotos ya están subidas", async () => {
     assert.equal(salida.subidas, 2, "las dos subieron igual");
     assert.equal(salida.abierta, false, "y se sabe que no se pudo compartir");
     assert.match(salida.link, /^https:\/\/drive\.google\.com\/drive\/folders\//);
+  } finally { falso.devolver(); }
+});
+
+/* ---------- Actualizar lo que ya está en el Drive ---------- */
+
+/* Juan: "la herramienta de inventarios debería tener un botón que sea actualizar drive. esto
+   significa que si toco ese botón reemplaza el pdf viejo con el nuevo (porque si toco ese botón
+   es porque le hice cambios)".
+
+   El Drive acepta dos archivos con el MISMO nombre en la misma carpeta: subirlo de nuevo
+   dejaría dos inventarios y el inquilino no sabría cuál vale. */
+test("actualizar reemplaza el PDF viejo en vez de dejar dos", async () => {
+  const falso = driveDeMentira();
+  try {
+    const inv = { fecha: "2026-09-25", direccion: "Humaitá 2750" };
+    await subirInventario("tok", inv, [], {
+      pdf: { nombre: "Inventario.pdf", bytes: new Uint8Array([1]) },
+    });
+    assert.equal(falso.archivos.length, 1);
+
+    const salida = await subirInventario("tok", inv, [], {
+      que: "pdf", pdf: { nombre: "Inventario.pdf", bytes: new Uint8Array([2, 2, 2]) },
+    });
+    assert.equal(falso.archivos.length, 1, "sigue habiendo UN pdf");
+    assert.equal(falso.archivos[0].reemplazado, 1, "se le cambió el contenido");
+    assert.equal(salida.pdfReemplazado, true);
+  } finally { falso.devolver(); }
+});
+
+test("actualizar sólo el PDF no toca ninguna foto", async () => {
+  const falso = driveDeMentira();
+  try {
+    const salida = await subirInventario("tok", { fecha: "2026-09-25", direccion: "Humaitá 2750" },
+      [laFoto("Cocina", 1), laFoto("Cocina", 2)], {
+        que: "pdf", pdf: { nombre: "Inventario.pdf", bytes: new Uint8Array([1]) },
+      });
+    assert.equal(salida.subidas, 1, "sólo el PDF");
+    assert.equal(falso.archivos.filter((a) => a.nombre.endsWith(".jpg")).length, 0);
+  } finally { falso.devolver(); }
+});
+
+test("actualizar sólo las fotos no toca el PDF", async () => {
+  const falso = driveDeMentira();
+  try {
+    const salida = await subirInventario("tok", { fecha: "2026-09-25", direccion: "Humaitá 2750" },
+      [laFoto("Cocina", 1)], {
+        que: "fotos", pdf: { nombre: "Inventario.pdf", bytes: new Uint8Array([1]) },
+      });
+    assert.equal(salida.subidas, 1);
+    assert.equal(falso.archivos.filter((a) => a.nombre === "Inventario.pdf").length, 0);
+  } finally { falso.devolver(); }
+});
+
+/* LO QUE MAS LE IMPORTA: "que no vuelva a subir todas las fotos, porque capaz que yo sólo
+   agregué una foto más... puede pasar que sean 300 fotos y estoy actualizando por sólo una". */
+test("actualizando las fotos sube sólo la que falta, no las trescientas", async () => {
+  const falso = driveDeMentira();
+  try {
+    const inv = { fecha: "2026-09-25", direccion: "Humaitá 2750" };
+    const viejas = [laFoto("Cocina", 1), laFoto("Cocina", 2), laFoto("Living", 3)];
+    await subirInventario("tok", inv, viejas);
+    falso.archivos.length = 0;
+
+    const salida = await subirInventario("tok", inv, [...viejas, laFoto("Living", 4)], {
+      que: "fotos", yaSubida: (f) => f.orden <= 3,
+    });
+    assert.equal(salida.subidas, 1, "sólo la nueva");
+    assert.equal(falso.archivos.length, 1);
   } finally { falso.devolver(); }
 });
