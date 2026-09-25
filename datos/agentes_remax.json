@@ -121,6 +121,12 @@
    "slug": "alejandro-rodriguez-ametrano"
   },
   {
+   "id": "055433af-7672-4435-ab35-88581d63457c",
+   "nombre": "Alejandro Vescia",
+   "oficina_id": "238a0dbc-ad1b-45d3-943c-f4699ef9262a",
+   "slug": "alejandro-vescia"
+  },
+  {
    "id": "bf991429-37fa-4f89-a6b1-c63ab332eb63",
    "nombre": "Alexis Labores",
    "oficina_id": "d342d53d-cf32-4ee7-b422-d965e3c860c9",
@@ -179,12 +185,6 @@
    "nombre": "Andrea  Mateo",
    "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
    "slug": "andrea-mateo"
-  },
-  {
-   "id": "f55682f4-cf70-40d4-a59a-b88a9e5a2673",
-   "nombre": "Andrea Ayala",
-   "oficina_id": "d342d53d-cf32-4ee7-b422-d965e3c860c9",
-   "slug": "andrea-ayala"
   },
   {
    "id": "0361c911-6916-4a23-8e46-8a227c2daafc",
@@ -1381,6 +1381,12 @@
    "slug": "maria-soledad-dodero-de-leon"
   },
   {
+   "id": "e29cc63d-bff6-46e6-9f89-d55dc45f66cf",
+   "nombre": "Maria Victoria Amigo",
+   "oficina_id": "b8587180-e38e-474a-b16e-1e411d1a100f",
+   "slug": "maria-victoria-amigo"
+  },
+  {
    "id": "0df5deea-4bfc-4023-b09c-a75e1b3583d1",
    "nombre": "Mariana Borio",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -1975,12 +1981,6 @@
    "slug": "rosario-vidal-dominguez"
   },
   {
-   "id": "47e8be69-4249-400c-8c14-c54b9e063e44",
-   "nombre": "Roxana Brazeiro",
-   "oficina_id": "3815a3ab-c6c8-47ae-aa15-fe403005c965",
-   "slug": "roxana-brazeiro"
-  },
-  {
    "id": "ccf35c99-101c-4868-aa99-beadd46cdec1",
    "nombre": "Roxana Caviglia",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -2251,6 +2251,12 @@
    "slug": "yennifer-bragunde"
   },
   {
+   "id": "b7d0d431-c1e0-4089-b912-2a2fe2a4cf8f",
+   "nombre": "Yeny Magnani",
+   "oficina_id": "b8587180-e38e-474a-b16e-1e411d1a100f",
+   "slug": "yeny-magnani"
+  },
+  {
    "id": "63bfecdb-ea05-44a8-9a04-2bd194b9bfd6",
    "nombre": "Zully Gutiérrez",
    "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
@@ -2263,7 +2269,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-09-22",
+ "bajada_el": "2026-09-25",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
