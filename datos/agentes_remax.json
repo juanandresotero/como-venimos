@@ -1285,6 +1285,12 @@
    "slug": "lucia-dellepiane"
   },
   {
+   "id": "73e38ae3-a5b6-4dd1-84ea-b5d7afb89859",
+   "nombre": "Luis Antonio Malanchino Patrignani",
+   "oficina_id": "dcabe4e3-7e63-4451-b26f-2a60d581a08f",
+   "slug": "luis-antonio-malanchino-patrignani"
+  },
+  {
    "id": "2a8dcc07-b83a-4402-99d8-d4975ebf6c2e",
    "nombre": "Lusiana López",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -2023,22 +2029,10 @@
    "slug": "santiago-beltrand"
   },
   {
-   "id": "4e38f897-b134-40d2-b432-645c1766a7f6",
-   "nombre": "Santiago Carseles",
-   "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
-   "slug": "santiago-carseles"
-  },
-  {
    "id": "8f6826de-6a59-4c53-bfe9-cc7759d17e5a",
    "nombre": "Santiago Pereyra",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
    "slug": "santiago-pereyra"
-  },
-  {
-   "id": "d3ef20e0-1590-4704-8dcc-b60107cb8023",
-   "nombre": "Santiago Suárez",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "santiago-suarez"
   },
   {
    "id": "c1b3ffd6-2626-4286-8351-49e02f4ad387",
@@ -2269,7 +2263,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-09-28",
+ "bajada_el": "2026-10-01",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
