@@ -763,12 +763,6 @@
    "slug": "gaston-fleitas"
   },
   {
-   "id": "cb828e7a-abfe-4170-a3f6-b84c612f9ff1",
-   "nombre": "Gastón Nicolás Levy",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "gaston-nicolas-levy"
-  },
-  {
    "id": "7be58f19-ec44-412d-8e1e-0a70ac9f4567",
    "nombre": "Gerónimo Fernández",
    "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
@@ -2263,7 +2257,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-10-01",
+ "bajada_el": "2026-10-04",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
