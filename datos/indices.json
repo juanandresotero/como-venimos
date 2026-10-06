@@ -1,6 +1,114 @@
 {
  "actualizado": "2026-10-06",
  "meses": {
+  "2020-01": {
+   "avisos": [
+    "el coeficiente publicado (1.0365) no coincide con la cuenta del articulo 15 (1.0879)"
+   ],
+   "coeficiente": 1.0365,
+   "ipc": null,
+   "ura": 1.0948,
+   "verificado": false
+  },
+  "2020-02": {
+   "avisos": [
+    "el coeficiente publicado (1.0346) no coincide con la cuenta del articulo 15 (1.0871)"
+   ],
+   "coeficiente": 1.0346,
+   "ipc": null,
+   "ura": 1.0898,
+   "verificado": false
+  },
+  "2020-03": {
+   "avisos": [
+    "el coeficiente publicado (1.0311) no coincide con la cuenta del articulo 15 (1.0832)"
+   ],
+   "coeficiente": 1.0311,
+   "ipc": null,
+   "ura": 1.0857,
+   "verificado": false
+  },
+  "2020-04": {
+   "avisos": [
+    "el coeficiente publicado (1.0294) no coincide con la cuenta del articulo 15 (1.0832)"
+   ],
+   "coeficiente": 1.0294,
+   "ipc": null,
+   "ura": 1.0832,
+   "verificado": false
+  },
+  "2020-05": {
+   "avisos": [
+    "el coeficiente publicado (1.0316) no coincide con la cuenta del articulo 15 (1.0823)"
+   ],
+   "coeficiente": 1.0316,
+   "ipc": null,
+   "ura": 1.0823,
+   "verificado": false
+  },
+  "2020-06": {
+   "avisos": [
+    "el coeficiente publicado (1.0377) no coincide con la cuenta del articulo 15 (1.0803)"
+   ],
+   "coeficiente": 1.0377,
+   "ipc": null,
+   "ura": 1.0803,
+   "verificado": false
+  },
+  "2020-07": {
+   "avisos": [
+    "el coeficiente publicado (1.0425) no coincide con la cuenta del articulo 15 (1.0780)"
+   ],
+   "coeficiente": 1.0425,
+   "ipc": null,
+   "ura": 1.078,
+   "verificado": false
+  },
+  "2020-08": {
+   "avisos": [
+    "el coeficiente publicado (1.0427) no coincide con la cuenta del articulo 15 (1.0780)"
+   ],
+   "coeficiente": 1.0427,
+   "ipc": null,
+   "ura": 1.078,
+   "verificado": false
+  },
+  "2020-09": {
+   "avisos": [
+    "el coeficiente publicado (1.0455) no coincide con la cuenta del articulo 15 (1.0776)"
+   ],
+   "coeficiente": 1.0455,
+   "ipc": null,
+   "ura": 1.0776,
+   "verificado": false
+  },
+  "2020-10": {
+   "avisos": [
+    "el coeficiente publicado (1.0468) no coincide con la cuenta del articulo 15 (1.0781)"
+   ],
+   "coeficiente": 1.0468,
+   "ipc": null,
+   "ura": 1.0781,
+   "verificado": false
+  },
+  "2020-11": {
+   "avisos": [
+    "el coeficiente publicado (1.0432) no coincide con la cuenta del articulo 15 (1.0765)"
+   ],
+   "coeficiente": 1.0432,
+   "ipc": null,
+   "ura": 1.0765,
+   "verificado": false
+  },
+  "2020-12": {
+   "avisos": [
+    "el coeficiente publicado (1.0409) no coincide con la cuenta del articulo 15 (1.0773)"
+   ],
+   "coeficiente": 1.0409,
+   "ipc": null,
+   "ura": 1.0773,
+   "verificado": false
+  },
   "2025-03": {
    "avisos": [
     "falta el coeficiente"
@@ -92,69 +200,76 @@
    "verificado": false
   },
   "2026-01": {
-   "avisos": [],
-   "coeficiente": 1.0365,
+   "avisos": [
+    "falta el coeficiente"
+   ],
+   "coeficiente": null,
    "ipc": 1.0365,
    "ura": 1.0568,
-   "verificado": true
+   "verificado": false
   },
   "2026-02": {
-   "avisos": [],
-   "coeficiente": 1.0346,
+   "avisos": [
+    "falta el coeficiente"
+   ],
+   "coeficiente": null,
    "ipc": 1.0346,
    "ura": 1.0583,
-   "verificado": true
+   "verificado": false
   },
   "2026-03": {
-   "avisos": [],
-   "coeficiente": 1.0311,
+   "avisos": [
+    "falta el coeficiente"
+   ],
+   "coeficiente": null,
    "ipc": 1.0311,
    "ura": 1.0571,
-   "verificado": true
+   "verificado": false
   },
   "2026-04": {
-   "avisos": [],
-   "coeficiente": 1.0294,
+   "avisos": [
+    "falta el coeficiente"
+   ],
+   "coeficiente": null,
    "ipc": 1.0294,
    "ura": 1.0548,
-   "verificado": true
+   "verificado": false
   },
   "2026-05": {
-   "avisos": [],
-   "coeficiente": 1.0316,
+   "avisos": [
+    "falta el coeficiente"
+   ],
+   "coeficiente": null,
    "ipc": 1.0316,
    "ura": 1.0527,
-   "verificado": true
+   "verificado": false
   },
   "2026-06": {
-   "avisos": [],
-   "coeficiente": 1.0377,
+   "avisos": [
+    "falta el coeficiente"
+   ],
+   "coeficiente": null,
    "ipc": 1.0377,
    "ura": 1.0523,
-   "verificado": true
+   "verificado": false
   },
   "2026-07": {
    "avisos": [
-    "el coeficiente publicado (1.0425) no coincide con la cuenta del articulo 15 (0.0092)"
+    "falta el coeficiente"
    ],
-   "coeficiente": 1.0425,
+   "coeficiente": null,
    "ipc": 1.0425,
    "ura": 1.0519,
    "verificado": false
   },
   "2026-08": {
-   "avisos": [],
-   "coeficiente": 1.0427,
+   "avisos": [
+    "falta el coeficiente"
+   ],
+   "coeficiente": null,
    "ipc": 1.0427,
    "ura": 1.0513,
-   "verificado": true
-  },
-  "2026-09": {
-   "avisos": [],
-   "coeficiente": 1.0455,
-   "ipc": null,
-   "ura": null,
-   "verificado": true
+   "verificado": false
   }
  }
 }
