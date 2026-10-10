@@ -1759,12 +1759,6 @@
    "slug": "noella-vuille"
   },
   {
-   "id": "98a31535-475d-4fb3-9d10-80de5da1c3a8",
-   "nombre": "Ornella Mattivi",
-   "oficina_id": "54a7281c-ebdf-4667-90ed-235c67a12340",
-   "slug": "ornella-mattivi"
-  },
-  {
    "id": "50b11513-bebc-4fbe-9ad6-31901bda3262",
    "nombre": "Oscar Silva Dotti",
    "oficina_id": "54a7281c-ebdf-4667-90ed-235c67a12340",
@@ -2257,7 +2251,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-10-07",
+ "bajada_el": "2026-10-10",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
