@@ -3273,12 +3273,7 @@
   "manual": true,
   "atajo": "venta",
   "nacio_solo": true,
-  "avisos": [
-   {
-    "tipo": "lo_hice_solo",
-    "detalle": "Este negocio lo abrí yo, porque la propiedad quedó reservada en RE/MAX. Revisá que esté bien."
-   }
-  ],
+  "avisos": [],
   "ficha_vigente": true,
   "regimen_comision": "ref_martin",
   "base": 3228,
@@ -3297,7 +3292,8 @@
   "cliente_vendedor": {
    "nombre": "Fabian Sagrera Ref. Tali",
    "telefono": "+59891064941"
-  }
+  },
+  "visto_bueno": true
  },
  {
   "id": "manual-5",
