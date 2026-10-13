@@ -3289,7 +3289,15 @@
   "fecha_fin_estimada": false,
   "ficha_completa_momento": "reservada",
   "precio_publicado": 56000,
-  "baja_sobre_publicado": 0.0393
+  "baja_sobre_publicado": 0.0393,
+  "cliente_comprador": {
+   "nombre": "Norma Por Playa Pascual",
+   "telefono": "093740366"
+  },
+  "cliente_vendedor": {
+   "nombre": "Fabian Sagrera Ref. Tali",
+   "telefono": "+59891064941"
+  }
  },
  {
   "id": "manual-5",
