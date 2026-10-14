@@ -542,7 +542,7 @@
   "direccion": "Juana de Ibarbourou 200",
   "dormitorios": 4,
   "entity_id": "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea",
-  "estado": "publicada",
+  "estado": "en_negociacion",
   "estado_al_desaparecer": null,
   "fecha_captacion_estimada": true,
   "fecha_captacion_real": "2026-08-17",
