@@ -472,5 +472,21 @@
   "internal_id": "940041154-216",
   "tipo": "cambio_estado",
   "titulo": "Venta Apartamento en Malvin Norte de 2 dormitorios"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "desenlace_propuesto": "vendida",
+   "estado_al_desaparecer": "reservada",
+   "moneda": "USD",
+   "precio": 94000.0
+  },
+  "direccion": "Eusebio Vidal 3100",
+  "entity_id": "29b0df7e-7d40-4283-99b0-f88c2f168377",
+  "fecha": "2026-10-14",
+  "id": "2026-10-14|29b0df7e-7d40-4283-99b0-f88c2f168377|baja",
+  "internal_id": "940041154-210",
+  "tipo": "baja",
+  "titulo": "Venta 2 casas mismo padron flor de Maroñas cochera"
  }
 ]
