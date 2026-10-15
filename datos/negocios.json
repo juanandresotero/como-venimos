@@ -3407,12 +3407,7 @@
   "manual": true,
   "atajo": "venta",
   "nacio_solo": true,
-  "avisos": [
-   {
-    "tipo": "lo_hice_solo",
-    "detalle": "Este negocio lo abrí yo. Revisá que esté bien."
-   }
-  ],
+  "avisos": [],
   "precio_publicado": 94000,
   "baja_sobre_publicado": 0.0532,
   "ficha_vigente": true,
@@ -3431,6 +3426,7 @@
    "nombre": "Norma Por Playa Pascual",
    "telefono": "093740366"
   },
-  "ficha_completa_momento": "fuera_de_cartera"
+  "ficha_completa_momento": "fuera_de_cartera",
+  "visto_bueno": true
  }
 ]
