@@ -648,3 +648,57 @@ test("una publicada con una venta vieja cobrada sigue contando como publicada", 
   const c = capas([viejo], { p1: propiedad({ estado: "publicada" }) }, AJUSTES, "2026");
   assert.equal(c.publicado.cantidad, 1);
 });
+
+/* ---------- Cómo llegó la propiedad cambia lo que deja ---------- */
+
+/* EL MISMO ERROR QUE JUAN CAZÓ EN LA CALCULADORA (2026-10-15), pero acá pesaba más: una
+   propiedad sin negocio cargado se estimaba con el split pelado, y CINCO de sus catorce
+   activas son "Ref. Martin". Con Martín no facturás la comisión entera ni te queda tu 45%:
+   facturás la mitad y te queda el 35%. */
+test("una propiedad que te refirió Martín proyecta la mitad y te deja el 35%", () => {
+  const lista = [negocio({ precio_operacion: 100000, facturacion: 4500, ganancia: 2025 })];
+  const mia = capas(lista, { p1: propiedad({ estado: "publicada", precio: 100000 }) },
+    AJUSTES, "2026");
+  const deMartin = capas(lista,
+    { p1: propiedad({ estado: "publicada", precio: 100000, origen_captacion: "Ref. Martin" }) },
+    AJUSTES, "2026");
+  const mio = mia.publicado.detalle[0];
+  const suyo = deMartin.publicado.detalle[0];
+  assert.ok(Math.abs(suyo.facturacion - mio.facturacion * 0.5) < 0.01, "factura la mitad");
+  assert.ok(Math.abs(suyo.ganancia - mio.facturacion * 0.35) < 0.01, "y te deja el 35%");
+});
+
+/* Y si te la refirió un colega, el referidor cobra primero: tu split corre sobre el 75% que
+   queda, o sea 33,75%. La facturación sí es entera. */
+test("una propiedad que te refirió un colega te deja el 33,75%", () => {
+  const lista = [negocio({ precio_operacion: 100000, facturacion: 4500, ganancia: 2025 })];
+  const c = capas(lista,
+    { p1: propiedad({ estado: "reservada", precio: 100000, origen_captacion: "Ref. Único" }) },
+    AJUSTES, "2026");
+  const fila = c.reservado.detalle[0];
+  assert.ok(Math.abs(fila.ganancia - fila.facturacion * 0.3375) < 0.01);
+});
+
+/* Un cliente que te recomienda NO se lleva nada: eso cobra entero, como siempre. */
+test("una recomendación de un cliente sigue dejando tu split entero", () => {
+  const lista = [negocio({ precio_operacion: 100000, facturacion: 4500, ganancia: 2025 })];
+  const c = capas(lista,
+    { p1: propiedad({ estado: "publicada", precio: 100000, origen_captacion: "Ref. Cliente" }) },
+    AJUSTES, "2026");
+  const fila = c.publicado.detalle[0];
+  assert.ok(Math.abs(fila.ganancia - fila.facturacion * 0.45) < 0.01);
+});
+
+/* Y si la propiedad YA tiene su negocio cargado, mandan los números del negocio: la
+   estimación no se usa. */
+test("con el negocio cargado, la estimación no manda", () => {
+  const suyo = negocio({
+    id: "n2", estado: "en_curso", fecha_fin: null, entity_id_cartera: "p1",
+    facturacion: 1234, ganancia: 567,
+  });
+  const c = capas([suyo],
+    { p1: propiedad({ estado: "reservada", precio: 100000, origen_captacion: "Ref. Martin" }) },
+    AJUSTES, "2026");
+  assert.equal(c.reservado.detalle[0].facturacion, 1234);
+  assert.equal(c.reservado.detalle[0].ganancia, 567);
+});

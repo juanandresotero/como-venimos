@@ -57,7 +57,9 @@ const splitVigente = (ajustes) => {
 export function dibujarComisiones(estado) {
   const split = splitVigente(estado.datos.ajustes);
   const activas = entradas.puntas.slice(0, entradas.cantidad);
-  const r = calcular({ precio: entradas.precio, split, puntas: activas });
+  const r = calcular({
+    precio: entradas.precio, split, puntas: activas, regimen: entradas.regimen,
+  });
 
   const f = facturar(r, { regimen: entradas.regimen, split, conIva: entradas.conIva });
 
@@ -71,7 +73,7 @@ export function dibujarComisiones(estado) {
      3. quién cobra y el IVA;
      4. y AL FINAL los dos resúmenes, que son el resultado y van con otro fondo. */
   const trozo = document.createDocumentFragment();
-  trozo.append(cabecera(estado, r, f, split));
+  trozo.append(cabecera(estado, r, f));
   trozo.append(basicos(estado));
   for (const [i] of activas.entries()) trozo.append(campoPunta(i, estado));
   trozo.append(repartirDiferencia(estado));
@@ -87,7 +89,7 @@ export function dibujarComisiones(estado) {
 /* El título va SUELTO, sin tarjeta y sin botón de volver: se vuelve por la barra de abajo,
    igual que en las demás pantallas. Y sin el "cargá el precio y elegí las puntas": los
    campos están ahí abajo y se explican solos. */
-function cabecera(estado, r, f, split) {
+function cabecera(estado, r, f) {
   const hayDescuento = r.descuento > 0;
   const seccion = nodo(html`
     <section style="margin-bottom:16px">
@@ -103,7 +105,9 @@ function cabecera(estado, r, f, split) {
             <div class="renta-caja">
               <p class="renta-nombre">A tu bolsillo</p>
               <p class="cifra renta-cifra chica">${plata(r.bolsillo)}</p>
-              <p class="renta-pie">con tu ${Math.round(split * 100)}%</p>
+              <!-- El porcentaje que se escribe acá es el QUE TE TOCA DE VERDAD, que con un
+                   referido no es tu split: el reparto de abajo dice el mismo número. -->
+              <p class="renta-pie">con tu ${pctFino(r.mi_parte)}</p>
             </div>
           </div>
           ${f.iva

@@ -2,7 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   calcular, calcularPunta, conComisionAdentro, repartir, descuentoParaLlegarA, LADOS, DESCUENTOS,
+  parteTuya,
 } from "../lib/comisiones.js";
+import { calcular as calcularNegocio } from "../lib/motor.js";
 
 const cerca = (a, b, tol = 0.01) =>
   assert.ok(Math.abs(a - b) <= tol, `${a} debería estar cerca de ${b}`);
@@ -469,4 +471,84 @@ test("un descuento de menos de medio punto no se anuncia", () => {
   const f = facturaDe(CON_IVA, { descuentoTipo: "monto", descuentoValor: 10 });
   assert.ok(f.pct_descuento > 0);
   assert.ok(!textoParaElCliente(f, {}).includes("Descuento aplicado"));
+});
+
+/* ---------- Lo que te queda a vos depende de CÓMO llegó el negocio ---------- */
+
+/* EL ERROR QUE CAZÓ JUAN (2026-10-15) mirando Eusebio Vidal 3100: arriba decía "a tu bolsillo
+   2.403, con tu 45%" y abajo, en el reparto de ese mismo negocio, su parte era el 33,75% —
+   901 por punta, 1.802 en total. El número grande salía del split pelado, sin mirar que un
+   referido entrante cobra PRIMERO y el split se aplica sobre lo que queda.
+
+   "creo que debería decir 1802 o parecido": era exactamente eso. */
+test("con un referido entrante, el bolsillo es el 33,75% y no el 45%", () => {
+  const r = calcular({
+    precio: 89000, split: 0.45, regimen: "ref_otro_colega",
+    puntas: [punta(), punta({ lado: "compradora" })],
+  });
+  assert.equal(r.neto, 5340);
+  cerca(r.bolsillo, 1802.25);
+  cerca(r.mi_parte, 0.3375);
+});
+
+test("si la captaste vos, sí es tu split entero", () => {
+  const r = calcular({
+    precio: 89000, split: 0.45, regimen: "captacion_mia",
+    puntas: [punta(), punta({ lado: "compradora" })],
+  });
+  cerca(r.bolsillo, 2403);
+  cerca(r.mi_parte, 0.45);
+});
+
+/* El arreglo con Martín es fijo: 35% sin importar la categoría. */
+test("y con Martín es el 35%, que no escala con la categoría", () => {
+  const r = calcular({
+    precio: 89000, split: 0.45, regimen: "ref_martin",
+    puntas: [punta(), punta({ lado: "compradora" })],
+  });
+  cerca(r.bolsillo, 1869);
+  cerca(r.mi_parte, 0.35);
+});
+
+test("sin decir el régimen, la cuenta es la de siempre", () => {
+  const r = calcular({ precio: 100000, split: 0.45, puntas: [punta()] });
+  assert.equal(r.bolsillo, 1350);
+  cerca(r.mi_parte, 0.45);
+});
+
+/* LA MISMA PLATA QUE CALCULA LA APP PARA ESE NEGOCIO. Son dos cuentas distintas —la
+   calculadora de la herramienta y el motor que mueve los negocios de verdad— y si no dieran
+   lo mismo habría dos verdades para la misma operación. */
+test("el bolsillo coincide con la ganancia que calcula el motor", () => {
+  const AJUSTES_MOTOR = {
+    categorias: [{ categoria: "RAP", split_pct: 0.45, desde: "2026-01-01", hasta: null }],
+    pct_referido_entrante_otro: 0.75,
+    regla_martin: { facturacion: 0.5, ganancia: 0.35 },
+  };
+  for (const regimen of ["captacion_mia", "ref_martin", "ref_otro_colega"]) {
+    const r = calcular({
+      precio: 89000, split: 0.45, regimen,
+      puntas: [punta(), punta({ lado: "compradora" })],
+    });
+    const [, ganancia] = calcularNegocio(regimen, r.neto, "2026-10-15", AJUSTES_MOTOR);
+    cerca(r.bolsillo, ganancia, 1);
+  }
+});
+
+/* Y lo que te cuesta un descuento sale de TU parte, no del split pelado: con un referido
+   entrante, cada dólar que resignás te cuesta 33,75 centavos, no 45. */
+test("el costo del descuento también sale de tu parte de verdad", () => {
+  const r = calcular({
+    precio: 89000, split: 0.45, regimen: "ref_otro_colega",
+    puntas: [punta(), punta({ lado: "compradora", descuentoTipo: "pct", descuentoValor: 0.2 })],
+  });
+  cerca(r.costo_del_descuento, r.descuento * 0.3375);
+  cerca(r.bolsillo_sin_descuento, r.bruto * 0.3375);
+});
+
+test("parteTuya dice cuánto te toca en cada régimen", () => {
+  cerca(parteTuya("captacion_mia", 0.45), 0.45);
+  cerca(parteTuya("ref_martin", 0.45), 0.35);
+  cerca(parteTuya("ref_otro_colega", 0.45), 0.3375);
+  cerca(parteTuya("lo_que_sea", 0.45), 0.45, 0.0001);
 });
