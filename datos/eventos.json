@@ -502,5 +502,21 @@
   "internal_id": "940041154-147",
   "tipo": "cambio_estado",
   "titulo": "Venta terreno y gran Casa 4 dorm. Barros Blancos"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "desenlace_propuesto": "vendida",
+   "estado_al_desaparecer": "reservada",
+   "moneda": "USD",
+   "precio": 56000.0
+  },
+  "direccion": "San José 1200",
+  "entity_id": "a4b43687-a487-485c-82ae-62118b687ec1",
+  "fecha": "2026-10-15",
+  "id": "2026-10-15|a4b43687-a487-485c-82ae-62118b687ec1|baja",
+  "internal_id": "940041154-207",
+  "tipo": "baja",
+  "titulo": "Venta Casa 3 dormitorios playa pascual parrillero"
  }
 ]
