@@ -2080,7 +2080,7 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": true,
+  "ficha_vigente": false,
   "fecha_negociacion": null,
   "cliente_comprador": null,
   "cliente_vendedor": {
@@ -3391,17 +3391,17 @@
   "fecha_inicio": "2026-06-08",
   "fecha_negociacion": "2026-08-27",
   "fecha_boleto": "2026-08-31",
-  "fecha_fin": null,
+  "fecha_fin": "2026-10-14",
   "entity_id_cartera": "29b0df7e-7d40-4283-99b0-f88c2f168377",
   "direccion": "Eusebio Vidal 3100",
   "barrio": "Maroñas",
   "tipo_propiedad": "casa",
-  "precio_operacion": 94000,
+  "precio_operacion": 89000,
   "moneda": "USD",
   "tipo_cambio": null,
   "origen_captacion": "Ref. Remax",
-  "estado": "en_curso",
-  "ficha_completa": false,
+  "estado": "cerrado",
+  "ficha_completa": true,
   "puntas_confirmadas": true,
   "notas": "",
   "manual": true,
@@ -3410,18 +3410,27 @@
   "avisos": [
    {
     "tipo": "lo_hice_solo",
-    "detalle": "Este negocio lo abrí yo, porque la propiedad quedó reservada en RE/MAX. Revisá que esté bien."
+    "detalle": "Este negocio lo abrí yo. Revisá que esté bien."
    }
   ],
   "precio_publicado": 94000,
-  "baja_sobre_publicado": 0,
-  "ficha_vigente": false,
+  "baja_sobre_publicado": 0.0532,
+  "ficha_vigente": true,
   "regimen_comision": "ref_otro_colega",
-  "base": 5640,
-  "facturacion": 5640,
-  "ganancia": 1903.5,
+  "base": 5340,
+  "facturacion": 5340,
+  "ganancia": 1802.25,
   "categoria_vigente": "RAP",
   "recalculado": true,
-  "fecha_fin_estimada": false
+  "fecha_fin_estimada": false,
+  "cliente_vendedor": {
+   "nombre": "Fabian Sagrera Ref. Tali",
+   "telefono": "+59891064941"
+  },
+  "cliente_comprador": {
+   "nombre": "Norma Por Playa Pascual",
+   "telefono": "093740366"
+  },
+  "ficha_completa_momento": "fuera_de_cartera"
  }
 ]
