@@ -17,7 +17,8 @@
   "2026-08-19|a4b43687-a487-485c-82ae-62118b687ec1|cambio_estado",
   "2026-09-02|5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6|baja",
   "2026-09-24|38987f80-3eb7-4653-93df-da695a27575b|baja",
-  "2026-09-24|d8d7855f-b0bb-4122-bc7e-74c987f50396|baja"
+  "2026-09-24|d8d7855f-b0bb-4122-bc7e-74c987f50396|baja",
+  "2026-10-14|29b0df7e-7d40-4283-99b0-f88c2f168377|baja"
  ],
  "cartera": {
   "45e27b03-b19a-4654-a163-4d0bf3307fac": {
@@ -73,7 +74,8 @@
    "origen_captacion": "Ref. Remax",
    "fecha_captacion_real": "2026-06-08",
    "fecha_captacion_estimada": false,
-   "precio_negociacion": 89000
+   "precio_negociacion": 89000,
+   "desenlace_confirmado": "vendida"
   },
   "bbc202e6-4ad7-49f3-9b7c-e667810aa8ea": {
    "precio_negociacion": 75000
