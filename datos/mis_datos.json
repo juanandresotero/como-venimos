@@ -18,7 +18,8 @@
   "2026-09-02|5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6|baja",
   "2026-09-24|38987f80-3eb7-4653-93df-da695a27575b|baja",
   "2026-09-24|d8d7855f-b0bb-4122-bc7e-74c987f50396|baja",
-  "2026-10-14|29b0df7e-7d40-4283-99b0-f88c2f168377|baja"
+  "2026-10-14|29b0df7e-7d40-4283-99b0-f88c2f168377|baja",
+  "2026-10-15|a4b43687-a487-485c-82ae-62118b687ec1|baja"
  ],
  "cartera": {
   "45e27b03-b19a-4654-a163-4d0bf3307fac": {
@@ -42,7 +43,8 @@
    "fecha_captacion_real": "2026-06-08",
    "fecha_captacion_estimada": false,
    "origen_captacion": "Ref. Martin",
-   "precio_negociacion": 53800
+   "precio_negociacion": 53800,
+   "desenlace_confirmado": "vendida"
   },
   "cab1949c-02eb-445f-989a-68c5f31523df": {
    "fecha_captacion_real": "2025-01-30",
