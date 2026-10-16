@@ -781,12 +781,6 @@
    "slug": "gonzalo-arbulo"
   },
   {
-   "id": "0b91e8a6-948c-4679-84f9-a3057286674f",
-   "nombre": "Guillermina Lacruz",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "guillermina-lacruz"
-  },
-  {
    "id": "0668a740-96a5-4fdb-acf3-c4456cb10817",
    "nombre": "Gustavo Sosa De Armas",
    "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
@@ -2251,7 +2245,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-10-13",
+ "bajada_el": "2026-10-16",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
