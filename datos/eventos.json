@@ -518,5 +518,50 @@
   "internal_id": "940041154-207",
   "tipo": "baja",
   "titulo": "Venta Casa 3 dormitorios playa pascual parrillero"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 93000.0
+  },
+  "direccion": "Venancio Benavídez 3500",
+  "entity_id": "375f978c-be4a-40b7-907a-758233a511b3",
+  "fecha": "2026-10-19",
+  "id": "2026-10-19|375f978c-be4a-40b7-907a-758233a511b3|alta",
+  "internal_id": "940041154-226",
+  "tipo": "alta",
+  "titulo": "Venta apartamento 2 dormitorios en el Prado"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "ahora": "en_negociacion",
+   "antes": "publicada"
+  },
+  "direccion": "Minas 1600",
+  "entity_id": "c9e235a6-5bb0-47a6-b9aa-62b2283bb94a",
+  "fecha": "2026-10-19",
+  "id": "2026-10-19|c9e235a6-5bb0-47a6-b9aa-62b2283bb94a|cambio_estado",
+  "internal_id": "940041154-204",
+  "tipo": "cambio_estado",
+  "titulo": "Venta Apartamento 2 dormitorios Cordon con jacuzzi"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "desenlace_propuesto": "caida",
+   "estado_al_desaparecer": "publicada",
+   "moneda": "USD",
+   "precio": 230000.0
+  },
+  "direccion": "Gobernador Vigodet 2700",
+  "entity_id": "a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f",
+  "fecha": "2026-10-19",
+  "id": "2026-10-19|a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f|baja",
+  "internal_id": "940041154-217",
+  "tipo": "baja",
+  "titulo": "Venta 2 casas en Maroñas con cochera y gran salón"
  }
 ]
