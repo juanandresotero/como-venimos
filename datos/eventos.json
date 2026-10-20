@@ -563,5 +563,20 @@
   "internal_id": "940041154-217",
   "tipo": "baja",
   "titulo": "Venta 2 casas en Maroñas con cochera y gran salón"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 400000.0
+  },
+  "direccion": "Libertad 0",
+  "entity_id": "b92c08fe-fc75-4014-8708-5bbe9f3118fe",
+  "fecha": "2026-10-20",
+  "id": "2026-10-20|b92c08fe-fc75-4014-8708-5bbe9f3118fe|alta",
+  "internal_id": "940041154-227",
+  "tipo": "alta",
+  "titulo": "Se vende proyecto de 2 terrenos y algunos aptos"
  }
 ]
