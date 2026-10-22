@@ -297,7 +297,7 @@
   "direccion": "Flammarión 5000",
   "dormitorios": 2,
   "entity_id": "45e27b03-b19a-4654-a163-4d0bf3307fac",
-  "estado": "publicada",
+  "estado": "en_negociacion",
   "estado_al_desaparecer": null,
   "fecha_captacion_estimada": false,
   "fecha_captacion_real": "2026-07-30",
