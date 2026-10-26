@@ -592,5 +592,37 @@
   "internal_id": "940041154-216",
   "tipo": "cambio_estado",
   "titulo": "Venta Apartamento en Malvin Norte de 2 dormitorios"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "desenlace_propuesto": "caida",
+   "estado_al_desaparecer": "publicada",
+   "moneda": "USD",
+   "precio": 175000.0
+  },
+  "direccion": "Libertad 0",
+  "entity_id": "7cfcdb33-d348-4c4a-90d9-406dce54d149",
+  "fecha": "2026-10-26",
+  "id": "2026-10-26|7cfcdb33-d348-4c4a-90d9-406dce54d149|baja",
+  "internal_id": "940041154-220",
+  "tipo": "baja",
+  "titulo": "Venta Casa 3 dormitorios en Lagomar con cochera"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "desenlace_propuesto": "caida",
+   "estado_al_desaparecer": "publicada",
+   "moneda": "USD",
+   "precio": 400000.0
+  },
+  "direccion": "Libertad 0",
+  "entity_id": "b92c08fe-fc75-4014-8708-5bbe9f3118fe",
+  "fecha": "2026-10-26",
+  "id": "2026-10-26|b92c08fe-fc75-4014-8708-5bbe9f3118fe|baja",
+  "internal_id": "940041154-227",
+  "tipo": "baja",
+  "titulo": "Se vende proyecto de 2 terrenos y algunos aptos"
  }
 ]
