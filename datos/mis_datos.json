@@ -20,7 +20,8 @@
   "2026-09-24|d8d7855f-b0bb-4122-bc7e-74c987f50396|baja",
   "2026-10-14|29b0df7e-7d40-4283-99b0-f88c2f168377|baja",
   "2026-10-15|a4b43687-a487-485c-82ae-62118b687ec1|baja",
-  "2026-10-19|a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f|baja"
+  "2026-10-19|a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f|baja",
+  "2026-10-26|7cfcdb33-d348-4c4a-90d9-406dce54d149|baja"
  ],
  "cartera": {
   "45e27b03-b19a-4654-a163-4d0bf3307fac": {
@@ -101,7 +102,8 @@
   "7cfcdb33-d348-4c4a-90d9-406dce54d149": {
    "origen_captacion": "Ref. B.d.r.",
    "fecha_captacion_real": "2026-08-26",
-   "fecha_captacion_estimada": false
+   "fecha_captacion_estimada": false,
+   "desenlace_confirmado": "caida"
   },
   "38987f80-3eb7-4653-93df-da695a27575b": {
    "origen_captacion": "Ref. Martin",
