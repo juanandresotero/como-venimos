@@ -388,7 +388,7 @@
   "ambientes": 5,
   "banos": 1,
   "barrio": "Lagomar",
-  "desenlace_confirmado": null,
+  "desenlace_confirmado": "caida",
   "desenlace_propuesto": "caida",
   "direccion": "Libertad 0",
   "dormitorios": 3,
