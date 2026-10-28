@@ -169,6 +169,12 @@
    "slug": "ana-belen-montiel"
   },
   {
+   "id": "f94d24be-d332-4591-97eb-47f82328c670",
+   "nombre": "Ana Bico",
+   "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+   "slug": "ana-bico"
+  },
+  {
    "id": "b84cf7f4-ae97-4643-81fa-3802e580acaa",
    "nombre": "Ana Carreras",
    "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
@@ -631,6 +637,12 @@
    "slug": "federico-saralegui"
   },
   {
+   "id": "1c3fb3fd-b77d-455b-81d5-37163475ba64",
+   "nombre": "Federico Dorado",
+   "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
+   "slug": "federico-dorado"
+  },
+  {
    "id": "449b6f3a-91eb-4381-b216-66b603388d94",
    "nombre": "Federico Garcilazo",
    "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
@@ -1039,12 +1051,6 @@
    "slug": "karina-rossini"
   },
   {
-   "id": "3f0fb505-def1-4475-b6d2-7e6f5ed378c7",
-   "nombre": "Karina Urrutia Da Rocha",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "karina-urrutia-da-rocha"
-  },
-  {
    "id": "cba22da3-9108-4ae4-9372-9ead23fc1d94",
    "nombre": "Karol Malamed",
    "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
@@ -1159,22 +1165,10 @@
    "slug": "lilia-echarte"
   },
   {
-   "id": "125471cc-5165-422a-8e9c-37697ccc74f9",
-   "nombre": "Lorena  Puentes",
-   "oficina_id": "dcabe4e3-7e63-4451-b26f-2a60d581a08f",
-   "slug": "lorena-puentes"
-  },
-  {
    "id": "2075311c-eb22-43ed-8076-ea171c2b6b9f",
    "nombre": "Lorena Brasil",
    "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
    "slug": "lorena-brasil"
-  },
-  {
-   "id": "77bd3e65-3715-455b-8823-befa27b6da0e",
-   "nombre": "Lorena Vignolo",
-   "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
-   "slug": "lorena-vignolo"
   },
   {
    "id": "980fbc51-59d4-4ab0-883e-fbb878923619",
@@ -2245,7 +2239,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-10-25",
+ "bajada_el": "2026-10-28",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
