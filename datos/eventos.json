@@ -624,5 +624,21 @@
   "internal_id": "940041154-227",
   "tipo": "baja",
   "titulo": "Se vende proyecto de 2 terrenos y algunos aptos"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "desenlace_propuesto": "caida",
+   "estado_al_desaparecer": "publicada",
+   "moneda": "USD",
+   "precio": 245000.0
+  },
+  "direccion": "Ovidio Fernandez Rios 3900",
+  "entity_id": "f123f605-dc13-4aaa-ad8a-94ad44a11db6",
+  "fecha": "2026-10-30",
+  "id": "2026-10-30|f123f605-dc13-4aaa-ad8a-94ad44a11db6|baja",
+  "internal_id": "940041154-179",
+  "tipo": "baja",
+  "titulo": "Venta gran padrón punta de rieles casa y terreno"
  }
 ]
