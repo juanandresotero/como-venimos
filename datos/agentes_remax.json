@@ -493,6 +493,12 @@
    "slug": "diego-acosta"
   },
   {
+   "id": "2f7201fd-c5a7-4983-acdd-b020e82993bb",
+   "nombre": "Diego Burgos Rodriguez",
+   "oficina_id": "54a7281c-ebdf-4667-90ed-235c67a12340",
+   "slug": "diego-burgos-rodriguez"
+  },
+  {
    "id": "da941682-f9f8-4804-ba9f-7cbcfeace78a",
    "nombre": "Dinora Curbelo",
    "oficina_id": "c154cfa8-20b4-4257-98f1-7a11cf34b57c",
@@ -569,12 +575,6 @@
    "nombre": "Estefanía Larraz",
    "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
    "slug": "estefania-larraz"
-  },
-  {
-   "id": "4a3336af-80f4-46e2-a801-82f579b00b04",
-   "nombre": "Esther Languillet",
-   "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
-   "slug": "esther-languillet"
   },
   {
    "id": "2424c305-adec-40f2-a630-f945ae2d6942",
@@ -881,6 +881,12 @@
    "nombre": "Ismael Luján",
    "oficina_id": "d342d53d-cf32-4ee7-b422-d965e3c860c9",
    "slug": "ismael-lujan"
+  },
+  {
+   "id": "09bd19c7-0325-4ec3-b57e-1259ef8180b1",
+   "nombre": "Israel Jijena",
+   "oficina_id": "238a0dbc-ad1b-45d3-943c-f4699ef9262a",
+   "slug": "israel-jijena"
   },
   {
    "id": "543ab1bb-c3d7-490d-84a6-e99937d554d2",
@@ -2239,7 +2245,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-10-28",
+ "bajada_el": "2026-10-31",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
