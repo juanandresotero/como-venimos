@@ -921,7 +921,7 @@
   "ambientes": 8,
   "banos": 1,
   "barrio": "Punta Rieles",
-  "desenlace_confirmado": null,
+  "desenlace_confirmado": "retirada",
   "desenlace_propuesto": "caida",
   "direccion": "Ovidio Fernandez Rios 3900",
   "dormitorios": 4,
