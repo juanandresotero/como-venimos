@@ -23,7 +23,8 @@
   "2026-10-19|a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f|baja",
   "2026-10-26|7cfcdb33-d348-4c4a-90d9-406dce54d149|baja",
   "2026-10-26|b92c08fe-fc75-4014-8708-5bbe9f3118fe|baja",
-  "2026-10-20|b92c08fe-fc75-4014-8708-5bbe9f3118fe|alta"
+  "2026-10-20|b92c08fe-fc75-4014-8708-5bbe9f3118fe|alta",
+  "2026-10-30|f123f605-dc13-4aaa-ad8a-94ad44a11db6|baja"
  ],
  "cartera": {
   "45e27b03-b19a-4654-a163-4d0bf3307fac": {
@@ -69,7 +70,8 @@
   "f123f605-dc13-4aaa-ad8a-94ad44a11db6": {
    "origen_captacion": "Ref. Martin",
    "fecha_captacion_real": "2025-07-08",
-   "fecha_captacion_estimada": false
+   "fecha_captacion_estimada": false,
+   "desenlace_confirmado": "retirada"
   },
   "a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f": {
    "origen_captacion": "Ref. Remax",
