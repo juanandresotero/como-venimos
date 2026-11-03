@@ -2098,13 +2098,7 @@
   "precio_publicado": null,
   "baja_sobre_publicado": null,
   "lo_borrado_al_caerse": {
-   "fecha_negociacion": "2026-08-17",
-   "precio_operacion": 80000,
-   "pct_comision_total": 0.03,
-   "puntas": 1,
-   "puntas_confirmadas": true,
-   "precio_publicado": 80000,
-   "baja_sobre_publicado": 0
+   "fecha_negociacion": "2026-10-20"
   }
  },
  {
