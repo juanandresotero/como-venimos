@@ -2082,7 +2082,10 @@
   "yo_referi": false,
   "ficha_vigente": false,
   "fecha_negociacion": null,
-  "cliente_comprador": null,
+  "cliente_comprador": {
+   "nombre": "Natalia por ibarburu",
+   "telefono": "+59898048838"
+  },
   "cliente_vendedor": {
    "nombre": "Juanjo 2025",
    "telefono": "+598 92 697 996"
