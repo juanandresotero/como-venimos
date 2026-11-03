@@ -2329,7 +2329,10 @@
    "nombre": "Rodolfo Cap. Bdr",
    "telefono": "+59898870023"
   },
-  "cliente_comprador": null,
+  "cliente_comprador": {
+   "nombre": "Santiago Por Flammarion",
+   "telefono": "+59899088525"
+  },
   "ficha_completa_momento": "en_negociacion"
  },
  {
