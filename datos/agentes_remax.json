@@ -133,12 +133,6 @@
    "slug": "alexis-labores"
   },
   {
-   "id": "809a2c83-c0fc-479a-93ef-9f6d82c59630",
-   "nombre": "Alfonso Reissig",
-   "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
-   "slug": "alfonso-reissig"
-  },
-  {
    "id": "31e03047-0b05-4510-9cdb-3d3742ff8b37",
    "nombre": "Alicia Etchegoyen",
    "oficina_id": "d342d53d-cf32-4ee7-b422-d965e3c860c9",
@@ -1453,12 +1447,6 @@
    "slug": "maristella-lopez"
   },
   {
-   "id": "80a020d0-f1c5-4cae-8180-a97ec77c7445",
-   "nombre": "Martin Canepa",
-   "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
-   "slug": "martin-canepa"
-  },
-  {
    "id": "fcf54813-0332-46bf-8ad8-a903441c204b",
    "nombre": "Martin Lopez",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -2245,7 +2233,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-10-31",
+ "bajada_el": "2026-11-03",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
