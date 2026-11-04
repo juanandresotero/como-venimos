@@ -3419,13 +3419,13 @@
   "puntas": 2,
   "agente_vende": "Juan Andrés Otero",
   "agente_compra": "Juan Andrés Otero",
-  "pct_comision_total": 0.06,
+  "pct_comision_total": 0.0525,
   "fecha_inicio": "2026-10-19",
   "fecha_negociacion": "2026-11-04",
   "fecha_boleto": null,
   "fecha_fin": null,
   "entity_id_cartera": "375f978c-be4a-40b7-907a-758233a511b3",
-  "direccion": "Venancio Benavídez 3500",
+  "direccion": "Venancio Benavídez 3535",
   "barrio": "Prado",
   "tipo_propiedad": "departamento_estandar",
   "precio_operacion": 93000,
@@ -3433,8 +3433,8 @@
   "tipo_cambio": null,
   "origen_captacion": "Ref. B.d.r.",
   "estado": "en_curso",
-  "ficha_completa": false,
-  "puntas_confirmadas": false,
+  "ficha_completa": true,
+  "puntas_confirmadas": true,
   "notas": "",
   "manual": true,
   "atajo": "venta",
@@ -3443,21 +3443,26 @@
    {
     "tipo": "lo_hice_solo",
     "detalle": "Este negocio lo abrí yo, porque la propiedad pasó a negociación en RE/MAX. Revisá que esté bien."
-   },
-   {
-    "tipo": "revisar_puntas",
-    "detalle": "Está contando LAS DOS PUNTAS. Si al comprador lo trajo otro agente es una sola, y esta ganancia vale la mitad de lo que dice."
    }
   ],
   "precio_publicado": 93000,
   "baja_sobre_publicado": 0,
-  "ficha_vigente": false,
+  "ficha_vigente": true,
   "regimen_comision": "captacion_mia",
-  "base": 5580,
-  "facturacion": 5580,
-  "ganancia": 2511,
+  "base": 4882.5,
+  "facturacion": 4882.5,
+  "ganancia": 2197.13,
   "categoria_vigente": "RAP",
   "recalculado": true,
-  "fecha_fin_estimada": false
+  "fecha_fin_estimada": false,
+  "cliente_vendedor": {
+   "nombre": "Alfredo Otero Cap. Redes",
+   "telefono": "+59895069274"
+  },
+  "cliente_comprador": {
+   "nombre": "Josué Por Venancio",
+   "telefono": "+59898877989"
+  },
+  "ficha_completa_momento": "en_negociacion"
  }
 ]
