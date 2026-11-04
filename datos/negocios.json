@@ -3439,12 +3439,7 @@
   "manual": true,
   "atajo": "venta",
   "nacio_solo": true,
-  "avisos": [
-   {
-    "tipo": "lo_hice_solo",
-    "detalle": "Este negocio lo abrí yo, porque la propiedad pasó a negociación en RE/MAX. Revisá que esté bien."
-   }
-  ],
+  "avisos": [],
   "precio_publicado": 93000,
   "baja_sobre_publicado": 0,
   "ficha_vigente": true,
@@ -3463,6 +3458,7 @@
    "nombre": "Josué Por Venancio",
    "telefono": "+59898877989"
   },
-  "ficha_completa_momento": "en_negociacion"
+  "ficha_completa_momento": "en_negociacion",
+  "visto_bueno": true
  }
 ]
