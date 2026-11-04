@@ -640,5 +640,19 @@
   "internal_id": "940041154-179",
   "tipo": "baja",
   "titulo": "Venta gran padrón punta de rieles casa y terreno"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "ahora": "en_negociacion",
+   "antes": "publicada"
+  },
+  "direccion": "Venancio Benavídez 3500",
+  "entity_id": "375f978c-be4a-40b7-907a-758233a511b3",
+  "fecha": "2026-11-04",
+  "id": "2026-11-04|375f978c-be4a-40b7-907a-758233a511b3|cambio_estado",
+  "internal_id": "940041154-226",
+  "tipo": "cambio_estado",
+  "titulo": "Venta apartamento 2 dormitorios en el Prado"
  }
 ]
