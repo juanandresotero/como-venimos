@@ -1171,6 +1171,12 @@
    "slug": "lorena-brasil"
   },
   {
+   "id": "2389a910-74de-4d7f-8941-c5840d5c3fb9",
+   "nombre": "Lorena Vignolo",
+   "oficina_id": "d342d53d-cf32-4ee7-b422-d965e3c860c9",
+   "slug": "lorena-vignolo"
+  },
+  {
    "id": "980fbc51-59d4-4ab0-883e-fbb878923619",
    "nombre": "Lourdes Ferreira",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -1331,12 +1337,6 @@
    "nombre": "Maria Emilia Coppola Marr",
    "oficina_id": "54a7281c-ebdf-4667-90ed-235c67a12340",
    "slug": "maria-emilia-coppola-marr"
-  },
-  {
-   "id": "8cad935b-6d8d-4bc8-81ea-e5ce8a2ddf27",
-   "nombre": "Maria Emilia Portela Facal",
-   "oficina_id": "b8587180-e38e-474a-b16e-1e411d1a100f",
-   "slug": "maria-emilia-portela-facal"
   },
   {
    "id": "3cfbadd7-4f19-4db2-9379-0be63092b141",
@@ -1775,12 +1775,6 @@
    "nombre": "Paola Scharf",
    "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
    "slug": "paola-scharf"
-  },
-  {
-   "id": "b80c175e-fd14-4335-81fd-4a9dbbccd73f",
-   "nombre": "Patricia  Rodríguez",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "patricia-rodriguez"
   },
   {
    "id": "096bfdd7-e1e4-4d27-a816-0b8ff22e361e",
@@ -2233,7 +2227,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-11-03",
+ "bajada_el": "2026-11-06",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
