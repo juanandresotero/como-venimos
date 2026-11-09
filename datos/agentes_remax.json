@@ -1903,6 +1903,12 @@
    "slug": "rita-leite"
   },
   {
+   "id": "268b1b9f-8459-4b8f-9323-8b90eaa5c57a",
+   "nombre": "Robert CABRERA",
+   "oficina_id": "d342d53d-cf32-4ee7-b422-d965e3c860c9",
+   "slug": "robert-cabrera"
+  },
+  {
    "id": "875a82c7-235e-4b2c-8708-6aca950d9ffb",
    "nombre": "Rodolfo Manuel  Yañez Iturralde",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -1997,6 +2003,12 @@
    "nombre": "Santiago Pereyra",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
    "slug": "santiago-pereyra"
+  },
+  {
+   "id": "48e571cd-3671-467d-af18-218669f60b88",
+   "nombre": "Sebastián CRUZ",
+   "oficina_id": "d342d53d-cf32-4ee7-b422-d965e3c860c9",
+   "slug": "sebastian-cruz"
   },
   {
    "id": "c1b3ffd6-2626-4286-8351-49e02f4ad387",
@@ -2227,7 +2239,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-11-06",
+ "bajada_el": "2026-11-09",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
