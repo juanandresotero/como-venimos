@@ -1,5 +1,5 @@
 {
- "actualizado": "2026-11-10",
+ "actualizado": "2026-11-11",
  "meses": {
   "2020-01": {
    "avisos": [
@@ -269,6 +269,15 @@
    "coeficiente": null,
    "ipc": 1.0427,
    "ura": 1.0513,
+   "verificado": false
+  },
+  "2026-09": {
+   "avisos": [
+    "falta el coeficiente"
+   ],
+   "coeficiente": null,
+   "ipc": 1.0455,
+   "ura": 1.0533,
    "verificado": false
   },
   "2026-10": {
