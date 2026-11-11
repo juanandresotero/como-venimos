@@ -93,9 +93,9 @@
   },
   "2020-11": {
    "avisos": [
-    "el coeficiente publicado (1.0432) no coincide con la cuenta del articulo 15 (1.0765)"
+    "el coeficiente publicado (1.0487) no coincide con la cuenta del articulo 15 (1.0765)"
    ],
-   "coeficiente": 1.0432,
+   "coeficiente": 1.0487,
    "ipc": null,
    "ura": 1.0765,
    "verificado": false
