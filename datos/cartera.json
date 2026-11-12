@@ -45,7 +45,7 @@
   "titulo": "Venta casa 3 dormitorios en casavalle con cochera",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-09-16",
-  "visto_ultima_vez": "2026-11-11"
+  "visto_ultima_vez": "2026-11-12"
  },
  "289eef8c-1a9c-4417-b483-8875104847ac": {
   "activa": true,
@@ -93,7 +93,7 @@
   "titulo": "Venta Apto 1 dormitorio con cochera la Blanqueda",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-20",
-  "visto_ultima_vez": "2026-11-11"
+  "visto_ultima_vez": "2026-11-12"
  },
  "29b0df7e-7d40-4283-99b0-f88c2f168377": {
   "activa": false,
@@ -189,7 +189,7 @@
   "titulo": "Venta gran casa en colon 5 dorm. con gran terreno",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-11"
+  "visto_ultima_vez": "2026-11-12"
  },
  "375f978c-be4a-40b7-907a-758233a511b3": {
   "activa": true,
@@ -237,7 +237,7 @@
   "titulo": "Venta apartamento 2 dormitorios en el Prado",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-10-19",
-  "visto_ultima_vez": "2026-11-11"
+  "visto_ultima_vez": "2026-11-12"
  },
  "38987f80-3eb7-4653-93df-da695a27575b": {
   "activa": false,
@@ -333,7 +333,7 @@
   "titulo": "Venta Apartamento en Malvin Norte de 2 dormitorios",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-11"
+  "visto_ultima_vez": "2026-11-12"
  },
  "5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6": {
   "activa": false,
@@ -431,6 +431,102 @@
   "visto_primera_vez": "2026-08-27",
   "visto_ultima_vez": "2026-10-25"
  },
+ "83271442-05bd-4a1a-bb7e-b0026994e96f": {
+  "activa": true,
+  "ambientes": 3,
+  "banos": 1,
+  "barrio": "Peñarol",
+  "desenlace_confirmado": null,
+  "desenlace_propuesto": null,
+  "direccion": "Yucutuja 1400",
+  "dormitorios": 2,
+  "entity_id": "83271442-05bd-4a1a-bb7e-b0026994e96f",
+  "estado": "publicada",
+  "estado_al_desaparecer": null,
+  "fecha_captacion_estimada": true,
+  "fecha_captacion_real": "2026-11-12",
+  "fecha_desaparicion": null,
+  "fecha_negociacion": null,
+  "fecha_reservada": null,
+  "foto_portada": "listings/83271442-05bd-4a1a-bb7e-b0026994e96f/e3437177-831b-4850-bd44-e4c3660a7a79",
+  "gastos_comunes": null,
+  "historial_precio": [
+   {
+    "fecha": "2026-11-12",
+    "moneda": "USD",
+    "precio": 45000.0
+   }
+  ],
+  "internal_id": "940041154-228",
+  "lat": -34.8357693,
+  "link": "https://www.remax.com.uy/listings/venta-casa-de-dos-dormitorios-en-penarol-con-patio",
+  "listing_id": 34715,
+  "lon": -56.1940438,
+  "m2_cubierto": 51.0,
+  "m2_terreno": 82.0,
+  "m2_total": 82.0,
+  "moneda": "USD",
+  "moneda_gastos": "UYU",
+  "notas": "",
+  "operacion": "venta",
+  "origen_captacion": null,
+  "posible_duplicado_de": null,
+  "precio": 45000.0,
+  "slug": "venta-casa-de-dos-dormitorios-en-penarol-con-patio",
+  "tipo": "casa",
+  "titulo": "Venta casa de dos dormitorios en Peñarol con patio",
+  "usar_en_proyeccion": true,
+  "visto_primera_vez": "2026-11-12",
+  "visto_ultima_vez": "2026-11-12"
+ },
+ "90a7d087-db00-480d-a242-cb6a8aec667e": {
+  "activa": true,
+  "ambientes": 6,
+  "banos": 2,
+  "barrio": "Colon",
+  "desenlace_confirmado": null,
+  "desenlace_propuesto": null,
+  "direccion": "Camino Francisco Lecocq 1500",
+  "dormitorios": 4,
+  "entity_id": "90a7d087-db00-480d-a242-cb6a8aec667e",
+  "estado": "publicada",
+  "estado_al_desaparecer": null,
+  "fecha_captacion_estimada": true,
+  "fecha_captacion_real": "2026-11-12",
+  "fecha_desaparicion": null,
+  "fecha_negociacion": null,
+  "fecha_reservada": null,
+  "foto_portada": "listings/90a7d087-db00-480d-a242-cb6a8aec667e/45d7881d-1976-4a09-98cd-f5958e7d3ac4",
+  "gastos_comunes": null,
+  "historial_precio": [
+   {
+    "fecha": "2026-11-12",
+    "moneda": "USD",
+    "precio": 100000.0
+   }
+  ],
+  "internal_id": "940041154-229",
+  "lat": -34.8116369,
+  "link": "https://www.remax.com.uy/listings/se-vende-casa-4-dormitorios-con-parrillero-colon",
+  "listing_id": 34719,
+  "lon": -56.2291945,
+  "m2_cubierto": 162.0,
+  "m2_terreno": 325.0,
+  "m2_total": 325.0,
+  "moneda": "USD",
+  "moneda_gastos": "UYU",
+  "notas": "",
+  "operacion": "venta",
+  "origen_captacion": null,
+  "posible_duplicado_de": null,
+  "precio": 100000.0,
+  "slug": "se-vende-casa-4-dormitorios-con-parrillero-colon",
+  "tipo": "casa",
+  "titulo": "Se vende casa 4 dormitorios con parrillero Colon",
+  "usar_en_proyeccion": true,
+  "visto_primera_vez": "2026-11-12",
+  "visto_ultima_vez": "2026-11-12"
+ },
  "99be19a0-068d-4258-8719-3bac251cee0e": {
   "activa": true,
   "ambientes": 4,
@@ -477,7 +573,7 @@
   "titulo": "VENTA DE COCHERAS CON CASA EN COLON",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-09-25",
-  "visto_ultima_vez": "2026-11-11"
+  "visto_ultima_vez": "2026-11-12"
  },
  "a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f": {
   "activa": false,
@@ -674,7 +770,7 @@
   "titulo": "Venta terreno y gran Casa 4 dorm. Barros Blancos",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-11"
+  "visto_ultima_vez": "2026-11-12"
  },
  "c9e235a6-5bb0-47a6-b9aa-62b2283bb94a": {
   "activa": true,
@@ -722,7 +818,7 @@
   "titulo": "Venta Apartamento 2 dormitorios Cordon con jacuzzi",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-11"
+  "visto_ultima_vez": "2026-11-12"
  },
  "c9f554b2-5290-4e2f-9b88-fdac4cbd67d7": {
   "activa": true,
@@ -770,7 +866,7 @@
   "titulo": "Venta gran casa en colon 5 dorm. con gran terreno",
   "usar_en_proyeccion": false,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-11"
+  "visto_ultima_vez": "2026-11-12"
  },
  "cab1949c-02eb-445f-989a-68c5f31523df": {
   "activa": true,
@@ -818,7 +914,7 @@
   "titulo": "Venta salón 3 dormitorios cochera paso de la arena",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-11"
+  "visto_ultima_vez": "2026-11-12"
  },
  "d8d7855f-b0bb-4122-bc7e-74c987f50396": {
   "activa": false,
@@ -914,7 +1010,7 @@
   "titulo": "VENTA APARTAMENTO UN DORMITORIO LA BLANQUEADA",
   "usar_en_proyeccion": false,
   "visto_primera_vez": "2026-08-19",
-  "visto_ultima_vez": "2026-11-11"
+  "visto_ultima_vez": "2026-11-12"
  },
  "f123f605-dc13-4aaa-ad8a-94ad44a11db6": {
   "activa": false,

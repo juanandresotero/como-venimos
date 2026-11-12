@@ -654,5 +654,35 @@
   "internal_id": "940041154-226",
   "tipo": "cambio_estado",
   "titulo": "Venta apartamento 2 dormitorios en el Prado"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 100000.0
+  },
+  "direccion": "Camino Francisco Lecocq 1500",
+  "entity_id": "90a7d087-db00-480d-a242-cb6a8aec667e",
+  "fecha": "2026-11-12",
+  "id": "2026-11-12|90a7d087-db00-480d-a242-cb6a8aec667e|alta",
+  "internal_id": "940041154-229",
+  "tipo": "alta",
+  "titulo": "Se vende casa 4 dormitorios con parrillero Colon"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 45000.0
+  },
+  "direccion": "Yucutuja 1400",
+  "entity_id": "83271442-05bd-4a1a-bb7e-b0026994e96f",
+  "fecha": "2026-11-12",
+  "id": "2026-11-12|83271442-05bd-4a1a-bb7e-b0026994e96f|alta",
+  "internal_id": "940041154-228",
+  "tipo": "alta",
+  "titulo": "Venta casa de dos dormitorios en Peñarol con patio"
  }
 ]
