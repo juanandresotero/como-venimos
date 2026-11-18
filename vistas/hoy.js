@@ -17,7 +17,7 @@ import {
 import { capas, ritmo, formaDelAnio, comparativaCategorias } from "../lib/salud.js";
 import { marcarAtendido, editarPropiedad, editarNegocio } from "../lib/guardado.js";
 import { mandarAlRobot, comoVaElRobot } from "../lib/github.js";
-import { medir, vale_la_pena_ajustar } from "../lib/seguridad.js";
+import { medir } from "../lib/seguridad.js";
 import { nivelDe, nivelDelObjetivo } from "../lib/niveles.js";
 import { plata, pct, fechaCorta, escapar } from "../lib/formato.js";
 import { telon } from "./ventana.js";
@@ -530,7 +530,6 @@ function queTanSeguro(estado) {
   if (!filas.length) return document.createDocumentFragment();
 
   const medidas = filas.filter((f) => f.alcanza);
-  const paraAjustar = filas.filter(vale_la_pena_ajustar);
 
   return nodo(html`
     <section class="tarjeta">
@@ -549,11 +548,6 @@ function queTanSeguro(estado) {
             </span>
           </div>`).join("")}
       </div>
-      ${paraAjustar.length
-        ? html`<p class="frase alerta">No coincide con lo que tenés cargado:
-             ${paraAjustar.map((f) => `${f.nombre.toLowerCase()} da ${pct(f.medido, 0)}`).join("; ")}.
-             Cambialo en Ajustes.</p>`
-        : ""}
     </section>
   `);
 }
