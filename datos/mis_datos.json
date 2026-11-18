@@ -124,6 +124,10 @@
   "375f978c-be4a-40b7-907a-758233a511b3": {
    "origen_captacion": "Ref. B.d.r.",
    "precio_negociacion": 90500
+  },
+  "90a7d087-db00-480d-a242-cb6a8aec667e": {
+   "origen_captacion": "Ref. Remax",
+   "usar_en_proyeccion": true
   }
  }
 }
