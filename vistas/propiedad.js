@@ -21,7 +21,7 @@ function opcionesCon(lista, actual) {
   }
   return opciones;
 }
-import { editarPropiedad, editarNegocio } from "../lib/guardado.js";
+import { editarPropiedad, editarNegocio, confirmarFechaDelRobot } from "../lib/guardado.js";
 import {
   plata, plataUSD, fechaCorta, escapar, fechaRazonable, numeroDesde,
   formatearMientrasEscribe,
@@ -271,6 +271,27 @@ function campos(p, estado) {
 
   agregar("fecha_captacion_real", "Cuándo la captaste de verdad", "date",
     p.fecha_captacion_real, null, p.fecha_captacion_estimada);
+
+  /* La fecha del robot es el dia que vio la propiedad por primera vez. Si es la correcta
+     (la captaste el mismo dia que aparecio), no hay nada que cambiar: se confirma de un toque.
+     Antes el rojo solo se iba si ponias OTRA fecha. */
+  if (p.fecha_captacion_estimada && p.fecha_captacion_real) {
+    const confirmar = document.createElement("div");
+    confirmar.className = "campo-fila";
+    confirmar.innerHTML = html`
+      <p class="apunte" style="margin:0 0 8px">El robot la vio por primera vez el
+        ${fechaCorta(p.fecha_captacion_real, Number(estado.hoy.slice(0, 4)))}.
+        ¿Esa es la fecha en que la captaste?</p>
+      <div class="botonera" style="margin-top:0">
+        <button class="boton boton-chico boton-primario" id="fecha-ok">Sí, está bien</button>
+      </div>
+    `;
+    confirmar.querySelector("#fecha-ok").addEventListener("click", () => {
+      confirmarFechaDelRobot(estado, p.entity_id);
+      estado.redibujar();
+    });
+    contenedor.append(confirmar);
+  }
   /* Se llama IGUAL que en la ficha del negocio a proposito: es el mismo dato, visto
      desde otra pantalla. Con dos nombres distintos parecian dos cosas. */
   agregar("origen_captacion", "Cómo llegó", null, p.origen_captacion,

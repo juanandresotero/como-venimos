@@ -3,7 +3,9 @@
    Los campos que faltan se pintan en rojo, para que se vea de un golpe que hay que
    completar. Cada cambio se aplica al instante y queda en la cola para subir. */
 
-import { editarNegocio, editarPropiedad, borrarNegocio } from "../lib/guardado.js";
+import {
+  editarNegocio, editarPropiedad, borrarNegocio, confirmarFechaDelRobot,
+} from "../lib/guardado.js";
 import { PIDEN_VISTO_BUENO } from "../lib/motor.js";
 import {
   plata, plataUSD, escapar, fechaRazonable, numeroDesde, formatearMientrasEscribe,
@@ -1135,6 +1137,9 @@ function fichaCompleta(n, estado) {
       estado.redibujar();
       return;
     }
+    /* "Ficha completa" tambien da por buena la fecha de captacion que vio el robot: si ya
+       cargaste todo y no la cambiaste, es que estaba bien (Juan, 2026-11-18). */
+    if (n.entity_id_cartera) confirmarFechaDelRobot(estado, n.entity_id_cartera);
     /* Al darla por completa se sube y se sale: es el final del trabajo con ese negocio.
        El guardado va por atrás, así la pantalla no se queda esperando a la red. */
     estado.guardar();

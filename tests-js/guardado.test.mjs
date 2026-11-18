@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   editarNegocio, editarPropiedad, marcarAtendido, hayCambios, resumenCambios, sincronizar,
+  confirmarFechaDelRobot, ARCHIVO_MIS_DATOS,
   ARCHIVO_NEGOCIOS,
 } from "../lib/guardado.js";
 
@@ -237,4 +238,40 @@ test("contestar qué pasó despacha el aviso de que se fue", () => {
   const e = conPropiedadQueSeFue();
   editarPropiedad(e, "sf", { desenlace_confirmado: "vendida" });
   assert.ok(e.datos.mis_datos.eventos_atendidos.includes("2026-09-02|sf|baja"));
+});
+
+/* PASTOR 1200 (2026-11-18): el robot la vio hoy y Juan la capto hoy. La fecha quedaba en rojo
+   ("estimada") y no habia forma de decir "esta bien": el campo solo se confirmaba al CAMBIARLA. */
+const conFechaDelRobot = (extra = {}) => ({
+  datos: {
+    negocios: [], eventos: [], ajustes: AJUSTES, mis_datos: { eventos_atendidos: [] },
+    cartera: { p1: { entity_id: "p1", fecha_captacion_real: "2026-11-18",
+      fecha_captacion_estimada: true, ...extra } },
+  },
+  hoy: "2026-11-18",
+  sucios: new Set(),
+});
+
+test("confirmar la fecha del robot la da por buena, sin cambiarla", () => {
+  const e = conFechaDelRobot();
+  assert.equal(confirmarFechaDelRobot(e, "p1"), true);
+  const p = e.datos.cartera.p1;
+  assert.equal(p.fecha_captacion_estimada, false);
+  assert.equal(p.fecha_captacion_real, "2026-11-18");
+  assert.ok(e.sucios.has(ARCHIVO_MIS_DATOS), "queda en la cola para subir");
+  // Y sobrevive: lo anotado va en lo que edita el usuario, no se lo pisa el robot.
+  assert.equal(e.datos.mis_datos.cartera.p1.fecha_captacion_estimada, false);
+  assert.equal(e.datos.mis_datos.cartera.p1.fecha_captacion_real, "2026-11-18");
+});
+
+test("si la fecha ya estaba confirmada, no hace nada", () => {
+  const e = conFechaDelRobot({ fecha_captacion_estimada: false });
+  assert.equal(confirmarFechaDelRobot(e, "p1"), false);
+  assert.equal(e.sucios.size, 0, "no marca nada para subir");
+});
+
+test("sin fecha de captacion no hay nada que confirmar", () => {
+  const e = conFechaDelRobot({ fecha_captacion_real: null });
+  assert.equal(confirmarFechaDelRobot(e, "p1"), false);
+  assert.equal(confirmarFechaDelRobot(e, "no-existe"), false);
 });
