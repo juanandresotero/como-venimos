@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import {
   AGENTES, AGENTES_QUE_LLEVAN_NOMBRE, ORIGENES, ORIGEN_A_REGIMEN,
   regimenDe, marcaActual, admiteMarcas, MARCAS, TIPOS_NEGOCIO, YO,
-  origenSegunReferidor, esOrigenDeReferido, normalizarOrigen,
+  origenSegunReferidor, esOrigenDeReferido, normalizarOrigen, QUE_PASO_DESPUES,
 } from "../lib/catalogos.js";
 
 /* "Inmobiliaria exterior" se agregó para las búsquedas: ahí el aviso lo tiene, muchas veces,
@@ -175,4 +175,11 @@ test("todo origen traducido cae en la lista que se ofrece", () => {
                        "Referido - Team", "Referido - cliente", "Redes pagas"]) {
     assert.ok(conocidos.has(normalizarOrigen(viejo)), `${viejo} traduce a algo que no esta`);
   }
+});
+
+test("los motivos de 'que paso con el negocio anterior' incluyen la salida 'no tiene que ver'", () => {
+  const claves = QUE_PASO_DESPUES.map(([clave]) => clave);
+  assert.deepEqual(claves, [
+    "se_fue_el_inquilino", "se_cayo_la_venta", "termino_el_contrato", "otra", "no_tiene_que_ver",
+  ]);
 });

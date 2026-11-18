@@ -2,7 +2,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { normalizar, partirDireccion, parecido, puntaje, sugerencias } from "../lib/cruce.js";
+import {
+  normalizar, partirDireccion, parecido, puntaje, sugerencias, negocioAnteriorSinContestar,
+} from "../lib/cruce.js";
 
 test("normalizar deja comparables dos formas de escribir lo mismo", () => {
   assert.equal(normalizar("Flammarión 5.000"), "flammarion 5 000");
@@ -108,4 +110,73 @@ test("un negocio abierto de esa misma direccion SI se sigue sugiriendo", () => {
   const s = sugerencias({ direccion: "Pastor 1221", estado: "en_curso" }, cartera);
   assert.equal(s.length, 1);
   assert.equal(s[0].propiedad.entity_id, "a");
+});
+
+/* LA PREGUNTA "¿QUE PASO CON EL NEGOCIO ANTERIOR?" (Juan, 2026-11-18). */
+const robot = (extra = {}) => ({
+  // La propiedad vieja fija el dia en que el robot empezo a mirar (la carga inicial).
+  vieja: { entity_id: "vieja", activa: true, direccion: "Gutenberg 6100", visto_primera_vez: "2026-08-17" },
+  nueva: { entity_id: "nueva", activa: true, direccion: "Pastor 1200", visto_primera_vez: "2026-11-18", ...extra },
+});
+const cerrado = (id, fin, extra = {}) => ({
+  id, direccion: "Pastor 1221", estado: "cerrado", fecha_fin: fin, entity_id_cartera: null, ...extra,
+});
+
+test("la propiedad nueva pregunta por el negocio cerrado de su misma direccion", () => {
+  const anterior = negocioAnteriorSinContestar(
+    robot().nueva, [cerrado("n1", "2025-11-14")], robot());
+  assert.equal(anterior.id, "n1");
+});
+
+test("si hay varios cerrados parecidos, pregunta por el mas reciente", () => {
+  const anterior = negocioAnteriorSinContestar(robot().nueva, [
+    cerrado("n1", "2023-06-05"), cerrado("n2", "2025-11-20"), cerrado("n3", "2025-11-14"),
+  ], robot());
+  assert.equal(anterior.id, "n2");
+});
+
+test("tambien pregunta por uno caido", () => {
+  const anterior = negocioAnteriorSinContestar(
+    robot().nueva, [cerrado("n1", "2025-11-14", { estado: "caido" })], robot());
+  assert.equal(anterior.id, "n1");
+});
+
+test("contestada una vez, no vuelve a preguntar por esa propiedad (ni por los otros parecidos)", () => {
+  const contestado = cerrado("n2", "2025-11-20", {
+    que_paso_despues: { motivo: "no_tiene_que_ver", propiedad: "nueva", fecha: "2026-11-18" },
+  });
+  assert.equal(negocioAnteriorSinContestar(
+    robot().nueva, [cerrado("n1", "2025-11-14"), contestado], robot()), null);
+});
+
+test("no pregunta por un negocio posterior a la publicacion", () => {
+  assert.equal(negocioAnteriorSinContestar(
+    robot().nueva, [cerrado("n1", "2026-12-01")], robot()), null);
+});
+
+test("no pregunta por los negocios enganchados a la propia propiedad", () => {
+  assert.equal(negocioAnteriorSinContestar(
+    robot().nueva, [cerrado("n1", "2025-11-14", { entity_id_cartera: "nueva" })], robot()), null);
+});
+
+test("no pregunta por los abiertos", () => {
+  assert.equal(negocioAnteriorSinContestar(
+    robot().nueva, [cerrado("n1", "2025-11-14", { estado: "en_curso" })], robot()), null);
+});
+
+test("no pregunta por propiedades que ya estaban el primer dia del robot", () => {
+  const cartera = robot({ visto_primera_vez: "2026-08-17" });
+  assert.equal(negocioAnteriorSinContestar(
+    cartera.nueva, [cerrado("n1", "2025-11-14")], cartera), null);
+});
+
+test("no pregunta por una propiedad que ya no esta activa", () => {
+  const cartera = robot({ activa: false });
+  assert.equal(negocioAnteriorSinContestar(
+    cartera.nueva, [cerrado("n1", "2025-11-14")], cartera), null);
+});
+
+test("no pregunta si la direccion no se parece", () => {
+  assert.equal(negocioAnteriorSinContestar(
+    robot().nueva, [cerrado("n1", "2025-11-14", { direccion: "Minas 1600" })], robot()), null);
 });
