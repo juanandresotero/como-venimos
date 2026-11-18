@@ -283,12 +283,17 @@
  {
   "agente_compra": "Otro REMAX",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "firma_inventada",
+    "detalle": "Lo diste por cobrado el 2023-06-05 y RE/MAX todavía muestra la propiedad publicada. Si ya firmaste está bien, el portal tarda en bajar el aviso. Si no, borrale la fecha de firma y vuelve a contar como reservada."
+   }
+  ],
   "barrio": "Peñarol",
-  "base": 612,
+  "base": 15.250436082731122,
   "categoria_vigente": null,
   "direccion": "pastor 1223",
-  "entity_id_cartera": null,
+  "entity_id_cartera": "b8e4aa94-a3ba-4904-925a-cfd7d0339781",
   "estado": "cerrado",
   "excel_facturado": 612,
   "excel_importe": 306,
@@ -297,10 +302,10 @@
   "fecha_fin": "2023-06-05",
   "fecha_fin_estimada": false,
   "fecha_inicio": "2023-05-18",
-  "ficha_completa": false,
+  "ficha_completa": true,
   "ganancia": 306,
   "id": "excel-10",
-  "moneda": "USD",
+  "moneda": "UYU",
   "notas": "",
   "origen_captacion": "Ref. Martin",
   "pct_comision_total": 1.5,
@@ -313,7 +318,11 @@
   "tipo_propiedad": null,
   "es_suplencia": false,
   "yo_referi": false,
-  "ficha_vigente": false
+  "ficha_vigente": true,
+  "precio_publicado": 17700,
+  "baja_sobre_publicado": 0.9769,
+  "tipo_cambio": 40.13,
+  "ficha_completa_momento": "publicada"
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -2623,7 +2632,12 @@
  {
   "agente_compra": "Juan Andrés Otero",
   "agente_vende": "Juan Andrés Otero",
-  "avisos": [],
+  "avisos": [
+   {
+    "tipo": "posible_cruce",
+    "detalle": "Puede ser \"Pastor 1200\", que está en tu cartera (publicada). Si es la misma, engancharlas."
+   }
+  ],
   "barrio": "Sayago",
   "base": 649.5,
   "categoria_vigente": null,
