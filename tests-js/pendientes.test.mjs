@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { derivar, GRUPOS, accionesDe, juntarRepetidos, bandeja, cuantosPendientes }
+import { derivar, GRUPOS, accionesDe, bandeja, cuantosPendientes }
   from "../lib/pendientes.js";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -204,72 +204,6 @@ test("derivar le pone las dos llaves a los avisos del robot", () => {
   assert.equal(accionesDe(grupo.items[0]).length, 2);
 });
 
-/* Juntar los pendientes repetidos de una misma propiedad. Nace de un caso real: una
-   propiedad caia en "Sin fecha de firma" y en "Sin fecha de boleto", se veia dos veces,
-   y nada decia que las dos llevaban a la MISMA pantalla. */
-function grupo(clave, items) {
-  const c = GRUPOS[clave];
-  return { clave, nombre: c.nombre, orden: c.orden, urgente: c.urgente, items };
-}
-
-test("una propiedad repetida en dos grupos queda en uno solo", () => {
-  const juntos = juntarRepetidos([
-    grupo("sin_fecha_fin", [{ negocio_id: "m2", titulo: "Calle 6", detalle: "falta la firma" }]),
-    grupo("falta_fecha_boleto", [{ negocio_id: "m2", titulo: "Calle 6", detalle: "falta el boleto" }]),
-  ]);
-  assert.equal(juntos.length, 1, "el segundo grupo queda vacio y se va");
-  assert.equal(juntos[0].clave, "sin_fecha_fin", "sobrevive en el grupo mas urgente");
-  assert.deepEqual(juntos[0].items[0].mas, ["falta la firma", "falta el boleto"]);
-});
-
-test("el que sobrevive es el del grupo MAS urgente, sin importar el orden de entrada", () => {
-  const juntos = juntarRepetidos([
-    grupo("falta_precio_negociacion", [{ entity_id: "p1", titulo: "Minas 1600", detalle: "a" }]),
-    grupo("falta_barrio", [{ entity_id: "p1", titulo: "Minas 1600", detalle: "b", eventos: ["e9"] }]),
-  ]);
-  assert.equal(juntos[0].clave, "falta_precio_negociacion");
-});
-
-test("al juntar, 'Ya lo resolvi' despacha TODOS los avisos que quedaron adentro", () => {
-  const juntos = juntarRepetidos([
-    grupo("baja", [{ entity_id: "p1", titulo: "X", detalle: "a", eventos: ["e1"] }]),
-    grupo("falta_barrio", [{ entity_id: "p1", titulo: "X", detalle: "b", eventos: ["e2"] }]),
-  ]);
-  const atender = accionesDe(juntos[0].items[0]).find((a) => a.tipo === "atendido");
-  assert.deepEqual(atender.destino, ["e1", "e2"], "si se pierde uno, el aviso vuelve manana");
-});
-
-test("propiedades distintas NO se juntan", () => {
-  const juntos = juntarRepetidos([
-    grupo("falta_precio_negociacion", [
-      { entity_id: "p1", titulo: "A", detalle: "a" },
-      { entity_id: "p2", titulo: "B", detalle: "b" },
-    ]),
-  ]);
-  assert.equal(juntos[0].items.length, 2);
-  assert.equal(juntos[0].items[0].mas, undefined, "sin repetir no se arma la lista");
-});
-
-test("un pendiente sin sujeto no rompe ni se junta con nada", () => {
-  const juntos = juntarRepetidos([grupo("alta", [{ titulo: "suelto", detalle: "x" }])]);
-  assert.equal(juntos[0].items.length, 1);
-});
-
-test("sin grupos devuelve vacio", () => {
-  assert.deepEqual(juntarRepetidos([]), []);
-});
-
-/* El globito rojo del menu y el "Atencion N" del titulo contaban lo mismo por caminos
-   separados. Al juntar los repetidos, uno dijo 3 y el otro siguio diciendo 4. */
-test("la bandeja junta los repetidos, y la cuenta sale de ella", () => {
-  const negocios = [{
-    id: "m2", direccion: "Calle 6", fecha_fin: null, tipo_negocio: "venta",
-    avisos: [{ tipo: "sin_fecha_fin", detalle: "falta firma" },
-             { tipo: "falta_fecha_boleto", detalle: "falta boleto" }],
-  }];
-  assert.equal(cuantosPendientes(derivar(negocios, [], "2026-08-19", {})), 2, "dos problemas");
-  assert.equal(cuantosPendientes(bandeja(negocios, [], "2026-08-19", {})), 1, "una sola visita");
-});
 
 /* Que nadie vuelva a contar por su cuenta: si una pantalla llama a `derivar` directo,
    se saltea la junta y su numero se separa del de las demas. */
@@ -282,7 +216,7 @@ test("ninguna pantalla llama a derivar por su cuenta", () => {
   const trae = /import\s*\{[^}]*\bderivar\b[^}]*\}\s*from\s*["'][^"']*pendientes\.js["']/;
   const culpables = archivos.filter((a) => trae.test(readFileSync(a, "utf-8")));
   assert.deepEqual(culpables.map((a) => a.split(/[\\/]/).pop()), [],
-    "usar bandeja(), que ademas junta los repetidos");
+    "usar bandeja(), que ademas arma una tarjeta por propiedad");
 });
 
 /* Una propiedad podia pasar de negociacion a RESERVADA sin que se le hubiera cargado
@@ -662,4 +596,124 @@ test("contestada, la pregunta desaparece", () => {
   });
   const grupos = derivar([contestado], [], "2026-11-18", carteraConNueva());
   assert.equal(grupos.find((x) => x.clave === "que_paso_antes"), undefined);
+});
+
+/* UNA TARJETA POR PROPIEDAD (Juan, 2026-11-18): "para todo tipo de noticias, 1 notificacion
+   por propiedad; si tiene que preguntar varias cosas, todas dentro de la misma". */
+const MINAS = {
+  p1: { entity_id: "p1", activa: true, estado: "en_negociacion", direccion: "Minas 1600",
+    precio: 90000, visto_primera_vez: "2026-08-17" },
+};
+const negocioDeMinas = (extra = {}) => ({
+  id: "n1", direccion: "Minas 1600", entity_id_cartera: "p1", estado: "en_curso",
+  avisos: [{ tipo: "revisar_puntas", detalle: "puntas?" }], ...extra,
+});
+const altaDeMinas = { id: "e1", entity_id: "p1", tipo: "alta", direccion: "Minas 1600",
+  fecha: "2026-11-18", detalle: {} };
+
+test("un cambio en una propiedad llega en UNA tarjeta con una linea por aviso", () => {
+  // Tres avisos distintos, de tres origenes distintos: un negocio, un evento y la cartera.
+  const lista = bandeja([negocioDeMinas()], [altaDeMinas], "2026-11-18", MINAS);
+  assert.equal(lista.length, 1, "una sola tarjeta");
+  assert.deepEqual(lista[0].lineas.map((l) => l.clave).sort(),
+    ["alta", "falta_precio_negociacion", "revisar_puntas"]);
+});
+
+test("la tarjeta es roja si alguna linea pide algo, y las rojas van primero", () => {
+  const t = bandeja([negocioDeMinas()], [altaDeMinas], "2026-11-18", MINAS)[0];
+  assert.equal(t.urgente, true);
+  assert.equal(t.lineas[t.lineas.length - 1].clave, "alta", "la gris (informativa) queda al final");
+  assert.ok(t.lineas.slice(0, -1).every((l) => l.urgente), "las de arriba son rojas");
+});
+
+test("una tarjeta sin lineas rojas es gris y va despues de las rojas", () => {
+  const cartera = {
+    ...MINAS,
+    p2: { entity_id: "p2", activa: true, estado: "publicada", direccion: "Zeta 10",
+      visto_primera_vez: "2026-08-17" },
+  };
+  const solaAlta = { id: "e2", entity_id: "p2", tipo: "alta", direccion: "Zeta 10",
+    fecha: "2026-11-18", detalle: {} };
+  const lista = bandeja([negocioDeMinas()], [solaAlta], "2026-11-18", cartera);
+  assert.deepEqual(lista.map((t) => t.entity_id), ["p1", "p2"]);
+  assert.equal(lista[0].urgente, true);
+  assert.equal(lista[1].urgente, false);
+});
+
+test("el toque abre el negocio abierto de la propiedad; sin negocio, la propiedad", () => {
+  const conNegocio = bandeja([negocioDeMinas()], [altaDeMinas], "2026-11-18", MINAS)[0];
+  assert.equal(conNegocio.negocio_id, "n1");
+
+  const sinNegocio = bandeja([], [altaDeMinas], "2026-11-18",
+    { p1: { ...MINAS.p1, estado: "publicada" } })[0];
+  assert.equal(sinNegocio.negocio_id, null);
+  assert.equal(sinNegocio.entity_id, "p1");
+});
+
+test("un aviso de un negocio CERRADO enganchado se junta con su propiedad", () => {
+  const cerrado = negocioDeMinas({
+    estado: "cerrado", fecha_fin: "2026-11-10",
+    avisos: [{ tipo: "cierre_por_revisar", detalle: "revisalo" }],
+  });
+  const cartera = { p1: { ...MINAS.p1, estado: "publicada" } };
+  const lista = bandeja([cerrado], [altaDeMinas], "2026-11-18", cartera);
+  assert.equal(lista.length, 1);
+  assert.equal(lista[0].negocio_id, "n1", "sin negocio abierto, abre el cerrado a revisar");
+});
+
+test("un negocio sin propiedad en la cartera es su propia tarjeta", () => {
+  const busqueda = { id: "b1", direccion: "Calle 6", entity_id_cartera: null, estado: "en_curso",
+    avisos: [{ tipo: "busqueda_en_curso", detalle: "abierta" }] };
+  const lista = bandeja([busqueda], [], "2026-11-18", {});
+  assert.equal(lista.length, 1);
+  assert.equal(lista[0].negocio_id, "b1");
+  assert.equal(lista[0].entity_id, null);
+});
+
+test("una referida sigue siendo del NEGOCIO aunque el aviso traiga la propiedad del colega", () => {
+  const evento = { id: "r1", tipo: "referida_avanzo", entity_id: "colega", negocio_id: "n7",
+    direccion: "Casa del colega", fecha: "2026-11-18", detalle: "avanzo" };
+  const otro = { ...evento, id: "r2", negocio_id: "n8" };
+  const lista = bandeja([], [evento, otro], "2026-11-18", {});
+  assert.deepEqual(lista.map((t) => t.negocio_id).sort(), ["n7", "n8"], "una por negocio");
+});
+
+test("cada linea conserva lo que necesitan sus botones", () => {
+  const t = bandeja([negocioDeMinas()], [altaDeMinas], "2026-11-18", MINAS)[0];
+  const alta = t.lineas.find((l) => l.clave === "alta");
+  assert.deepEqual(alta.eventos, ["e1"]);
+  assert.ok(accionesDe(alta).some((a) => a.tipo === "atendido"), "se sigue pudiendo despachar");
+});
+
+test("la cuenta del menu cuenta tarjetas, no avisos", () => {
+  const lista = bandeja([negocioDeMinas()], [altaDeMinas], "2026-11-18", MINAS);
+  assert.equal(derivar([negocioDeMinas()], [altaDeMinas], "2026-11-18", MINAS)
+    .reduce((t, g) => t + g.items.length, 0), 3, "tres avisos");
+  assert.equal(cuantosPendientes(lista), 1, "una tarjeta");
+});
+
+test("la bandeja de PASTOR: dos avisos sueltos pasan a una sola tarjeta", () => {
+  // El caso real del 2026-11-18: la propiedad nueva sin origen, mas la pregunta del negocio viejo.
+  const cartera = {
+    ...carteraConNueva(),
+    nueva: { ...carteraConNueva().nueva, origen_captacion: null },
+  };
+  const evento = { id: "e9", entity_id: "nueva", tipo: "alta", direccion: "Pastor 1200",
+    fecha: "2026-11-18", detalle: {} };
+  const lista = bandeja([cerradoPastor()], [evento], "2026-11-18", cartera);
+  assert.equal(lista.length, 1, "una sola tarjeta");
+  assert.equal(lista[0].titulo, "Pastor 1200");
+  assert.deepEqual(lista[0].lineas.map((l) => l.clave), ["que_paso_antes", "alta"]);
+});
+
+test("nada se pierde: la cantidad de lineas es la cantidad de avisos", () => {
+  const args = [[negocioDeMinas()], [altaDeMinas], "2026-11-18", MINAS];
+  const avisos = derivar(...args).reduce((t, g) => t + g.items.length, 0);
+  const lineas = bandeja(...args).reduce((t, x) => t + x.lineas.length, 0);
+  assert.equal(lineas, avisos);
+});
+
+test("sin avisos, la bandeja esta vacia", () => {
+  assert.deepEqual(bandeja([], [], "2026-11-18", {}), []);
+  assert.equal(cuantosPendientes([]), 0);
 });
