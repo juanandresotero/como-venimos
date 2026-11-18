@@ -624,3 +624,42 @@ test("y lo que hizo la app sola apaga el suyo", () => {
   });
   assert.equal(acciones[0].campo, "visto_bueno");
 });
+
+/* "¿QUE PASO CON EL NEGOCIO ANTERIOR?" va en rojo: es una pregunta que la app no puede
+   contestar sola. */
+const carteraConNueva = () => ({
+  vieja: { entity_id: "vieja", activa: true, estado: "publicada", direccion: "Gutenberg 6100",
+    visto_primera_vez: "2026-08-17", origen_captacion: "B.d.r." },
+  nueva: { entity_id: "nueva", activa: true, estado: "publicada", direccion: "Pastor 1200",
+    visto_primera_vez: "2026-11-18", origen_captacion: "Ref. Martin" },
+});
+const cerradoPastor = (extra = {}) => ({
+  id: "excel-75", direccion: "Pastor 1221", estado: "cerrado", fecha_fin: "2025-11-14",
+  entity_id_cartera: null, avisos: [], ficha_completa: true, ficha_vigente: true, ...extra,
+});
+
+test("una propiedad nueva en una direccion con un negocio cerrado pregunta que paso", () => {
+  const grupos = derivar([cerradoPastor()], [], "2026-11-18", carteraConNueva());
+  const g = grupos.find((x) => x.clave === "que_paso_antes");
+  assert.ok(g, "tiene que aparecer");
+  assert.equal(g.urgente, true, "es una pregunta que la app no puede contestar sola");
+  assert.equal(g.items[0].entity_id, "nueva");
+  assert.match(g.items[0].detalle, /Pastor 1221/);
+  assert.match(g.items[0].detalle, /2025-11-14/);
+});
+
+test("la pregunta lleva a la propiedad", () => {
+  const item = derivar([cerradoPastor()], [], "2026-11-18", carteraConNueva())
+    .find((x) => x.clave === "que_paso_antes").items[0];
+  const abrir = accionesDe(item)[0];
+  assert.equal(abrir.tipo, "propiedad");
+  assert.equal(abrir.destino, "nueva");
+});
+
+test("contestada, la pregunta desaparece", () => {
+  const contestado = cerradoPastor({
+    que_paso_despues: { motivo: "se_fue_el_inquilino", propiedad: "nueva", fecha: "2026-11-18" },
+  });
+  const grupos = derivar([contestado], [], "2026-11-18", carteraConNueva());
+  assert.equal(grupos.find((x) => x.clave === "que_paso_antes"), undefined);
+});
