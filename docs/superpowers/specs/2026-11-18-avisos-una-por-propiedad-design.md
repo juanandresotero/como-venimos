@@ -57,9 +57,9 @@ Los avisos de un negocio **cerrado** que no tenga la propiedad enganchada no se 
 
 **Regla 1 — nunca se ofrece enganchar un negocio cerrado o caído** a una propiedad. `sugerencias()` devuelve vacío para negocios con `estado` `cerrado` o `caido`. (Los abiertos siguen igual.) Desaparece "Puede ser una propiedad de tu cartera" para negocios ya cobrados.
 
-**Regla 2 — `firma_inventada` sólo vale si la propiedad ya estaba en la cartera cuando se cerró el negocio.** Se compara `propiedad.visto_primera_vez` contra `negocio.fecha_fin` (condición en `lib/motor.js`, bloque "DADO POR COBRADO, CON LA PROPIEDAD TODAVIA EN EL PORTAL"): si la propiedad se vio por primera vez **después** de la firma, es otra publicación y el aviso no se genera.
+**Regla 2 — `firma_inventada` sólo vale si la propiedad ya estaba captada cuando se cerró el negocio.** Se compara `propiedad.fecha_captacion_real` (la fecha que Juan cargó, o la que la app tomó de sus negocios) contra `negocio.fecha_fin` (condición en `lib/motor.js`, bloque "DADO POR COBRADO, CON LA PROPIEDAD TODAVIA EN EL PORTAL"): si la propiedad se captó **después** de la firma, es otra publicación y el aviso no se genera. Si una propiedad no tiene fecha de captación, el aviso se mantiene como hoy.
 
-*Excepción:* las propiedades vistas el **primer día que el robot miró** (la carga inicial, la fecha más vieja de `visto_primera_vez` en la cartera) no tienen fecha real de aparición — puede que estuvieran desde antes. Para esas se mantiene el aviso como hoy, para no callar un cobro que sí está esperando que el portal baje la propiedad.
+Se había pensado una excepción para las propiedades que el robot vio el primer día (17/08), por no tener fecha real. **Se descartó**: con los datos del 2026-11-18, de las 14 propiedades activas ninguna es de ese caso. Juan cargó a mano las fechas de las que venían del Excel; las 5 sin fecha real (Teniente Galeano, Yucutuja, Lecocq, Giucci, Pastor 1200) son publicaciones nuevas que el robot vio cuando aparecieron, así que su fecha estimada es casi la verdadera.
 
 **Regla 3 — la pregunta "¿qué pasó?"**. Cuando aparece una propiedad nueva (evento `alta`) y su dirección se parece (mismo umbral que hoy, `UMBRAL_SUGERENCIA`) a la de un negocio **cerrado o caído** cuya `fecha_fin` es anterior a `visto_primera_vez`:
 
