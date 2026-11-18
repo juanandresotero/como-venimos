@@ -301,3 +301,32 @@ test("los otros archivos se suben igual aunque uno no haya bajado", async () => 
   assert.equal(r.ok, true);
   assert.equal(g.escrituras[0].ruta, ARCHIVO_MIS_DATOS);
 });
+
+/* AUDITORIA 2026-10-27: el botón "Una punta / Las dos" cambiaba las puntas pero no el % de
+   comisión, que es el que mueve la plata. El cartel decía "vale la mitad" y la plata seguía
+   igual. Las dos puntas cobran el doble que una, así que el % se ajusta en la misma cuenta. */
+test("pasar de dos puntas a una deja la comisión a la mitad", () => {
+  const e = estado();
+  editarNegocio(e, "excel-5", { puntas: 2, pct_comision_total: 0.06 });
+  const n = editarNegocio(e, "excel-5", { puntas: 1 });
+  assert.equal(n.pct_comision_total, 0.03);
+  assert.equal(n.facturacion, 3000);
+});
+
+test("y de una a dos, el doble", () => {
+  const e = estado();
+  const n = editarNegocio(e, "excel-5", { puntas: 2 });
+  assert.equal(n.pct_comision_total, 0.06);
+});
+
+test("si el % se carga junto con las puntas, manda el que se cargó", () => {
+  const e = estado();
+  const n = editarNegocio(e, "excel-5", { puntas: 2, pct_comision_total: 0.05 });
+  assert.equal(n.pct_comision_total, 0.05);
+});
+
+test("tocar otra cosa no mueve el %", () => {
+  const e = estado();
+  const n = editarNegocio(e, "excel-5", { puntas: 1, notas: "x" });
+  assert.equal(n.pct_comision_total, 0.03);
+});

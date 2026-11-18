@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ratios, capas, ritmo, porAnio, metricas, comparativaCategorias, estimacionPorPuntas,
-  formaDelAnio,
+  formaDelAnio, conOtrasPuntas,
 } from "../lib/salud.js";
 
 const AJUSTES = {
@@ -701,4 +701,77 @@ test("con el negocio cargado, la estimación no manda", () => {
     AJUSTES, "2026");
   assert.equal(c.reservado.detalle[0].facturacion, 1234);
   assert.equal(c.reservado.detalle[0].ganancia, 567);
+});
+
+/* ---------- Auditoría 2026-10-27: los números entre pantallas ---------- */
+
+/* "Lo potencial" deja probar 1 o 2 puntas en cada propiedad. Al probarlas rehacía la comisión
+   desde cero y se olvidaba de cómo llegó la propiedad: una de Martín pasaba de facturar la
+   mitad a facturar entera, y con eso la plata se duplicaba. */
+test("probar dos puntas en una propiedad de Martín sigue facturando la mitad", () => {
+  const c = capas([negocio({ puntas: 1 })],
+    { p1: propiedad({ estado: "publicada", precio: 100000, origen_captacion: "Ref. Martin" }) },
+    AJUSTES, "2026");
+  const fila = conOtrasPuntas(c.publicado.detalle[0], 2);
+  assert.ok(Math.abs(fila.facturacion - 100000 * 0.06 * 0.5) < 0.01, "la mitad de 6%");
+  assert.ok(Math.abs(fila.ganancia - 100000 * 0.06 * 0.35) < 0.01, "y el 35%");
+  assert.equal(fila.pct, 0.06);
+});
+
+test("probar puntas en una propiedad con su negocio cargado no cambia nada", () => {
+  const fila = { estimado: false, facturacion: 1234, ganancia: 567 };
+  assert.deepEqual(conOtrasPuntas(fila, 2), fila);
+});
+
+/* Un negocio en curso cuya propiedad se fue del portal (esperando "¿se vendió o se cayó?") no
+   estaba en ninguna capa: la propiedad ya no está activa y el negocio se salteaba porque SÍ
+   tiene propiedad. Valía cero justo cuando está más cerca de cobrarse. */
+test("un negocio cuya propiedad se fue del portal sigue contando", () => {
+  const suyo = negocio({
+    id: "n2", estado: "en_curso", fecha_fin: null, fecha_boleto: "2026-10-01",
+    entity_id_cartera: "p1", facturacion: 5000, ganancia: 2250,
+  });
+  const c = capas([suyo], { p1: propiedad({ estado: "reservada", activa: false }) },
+    AJUSTES, "2026");
+  assert.equal(c.reservado.cantidad, 1);
+  assert.equal(c.reservado.facturacion, 5000);
+});
+
+test("pero si sacaste la propiedad de la proyección, su negocio tampoco cuenta", () => {
+  const suyo = negocio({
+    id: "n2", estado: "en_curso", fecha_fin: null, entity_id_cartera: "p1",
+    facturacion: 5000, ganancia: 2250,
+  });
+  const c = capas([suyo],
+    { p1: propiedad({ estado: "en_negociacion", usar_en_proyeccion: false }) }, AJUSTES, "2026");
+  assert.equal(c.negociacion.cantidad + c.reservado.cantidad, 0);
+});
+
+test("y un negocio con su propiedad activa no se cuenta dos veces", () => {
+  const suyo = negocio({
+    id: "n2", estado: "en_curso", fecha_fin: null, entity_id_cartera: "p1",
+    facturacion: 5000, ganancia: 2250,
+  });
+  const c = capas([suyo], { p1: propiedad({ estado: "en_negociacion" }) }, AJUSTES, "2026");
+  assert.equal(c.negociacion.cantidad + c.reservado.cantidad, 1);
+});
+
+/* "Con ALTO habrías ganado…" rehacía la cuenta de cada negocio desde su base. Una suplencia
+   cobrada a mano tiene base 0: valía cero en todas las categorías y la comparación se
+   olvidaba de esa plata (los 411 de manual-4). Lo que no depende del split entra tal cual. */
+test("comparativa: una suplencia cobrada suma igual en todas las categorías", () => {
+  const sola = [negocio({ facturacion: 20000, ganancia: 9000, regimen_comision: "captacion_mia", base: 20000 })];
+  const conSuplencia = [...sola, negocio({ id: "s1", regimen_comision: "suplencia",
+    es_suplencia: true, cobrado_suplencia: 411, base: 0, facturacion: 0, ganancia: 411 })];
+  const a = comparativaCategorias(sola, AJUSTES_CAT, "2026", "2026-12-31");
+  const b = comparativaCategorias(conSuplencia, AJUSTES_CAT, "2026", "2026-12-31");
+  for (const i of [0, 1, 2]) assert.ok(Math.abs(b[i].neto - a[i].neto - 411) < 0.01);
+});
+
+test("comparativa: la plata acordada a mano tampoco se recalcula", () => {
+  const lista = [negocio({ regimen_comision: "captacion_mia", base: 5000,
+    plata_acordada: true, facturacion: 5000, ganancia: 1000 })];
+  const c = comparativaCategorias(lista, AJUSTES_CAT, "2026", "2026-12-31");
+  const rap = c.find((x) => x.categoria === "RAP");
+  assert.ok(Math.abs(rap.neto - (1000 - 70 * 12)) < 0.01);
 });

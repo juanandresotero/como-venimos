@@ -542,7 +542,7 @@ function detalle(r, split) {
       </div>
       ${r.puntas.map(fila).join("")}
       <div class="datos" style="margin-top:14px">
-        <div class="dato"><span class="dato-nombre">Factura RE/MAX</span><span class="dato-valor">${plata(r.neto)}</span></div>
+        <div class="dato"><span class="dato-nombre">Factura RE/MAX${r.factura !== r.neto ? " (tu mitad, con Martín)" : ""}</span><span class="dato-valor">${plata(r.factura)}</span></div>
         <div class="dato"><span class="dato-nombre">A tu bolsillo</span><span class="dato-valor">${plata(r.bolsillo)}</span></div>
         <div class="dato">
           <span class="dato-nombre">${r.puntas.length > 1 ? "Entre los dos lados pagan" : "Le sale al cliente"}</span>

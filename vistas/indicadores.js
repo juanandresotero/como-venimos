@@ -284,7 +284,7 @@ function dependencia(ctx) {
 /* ---------- Cartera viva por canal ---------- */
 
 function carteraCanal(ctx) {
-  const filas = carteraPorCanal(ctx.cartera, ctx.negocios, ctx.ajustes);
+  const filas = carteraPorCanal(ctx.cartera, ctx.negocios, ctx.ajustes, ctx.hoy);
   if (!filas.length) return null;
   const nota = html`<p class="apunte" style="margin-top:10px">
     Esto es tu cartera de HOY, no cambia con el año elegido. Lo que no tiene negocio

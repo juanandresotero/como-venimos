@@ -255,6 +255,29 @@ test("carteraPorCanal: si la propiedad ya tiene su negocio cargado, manda ese n�
   assert.equal(filas[0].ganancia, 2222);
 });
 
+/* AUDITORIA 2026-10-27: esta pantalla daba 2.454 menos que Salud. Se comía los negocios sin
+   propiedad en la cartera (una búsqueda, una referida) y estimaba sobre el precio publicado
+   aunque hubiera un precio de negociación cargado. Ahora sale de la misma cuenta que Salud. */
+test("carteraPorCanal: cuenta también los negocios sin propiedad en la cartera", () => {
+  const negocios = [
+    negocio({ id: "b1", estado: "en_curso", fecha_fin: null, entity_id_cartera: null,
+      origen_captacion: "Ref. Cliente", facturacion: 3000, ganancia: 1350 }),
+  ];
+  const filas = carteraPorCanal({}, negocios, AJUSTES);
+  assert.equal(filas.length, 1);
+  assert.equal(filas[0].nombre, "Ref. Cliente");
+  assert.equal(filas[0].facturacion, 3000);
+});
+
+test("carteraPorCanal: estima sobre el precio de negociación si está cargado", () => {
+  const cartera = {
+    p1: { entity_id: "p1", activa: true, usar_en_proyeccion: true, estado: "en_negociacion",
+      operacion: "venta", precio: 100000, precio_negociacion: 80000, origen_captacion: "B.d.r." },
+  };
+  const filas = carteraPorCanal(cartera, [negocio({ tipo_negocio: "venta", puntas: 1 })], AJUSTES);
+  assert.ok(Math.abs(filas[0].facturacion - 80000 * 0.03) < 1e-6);
+});
+
 test("plazos: mide de inicio a firma y aguanta los que no tienen fecha", () => {
   const negocios = [
     negocio({ tipo_negocio: "venta", fecha_inicio: "2025-01-01", fecha_fin: "2025-03-02" }),

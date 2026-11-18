@@ -535,6 +535,24 @@ test("el bolsillo coincide con la ganancia que calcula el motor", () => {
   }
 });
 
+/* AUDITORIA 2026-10-27: "Factura RE/MAX" mostraba la comisión entera aunque con Martín te
+   cuenta la mitad. Tiene que dar lo mismo que la facturación del motor, en los tres. */
+test("lo que factura RE/MAX coincide con la facturación del motor", () => {
+  const AJUSTES_MOTOR = {
+    categorias: [{ categoria: "RAP", split_pct: 0.45, desde: "2026-01-01", hasta: null }],
+    pct_referido_entrante_otro: 0.75,
+    regla_martin: { facturacion: 0.5, ganancia: 0.35 },
+  };
+  for (const regimen of ["captacion_mia", "ref_martin", "ref_otro_colega"]) {
+    const r = calcular({
+      precio: 89000, split: 0.45, regimen,
+      puntas: [punta(), punta({ lado: "compradora" })],
+    });
+    const [facturacion] = calcularNegocio(regimen, r.neto, "2026-10-15", AJUSTES_MOTOR);
+    cerca(r.factura, facturacion, 1);
+  }
+});
+
 /* Y lo que te cuesta un descuento sale de TU parte, no del split pelado: con un referido
    entrante, cada dólar que resignás te cuesta 33,75 centavos, no 45. */
 test("el costo del descuento también sale de tu parte de verdad", () => {

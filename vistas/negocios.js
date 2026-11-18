@@ -1,7 +1,7 @@
 /* La lista de los 85 negocios, con filtros. Tocar uno abre su ficha. */
 
 import { plata, plataUSD, pct, fechaCorta, escapar } from "../lib/formato.js";
-import { capas } from "../lib/salud.js";
+import { capas, conOtrasPuntas } from "../lib/salud.js";
 import { crearNegocio } from "../lib/guardado.js";
 import { esBusqueda } from "../lib/motor.js";
 
@@ -354,20 +354,9 @@ const puntasElegidas = {};
 
 const PROXIMA_PUNTA = { undefined: 1, 1: 2, 2: 1 };
 
-/* La misma propiedad con otro supuesto de puntas.
-
-   El split sale de la proporcion que ya trae la fila (lo tuyo sobre lo que factura RE/MAX),
-   asi que no hay que volver a mirar las categorias ni arriesgar dos cuentas distintas del
-   mismo numero en dos lugares. */
-function conPuntas(p, puntas) {
-  if (!puntas || !p.estimado) return p;
-  const facturacion = p.precio * p.unaPunta * puntas;
-  const tajada = p.facturacion ? p.ganancia / p.facturacion : 0;
-  return { ...p, puntas, pct: p.unaPunta * puntas, facturacion, ganancia: facturacion * tajada };
-}
-
+/* La misma propiedad con otro supuesto de puntas: `conOtrasPuntas` en lib/salud.js. */
 function loPotencial(publicado, estado) {
-  const detalle = publicado.detalle.map((p) => conPuntas(p, puntasElegidas[p.entity_id]));
+  const detalle = publicado.detalle.map((p) => conOtrasPuntas(p, puntasElegidas[p.entity_id]));
   const bolsillo = detalle.reduce((t, p) => t + (p.ganancia || 0), 0);
   const tocadas = detalle.filter((p) => puntasElegidas[p.entity_id]).length;
 

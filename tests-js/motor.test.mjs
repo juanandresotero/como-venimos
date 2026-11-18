@@ -1482,6 +1482,16 @@ test("lo que se borró al caerse vuelve solo si el negocio revive", () => {
   assert.equal(vivo.lo_borrado_al_caerse, null, "la copia se usa una vez y se tira");
 });
 
+/* Minas 1600 revivió y seguía guardando "se cayó el 2026-09-11". Si se volvía a caer, la
+   caída nueva quedaba con la fecha de la vieja. Un negocio vivo no tiene fecha de caída. */
+test("al revivir se borra la fecha en que se había caído", () => {
+  const caido = revisar(negocio({
+    estado: CAIDO, estado_a_mano: true, fecha_fin: null, fecha_caida: "2026-09-11",
+  }), AJUSTES, "2026-09-24");
+  const vivo = revisar({ ...caido, estado: "en_curso" }, AJUSTES, "2026-10-20");
+  assert.equal(vivo.fecha_caida, null);
+});
+
 test("revivir no pisa lo que se haya cargado a mano mientras estaba caído", () => {
   const caido = revisar(negocio({
     estado: CAIDO, estado_a_mano: true, fecha_fin: null,
