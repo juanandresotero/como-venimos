@@ -59,11 +59,9 @@ jobs:
           python-version: "3.13"
       - name: Revisar los datos de verdad
         run: python -m unittest discover -s tests -t . -v
-      # Esta prueba le pega a RE/MAX en vivo, asi que NO puede frenar el guardado: antes estaba
-      # en el job `pruebas` y cuando RE/MAX bloqueo al robot (403, 2026-11-14) la corrida real
-      # no arranco, la app no recibio la alerta roja y quedaron dias sin guardar.
-      - name: Probar el robot sin escribir nada
-        run: DRY_RUN=1 python -m robot.main
+      # OJO: aca NO se prueba el robot contra RE/MAX en vivo. Desde 2026-11-14 RE/MAX le da 403 a
+      # los servidores de GitHub, asi que ese paso siempre fallaba; el robot corre en la PC de Juan
+      # (ver robot/correr_en_mi_pc.ps1). Antes estaba en el job `pruebas` y frenaba el guardado.
 
   # Los 53 tests de JavaScript no corrian en ningun lado salvo la maquina del usuario.
   pruebas-js:
