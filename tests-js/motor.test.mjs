@@ -1600,3 +1600,26 @@ test("si la propiedad ya se fue del portal, no hay nada que preguntar", () => {
   }), AJUSTES, "2026-09-15", propiedadEn("fuera"));
   assert.ok(!tipos(n).includes("firma_inventada"));
 });
+
+/* PASTOR 1200: el negocio de 2023 estaba cobrado y la publicacion de 2026 es OTRA. El aviso
+   esta pensado para el retraso de DIAS del portal, no para una publicacion nueva. */
+test("si la propiedad se capto DESPUES de la firma, es otra publicacion: no se avisa", () => {
+  const n = revisar(negocio({
+    estado: "cerrado", fecha_fin: "2023-06-05", entity_id_cartera: "flam",
+  }), AJUSTES, "2026-11-18", propiedadEn("publicada", { fecha_captacion_real: "2026-11-18" }));
+  assert.ok(!tipos(n).includes("firma_inventada"));
+});
+
+test("si la propiedad se capto ANTES de la firma, se sigue avisando", () => {
+  const n = revisar(negocio({
+    estado: "cerrado", fecha_fin: "2026-09-10", entity_id_cartera: "flam",
+  }), AJUSTES, "2026-09-15", propiedadEn("reservada", { fecha_captacion_real: "2026-05-14" }));
+  assert.ok(tipos(n).includes("firma_inventada"));
+});
+
+test("sin fecha de captacion en la propiedad, se avisa como siempre", () => {
+  const n = revisar(negocio({
+    estado: "cerrado", fecha_fin: "2026-09-10", entity_id_cartera: "flam",
+  }), AJUSTES, "2026-09-15", propiedadEn("reservada", { fecha_captacion_real: null }));
+  assert.ok(tipos(n).includes("firma_inventada"));
+});
