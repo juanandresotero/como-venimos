@@ -1,7 +1,7 @@
 {
- "error": "No se pudo bajar la cartera despues de 3 intentos: HTTP Error 403: Forbidden",
- "novedades": null,
- "ok": false,
- "propiedades": null,
+ "error": null,
+ "novedades": 1,
+ "ok": true,
+ "propiedades": 14,
  "ultima_corrida": "2026-11-18"
 }

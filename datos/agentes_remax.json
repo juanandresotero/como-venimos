@@ -241,16 +241,16 @@
    "slug": "andres-gramont"
   },
   {
+   "id": "15109afc-046e-432f-869a-b765e31928e8",
+   "nombre": "Andrés Angelero",
+   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
+   "slug": "andres-angelero"
+  },
+  {
    "id": "fdcb877d-81f5-4cac-8ff8-9b914531bcd2",
    "nombre": "Andrés Bovio",
    "oficina_id": "3815a3ab-c6c8-47ae-aa15-fe403005c965",
    "slug": "andres-bovio"
-  },
-  {
-   "id": "15109afc-046e-432f-869a-b765e31928e8",
-   "nombre": "Andrés Carlos  Angelero",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "andres-carlos-angelero"
   },
   {
    "id": "7320b428-3f95-43c6-994e-d9cd34ffdbcd",
@@ -275,6 +275,12 @@
    "nombre": "Antonella Güida",
    "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
    "slug": "antonella-guida"
+  },
+  {
+   "id": "c61cc638-6186-48ca-8cf6-aea5f51bba34",
+   "nombre": "Antonella Minetti",
+   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
+   "slug": "antonella-minetti"
   },
   {
    "id": "062fe985-f195-4089-b547-a7b9ac4913c0",
@@ -595,12 +601,6 @@
    "slug": "ezequiel-agresta"
   },
   {
-   "id": "8a6f6867-2ae4-4f70-a2e3-0b2a38ef9647",
-   "nombre": "Fabian Beramendi",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "fabian-beramendi"
-  },
-  {
    "id": "8180990c-544b-43c6-8187-0f2c8603c1e4",
    "nombre": "Fabian Sosa",
    "oficina_id": "a3f89fd7-599d-4883-90f6-e6b22b84c0af",
@@ -803,12 +803,6 @@
    "nombre": "Heber Rodriguez",
    "oficina_id": "238a0dbc-ad1b-45d3-943c-f4699ef9262a",
    "slug": "heber-rodriguez"
-  },
-  {
-   "id": "ca732fcb-d696-4928-a941-0df4999759ee",
-   "nombre": "Helena Muñoz",
-   "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
-   "slug": "helena-munoz"
   },
   {
    "id": "8c35b889-b0ed-43a5-a7e6-02d4e7894f8b",
@@ -1309,12 +1303,6 @@
    "slug": "marcelo-vazquez"
   },
   {
-   "id": "589a2df4-58e8-4196-bf1a-8b9737370a2c",
-   "nombre": "Marcos Agnetti Meyer",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "marcos-agnetti-meyer"
-  },
-  {
    "id": "01cfddf0-ad1b-4585-9770-81a7cdaf6403",
    "nombre": "Marcos Rostagnol",
    "oficina_id": "c154cfa8-20b4-4257-98f1-7a11cf34b57c",
@@ -1487,12 +1475,6 @@
    "nombre": "María Jimena Caballero",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
    "slug": "maria-jimena-caballero"
-  },
-  {
-   "id": "a78870e0-5d01-4c9b-9d1e-43c35b6db71d",
-   "nombre": "María José Aguerreberry",
-   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
-   "slug": "maria-jose-aguerreberry"
   },
   {
    "id": "ec326cb3-7dc4-4675-bf99-be08036dacfb",
@@ -1745,12 +1727,6 @@
    "nombre": "Oscar Silva Dotti",
    "oficina_id": "54a7281c-ebdf-4667-90ed-235c67a12340",
    "slug": "oscar-silva-dotti"
-  },
-  {
-   "id": "c9fd6d47-435b-4337-9d9e-752a7ab889e1",
-   "nombre": "Pablo Berti",
-   "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
-   "slug": "pablo-berti"
   },
   {
    "id": "3e910a80-fd0e-47ba-a795-de9b79546ba3",
@@ -2197,12 +2173,6 @@
    "slug": "viviana-romanos"
   },
   {
-   "id": "b2446ac0-93ab-4b2d-abda-1e07557ab64c",
-   "nombre": "Walter  Leal",
-   "oficina_id": "238a0dbc-ad1b-45d3-943c-f4699ef9262a",
-   "slug": "walter-leal"
-  },
-  {
    "id": "f6c0e093-79ce-48f3-92ba-4fba989e8a22",
    "nombre": "Walter  Talayer",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -2239,7 +2209,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-11-12",
+ "bajada_el": "2026-11-18",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",

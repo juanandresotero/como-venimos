@@ -45,7 +45,7 @@
   "titulo": "Venta casa 3 dormitorios en casavalle con cochera",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-09-16",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "289eef8c-1a9c-4417-b483-8875104847ac": {
   "activa": true,
@@ -93,7 +93,7 @@
   "titulo": "Venta Apto 1 dormitorio con cochera la Blanqueda",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-20",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "29b0df7e-7d40-4283-99b0-f88c2f168377": {
   "activa": false,
@@ -189,7 +189,7 @@
   "titulo": "Venta gran casa en colon 5 dorm. con gran terreno",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "375f978c-be4a-40b7-907a-758233a511b3": {
   "activa": true,
@@ -237,7 +237,7 @@
   "titulo": "Venta apartamento 2 dormitorios en el Prado",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-10-19",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "38987f80-3eb7-4653-93df-da695a27575b": {
   "activa": false,
@@ -333,7 +333,7 @@
   "titulo": "Venta Apartamento en Malvin Norte de 2 dormitorios",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "5cc5a0b6-bbe0-4e8e-b3c9-6581bc5759e6": {
   "activa": false,
@@ -469,7 +469,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "B.d.r.",
   "posible_duplicado_de": null,
   "precio": 45000.0,
   "slug": "venta-casa-de-dos-dormitorios-en-penarol-con-patio",
@@ -477,7 +477,7 @@
   "titulo": "Venta casa de dos dormitorios en Peñarol con patio",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-11-12",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "90a7d087-db00-480d-a242-cb6a8aec667e": {
   "activa": true,
@@ -517,7 +517,7 @@
   "moneda_gastos": "UYU",
   "notas": "",
   "operacion": "venta",
-  "origen_captacion": null,
+  "origen_captacion": "Ref. Remax",
   "posible_duplicado_de": null,
   "precio": 100000.0,
   "slug": "se-vende-casa-4-dormitorios-con-parrillero-colon",
@@ -525,7 +525,7 @@
   "titulo": "Se vende casa 4 dormitorios con parrillero Colon",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-11-12",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "99be19a0-068d-4258-8719-3bac251cee0e": {
   "activa": true,
@@ -573,7 +573,7 @@
   "titulo": "VENTA DE COCHERAS CON CASA EN COLON",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-09-25",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "a355f1fe-efc5-4a5a-87a5-c6d33f82bd4f": {
   "activa": false,
@@ -676,6 +676,54 @@
   "visto_primera_vez": "2026-08-17",
   "visto_ultima_vez": "2026-10-15"
  },
+ "b8e4aa94-a3ba-4904-925a-cfd7d0339781": {
+  "activa": true,
+  "ambientes": 2,
+  "banos": 1,
+  "barrio": "Sayago",
+  "desenlace_confirmado": null,
+  "desenlace_propuesto": null,
+  "direccion": "Pastor 1200",
+  "dormitorios": 1,
+  "entity_id": "b8e4aa94-a3ba-4904-925a-cfd7d0339781",
+  "estado": "publicada",
+  "estado_al_desaparecer": null,
+  "fecha_captacion_estimada": true,
+  "fecha_captacion_real": "2026-11-18",
+  "fecha_desaparicion": null,
+  "fecha_negociacion": null,
+  "fecha_reservada": null,
+  "foto_portada": "listings/b8e4aa94-a3ba-4904-925a-cfd7d0339781/2c849a1e-114a-41ed-86a4-2d186c957881",
+  "gastos_comunes": 0.0,
+  "historial_precio": [
+   {
+    "fecha": "2026-11-18",
+    "moneda": "UYU",
+    "precio": 17700.0
+   }
+  ],
+  "internal_id": "940041154-230",
+  "lat": -34.8343359,
+  "link": "https://www.remax.com.uy/listings/alquiler-apartamento-1-dormitorio-y-patio-sayago",
+  "listing_id": 34862,
+  "lon": -56.2048173,
+  "m2_cubierto": 42.0,
+  "m2_terreno": 0.0,
+  "m2_total": 56.0,
+  "moneda": "UYU",
+  "moneda_gastos": "UYU",
+  "notas": "",
+  "operacion": "alquiler",
+  "origen_captacion": null,
+  "posible_duplicado_de": null,
+  "precio": 17700.0,
+  "slug": "alquiler-apartamento-1-dormitorio-y-patio-sayago",
+  "tipo": "departamento_estandar",
+  "titulo": "Alquiler apartamento 1 dormitorio y patio Sayago",
+  "usar_en_proyeccion": true,
+  "visto_primera_vez": "2026-11-18",
+  "visto_ultima_vez": "2026-11-18"
+ },
  "b92c08fe-fc75-4014-8708-5bbe9f3118fe": {
   "activa": false,
   "ambientes": 5,
@@ -770,7 +818,7 @@
   "titulo": "Venta terreno y gran Casa 4 dorm. Barros Blancos",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "c9e235a6-5bb0-47a6-b9aa-62b2283bb94a": {
   "activa": true,
@@ -818,7 +866,7 @@
   "titulo": "Venta Apartamento 2 dormitorios Cordon con jacuzzi",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "c9f554b2-5290-4e2f-9b88-fdac4cbd67d7": {
   "activa": true,
@@ -866,7 +914,7 @@
   "titulo": "Venta gran casa en colon 5 dorm. con gran terreno",
   "usar_en_proyeccion": false,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "cab1949c-02eb-445f-989a-68c5f31523df": {
   "activa": true,
@@ -914,7 +962,7 @@
   "titulo": "Venta salón 3 dormitorios cochera paso de la arena",
   "usar_en_proyeccion": true,
   "visto_primera_vez": "2026-08-17",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "d8d7855f-b0bb-4122-bc7e-74c987f50396": {
   "activa": false,
@@ -1010,7 +1058,7 @@
   "titulo": "VENTA APARTAMENTO UN DORMITORIO LA BLANQUEADA",
   "usar_en_proyeccion": false,
   "visto_primera_vez": "2026-08-19",
-  "visto_ultima_vez": "2026-11-14"
+  "visto_ultima_vez": "2026-11-18"
  },
  "f123f605-dc13-4aaa-ad8a-94ad44a11db6": {
   "activa": false,

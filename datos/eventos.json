@@ -684,5 +684,20 @@
   "internal_id": "940041154-228",
   "tipo": "alta",
   "titulo": "Venta casa de dos dormitorios en Peñarol con patio"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "UYU",
+   "precio": 17700.0
+  },
+  "direccion": "Pastor 1200",
+  "entity_id": "b8e4aa94-a3ba-4904-925a-cfd7d0339781",
+  "fecha": "2026-11-18",
+  "id": "2026-11-18|b8e4aa94-a3ba-4904-925a-cfd7d0339781|alta",
+  "internal_id": "940041154-230",
+  "tipo": "alta",
+  "titulo": "Alquiler apartamento 1 dormitorio y patio Sayago"
  }
 ]
