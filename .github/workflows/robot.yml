@@ -43,8 +43,6 @@ jobs:
         env:
           SIN_DATOS_VIVOS: "1"
         run: python -m unittest discover -s tests -t . -v
-      - name: Probar el robot sin escribir nada
-        run: DRY_RUN=1 python -m robot.main
 
   # LAS PRUEBAS QUE MIRAN LOS DATOS DE VERDAD. Corren aparte y NO son requisito para guardar:
   # si algo de los datos no cierra, la corrida queda en rojo y GitHub manda el mail, pero la
@@ -58,6 +56,11 @@ jobs:
           python-version: "3.13"
       - name: Revisar los datos de verdad
         run: python -m unittest discover -s tests -t . -v
+      # Esta prueba le pega a RE/MAX en vivo, asi que NO puede frenar el guardado: antes estaba
+      # en el job `pruebas` y cuando RE/MAX bloqueo al robot (403, 2026-11-14) la corrida real
+      # no arranco, la app no recibio la alerta roja y quedaron dias sin guardar.
+      - name: Probar el robot sin escribir nada
+        run: DRY_RUN=1 python -m robot.main
 
   # Los 53 tests de JavaScript no corrian en ningun lado salvo la maquina del usuario.
   pruebas-js:
