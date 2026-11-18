@@ -132,6 +132,11 @@
   "83271442-05bd-4a1a-bb7e-b0026994e96f": {
    "origen_captacion": "B.d.r.",
    "usar_en_proyeccion": true
+  },
+  "b8e4aa94-a3ba-4904-925a-cfd7d0339781": {
+   "origen_captacion": "Ref. Único",
+   "fecha_captacion_real": "2026-11-17",
+   "fecha_captacion_estimada": false
   }
  }
 }
