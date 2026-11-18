@@ -9,7 +9,8 @@ import {
   negociosDe, rendimiento, DESENLACES,
   PRECIO_NEGOCIADO_VISIBLE, etiquetaDelPrecioNegociado,
 } from "../lib/cartera.js";
-import { ORIGENES } from "../lib/catalogos.js";
+import { ORIGENES, QUE_PASO_DESPUES } from "../lib/catalogos.js";
+import { negocioAnteriorSinContestar } from "../lib/cruce.js";
 
 /* Un valor cargado que no este en la lista se conserva como opcion, en vez de dejar el
    desplegable vacio como si faltara el dato. */
@@ -20,7 +21,7 @@ function opcionesCon(lista, actual) {
   }
   return opciones;
 }
-import { editarPropiedad } from "../lib/guardado.js";
+import { editarPropiedad, editarNegocio } from "../lib/guardado.js";
 import {
   plata, plataUSD, fechaCorta, escapar, fechaRazonable, numeroDesde,
   formatearMientrasEscribe,
@@ -278,6 +279,36 @@ function campos(p, estado) {
     agregar("desenlace_confirmado", "Qué pasó al final", null, p.desenlace_confirmado,
       DESENLACES, !p.desenlace_confirmado);
   }
+  /* "¿QUE PASO CON EL NEGOCIO ANTERIOR?" Esta direccion ya tuvo un negocio cerrado y la
+     publicacion de ahora es otro negocio. Se marca en rojo mientras falte. La respuesta se
+     guarda en el negocio VIEJO (`que_paso_despues`); el nuevo nace aparte, como siempre. */
+  const sinContestar = negocioAnteriorSinContestar(p, estado.datos.negocios, estado.datos.cartera);
+  const contestado = (estado.datos.negocios || [])
+    .find((n) => (n.que_paso_despues || {}).propiedad === p.entity_id);
+  const deAntes = sinContestar || contestado;
+  if (deAntes) {
+    const fila = document.createElement("div");
+    fila.className = `campo-fila${sinContestar ? " falta" : ""}`;
+    fila.innerHTML = html`
+      <label for="prop-que-paso">Esta dirección ya tuvo un negocio cerrado
+        (${escapar(deAntes.direccion || "sin dirección")}, ${escapar(deAntes.fecha_fin || "")}).
+        ¿Qué pasó?${sinContestar ? " — falta" : ""}</label>
+      <select class="campo" id="prop-que-paso">
+        <option value=""></option>
+        ${QUE_PASO_DESPUES.map(([v, t]) => `<option value="${escapar(v)}"${
+          v === (deAntes.que_paso_despues || {}).motivo ? " selected" : ""}>${escapar(t)}</option>`).join("")}
+      </select>
+    `;
+    fila.querySelector("select").addEventListener("change", (evento) => {
+      if (!evento.target.value) return;
+      editarNegocio(estado, deAntes.id, {
+        que_paso_despues: { motivo: evento.target.value, propiedad: p.entity_id, fecha: estado.hoy },
+      });
+      estado.redibujar();
+    });
+    contenedor.append(fila);
+  }
+
   agregar("notas", "Notas", "text", p.notas);
 
   // La proyeccion se apaga sola cuando el robot sospecha que es la misma propiedad

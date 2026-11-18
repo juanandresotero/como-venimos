@@ -717,3 +717,24 @@ test("sin avisos, la bandeja esta vacia", () => {
   assert.deepEqual(bandeja([], [], "2026-11-18", {}), []);
   assert.equal(cuantosPendientes([]), 0);
 });
+
+/* UNA LINEA ROJA SIN SU CAMPO ES UN BOTON QUE NO HACE NADA. Cada aviso que lleva a la ficha
+   de la PROPIEDAD (no al negocio) tiene que tener su campo marcado ahi. */
+test("cada aviso que abre la propiedad tiene su campo marcado en la propiedad", () => {
+  const raiz = fileURLToPath(new URL("..", import.meta.url));
+  const pantalla = readFileSync(join(raiz, "vistas", "propiedad.js"), "utf-8");
+  const origen = /"origen_captacion"[\s\S]{0,200}!p\.origen_captacion/;
+  const marcan = {
+    alta: origen,
+    carga_inicial: origen,
+    origen_sin_clasificar: origen,
+    baja: /"desenlace_confirmado"[\s\S]{0,200}!p\.desenlace_confirmado/,
+    falta_precio_negociacion: /"precio_negociacion"[\s\S]{0,200}!p\.precio_negociacion/,
+    posible_duplicado: /posible_duplicado_de/,
+    que_paso_antes: /que_paso_despues/,
+  };
+  for (const [clave, regla] of Object.entries(marcan)) {
+    assert.ok(GRUPOS[clave], `${clave} no existe en GRUPOS`);
+    assert.match(pantalla, regla, `${clave}: la propiedad no marca ese campo`);
+  }
+});
