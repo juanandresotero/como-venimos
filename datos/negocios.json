@@ -2245,7 +2245,12 @@
   "es_suplencia": false,
   "yo_referi": false,
   "ficha_vigente": true,
-  "ficha_completa_momento": null
+  "ficha_completa_momento": null,
+  "que_paso_despues": {
+   "motivo": "termino_el_contrato",
+   "propiedad": "b8e4aa94-a3ba-4904-925a-cfd7d0339781",
+   "fecha": "2026-11-18"
+  }
  },
  {
   "agente_compra": "Juan Andrés Otero",
