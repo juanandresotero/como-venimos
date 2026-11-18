@@ -38,8 +38,8 @@ export function dibujarHoy(estado) {
   // Los eventos que el usuario ya despacho no se vuelven a mostrar.
   const eventos = sinAtender(
     estado.datos.eventos, estado.datos.mis_datos, estado.datos.cartera);
-  const grupos = bandeja(estado.datos.negocios, eventos, estado.hoy, estado.datos.cartera);
-  const total = cuantosPendientes(grupos);
+  const lista = bandeja(estado.datos.negocios, eventos, estado.hoy, estado.datos.cartera);
+  const total = cuantosPendientes(lista);
 
   const trozo = document.createDocumentFragment();
   trozo.append(encabezado(estado, total));
@@ -48,7 +48,7 @@ export function dibujarHoy(estado) {
   trozo.append(tuCategoria(estado));
   trozo.append(queTanSeguro(estado));
   trozo.append(pendientes(total));
-  for (const grupo of grupos) trozo.append(dibujarGrupo(grupo, estado));
+  for (const tarjeta of lista) trozo.append(dibujarTarjeta(tarjeta, estado));
   trozo.append(mirarLaCartera(estado));
   return trozo;
 }
@@ -400,102 +400,114 @@ function pendientes(total) {
   `);
 }
 
-function dibujarGrupo(grupo, estado) {
+/* Un boton de un aviso. Sirve para los de cada linea ("Está bien", "Sí, es esa", "Ya lo
+   resolví"…) y para el "Abrir y completar" de la tarjeta. */
+function botonDeAccion(accion, item, estado, primario) {
+  const boton = document.createElement("button");
+  boton.className = `boton boton-chico${primario ? " boton-primario" : ""}`;
+  boton.textContent = accion.texto;
+  boton.addEventListener("click", async () => {
+    if (accion.tipo === "atendido") {
+      // Puede traer varios eventos del mismo aviso: se despachan todos de una.
+      for (const id of accion.destino) marcarAtendido(estado, id);
+      estado.redibujar();
+    } else if (accion.tipo === "visto-bueno") {
+      /* "Está bien": la app hizo un cambio sola y él lo aprueba. No toca nada del
+         negocio — el cambio ya está hecho—, sólo apaga el aviso. */
+      editarNegocio(estado, accion.destino, { [accion.campo || "visto_bueno"]: true });
+      estado.redibujar();
+    } else if (accion.tipo === "es-la-referida" || accion.tipo === "no-es-la-referida") {
+      /* "¿ES LA QUE LE REFERISTE?" — el único que sabe es el colega, así que Juan le
+         pregunta y vuelve con la respuesta.
+
+         CON UN SÍ quedan enganchadas, y de ahí en más el robot le sigue el rastro solo:
+         cuándo pasa a negociación, cuándo se reserva, cuándo se va del portal. De paso se
+         copian la fecha en que el colega la publicó y el precio al que la publicó, que
+         son los dos datos que Juan no tenía forma de saber.
+
+         CON UN NO queda descartada para siempre: volver a preguntar es hacerle llamar al
+         colega otra vez por lo mismo. */
+      const dice = accion.tipo === "es-la-referida";
+      const negocio = (estado.datos.negocios || [])
+        .find((n) => n.id === item.negocio_id) || {};
+      const visto = ((estado.datos.referidas || {}).negocios || {})[item.negocio_id] || {};
+      const suya = (visto.candidatas || [])
+        .find((c) => c.entity_id === item.entity_id) || {};
+
+      editarNegocio(estado, item.negocio_id, dice
+        ? {
+          referido_entity_id: item.entity_id,
+          fecha_publico_el_colega: estado.hoy,
+          precio_operacion: negocio.precio_operacion || suya.precio_cartera || null,
+        }
+        : {
+          referido_descartadas: [
+            ...(negocio.referido_descartadas || []), item.entity_id,
+          ],
+        });
+      for (const id of item.eventos || []) marcarAtendido(estado, id);
+      await estado.guardar();
+      estado.redibujar();
+    } else if (accion.tipo === "cuenta" || accion.tipo === "no-cuenta") {
+      /* El duplicado: la unica pregunta que hay que contestar es si esa propiedad cuenta
+         en los numeros. El robot ya la saco de la proyeccion al detectarla; esto la
+         devuelve, o confirma que se queda afuera. */
+      editarPropiedad(estado, accion.destino, {
+        usar_en_proyeccion: accion.tipo === "cuenta",
+        posible_duplicado_de: accion.tipo === "cuenta" ? null : undefined,
+      });
+      for (const id of item.eventos || []) marcarAtendido(estado, id);
+      await estado.guardar();
+      estado.redibujar();
+    } else {
+      estado.irA(accion.tipo, accion.destino);
+    }
+  });
+  return boton;
+}
+
+/* UNA TARJETA POR PROPIEDAD. Adentro, una linea por aviso: en rojo las que piden algo,
+   en gris las informativas. El boton de abajo abre el negocio (o la propiedad) y ahi quedan
+   marcados en rojo los campos que faltan. */
+function dibujarTarjeta(tarjeta, estado) {
   const anio = Number(estado.hoy.slice(0, 4));
   const marca = nodo(html`
-    <details class="grupo ${grupo.urgente ? "urgente" : ""}">
-      <summary class="grupo-cabeza">
-        <span class="grupo-cuenta">${grupo.items.length}</span>
-        <span class="grupo-nombre">${escapar(grupo.nombre)}</span>
-        <span class="grupo-flecha" aria-hidden="true">›</span>
-      </summary>
-      <ul class="grupo-lista"></ul>
-    </details>
+    <section class="aviso-propiedad ${tarjeta.urgente ? "urgente" : ""}">
+      <p class="aviso-titulo">${escapar(tarjeta.titulo)}</p>
+      <ul class="aviso-lineas"></ul>
+      <div class="botonera aviso-abrir"></div>
+    </section>
   `);
 
-  const lista = marca.querySelector(".grupo-lista");
-  for (const item of grupo.items) {
+  const lista = marca.querySelector(".aviso-lineas");
+  for (const linea of tarjeta.lineas) {
     const li = document.createElement("li");
-    li.className = "grupo-item";
+    li.className = `aviso-linea ${linea.urgente ? "pide" : "informa"}`;
     li.innerHTML = html`
-      <p class="grupo-item-titulo">${escapar(item.titulo)}${
-        item.fecha ? ` <span class="capa-sub">· ${fechaCorta(item.fecha, anio)}</span>` : ""
-      }</p>
-      ${item.mas
-        ? html`<ul class="grupo-item-mas">${item.mas
-            .map((d) => `<li>${escapar(d)}</li>`).join("")}</ul>`
-        : html`<p class="grupo-item-detalle">${escapar(item.detalle)}</p>`}
+      <p class="aviso-linea-texto"><strong>${escapar(linea.grupo)}.</strong>
+        ${escapar(linea.detalle)}${
+          linea.fecha ? ` <span class="capa-sub">· ${fechaCorta(linea.fecha, anio)}</span>` : ""
+        }</p>
       <div class="botonera"></div>
     `;
-
-    /* El primero es el que resuelve, y va pintado. "Ya lo resolví" viene despues y
-       apagado: descartar el aviso no arregla lo que el aviso decia. */
+    /* Los botones de la linea son los que RESUELVEN algo ("Está bien", "Sí / No", "Ya lo
+       resolví"). Abrir lo hace la tarjeta entera, una sola vez. */
     const botonera = li.querySelector(".botonera");
-    accionesDe(item).forEach((accion, i) => {
-      const boton = document.createElement("button");
-      boton.className = `boton boton-chico${i === 0 ? " boton-primario" : ""}`;
-      boton.textContent = accion.texto;
-      boton.addEventListener("click", async () => {
-        if (accion.tipo === "atendido") {
-          // Puede traer varios: un pendiente juntado despacha todos sus avisos de una.
-          for (const id of accion.destino) marcarAtendido(estado, id);
-          estado.redibujar();
-        } else if (accion.tipo === "visto-bueno") {
-          /* "Está bien": la app hizo un cambio sola y él lo aprueba. No toca nada del
-             negocio — el cambio ya está hecho—, sólo apaga el aviso. */
-          editarNegocio(estado, accion.destino, { [accion.campo || "visto_bueno"]: true });
-          estado.redibujar();
-        } else if (accion.tipo === "es-la-referida" || accion.tipo === "no-es-la-referida") {
-          /* "¿ES LA QUE LE REFERISTE?" — el único que sabe es el colega, así que Juan le
-             pregunta y vuelve con la respuesta.
-
-             CON UN SÍ quedan enganchadas, y de ahí en más el robot le sigue el rastro solo:
-             cuándo pasa a negociación, cuándo se reserva, cuándo se va del portal. De paso se
-             copian la fecha en que el colega la publicó y el precio al que la publicó, que
-             son los dos datos que Juan no tenía forma de saber.
-
-             CON UN NO queda descartada para siempre: volver a preguntar es hacerle llamar al
-             colega otra vez por lo mismo. */
-          const dice = accion.tipo === "es-la-referida";
-          const negocio = (estado.datos.negocios || [])
-            .find((n) => n.id === item.negocio_id) || {};
-          const visto = ((estado.datos.referidas || {}).negocios || {})[item.negocio_id] || {};
-          const suya = (visto.candidatas || [])
-            .find((c) => c.entity_id === item.entity_id) || {};
-
-          editarNegocio(estado, item.negocio_id, dice
-            ? {
-              referido_entity_id: item.entity_id,
-              fecha_publico_el_colega: estado.hoy,
-              precio_operacion: negocio.precio_operacion || suya.precio_cartera || null,
-            }
-            : {
-              referido_descartadas: [
-                ...(negocio.referido_descartadas || []), item.entity_id,
-              ],
-            });
-          for (const id of item.eventos || []) marcarAtendido(estado, id);
-          await estado.guardar();
-          estado.redibujar();
-        } else if (accion.tipo === "cuenta" || accion.tipo === "no-cuenta") {
-          /* El duplicado: la unica pregunta que hay que contestar es si esa propiedad cuenta
-             en los numeros. El robot ya la saco de la proyeccion al detectarla; esto la
-             devuelve, o confirma que se queda afuera. */
-          editarPropiedad(estado, accion.destino, {
-            usar_en_proyeccion: accion.tipo === "cuenta",
-            posible_duplicado_de: accion.tipo === "cuenta" ? null : undefined,
-          });
-          for (const id of item.eventos || []) marcarAtendido(estado, id);
-          await estado.guardar();
-          estado.redibujar();
-        } else {
-          estado.irA(accion.tipo, accion.destino);
-        }
-      });
-      botonera.append(boton);
-    });
+    for (const accion of accionesDe(linea).filter((a) => a.tipo !== "ficha" && a.tipo !== "propiedad")) {
+      botonera.append(botonDeAccion(accion, linea, estado, false));
+    }
+    if (!botonera.children.length) botonera.remove();
     lista.append(li);
   }
+
+  const abrir = tarjeta.negocio_id
+    ? { tipo: "ficha", destino: tarjeta.negocio_id, texto: "Abrir y completar" }
+    : tarjeta.entity_id
+      ? { tipo: "propiedad", destino: tarjeta.entity_id, texto: "Ver y editar" }
+      : null;
+  const zona = marca.querySelector(".aviso-abrir");
+  if (abrir) zona.append(botonDeAccion(abrir, tarjeta, estado, true));
+  else zona.remove();
   return marca;
 }
 
