@@ -372,6 +372,23 @@ body {
 }
 .grupo-item-mas li { margin-top: 2px; }
 
+/* HOY: una tarjeta por propiedad. Roja si alguna linea pide que marques algo. */
+.aviso-propiedad {
+  background: var(--lienzo-2);
+  border: 1px solid var(--linea);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.aviso-propiedad.urgente { border-color: var(--rojo); background: var(--rojo-suave); }
+.aviso-titulo { font-weight: 700; font-size: 15px; margin: 0 0 6px; }
+.aviso-lineas { list-style: none; margin: 0; padding: 0; }
+.aviso-linea { margin-top: 8px; padding-left: 12px; border-left: 3px solid var(--linea); }
+.aviso-linea.pide { border-left-color: var(--rojo); }
+.aviso-linea-texto { margin: 0; font-size: 13px; color: var(--tinta-2); }
+.aviso-linea.pide .aviso-linea-texto { color: var(--rojo-tinta); }
+.aviso-abrir { margin-top: 12px; }
+
 .vacio { text-align: center; padding: 44px 20px; }
 .vacio-signo { font-size: 40px; line-height: 1; margin: 0; }
 .vacio-texto { margin-top: 12px; color: var(--tinta-2); }
