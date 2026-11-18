@@ -466,6 +466,9 @@ function botonDeAccion(accion, item, estado, primario) {
   return boton;
 }
 
+// El nombre del grupo cierra con punto, salvo que ya termine en ?, ! o .
+const nombreDeLinea = (linea) => (/[.?!:]$/.test(linea.grupo) ? linea.grupo : `${linea.grupo}.`);
+
 /* UNA TARJETA POR PROPIEDAD. Adentro, una linea por aviso: en rojo las que piden algo,
    en gris las informativas. El boton de abajo abre el negocio (o la propiedad) y ahi quedan
    marcados en rojo los campos que faltan. */
@@ -484,7 +487,7 @@ function dibujarTarjeta(tarjeta, estado) {
     const li = document.createElement("li");
     li.className = `aviso-linea ${linea.urgente ? "pide" : "informa"}`;
     li.innerHTML = html`
-      <p class="aviso-linea-texto"><strong>${escapar(linea.grupo)}.</strong>
+      <p class="aviso-linea-texto"><strong>${escapar(nombreDeLinea(linea))}</strong>
         ${escapar(linea.detalle)}${
           linea.fecha ? ` <span class="capa-sub">· ${fechaCorta(linea.fecha, anio)}</span>` : ""
         }</p>
