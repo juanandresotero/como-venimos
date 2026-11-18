@@ -1,14 +1,17 @@
 name: Robot de cartera
 
-# La corrida REAL: 1 vez por dia (y a mano desde la pestaña Actions cuando haga falta).
-# La PRUEBA: cada vez que se toca el codigo, para cazar errores antes de la corrida diaria.
+# LA CORRIDA REAL YA NO ES ACA. Desde 2026-11-14 RE/MAX le da 403 a todo lo que no sea un
+# navegador comun, y los servidores de GitHub no pasan. La corrida diaria (dos veces por dia,
+# 06:00 y 18:00) la hace la PC de Juan con Chrome: ver robot/correr_en_mi_pc.ps1 y
+# robot/instalar_tarea_en_mi_pc.ps1. Se sacaron los `cron` de aca a proposito: si siguieran,
+# cada corrida de GitHub fallaria y pisaria con un error el estado bueno que deja la PC.
+#
+# Si RE/MAX algun dia vuelve a dejar pasar a GitHub, se pueden volver a poner:
+#   schedule:
+#     - cron: "0 9 * * *"      # 06:00 en Uruguay
+#     - cron: "0 21 * * *"     # 18:00 en Uruguay
+# Lo que queda: la PRUEBA cada vez que se toca el codigo, y la corrida a mano (Actions).
 on:
-  schedule:
-    - cron: "0 9 * * *"      # 09:00 UTC = 06:00 en Uruguay
-    # Y de tarde otra vez. Dos motivos: si a la mañana falla algo (la API de RE/MAX, la red),
-    # hay una segunda oportunidad el mismo día; y una propiedad que se mueve a media mañana
-    # queda anotada hoy y no mañana. Lo pidió Juan: "que mire 2 veces al día".
-    - cron: "0 21 * * *"     # 21:00 UTC = 18:00 en Uruguay
   workflow_dispatch: {}
   push:
     paths:

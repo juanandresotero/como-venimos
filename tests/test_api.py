@@ -69,5 +69,30 @@ class TestBajar(unittest.TestCase):
         self.assertIn("2 intentos", str(caso.exception))
 
 
+class TestConNavegador(unittest.TestCase):
+    """Desde 2026-11-14 RE/MAX le da 403 a todo lo que no es un navegador. Con la variable
+    COMO_VENIMOS_NAVEGADOR=1 el pedido pasa por Chrome y no por urllib."""
+
+    def test_con_la_variable_pide_por_el_navegador_y_no_por_urllib(self):
+        with mock.patch.dict("os.environ", {"COMO_VENIMOS_NAVEGADOR": "1"}), \
+             mock.patch("robot.navegador.pedir", return_value={"ok": True}) as por_chrome, \
+             mock.patch("urllib.request.urlopen") as por_urllib:
+            self.assertEqual(api.bajar("https://x", intentos=1), {"ok": True})
+        por_chrome.assert_called_once_with("https://x")
+        por_urllib.assert_not_called()
+
+    def test_sin_la_variable_sigue_usando_urllib(self):
+        with mock.patch.dict("os.environ", {}, clear=False) as entorno:
+            entorno.pop("COMO_VENIMOS_NAVEGADOR", None)
+            with mock.patch("urllib.request.urlopen", return_value=respuesta_http(b'{"ok": 1}')):
+                self.assertEqual(api.bajar("https://x", intentos=1), {"ok": 1})
+
+    def test_un_error_del_navegador_se_reintenta_como_cualquier_otro(self):
+        with mock.patch.dict("os.environ", {"COMO_VENIMOS_NAVEGADOR": "1"}), \
+             mock.patch("robot.navegador.pedir", side_effect=[ValueError("HTTP 403"), {"ok": True}]), \
+             mock.patch("time.sleep"):
+            self.assertEqual(api.bajar("https://x", intentos=2, espera=0), {"ok": True})
+
+
 if __name__ == "__main__":
     unittest.main()

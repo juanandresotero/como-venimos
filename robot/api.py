@@ -7,6 +7,7 @@ en vez de grabar una cartera incompleta (ver traer_listings).
 from __future__ import annotations
 
 import json
+import os
 import time
 import urllib.error
 import urllib.request
@@ -27,14 +28,22 @@ CABECERAS = {
 }
 
 
+def _pedir(url: str):
+    # Con la variable puesta el pedido pasa por Chrome: RE/MAX bloquea a todo lo demas.
+    if os.environ.get("COMO_VENIMOS_NAVEGADOR") == "1":
+        from robot import navegador
+        return navegador.pedir(url)
+    pedido = urllib.request.Request(url, headers=CABECERAS)
+    with urllib.request.urlopen(pedido, timeout=60) as respuesta:
+        return json.loads(respuesta.read().decode("utf-8"))
+
+
 def bajar(url: str = URL, intentos: int = 3, espera: int = 5):
     """Pide el JSON con reintentos. Un corte de red no puede tumbar la corrida del dia."""
     ultimo_error = None
     for intento in range(1, intentos + 1):
         try:
-            pedido = urllib.request.Request(url, headers=CABECERAS)
-            with urllib.request.urlopen(pedido, timeout=60) as respuesta:
-                return json.loads(respuesta.read().decode("utf-8"))
+            return _pedir(url)
         except (urllib.error.URLError, TimeoutError, ValueError) as error:
             ultimo_error = error
             if intento < intentos:
