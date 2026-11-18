@@ -113,6 +113,21 @@ class TestMain(unittest.TestCase):
             main.main()
         self.assertTrue(self.leer("cartera.json")["e1"]["activa"])
 
+    def test_si_remax_contesta_vacio_no_da_de_baja_toda_la_cartera(self):
+        # Auditoria 2026-10-27: una respuesta vacia (sin error) se leia como "se vendio todo" y
+        # llenaba Avisos de "se vendio o se cayo?" por cada propiedad.
+        self.correr([LISTING], fecha="2026-08-18")
+        self.assertEqual(self.correr([], fecha="2026-08-19"), 1)
+        self.assertTrue(self.leer("cartera.json")["e1"]["activa"])
+        self.assertEqual(len(self.leer("eventos.json")), 1, "no se anoto ninguna baja")
+        estado = self.leer("estado_robot.json")
+        self.assertFalse(estado["ok"])
+        self.assertIn("vac", estado["error"])
+
+    def test_vacio_la_primera_vez_no_es_un_error(self):
+        # Sin cartera previa no hay nada que proteger.
+        self.assertEqual(self.correr([], fecha="2026-08-18"), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

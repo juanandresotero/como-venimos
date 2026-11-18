@@ -85,7 +85,7 @@ async function bajarDeLaWeb(nombre) {
    devuelve el contenido del repo al instante. Los del robot (cartera, eventos, estado)
    siguen por la web: ahi no hay apuro, y son los mas pesados. Sin token o sin señal, todo
    cae a la web como antes. */
-async function bajarDatos(token, shas) {
+async function bajarDatos(token, shas, noBajaron) {
   const pares = await Promise.all(
     ARCHIVOS.map(async (nombre) => {
       try {
@@ -103,7 +103,9 @@ async function bajarDatos(token, shas) {
         }
         return [nombre, await bajarDeLaWeb(nombre)];
       } catch {
-        // Si falta un archivo la app tiene que abrir igual, no quedarse en blanco.
+        // Si falta un archivo la app tiene que abrir igual, no quedarse en blanco. Pero queda
+        // anotado: ese vacio de relleno nunca se puede subir encima del de verdad.
+        if (noBajaron && MIOS[nombre]) noBajaron.add(MIOS[nombre]);
         return [nombre, VACIO_OBJETO.has(nombre) ? {} : []];
       }
     })
@@ -396,6 +398,9 @@ function entrarPorElNegocio() {
    El try/catch no es de adorno: si `sincronizar` reventara por algo inesperado, sin el la
    barra quedaria colgada en "Guardando…" para siempre. */
 let reloj = null;
+/* Una version nueva que llego mientras habia cambios sin guardar: se recarga recien despues
+   de guardar (ver cuidarLaVersion). */
+let recargarAlGuardar = false;
 
 async function guardar() {
   clearTimeout(reloj);
@@ -411,6 +416,10 @@ async function guardar() {
     return;
   }
   dibujarBarraGuardado("listo", "✓ Guardado en GitHub");
+  if (recargarAlGuardar && !hayCambios(estado)) {
+    setTimeout(() => window.location.reload(), 1200);
+    return;
+  }
   reloj = setTimeout(() => dibujarBarraGuardado(), 2500);
 }
 
@@ -418,7 +427,8 @@ async function arrancar() {
   // Antes de bajar nada: si no, la pantalla parpadea en claro y despues se pone oscura.
   tema.aplicar(tema.vigente());
   estado.shas = estado.shas || {};
-  estado.datos = await bajarDatos(estado.token, estado.shas);
+  estado.noBajaron = new Set();
+  estado.datos = await bajarDatos(estado.token, estado.shas, estado.noBajaron);
   // Lo que el usuario edito de la cartera vive aparte (§3.3) y se superpone al leer.
   estado.datos.cartera = fusionar(estado.datos.cartera, estado.datos.mis_datos);
 
@@ -438,7 +448,9 @@ async function arrancar() {
 
      ESTO SI MARCA PARA SUBIR, a diferencia del repaso de arriba: un negocio nuevo es un dato
      que no existia, y si se quedara solo en memoria desapareceria al cerrar la app. */
-  const reciennacidos = negociosQueFaltan(
+  // Sin la lista de negocios a la vista, TODAS las propiedades en negociacion parecerian
+  // no tener negocio: nacerian duplicados de los que ya existen.
+  const reciennacidos = estado.noBajaron.has(ARCHIVO_NEGOCIOS) ? [] : negociosQueFaltan(
     estado.datos.cartera, estado.datos.negocios, estado.datos.ajustes, estado.hoy);
   if (reciennacidos.length) {
     estado.datos.negocios.push(...reciennacidos);
@@ -522,6 +534,12 @@ function cuidarLaVersion() {
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (!habiaUnaAnterior || yaRecargue) return;
     yaRecargue = true;
+    /* Con cambios sin guardar, recargar los borraba sin aviso: todo lo editado vive en
+       memoria hasta "Guardar" (auditoria 2026-10-27). Se espera a que guarde. */
+    if (hayCambios(estado)) {
+      recargarAlGuardar = true;
+      return;
+    }
     window.location.reload();
   });
 

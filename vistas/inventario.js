@@ -205,6 +205,15 @@ function editor(estado, trozo) {
     </section>
   `));
 
+  if (!guardado.seGuardo()) {
+    trozo.append(nodo(html`
+      <section class="tarjeta" style="border:2px solid var(--rojo);margin-bottom:12px">
+        <p style="color:var(--rojo);font-weight:700">⚠ Esto NO se está guardando</p>
+        <p class="apunte" style="margin-top:4px">El teléfono está lleno. No cierres la app:
+          liberá lugar (fotos o videos viejos) y tocá cualquier cosa del inventario para que
+          se vuelva a guardar.</p>
+      </section>`));
+  }
   trozo.append(cabecera(estado));
   if (abierto.ambientes.length > 1) trozo.append(plegarTodos(estado));
   for (const ambiente of abierto.ambientes) trozo.append(elAmbiente(estado, ambiente));

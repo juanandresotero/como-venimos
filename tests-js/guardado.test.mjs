@@ -275,3 +275,29 @@ test("sin fecha de captacion no hay nada que confirmar", () => {
   assert.equal(confirmarFechaDelRobot(e, "p1"), false);
   assert.equal(confirmarFechaDelRobot(e, "no-existe"), false);
 });
+
+/* AUDITORIA 2026-10-27: si al abrir falla la bajada de negocios.json, la app arranca con la
+   lista vacia (para no quedarse en blanco). Si despues se guardaba cualquier cosa, esa lista
+   vacia —o con solo los negocios que nacieron solos— pisaba en GitHub los más de cien
+   negocios de Juan. Un archivo que no se pudo leer no se puede escribir. */
+test("un archivo que no se pudo bajar al abrir no se sube nunca", async () => {
+  const e = estado();
+  e.noBajaron = new Set([ARCHIVO_NEGOCIOS]);
+  editarNegocio(e, "excel-5", { fecha_inicio: "2026-01-10" });
+  const g = fingirGitHub();
+  const r = await sincronizar(e, g.api, "tok");
+  assert.equal(r.ok, false);
+  assert.equal(g.escrituras.length, 0, "no tiene que tocar GitHub");
+  assert.match(r.mensaje, /cerrá la app/i);
+  assert.equal(hayCambios(e), true, "lo editado sigue esperando");
+});
+
+test("los otros archivos se suben igual aunque uno no haya bajado", async () => {
+  const e = estado();
+  e.noBajaron = new Set([ARCHIVO_NEGOCIOS]);
+  marcarAtendido(e, "evento-1");
+  const g = fingirGitHub();
+  const r = await sincronizar(e, g.api, "tok");
+  assert.equal(r.ok, true);
+  assert.equal(g.escrituras[0].ruta, ARCHIVO_MIS_DATOS);
+});

@@ -7,7 +7,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  medidaAchicada, comoSeLlamaLaFoto, cuantoPesan, enMegas,
+  medidaAchicada, comoSeLlamaLaFoto, cuantoPesan, enMegas, avisoDeFotosRotas,
   PARA_EL_PAPEL, PARA_EL_DRIVE,
 } from "../lib/fotos.js";
 
@@ -110,4 +110,14 @@ test("una foto sin número no baja la cuenta", () => {
   const proximo = (fotos) =>
     fotos.reduce((mayor, f) => Math.max(mayor, Number(f.orden) || 0), 0) + 1;
   assert.equal(proximo([{ orden: 3 }, {}, { orden: null }]), 4);
+});
+
+/* AUDITORIA 2026-10-27: una foto que no se podia achicar se descartaba en silencio y la
+   pantalla decia "20 de 20". En un inventario que se usa para discutir un deposito, una foto
+   que falta sin aviso es peor que un error a la vista. */
+test("si alguna foto no se pudo leer, se dice cuántas", () => {
+  assert.equal(avisoDeFotosRotas(0, 20), "");
+  assert.equal(avisoDeFotosRotas(1, 20), "1 de las 20 no se pudo leer: volvé a elegirla");
+  assert.equal(avisoDeFotosRotas(3, 20), "3 de las 20 no se pudieron leer: volvé a elegirlas");
+  assert.equal(avisoDeFotosRotas(1, 1), "la foto no se pudo leer: volvé a elegirla");
 });

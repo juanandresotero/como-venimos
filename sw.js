@@ -13,7 +13,7 @@
    abrir y al volver a la app, y recarga sola cuando el service worker nuevo toma el
    mando. Entre las dos, abrir y cerrar la app alcanza para actualizarse. */
 
-const CACHE = "como-venimos-v175";
+const CACHE = "como-venimos-v176";
 
 const ARMAZON = [
   "./",
@@ -143,6 +143,14 @@ self.addEventListener("activate", (evento) => {
 self.addEventListener("fetch", (evento) => {
   const pedido = evento.request;
   if (pedido.method !== "GET") return;
+
+  /* SOLO LO NUESTRO. Lo de afuera (GitHub, el Drive, Google, el tipo de cambio) va directo a
+     la red. Antes la API de GitHub entraba por la regla de los datos —su direccion tambien
+     lleva "/datos/"— y quedaba guardada: sin señal la app podia leer un negocios.json viejo
+     con su sha viejo. Y las busquedas en el Drive caian en la carrera de 2,5 segundos: con
+     señal lenta salia la respuesta de ayer (auditoria 2026-10-27). Cada uno de esos ya se
+     cuida solo cuando no hay red. */
+  if (new URL(pedido.url).origin !== self.location.origin) return;
 
   // Los datos: primero la red, y si no hay, lo ultimo que se guardo.
   if (pedido.url.includes("/datos/")) {

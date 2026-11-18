@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  sanear, leer, lista, papelera, guardar, borrar, recuperar, borrarDeVerdad, buscar,
+  sanear, leer, lista, papelera, guardar, borrar, recuperar, borrarDeVerdad, buscar, seGuardo,
 } from "../lib/inventario-guardado.js";
 
 /* El teléfono de mentira: el módulo acepta el almacén por parámetro justo para esto. */
@@ -114,4 +114,22 @@ test("vaciar la papelera sí lo borra de verdad", () => {
 
 test("sanear no inventa una papelera donde no hay", () => {
   assert.equal(sanear(unInventario()).papelera, "");
+});
+
+/* AUDITORIA 2026-10-27: con el teléfono lleno, `setItem` revienta. Antes eso cortaba el
+   botón a la mitad y nadie se enteraba de que el inventario ya no se estaba guardando. */
+function almacenLleno() {
+  return { getItem: () => null, setItem: () => { throw new Error("QuotaExceededError"); } };
+}
+
+test("con el teléfono lleno, guardar no revienta y avisa que no se guardó", () => {
+  const almacen = almacenLleno();
+  assert.doesNotThrow(() => guardar(unInventario(), almacen));
+  assert.equal(seGuardo(), false);
+});
+
+test("y cuando vuelve a haber lugar, el aviso se va solo", () => {
+  guardar(unInventario(), almacenLleno());
+  guardar(unInventario(), almacenFalso());
+  assert.equal(seGuardo(), true);
 });

@@ -21,8 +21,17 @@ def main() -> int:
     seco = os.environ.get("DRY_RUN") == "1"
     hoy = os.environ.get("FECHA_HOY") or datetime.date.today().isoformat()
 
+    cartera_previa = almacen.leer_json("cartera.json", {})
     try:
         listings = api.traer_listings()
+        # Una respuesta VACIA sin error es igual de peligrosa que un corte: se leeria como que
+        # se vendio todo y Avisos se llenaria de "se vendio o se cayo?" (auditoria 2026-10-27).
+        # Juan nunca se queda de golpe sin ninguna propiedad; si pasa, que lo confirme a mano.
+        if not listings and any(f.get("activa", True) for f in cartera_previa.values()):
+            raise RuntimeError(
+                "RE/MAX devolvio la cartera vacia. No se toco nada: si de verdad no te queda "
+                "ninguna propiedad publicada, avisale a Claude."
+            )
     except RuntimeError as error:
         almacen.escribir_json("estado_robot.json", {
             "ultima_corrida": hoy,
@@ -35,7 +44,6 @@ def main() -> int:
         return 1
 
     propiedades = [modelo.normalizar(x) for x in listings]
-    cartera_previa = almacen.leer_json("cartera.json", {})
     eventos_previos = almacen.leer_json("eventos.json", [])
     # Se lee, nunca se escribe: mis_datos.json es de la app (§3.3).
     mis_datos = almacen.leer_json("mis_datos.json", {})
