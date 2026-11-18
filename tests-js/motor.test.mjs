@@ -1148,6 +1148,22 @@ const seCayoSolo = (extra = {}) => revisar({
   origen_captacion: "Ref. Martin", ...extra,
 }, AJUSTES, "2026-08-27", CARTERA_PUBLICADA);
 
+/* EL AVISO DECÍA LA FECHA EQUIVOCADA. La de la propiedad es el día que el ROBOT la vio en
+   negociación —el 17 de agosto para todo lo que ya estaba negociando cuando empezó a mirar—, no
+   cuándo arrancó de verdad. Minas 1600 decía "17 de agosto" y había sido el 16 de julio. Manda
+   la que cargó Juan en el negocio. */
+test("el aviso de caído dice la fecha de negociación del negocio, no la que vio el robot", () => {
+  const cartera = { p1: { ...CARTERA_PUBLICADA.p1, fecha_negociacion: "2026-08-17" } };
+  const n = revisar({
+    id: "v1", entity_id_cartera: "p1", tipo_negocio: "venta", estado: "en_curso",
+    fecha_negociacion: "2026-07-16", precio_operacion: 150000, pct_comision_total: 0.06,
+    puntas: 1, puntas_confirmadas: true, origen_captacion: "B.d.r.",
+  }, AJUSTES, "2026-09-11", cartera);
+  const texto = n.avisos.find((a) => a.tipo === "lo_hice_solo").detalle;
+  assert.match(texto, /2026-07-16/);
+  assert.doesNotMatch(texto, /2026-08-17/);
+});
+
 test("una propiedad que volvió a publicada da el negocio por caído", () => {
   const n = seCayoSolo();
   assert.equal(n.estado, CAIDO);
