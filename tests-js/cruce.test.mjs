@@ -92,3 +92,20 @@ test("sobre la cartera y los negocios de verdad no se sugiere ninguna barbaridad
     }
   }
 });
+
+/* PASTOR 1200 (2026-11-18). Una propiedad que se vuelve a publicar casi nunca es el mismo
+   negocio: es otro inquilino u otro comprador. Ofrecer enganchar uno ya cobrado terminó con
+   un negocio de 2023 reabierto y su plata cambiada. */
+test("un negocio cerrado o caido nunca se sugiere para una propiedad", () => {
+  const cartera = { a: { entity_id: "a", direccion: "Pastor 1200" } };
+  for (const estado of ["cerrado", "caido"]) {
+    assert.deepEqual(sugerencias({ direccion: "Pastor 1221", estado }, cartera), [], estado);
+  }
+});
+
+test("un negocio abierto de esa misma direccion SI se sigue sugiriendo", () => {
+  const cartera = { a: { entity_id: "a", direccion: "Pastor 1200" } };
+  const s = sugerencias({ direccion: "Pastor 1221", estado: "en_curso" }, cartera);
+  assert.equal(s.length, 1);
+  assert.equal(s[0].propiedad.entity_id, "a");
+});
