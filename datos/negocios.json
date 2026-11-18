@@ -278,7 +278,8 @@
   "es_suplencia": false,
   "yo_referi": true,
   "ficha_vigente": false,
-  "puntas_confirmadas": true
+  "puntas_confirmadas": true,
+  "plata_acordada": true
  },
  {
   "agente_compra": "Otro REMAX",
@@ -982,7 +983,8 @@
   "es_suplencia": false,
   "yo_referi": true,
   "ficha_vigente": false,
-  "puntas_confirmadas": true
+  "puntas_confirmadas": true,
+  "plata_acordada": true
  },
  {
   "agente_compra": "Otro REMAX",
@@ -1018,7 +1020,8 @@
   "es_suplencia": false,
   "yo_referi": true,
   "ficha_vigente": false,
-  "puntas_confirmadas": true
+  "puntas_confirmadas": true,
+  "plata_acordada": true
  },
  {
   "agente_compra": "Juan Andrés Otero",
@@ -1159,7 +1162,8 @@
   "es_suplencia": false,
   "yo_referi": true,
   "ficha_vigente": false,
-  "puntas_confirmadas": true
+  "puntas_confirmadas": true,
+  "plata_acordada": true
  },
  {
   "agente_compra": "Otro REMAX",
