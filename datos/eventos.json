@@ -747,5 +747,20 @@
   "internal_id": "940041154-218",
   "tipo": "baja",
   "titulo": "VENTA APARTAMENTO UN DORMITORIO LA BLANQUEADA"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "UYU",
+   "precio": 28500.0
+  },
+  "direccion": "Ariel 5000",
+  "entity_id": "e6af7746-675f-486a-9af9-54964e631f81",
+  "fecha": "2026-11-20",
+  "id": "2026-11-20|e6af7746-675f-486a-9af9-54964e631f81|alta",
+  "internal_id": "940041154-231",
+  "tipo": "alta",
+  "titulo": "Alquiler Local Comercial en Sayago"
  }
 ]
