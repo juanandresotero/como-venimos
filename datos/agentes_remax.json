@@ -1981,6 +1981,12 @@
    "slug": "santiago-pereyra"
   },
   {
+   "id": "bf87c65d-8756-4b01-aa5d-e63e207f1cb3",
+   "nombre": "Sebastian Amato",
+   "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
+   "slug": "sebastian-amato"
+  },
+  {
    "id": "48e571cd-3671-467d-af18-218669f60b88",
    "nombre": "Sebastián CRUZ",
    "oficina_id": "d342d53d-cf32-4ee7-b422-d965e3c860c9",
@@ -2209,7 +2215,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-11-18",
+ "bajada_el": "2026-11-21",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
