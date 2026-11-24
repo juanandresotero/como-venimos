@@ -762,5 +762,20 @@
   "internal_id": "940041154-231",
   "tipo": "alta",
   "titulo": "Alquiler Local Comercial en Sayago"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "estado": "publicada",
+   "moneda": "USD",
+   "precio": 185000.0
+  },
+  "direccion": "Bohanes 8100",
+  "entity_id": "986825da-d525-404a-be62-faf3d53a0ad9",
+  "fecha": "2026-11-24",
+  "id": "2026-11-24|986825da-d525-404a-be62-faf3d53a0ad9|alta",
+  "internal_id": "940041154-233",
+  "tipo": "alta",
+  "titulo": "venta 2 casas en mismo padron en colon"
  }
 ]

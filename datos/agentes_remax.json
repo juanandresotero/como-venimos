@@ -85,12 +85,6 @@
    "slug": "alba-avero"
   },
   {
-   "id": "3dea8ae9-227e-495d-a2ea-b54f00e1856b",
-   "nombre": "Alberto Schuardt",
-   "oficina_id": "54a7281c-ebdf-4667-90ed-235c67a12340",
-   "slug": "alberto-schuardt"
-  },
-  {
    "id": "2c40009a-be36-4e58-ac75-529732fbf65a",
    "nombre": "Alejandra  Pereira",
    "oficina_id": "9de38e79-48b7-4b2c-94b8-7fce5b7eedbe",
@@ -1351,12 +1345,6 @@
    "slug": "maria-jose-cardozo"
   },
   {
-   "id": "b68edc87-337c-4323-98d5-1e9ce47a10c5",
-   "nombre": "Maria Soledad Dodero De León",
-   "oficina_id": "54a7281c-ebdf-4667-90ed-235c67a12340",
-   "slug": "maria-soledad-dodero-de-leon"
-  },
-  {
    "id": "e29cc63d-bff6-46e6-9f89-d55dc45f66cf",
    "nombre": "Maria Victoria Amigo",
    "oficina_id": "b8587180-e38e-474a-b16e-1e411d1a100f",
@@ -2215,7 +2203,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-11-21",
+ "bajada_el": "2026-11-24",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
