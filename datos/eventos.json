@@ -777,5 +777,19 @@
   "internal_id": "940041154-233",
   "tipo": "alta",
   "titulo": "venta 2 casas en mismo padron en colon"
+ },
+ {
+  "atendido": false,
+  "detalle": {
+   "ahora": "en_negociacion",
+   "antes": "publicada"
+  },
+  "direccion": "Yucutuja 1400",
+  "entity_id": "83271442-05bd-4a1a-bb7e-b0026994e96f",
+  "fecha": "2026-11-26",
+  "id": "2026-11-26|83271442-05bd-4a1a-bb7e-b0026994e96f|cambio_estado",
+  "internal_id": "940041154-228",
+  "tipo": "cambio_estado",
+  "titulo": "Venta casa de dos dormitorios en Peñarol con patio"
  }
 ]
