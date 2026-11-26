@@ -2331,7 +2331,7 @@
   "precio_publicado": 60000,
   "baja_sobre_publicado": 0.0083,
   "se_cayo_solo": false,
-  "fecha_caida": "2026-09-23",
+  "fecha_caida": null,
   "revivio_solo": true,
   "visto_bueno": true,
   "lo_borrado_al_caerse": null,
@@ -3148,7 +3148,7 @@
   "precio_publicado": 165000,
   "baja_sobre_publicado": 0.0758,
   "se_cayo_solo": false,
-  "fecha_caida": "2026-09-11",
+  "fecha_caida": null,
   "estado_a_mano": true,
   "lo_borrado_al_caerse": null,
   "cliente_comprador": {
@@ -3342,7 +3342,7 @@
   "fecha_inicio": null,
   "fecha_negociacion": "2026-09-03",
   "fecha_boleto": "2026-09-14",
-  "fecha_fin": null,
+  "fecha_fin": "2026-11-25",
   "entity_id_cartera": null,
   "direccion": "Blanca del Tabaré 2903",
   "barrio": "Parque batlle",
@@ -3351,14 +3351,14 @@
   "moneda": "USD",
   "tipo_cambio": null,
   "origen_captacion": "Redes sociales Campaña",
-  "estado": "en_curso",
-  "ficha_completa": false,
+  "estado": "cerrado",
+  "ficha_completa": true,
   "puntas_confirmadas": true,
-  "notas": "",
+  "notas": "El.comlrador es un Imbéci",
   "manual": true,
   "atajo": "busqueda",
   "avisos": [],
-  "ficha_vigente": false,
+  "ficha_vigente": true,
   "regimen_comision": "captacion_mia",
   "base": 2700,
   "facturacion": 2700,
@@ -3368,9 +3368,10 @@
   "fecha_fin_estimada": false,
   "agente_vende_nombre": "Juan andres brunini",
   "cliente_comprador": {
-   "nombre": "Rodrigo",
-   "telefono": "+59897132356"
-  }
+   "nombre": "Diego Petroccelli Por Flaco Mono",
+   "telefono": "+59894318037"
+  },
+  "ficha_completa_momento": null
  },
  {
   "id": "manual-8",
