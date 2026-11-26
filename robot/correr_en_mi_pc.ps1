@@ -29,7 +29,13 @@ $salio = $LASTEXITCODE
 git add datos/
 git commit -q -m ("datos: cartera del {0} (desde la PC)" -f (Get-Date -Format "yyyy-MM-dd"))
 git pull --rebase --autostash -q origin main
-git push -q origin main
+git push origin main
+# Si GitHub no deja subir (se vencio el permiso guardado en la PC), el robot anda pero el
+# celular sigue viendo la cartera vieja. Paso del 23 al 26/11/2026 sin que nadie se enterara:
+# el `-q` escondia el error. Ahora queda escrito en el log.
+if ($LASTEXITCODE -ne 0) {
+  Write-Output "NO SE PUDO SUBIR A GITHUB: los datos quedaron solo en la PC. Hay que volver a entrar a GitHub (correr un git push a mano)."
+}
 
 Stop-Transcript | Out-Null
 exit $salio
