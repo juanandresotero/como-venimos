@@ -451,6 +451,12 @@
    "slug": "cesar-perez"
   },
   {
+   "id": "2ccb285f-c53d-4c9e-8290-4739bcdad217",
+   "nombre": "DANA ROBERTS TABAREZ",
+   "oficina_id": "54a7281c-ebdf-4667-90ed-235c67a12340",
+   "slug": "dana-roberts-tabarez"
+  },
+  {
    "id": "d00b16fc-32f0-4002-8a00-185b15789649",
    "nombre": "Daniela Bardallo",
    "oficina_id": "c154cfa8-20b4-4257-98f1-7a11cf34b57c",
@@ -1465,6 +1471,12 @@
    "slug": "maria-jimena-caballero"
   },
   {
+   "id": "3cf38ead-d278-4d45-a41f-3b480557ea9a",
+   "nombre": "María José Legelén",
+   "oficina_id": "dd5bf580-a7c5-4729-ae8d-9745934a6ba8",
+   "slug": "maria-jose-legelen"
+  },
+  {
    "id": "ec326cb3-7dc4-4675-bf99-be08036dacfb",
    "nombre": "María José Zunino",
    "oficina_id": "3815a3ab-c6c8-47ae-aa15-fe403005c965",
@@ -2017,6 +2029,12 @@
    "slug": "silvia-goldemberg"
   },
   {
+   "id": "7df0f1f7-3a6a-4789-b994-dec5394e9e01",
+   "nombre": "Silvia Jarque",
+   "oficina_id": "c8f4c6b2-c252-4b02-b7c0-07ce3dd2471d",
+   "slug": "silvia-jarque"
+  },
+  {
    "id": "ae4974a2-7ba0-4916-b289-a9e4d6194ce6",
    "nombre": "Silvia Osano",
    "oficina_id": "898da160-d625-427f-99f8-23612b7dbe42",
@@ -2203,7 +2221,7 @@
    "slug": "alvaro-fernandez-del-campo"
   }
  ],
- "bajada_el": "2026-11-24",
+ "bajada_el": "2026-11-27",
  "oficinas": [
   {
    "direccion": "18 de Julio 320, Florida, Depto. De Florida, Uruguay",
